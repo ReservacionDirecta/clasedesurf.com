@@ -11,8 +11,8 @@
 - [x] **Tarea 1.6:** Configurar ESLint, Prettier y Husky para calidad de código y git hooks.
 
 ### Módulo 2: Autenticación y Perfil de Usuario
-- [ ] **Tarea 2.1:** Crear Vistas de Registro e Inicio de Sesión.
-- [ ] **Tarea 2.2:** Implementar la lógica de registro de nuevos usuarios (API y Frontend).
+- [x] **Tarea 2.1:** Crear Vistas de Registro e Inicio de Sesión.
+- [x] **Tarea 2.2:** Implementar la lógica de registro de nuevos usuarios (API y Frontend).
 - [ ] **Tarea 2.3:** Implementar la lógica de autenticación (API y Frontend).
 - [ ] **Tarea 2.4:** Proteger rutas y componentes basado en la sesión del usuario.
 - [ ] **Tarea 2.5:** Crear la Vista de Perfil de Usuario para ver y actualizar información personal (edad, peso, talla, lesiones, etc.).
