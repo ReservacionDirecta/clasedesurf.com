@@ -1,0 +1,510 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  /* High contrast color system optimized for accessibility */
+  --background: #ffffff;
+  --foreground: #000000;
+  --primary: #0066cc;
+  --primary-dark: #004499;
+  --secondary: #f8fafc;
+  --accent: #1e40af;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --card: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.15);
+  
+  /* Ocean-inspired palette with enhanced contrast */
+  --ocean-blue: #0066cc;
+  --ocean-dark: #003d7a;
+  --ocean-light: #e6f3ff;
+  --sand: #f7f3f0;
+  --wave: #00a8e6;
+  
+  /* Text contrast levels */
+  --text-primary: #000000;
+  --text-secondary: #1f2937;
+  --text-muted: #4b5563;
+  --text-light: #6b7280;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #000000;
+    --foreground: #ffffff;
+    --secondary: #1a1a1a;
+    --card: #111111;
+    --border: #333333;
+    --card-shadow: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #e5e7eb;
+    --text-muted: #d1d5db;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 16px; /* Base font size for better readability */
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Enhanced text contrast utilities */
+  .text-high-contrast {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+  
+  .text-medium-contrast {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  
+  .text-readable {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* Mobile-optimized text sizes */
+  .text-mobile-sm { font-size: 14px; line-height: 1.5; }
+  .text-mobile-base { font-size: 16px; line-height: 1.6; }
+  .text-mobile-lg { font-size: 18px; line-height: 1.7; }
+  .text-mobile-xl { font-size: 20px; line-height: 1.7; }
+
+  /* Enhanced spacing for mobile */
+  .spacing-mobile { padding: 1rem; }
+  .spacing-tablet { padding: 1.5rem; }
+  .spacing-desktop { padding: 2rem; }
+}
+
+@layer components {
+  /* Enhanced marketplace card with superior contrast */
+  .marketplace-card {
+    @apply bg-white border-2 border-gray-200 rounded-2xl shadow-lg;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color: #e5e7eb;
+  }
+  
+  .marketplace-card:hover {
+    @apply shadow-2xl border-blue-300;
+    transform: translateY(-6px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* High contrast buttons optimized for all devices */
+  .btn-primary-marketplace {
+    @apply bg-blue-600 text-white font-bold px-8 py-4 rounded-xl;
+    @apply hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-800;
+    @apply transition-all duration-200 ease-in-out;
+    @apply focus:outline-none focus:ring-4 focus:ring-blue-200;
+    @apply shadow-lg hover:shadow-xl;
+    min-height: 48px;
+    font-size: 16px;
+    letter-spacing: 0.025em;
+  }
+  
+  .btn-primary-marketplace:hover {
+    transform: translateY(-2px);
+  }
+  
+  .btn-outline-marketplace {
+    @apply bg-white text-gray-900 font-bold px-8 py-4 rounded-xl;
+    @apply border-2 border-gray-400 hover:border-gray-600;
+    @apply hover:bg-gray-50 focus:bg-gray-50 active:bg-gray-100;
+    @apply transition-all duration-200 ease-in-out;
+    @apply focus:outline-none focus:ring-4 focus:ring-gray-200;
+    @apply shadow-md hover:shadow-lg;
+    min-height: 48px;
+    font-size: 16px;
+  }
+  
+  /* Enhanced form inputs with better accessibility */
+  .input-marketplace {
+    @apply w-full px-4 py-4 border-2 border-gray-400 rounded-xl;
+    @apply focus:border-blue-600 focus:ring-4 focus:ring-blue-100;
+    @apply transition-all duration-200 ease-in-out;
+    @apply text-gray-900 placeholder-gray-600;
+    @apply shadow-sm focus:shadow-md;
+    font-size: 16px;
+    min-height: 48px;
+    font-weight: 500;
+  }
+  
+  /* School rating badges with high contrast */
+  .rating-badge {
+    @apply inline-flex items-center px-3 py-2 rounded-full text-sm font-bold;
+    @apply bg-yellow-100 text-yellow-900 border-2 border-yellow-300;
+    min-height: 32px;
+  }
+  
+  .verified-badge {
+    @apply inline-flex items-center px-3 py-2 rounded-full text-sm font-bold;
+    @apply bg-blue-100 text-blue-900 border-2 border-blue-300;
+  }
+  
+  /* Level badges with enhanced contrast */
+  .level-beginner {
+    @apply bg-green-100 text-green-900 border-2 border-green-400 font-bold px-3 py-2 rounded-full text-sm;
+  }
+  
+  .level-intermediate {
+    @apply bg-yellow-100 text-yellow-900 border-2 border-yellow-400 font-bold px-3 py-2 rounded-full text-sm;
+  }
+  
+  .level-advanced {
+    @apply bg-red-100 text-red-900 border-2 border-red-400 font-bold px-3 py-2 rounded-full text-sm;
+  }
+  
+  /* Enhanced navigation with better touch targets */
+  .nav-link-marketplace {
+    @apply text-gray-800 hover:text-blue-700 font-semibold;
+    @apply transition-colors duration-200 ease-in-out;
+    @apply focus:outline-none focus:ring-3 focus:ring-blue-500 focus:ring-offset-2;
+    @apply rounded-lg px-4 py-3;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Filter panel styling */
+  .filter-panel {
+    @apply bg-white border-2 border-gray-200 rounded-2xl shadow-lg p-6;
+    @apply backdrop-blur-sm;
+  }
+  
+  /* Mobile-optimized touch targets */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Price display with enhanced readability */
+  .price-display {
+    @apply font-bold text-2xl text-gray-900;
+    letter-spacing: -0.025em;
+  }
+  
+  .price-secondary {
+    @apply font-medium text-lg text-gray-600;
+  }
+}
+
+/* Smooth scrolling with performance optimization */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Enhanced scrollbar with better contrast */
+::-webkit-scrollbar {
+  width: 14px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 8px;
+  border: 3px solid #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Dark mode scrollbar */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #64748b;
+    border-color: #1e293b;
+  }
+}
+
+/* Enhanced focus styles for maximum accessibility */
+*:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
+}
+
+/* High contrast selection */
+::selection {
+  background-color: #1e40af;
+  color: white;
+}
+
+/* Enhanced loading animation */
+@keyframes marketplace-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+}
+
+.animate-marketplace-pulse {
+  animation: marketplace-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 640px) {
+  body {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .marketplace-card {
+    margin: 0.75rem;
+    border-radius: 16px;
+    border-width: 2px;
+  }
+  
+  .btn-primary-marketplace,
+  .btn-outline-marketplace {
+    padding: 14px 24px;
+    font-size: 16px;
+    min-height: 52px;
+    font-weight: 700;
+  }
+  
+  .input-marketplace {
+    padding: 14px 16px;
+    font-size: 16px;
+    min-height: 52px;
+    border-width: 2px;
+  }
+  
+  .price-display {
+    font-size: 1.75rem;
+  }
+  
+  /* Enhanced spacing for mobile */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  
+  .marketplace-card {
+    border-radius: 20px;
+  }
+}
+
+/* Desktop enhancements */
+@media (min-width: 1025px) {
+  .marketplace-card:hover {
+    transform: translateY(-8px) scale(1.02);
+  }
+  
+  .btn-primary-marketplace:hover {
+    transform: translateY(-3px);
+  }
+  
+  .nav-link-marketplace:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* iPhone specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  .input-marketplace,
+  .btn-primary-marketplace,
+  .btn-outline-marketplace {
+    font-size: 16px !important; /* Prevents zoom */
+    -webkit-appearance: none;
+  }
+  
+  /* Safe area support for iPhone X and newer */
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --foreground: #000000;
+    --background: #ffffff;
+    --primary: #0000ff;
+    --border: #000000;
+    --text-primary: #000000;
+  }
+  
+  .marketplace-card {
+    border: 3px solid #000000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .btn-primary-marketplace {
+    background-color: #000000;
+    border: 3px solid #000000;
+    color: #ffffff;
+  }
+  
+  .btn-outline-marketplace {
+    border: 3px solid #000000;
+    color: #000000;
+  }
+  
+  .level-beginner,
+  .level-intermediate,
+  .level-advanced {
+    border-width: 3px;
+    font-weight: 900;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+  
+  .marketplace-card {
+    border: 2px solid #000000;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-card,
+  .btn-primary-marketplace,
+  .btn-outline-marketplace {
+    transition: none;
+  }
+  
+  .marketplace-card:hover {
+    transform: none;
+  }
+}
+
+/* Enhanced typography scale */
+.text-marketplace-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-marketplace-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-marketplace-base { font-size: 1rem; line-height: 1.5rem; }
+.text-marketplace-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.text-marketplace-xl { font-size: 1.25rem; line-height: 1.75rem; }
+.text-marketplace-2xl { font-size: 1.5rem; line-height: 2rem; }
+.text-marketplace-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+.text-marketplace-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+
+/* Animations for expandable sections */
+@keyframes slide-in-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.slide-in-from-top {
+  animation-name: slide-in-from-top;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+/* Enhanced card details section */
+.card-details {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Profile images with enhanced styling */
+.profile-image {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.profile-image:hover {
+  transform: scale(1.05);
+}
+
+/* Specialty tags */
+.specialty-tag {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border: 1px solid #86efac;
+}
