@@ -13,13 +13,13 @@
 ### Módulo 2: Autenticación y Perfil de Usuario
 - [x] **Tarea 2.1:** Crear Vistas de Registro e Inicio de Sesión.
 - [x] **Tarea 2.2:** Implementar la lógica de registro de nuevos usuarios (API y Frontend).
-- [ ] **Tarea 2.3:** Implementar la lógica de autenticación (API y Frontend).
-- [ ] **Tarea 2.4:** Proteger rutas y componentes basado en la sesión del usuario.
-- [ ] **Tarea 2.5:** Crear la Vista de Perfil de Usuario para ver y actualizar información personal (edad, peso, talla, lesiones, etc.).
-- [ ] **Tarea 2.6:** Implementar la lógica para actualizar el perfil de usuario (API y Frontend).
+- [x] **Tarea 2.3:** Implementar la lógica de autenticación (API y Frontend).
+- [x] **Tarea 2.4:** Proteger rutas y componentes basado en la sesión del usuario.
+- [x] **Tarea 2.5:** Crear la Vista de Perfil de Usuario para ver y actualizar información personal (edad, peso, talla, lesiones, etc.).
+- [x] **Tarea 2.6:** Implementar la lógica para actualizar el perfil de usuario (API y Frontend).
 
 ### Módulo 3: Gestión de Clases (Admin)
-- [ ] **Tarea 3.1:** Crear un Dashboard de Administrador (Vista inicial).
+- [x] **Tarea 3.1:** Crear un Dashboard de Administrador (Vista inicial).
 - [ ] **Tarea 3.2:** Implementar la funcionalidad para CREAR nuevas clases (nombre, descripción, nivel, horario, cupos, precio).
 - [ ] **Tarea 3.3:** Implementar la funcionalidad para LEER (listar) todas las clases.
 - [ ] **Tarea 3.4:** Implementar la funcionalidad para ACTUALIZAR la información de una clase.
