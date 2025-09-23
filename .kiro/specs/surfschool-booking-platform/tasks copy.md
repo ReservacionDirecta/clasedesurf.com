@@ -8,7 +8,7 @@
 - [x] **Tarea 1.3:** Implementar Prisma ORM y conectar con la base de datos (PostgreSQL).
 - [x] **Tarea 1.4:** Definir el esquema inicial de la base de datos en `schema.prisma`.
 - [x] **Tarea 1.5:** Configurar NextAuth.js para autenticación (Credentials y OAuth con Google/Facebook).
-- [x] **Tarea 1.6:** Configurar ESLint, Prettier y Husky para calidad de código y git hooks.
+- [ ] **Tarea 1.6:** Configurar ESLint, Prettier y Husky para calidad de código y git hooks.
 
 ### Módulo 2: Autenticación y Perfil de Usuario
 - [ ] **Tarea 2.1:** Crear Vistas de Registro e Inicio de Sesión.

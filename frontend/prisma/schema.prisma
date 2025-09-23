@@ -1,487 +1,105 @@
-// SurfSchool Booking Platform - Prisma Schema
-// Comprehensive database schema for surf school booking management
-// Supports multi-school architecture with complete business logic
-
 generator client {
   provider = "prisma-client-js"
 }
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-// ============================================================================
-// USER MANAGEMENT
-// ============================================================================
-
 model User {
-  id           String        @id @default(cuid())
-  name         String
+  id           Int           @id @default(autoincrement())
   email        String        @unique
+  name         String
   password     String
-  emailVerified DateTime?
-  image        String?
-  
-  // Surf-specific profile information
-  age          Int?          @db.SmallInt
-  weight       Float?        // in kg
-  height       Float?        // in cm
+  role         UserRole      @default(STUDENT)
+  age          Int?
+  weight       Float?
+  height       Float?
   canSwim      Boolean       @default(false)
-  swimmingLevel SwimmingLevel @default(BEGINNER)
-  injuries     String?       @db.Text
-  emergencyContact String?
-  emergencyPhone String?
-  
-  // System fields
-  role         Role          @default(STUDENT)
-  isActive     Boolean       @default(true)
-  lastLoginAt  DateTime?
+  injuries     String?
+  phone        String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  
-  // Relations
   reservations Reservation[]
-  payments     Payment[]
-  reviews      Review[]
-  accounts     Account[]
-  sessions     Session[]
-  schoolMemberships SchoolMember[]
   
-  // Indexes for performance
-  @@index([email])
-  @@index([role])
-  @@index([isActive])
   @@map("users")
 }
-
-// NextAuth.js required models
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
-}
-
-// ============================================================================
-// SCHOOL MANAGEMENT
-// ============================================================================
-
 model School {
-  id          String   @id @default(cuid())
+  id          Int      @id @default(autoincrement())
   name        String
-  slug        String   @unique // For URL-friendly school identification
-  description String?  @db.Text
-  
-  // Contact information
-  email       String   @unique
+  location    String
+  description String?
   phone       String?
-  website     String?
-  
-  // Location details
-  address     String
-  city        String
-  state       String?
-  country     String   @default("ES")
-  latitude    Float?
-  longitude   Float?
-  
-  // Business information
-  taxId       String?  @unique // CIF/NIF for Spanish businesses
-  bankAccount String?  // For payment processing
-  
-  // Platform settings
-  isActive    Boolean  @default(true)
-  isVerified  Boolean  @default(false)
-  commission  Float    @default(0.10) // Platform commission (10%)
-  
-  // Branding
-  logo        String?
-  coverImage  String?
-  colors      Json?    // Brand colors configuration
-  
-  // System fields
+  email       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
-  // Relations
   classes     Class[]
-  members     SchoolMember[]
-  equipment   Equipment[]
-  reviews     Review[]
   
-  @@index([slug])
-  @@index([isActive])
-  @@index([city])
   @@map("schools")
 }
-
-model SchoolMember {
-  id       String     @id @default(cuid())
-  school   School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  schoolId String
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId   String
-  role     SchoolRole @default(INSTRUCTOR)
-  isActive Boolean    @default(true)
-  joinedAt DateTime   @default(now())
-  
-  @@unique([schoolId, userId])
-  @@map("school_members")
-}
-
-// ============================================================================
-// CLASS MANAGEMENT
-// ============================================================================
-
 model Class {
-  id          String    @id @default(cuid())
-  title       String
-  description String?   @db.Text
-  
-  // Scheduling
-  date        DateTime
-  startTime   DateTime
-  endTime     DateTime
-  duration    Int       // Duration in minutes
-  
-  // Capacity and pricing
-  capacity    Int       @db.SmallInt
-  price       Float
-  currency    String    @default("EUR")
-  
-  // Class details
-  level       Level     @default(BEGINNER)
-  type        ClassType @default(GROUP)
-  location    String?   // Beach/spot name
-  
-  // Weather and conditions
-  minWaveHeight Float?  // Minimum wave height in meters
-  maxWaveHeight Float?  // Maximum wave height in meters
-  weatherConditions String?
-  
-  // Instructor and school
-  school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  schoolId    String
-  instructorName String?
-  instructorId String?  // Future: link to instructor user
-  
-  // Equipment included
-  includesBoard    Boolean @default(true)
-  includesWetsuit  Boolean @default(true)
-  includesInsurance Boolean @default(true)
-  
-  // Status and settings
-  isActive    Boolean   @default(true)
-  isCanceled  Boolean   @default(false)
-  cancelReason String?
-  
-  // System fields
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  // Relations
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String?
+  date         DateTime
+  duration     Int           // duración en minutos
+  capacity     Int
+  price        Float
+  level        ClassLevel    @default(BEGINNER)
+  school       School        @relation(fields: [schoolId], references: [id])
+  schoolId     Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   reservations Reservation[]
-  equipment    ClassEquipment[]
   
-  // Computed field for available spots
-  // availableSpots = capacity - count(active reservations)
-  
-  @@index([schoolId])
-  @@index([date])
-  @@index([level])
-  @@index([isActive])
-  @@index([startTime])
   @@map("classes")
 }
-
-// ============================================================================
-// RESERVATION MANAGEMENT
-// ============================================================================
-
 model Reservation {
-  id             String            @id @default(cuid())
+  id             Int                @id @default(autoincrement())
+  user           User               @relation(fields: [userId], references: [id])
+  userId         Int
+  class          Class              @relation(fields: [classId], references: [id])
+  classId        Int
+  status         ReservationStatus  @default(PENDING)
+  specialRequest String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  payment        Payment?
   
-  // Core reservation data
-  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         String
-  class          Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
-  classId        String
-  
-  // Reservation details
-  status         ReservationStatus @default(PENDING)
-  specialRequest String?           @db.Text
-  participants   Int               @default(1) @db.SmallInt
-  
-  // Pricing (stored for historical accuracy)
-  totalAmount    Float
-  currency       String            @default("EUR")
-  
-  // Cancellation
-  canceledAt     DateTime?
-  cancelReason   String?
-  refundAmount   Float?
-  
-  // System fields
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  
-  // Relations
-  payments       Payment[]
-  reviews        Review[]
-  
-  @@unique([userId, classId]) // Prevent duplicate reservations
-  @@index([userId])
-  @@index([classId])
-  @@index([status])
-  @@index([createdAt])
   @@map("reservations")
 }
-
-// ============================================================================
-// PAYMENT MANAGEMENT
-// ============================================================================
-
 model Payment {
-  id            String        @id @default(cuid())
-  
-  // Payment details
-  reservation   Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  reservationId String
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String
-  
-  // Financial information
+  id            Int           @id @default(autoincrement())
+  reservation   Reservation   @relation(fields: [reservationId], references: [id])
+  reservationId Int           @unique
   amount        Float
-  currency      String        @default("EUR")
-  status        PaymentStatus @default(PENDING)
-  
-  // Payment method and processing
-  paymentMethod PaymentMethod @default(CASH)
-  paymentProvider String?     // Stripe, PayPal, etc.
-  transactionId String?       @unique
-  providerFee   Float?        // Payment processor fee
-  platformFee   Float?        // Platform commission
-  
-  // Metadata
-  metadata      Json?         // Additional payment data
-  receiptUrl    String?       // Receipt/invoice URL
-  
-  // Refund information
-  refundedAt    DateTime?
-  refundAmount  Float?
-  refundReason  String?
-  
-  // System fields
+  status        PaymentStatus @default(UNPAID)
+  paymentMethod String?
+  transactionId String?
+  paidAt        DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   
-  @@index([reservationId])
-  @@index([userId])
-  @@index([status])
-  @@index([transactionId])
   @@map("payments")
 }
-
-// ============================================================================
-// EQUIPMENT MANAGEMENT
-// ============================================================================
-
-model Equipment {
-  id          String   @id @default(cuid())
-  school      School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  schoolId    String
-  
-  name        String
-  type        EquipmentType
-  brand       String?
-  model       String?
-  size        String?
-  condition   EquipmentCondition @default(GOOD)
-  
-  isAvailable Boolean  @default(true)
-  notes       String?  @db.Text
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  // Relations
-  classEquipment ClassEquipment[]
-  
-  @@index([schoolId])
-  @@index([type])
-  @@index([isAvailable])
-  @@map("equipment")
-}
-
-model ClassEquipment {
-  id          String    @id @default(cuid())
-  class       Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
-  classId     String
-  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  equipmentId String
-  quantity    Int       @default(1) @db.SmallInt
-  
-  @@unique([classId, equipmentId])
-  @@map("class_equipment")
-}
-
-// ============================================================================
-// REVIEW SYSTEM
-// ============================================================================
-
-model Review {
-  id           String      @id @default(cuid())
-  
-  // Review relationships
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  school       School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  schoolId     String
-  reservation  Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  reservationId String     @unique
-  
-  // Review content
-  rating       Int         @db.SmallInt // 1-5 stars
-  title        String?
-  comment      String?     @db.Text
-  
-  // Detailed ratings
-  instructorRating Int?    @db.SmallInt
-  equipmentRating  Int?    @db.SmallInt
-  locationRating   Int?    @db.SmallInt
-  valueRating      Int?    @db.SmallInt
-  
-  // Moderation
-  isPublished  Boolean     @default(true)
-  isVerified   Boolean     @default(false)
-  
-  // System fields
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  
-  @@index([schoolId])
-  @@index([rating])
-  @@index([isPublished])
-  @@map("reviews")
-}
-
-// ============================================================================
-// ENUMS
-// ============================================================================
-
-enum Role {
+enum UserRole {
   STUDENT
   ADMIN
-  SCHOOL_OWNER
-  SUPER_ADMIN
+  SCHOOL_ADMIN
 }
-
-enum SchoolRole {
-  OWNER
-  ADMIN
-  INSTRUCTOR
-  ASSISTANT
-}
-
-enum Level {
+enum ClassLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
-  EXPERT
 }
-
-enum SwimmingLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  EXPERT
-}
-
-enum ClassType {
-  GROUP
-  PRIVATE
-  SEMI_PRIVATE
-  INTENSIVE
-  KIDS
-}
-
 enum ReservationStatus {
   PENDING
   CONFIRMED
   PAID
-  COMPLETED
   CANCELED
-  NO_SHOW
+  COMPLETED
 }
-
 enum PaymentStatus {
-  PENDING
-  PROCESSING
+  UNPAID
   PAID
-  FAILED
   REFUNDED
-  PARTIALLY_REFUNDED
-}
-
-enum PaymentMethod {
-  CASH
-  CARD
-  BANK_TRANSFER
-  PAYPAL
-  STRIPE
-  BIZUM
-  OTHER
-}
-
-enum EquipmentType {
-  SURFBOARD
-  WETSUIT
-  LEASH
-  WAX
-  FINS
-  HELMET
-  BOOTS
-  GLOVES
-  OTHER
-}
-
-enum EquipmentCondition {
-  EXCELLENT
-  GOOD
-  FAIR
-  POOR
-  NEEDS_REPAIR
 }
