@@ -40,19 +40,21 @@ model School {
   @@map("schools")
 }
 model Class {
-  id           Int           @id @default(autoincrement())
-  title        String
-  description  String?
-  date         DateTime
-  duration     Int           // duración en minutos
-  capacity     Int
-  price        Float
-  level        ClassLevel    @default(BEGINNER)
-  school       School        @relation(fields: [schoolId], references: [id])
-  schoolId     Int
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  reservations Reservation[]
+  id            Int           @id @default(autoincrement())
+  title         String
+  description   String?
+  date          DateTime
+  duration      Int
+  capacity      Int
+  price         Float
+  level         ClassLevel    @default(BEGINNER)
+  school        School        @relation(fields: [schoolId], references: [id])
+  schoolId      Int
+  instructor    User?         @relation(fields: [instructorId], references: [id])
+  instructorId  Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  reservations  Reservation[]
   
   @@map("classes")
 }

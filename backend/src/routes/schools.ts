@@ -19,7 +19,21 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const school = await prisma.school.findUnique({ where: { id } });
+    const school = await prisma.school.findUnique({
+      where: { id },
+      include: {
+        classes: {
+          include: {
+            instructor: true,
+            reservations: {
+              include: {
+                user: true,
+              }
+            }
+          }
+        }
+      }
+    });
     if (!school) return res.status(404).json({ message: 'School not found' });
     res.json(school);
   } catch (err) {
