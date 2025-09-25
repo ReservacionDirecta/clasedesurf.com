@@ -49,40 +49,40 @@ export default function AdminOverviewPage() {
     fetchAll();
   }, [session, status, router]);
 
-  if (status === 'loading' || loading) return <div className="p-8">Loading admin overview...</div>;
+  if (status === 'loading' || loading) return <div className="p-8 dark:text-white">Loading admin overview...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4">Platform Overview</h1>
+        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Platform Overview</h1>
 
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 bg-white rounded shadow">
-            <h2 className="text-xl font-semibold">Classes</h2>
-            <p className="mt-2 text-3xl">{summary.classes.length}</p>
+          <div className="p-6 bg-white dark:bg-gray-800 rounded shadow">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Classes</h2>
+            <p className="mt-2 text-3xl text-gray-900 dark:text-white">{summary.classes.length}</p>
           </div>
-          <div className="p-6 bg-white rounded shadow">
-            <h2 className="text-xl font-semibold">Reservations</h2>
-            <p className="mt-2 text-3xl">{summary.reservations.length}</p>
+          <div className="p-6 bg-white dark:bg-gray-800 rounded shadow">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Reservations</h2>
+            <p className="mt-2 text-3xl text-gray-900 dark:text-white">{summary.reservations.length}</p>
           </div>
-          <div className="p-6 bg-white rounded shadow">
-            <h2 className="text-xl font-semibold">Payments</h2>
-            <p className="mt-2 text-3xl">{summary.payments.length}</p>
+          <div className="p-6 bg-white dark:bg-gray-800 rounded shadow">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Payments</h2>
+            <p className="mt-2 text-3xl text-gray-900 dark:text-white">{summary.payments.length}</p>
           </div>
         </section>
 
         <section className="mt-8">
-          <h2 className="text-2xl font-semibold mb-2">Recent Reservations</h2>
+          <h2 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">Recent Reservations</h2>
           <div className="space-y-4">
             {summary.reservations.slice(0, 10).map((r: any) => (
-              <div key={r.id} className="p-4 bg-white rounded shadow">
+              <div key={r.id} className="p-4 bg-white dark:bg-gray-800 rounded shadow">
                 <div className="flex justify-between">
                   <div>
-                    <div className="font-semibold">Reservation #{r.id}</div>
-                    <div className="text-sm text-gray-600">Class: {r.class?.title || r.classId}</div>
-                    <div className="text-sm text-gray-600">User: {r.user?.name || r.userId}</div>
+                    <div className="font-semibold text-gray-900 dark:text-white">Reservation #{r.id}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Class: {r.class?.title || r.classId}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">User: {r.user?.name || r.userId}</div>
                   </div>
-                  <div className="text-sm text-gray-500">{r.status}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{r.status}</div>
                 </div>
               </div>
             ))}
