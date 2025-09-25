@@ -1,109 +1,124 @@
 # Plan de Implementación - Plataforma de Reservas SurfSchool
 
-- [ ] 1. Configuración inicial del proyecto y base de datos
-  - Configurar Prisma con PostgreSQL y definir el esquema completo de base de datos
-  - Crear migraciones iniciales y configurar cliente Prisma
-  - Configurar variables de entorno y conexión a Railway
-  - _Requerimientos: 8.1, 8.3, 10.4_
+Este documento refleja el estado real del proyecto tras separar la lógica (backend) de la interfaz (frontend), crear un scaffold de backend con Prisma y exponer endpoints REST básicos. Incluye instrucciones de ejecución, verificación rápida y siguientes pasos prioritarios.
 
-- [ ] 2. Implementar sistema de autenticación base
-  - Crear modelos de usuario con hash de contraseñas usando bcrypt
-  - Implementar endpoints de registro y login con validación JWT
-  - Crear middleware de autenticación para proteger rutas
-  - _Requerimientos: 1.1, 1.2, 1.3, 10.4_
+Resumen rápido (estado actual)
+- Backend: scaffold Express + TypeScript + Prisma en `backend/` — servidor dev funcionando en puerto 4000.
+- Frontend: Next.js (app router) en `frontend/` — UI intacta; rutas API internas convertidas a proxies que llaman al backend (`NEXT_PUBLIC_BACKEND_URL`).
+- Autenticación: endpoints mínimos `POST /auth/register` y `POST /auth/login` implementados (bcrypt + JWT). NextAuth CredentialsProvider actualizado para usar `/auth/login` y propagar `backendToken` en la sesión.
+- Reservas: endpoint `POST /reservations` usa Prisma y está protegido con middleware JWT; se mejoró la atomización usando transacciones en la creación (prevención básica de sobre-reservas).
+- Pagos: endpoint básico creado que registra pagos y marca reservas como `PAID` (implementación de gateway pendiente).
 
-- [ ] 3. Desarrollar API de gestión de usuarios y perfiles
-  - Implementar endpoints para obtener y actualizar perfil de usuario
-  - Crear validaciones Zod para datos de perfil (edad, peso, altura, lesiones)
-  - Escribir tests unitarios para validaciones de perfil
-  - _Requerimientos: 2.1, 2.2, 2.3, 2.4, 10.1_
+Estado detallado por módulo
 
-- [ ] 4. Crear sistema de gestión de escuelas y clases
-  - Implementar CRUD completo para escuelas (nombre, ubicación, contacto)
-  - Desarrollar endpoints para crear, listar y gestionar clases
-  - Añadir validaciones para fechas futuras y capacidad de clases
-  - _Requerimientos: 8.1, 8.2, 8.3, 8.4_
+- [x] 1. Configuración inicial y base de datos
+    - `backend/prisma/schema.prisma` copiado y adaptado; `npx prisma generate` ejecutado (Prisma Client generado en `backend/node_modules/@prisma/client`).
+    - Nota: antes de correr migraciones asegúrate de fijar `DATABASE_URL` en el entorno del `backend`.
 
-- [ ] 5. Implementar sistema de reservas
-  - Crear endpoint para listar clases disponibles con filtros de fecha
-  - Desarrollar lógica de creación de reservas con validación de capacidad
-  - Implementar verificación de plazas disponibles y prevención de overbooking
-  - _Requerimientos: 3.1, 3.2, 3.3, 4.1, 4.3, 4.4_
+- [x] 2. Autenticación básica
+    - Implementado: `backend/src/routes/auth.ts` con `POST /auth/register` y `POST /auth/login` (hash con bcrypt y JWT con `JWT_SECRET`).
+    - Implementado: middleware `backend/src/middleware/auth.ts` que valida `Authorization: Bearer <token>` y atacha `req.userId`.
+    - Frontend: `frontend/src/lib/auth.ts` (NextAuth) cambia authorize() para llamar al backend y conservar `backendToken` en el JWT/session.
+    - Extendido: el middleware ahora atacha `role` y hay helper `requireRole(...)` para proteger endpoints por rol.
+    - Refresh tokens: se añadió modelo `RefreshToken` en Prisma, `/auth/refresh` y `/auth/logout` en backend, y el backend envía refresh token en cookie httpOnly; NextAuth intenta refresh automáticamente.
 
-- [ ] 6. Desarrollar sistema de pagos y estados
-  - Crear modelo de pagos vinculado a reservas
-  - Implementar endpoints para gestionar estados de pago (unpaid, paid)
-  - Desarrollar lógica para cambio de estados de reserva según pagos
-  - _Requerimientos: 5.1, 5.2, 5.3, 5.4_
+- [x] 3. Gestión de usuarios / perfiles (parcial)
+    - Implementado: `GET /users/profile` y `PUT /users/profile` en `backend/src/routes/users.ts`, protegidos por middleware JWT.
+    - Pendiente: validaciones con Zod y tests de endpoints.
+    - Extendido: endpoints admin `GET /users` y `GET /users/:id` añadidos (protegidos por rol ADMIN).
 
-- [ ] 7. Crear componentes de autenticación del frontend
-  - Desarrollar formularios de login y registro con validación
-  - Implementar context de autenticación y manejo de estado de usuario
-  - Crear componentes de protección de rutas y redirección
-  - _Requerimientos: 1.1, 1.2, 1.3, 1.5_
+- [x] 4. Gestión de clases y escuelas (parcial)
+    - `backend/src/routes/classes.ts` implementa list/create (CRUD básico); validar aún permisos/propietario.
+    - Extendido: `backend/src/routes/schools.ts` añadido con endpoints `GET /schools`, `GET /schools/:id`, `POST /schools`, `PUT /schools/:id`.
+    - Frontend: añadidos paneles admin para `overview`, `schools`, `users` y `school profile` (vistas mínimas en `frontend/src/app/dashboard/...`).
 
-- [ ] 8. Desarrollar interfaz de gestión de perfil
-  - Crear formulario de perfil con campos para datos personales
-  - Implementar validación del lado cliente para datos de perfil
-  - Añadir funcionalidad de actualización de perfil con feedback visual
-  - _Requerimientos: 2.1, 2.2, 2.4, 2.5_
+- [x] 5. Sistema de reservas (parcial)
+    - `backend/src/routes/reservations.ts` con POST/GET. POST usa una transacción para comprobar capacidad y crear reserva.
+    - Pendiente: filtros por fecha, límites por usuario, tests de concurrencia.
 
-- [ ] 9. Implementar listado y calendario de clases
-  - Crear componente de calendario para mostrar clases disponibles
-  - Desarrollar filtros por fecha y disponibilidad de plazas
-  - Implementar indicadores visuales para clases llenas vs disponibles
-  - _Requerimientos: 3.1, 3.2, 3.3, 3.4, 3.5_
+- [x] 6. Pagos (básico)
+    - `backend/src/routes/payments.ts` registra pago y actualiza reserva a `PAID` (stub).
+    - Pendiente: integración con Stripe, webhooks y verificación idempotente.
 
-- [ ] 10. Desarrollar formulario de reserva
-  - Crear formulario de reserva con datos pre-completados del perfil
-  - Implementar campo de requerimientos especiales y validaciones
-  - Añadir confirmación de reserva y mostrar detalles de la clase
-  - _Requerimientos: 4.1, 4.2, 4.3, 4.5_
+- [x] 7. Harden auth (roles & refresh tokens)
+    - Implementado: role checks middleware (`requireRole`) y refresh token flow (DB-stored, rotated, cookie-based). Backend sets httpOnly refresh cookie and exposes `/auth/refresh` and `/auth/logout`.
+    - Frontend: NextAuth updated to store `backendToken` and attempt refresh via `/api/auth/refresh` when needed. Header links and admin pages use role to display admin nav.
+    - Nota: refresh tokens are stored hashed in DB; before production change cookie secure flag and tighten scope.
 
-- [ ] 11. Crear panel de usuario (dashboard)
-  - Desarrollar vista de historial de reservas ordenadas por fecha
-  - Implementar indicadores de estado visual (pendiente, pagada, cancelada)
-  - Añadir funcionalidad para ver detalles de reservas y pagos
-  - _Requerimientos: 6.1, 6.2, 6.3, 6.4, 6.5_
+- [ ] 7. Frontend auth components (done wiring)
+    - `frontend/src/app/(auth)/login/page.tsx` y `.../register/page.tsx` están presentes y la ruta de register/login fue cambiada para usar el backend (proxy). Ver `frontend/.env.local` para `NEXT_PUBLIC_BACKEND_URL`.
 
-- [ ] 12. Implementar dashboard administrativo
-  - Crear vista de calendario administrativo con todas las reservas
-  - Desarrollar sistema de colores para diferentes estados de reserva
-  - Implementar funcionalidad para ver detalles completos de estudiantes
-  - _Requerimientos: 7.1, 7.2, 7.3_
+- [ ] 8. Interfaz de gestión de perfil
+    - UI existente en `frontend/src/app/dashboard/student/profile/page.tsx` ahora incluye envío de `Authorization: Bearer <backendToken>` en fetches; falta añadir validaciones y mejorar UX.
 
-- [ ] 13. Desarrollar gestión administrativa de pagos
-  - Crear interfaz para confirmar pagos y cambiar estados de reserva
-  - Implementar funcionalidad de cancelación de reservas
-  - Añadir validaciones para cambios de estado y liberación de plazas
-  - _Requerimientos: 7.4, 7.5, 5.3_
+- [ ] 9. Calendar, booking UI y demás (pendiente)
+    - Componentes `BookingModal`, `QuickBookingEngine`, `ClassCard` existen. Faltan filtros avanzados, calendario y wiring final para pagos.
 
-- [ ] 14. Crear sistema de reportes y estadísticas
-  - Implementar endpoints para generar reportes filtrados por fecha
-  - Desarrollar cálculos de ingresos, ocupación y estadísticas de clases
-  - Crear funcionalidad de exportación de reportes en formato CSV
-  - _Requerimientos: 9.1, 9.2, 9.3, 9.4, 9.5_
+Navbar updates
+- `frontend/src/components/layout/Header.tsx` actualizado para incluir enlaces: `Mi Perfil` (a `/dashboard/student/profile`), `Escuelas` (a `/dashboard/admin/schools`) y un enlace `Admin` visible sólo si `session.user.role === 'ADMIN'`.
 
-- [ ] 15. Implementar validaciones y seguridad completa
-  - Añadir middleware de validación de permisos por rol de usuario
-  - Implementar rate limiting en endpoints críticos
-  - Crear manejo centralizado de errores con mensajes apropiados
-  - _Requerimientos: 10.1, 10.2, 10.3, 10.5_
+Cómo ejecutar (desarrollo local - PowerShell)
 
-- [ ] 16. Desarrollar tests de integración
-  - Escribir tests para flujos completos de reserva
-  - Crear tests de API para todos los endpoints principales
-  - Implementar tests de autenticación y autorización
-  - _Requerimientos: Todos los requerimientos (validación)_
+1) Backend — instalar, generar Prisma Client y correr migraciones (asegúrate de definir `DATABASE_URL` y `JWT_SECRET` en el entorno o en `backend/.env`):
 
-- [ ] 17. Configurar despliegue y optimización
-  - Configurar build de producción con optimizaciones de Next.js
-  - Implementar migraciones automáticas de base de datos en Railway
-  - Añadir logging y monitoreo de errores en producción
-  - _Requerimientos: 10.4, 10.5_
+```powershell
+cd C:\Users\yerct\clasedesurf.com\backend
+npm install
+# Ajusta la variable DATABASE_URL antes de correr migraciones. Ejemplo (local Postgres):
+$env:DATABASE_URL = 'postgres://postgres:password@localhost:5432/clasedesurf'
+$env:JWT_SECRET = 'dev-secret-change-me'
+npx prisma generate
+npx prisma migrate dev --name init
+npm run dev
+```
 
-- [ ] 18. Integrar componentes y realizar testing final
-  - Conectar todos los componentes frontend con APIs correspondientes
-  - Realizar testing end-to-end de flujos críticos de usuario
-  - Optimizar rendimiento y corregir bugs encontrados en testing
-  - _Requerimientos: Todos los requerimientos (integración final)_
+Salida esperada: "Backend listening on port 4000" y logs de rutas montadas.
+
+2) Frontend — configurar `NEXT_PUBLIC_BACKEND_URL` y lanzar dev server:
+
+```powershell
+cd C:\Users\yerct\clasedesurf.com\frontend
+# En frontend/.env.local asegúrate: NEXT_PUBLIC_BACKEND_URL="http://localhost:4000"
+npm install
+npm run dev
+```
+
+Salida esperada: Next.js corriendo en http://localhost:3000 y las rutas `/api/*` del frontend actuando como proxys hacia el backend.
+
+Pruebas rápidas (smoke tests)
+
+- Registrar un usuario (desde la UI o con curl): POST a `http://localhost:3000/api/auth/register` (frontend proxy) y confirmar respuesta 201.
+- Login: desde la UI de login (NextAuth Credentials) o POST directo a `http://localhost:4000/auth/login` y comprobar que la respuesta contiene `{ user, token }`.
+- Acceder al perfil: una vez logueado, abrir `/dashboard/student/profile` y confirmar que el fetch al backend a `GET /users/profile` devuelve datos (Authorization header debe contener `backendToken` desde la sesión NextAuth).
+
+Cambios de código importantes (ubicaciones)
+
+- Frontend changes:
+    - `frontend/src/app/api/auth/register/route.ts` — ahora hace POST al backend `${NEXT_PUBLIC_BACKEND_URL}/auth/register` en lugar de usar Prisma localmente.
+    - `frontend/src/lib/auth.ts` — NextAuth CredentialsProvider cambia authorize() para POST `/auth/login` al backend y guarda `backendToken` en token/session.
+    - `frontend/src/app/dashboard/student/profile/page.tsx` — incluye Authorization header en fetches con `session.backendToken`.
+    - `frontend/.env.local` — deberías tener `NEXT_PUBLIC_BACKEND_URL="http://localhost:4000"`.
+
+- Backend changes:
+    - `backend/src/routes/auth.ts` — register/login; usa bcryptjs y jsonwebtoken.
+    - `backend/src/middleware/auth.ts` — `requireAuth` valida Bearer token y atacha `req.userId`.
+    - `backend/src/routes/users.ts`, `reservations.ts`, `payments.ts`, `classes.ts` — ahora usan `requireAuth` donde aplica.
+    - `backend/prisma/schema.prisma` — modelo y enums copiados/adaptados desde el frontend-schema.
+
+Requerimientos y cobertura actual (resumen)
+- Implementado: autenticación básica, persistencia con Prisma, endpoints CRUD básicos para usuarios, clases, reservas y pagos (estado básico).
+- Parcial: validaciones robustas, tests automatizados, integración de pagos y hardening de seguridad (roles, refresh tokens, rate limits).
+
+Prioridades siguientes (recomendado)
+1. (Alta) Harden auth: añadir refresh tokens, rol-based middleware y tests de autorización.
+2. (Alta) Integrar Stripe (o gateway elegido) con endpoints webhook seguros e idempotentes.
+3. (Med) Añadir tests de integración (Jest/Vitest) y una GitHub Actions básica para lint/tests.
+4. (Med) Implementar filtros/calendario de clases y mejorar UX de booking.
+
+Notas finales y acuerdos
+- El diseño actual mueve todo acceso a base de datos al backend en `backend/`; el frontend actúa como UI + proxy. Esto evita que Prisma se ejecute en el proceso Next.js.
+- Antes de desplegar, fija valores seguros en `DATABASE_URL` y `JWT_SECRET`. Cambia `JWT_SECRET` por una variable fuerte y considera refresh tokens y rotación.
+- Si quieres, continúo ahora con cualquiera de las prioridades: (A) refresh tokens + role checks, (B) Stripe + webhooks, (C) tests + CI. Indica la opción o pido seguir con la opción por defecto: (A).
+
+---
+Última actualización: 2025-09-23 — Documentado por el equipo de desarrollo (ediciones automáticas desde el agente). 

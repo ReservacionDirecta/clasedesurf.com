@@ -1,11 +1,15 @@
-'use client'
+"use client"
 
 import { useState } from 'react'
+import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { data: session } = useSession()
+
+  const role = (session as any)?.user?.role;
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-40">
@@ -22,7 +26,7 @@ export function Header() {
           </Link>
 
           {/* Navigation - Desktop */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex space-x-8 items-center">
             <Link href="#clases" className="text-gray-600 hover:text-blue-600 transition-colors">
               Clases
             </Link>
@@ -32,27 +36,90 @@ export function Header() {
             <Link href="#sobre-nosotros" className="text-gray-600 hover:text-blue-600 transition-colors">
               Sobre Nosotros
             </Link>
-            <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
-              Contacto
-            </Link>
+
+            {/* Role-specific dashboard links */}
+            {session ? (
+              <>
+                {role === 'STUDENT' && (
+                  <>
+                    <Link href="/dashboard/student/profile" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Mi Perfil
+                    </Link>
+                    <Link href="/dashboard/student/reservations" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Mis Reservas
+                    </Link>
+                  </>
+                )}
+                {role === 'INSTRUCTOR' && (
+                  <>
+                    <Link href="/dashboard/instructor" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Instructor
+                    </Link>
+                    <Link href="/dashboard/instructor/classes" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Mis Clases
+                    </Link>
+                  </>
+                )}
+                {role === 'SCHOOL' && (
+                  <>
+                    <Link href="/dashboard/school" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Escuela
+                    </Link>
+                    <Link href="/dashboard/school/classes" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Clases Escuela
+                    </Link>
+                  </>
+                )}
+                {role === 'ADMIN' && (
+                  <Link href="/dashboard/admin" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    Admin
+                  </Link>
+                )}
+
+                <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  Contacto
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/dashboard/admin/schools" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  Escuelas
+                </Link>
+                <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
+                  Contacto
+                </Link>
+              </>
+            )}
           </nav>
 
           {/* Auth Buttons - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link href="/login">
-              <Button variant="outline" size="sm">
-                Iniciar Sesión
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button variant="primary" size="sm">
-                Registrarse
-              </Button>
-            </Link>
+            {session ? (
+              <>
+                <span className="text-sm text-gray-700">{(session as any).user?.name}</span>
+                <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: '/' })}>
+                  Cerrar sesión
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="outline" size="sm">
+                    Iniciar Sesión
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button variant="primary" size="sm">
+                    Registrarse
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
           <button
+            aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             className="md:hidden p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-100"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
@@ -79,21 +146,77 @@ export function Header() {
               <Link href="#sobre-nosotros" className="text-gray-600 hover:text-blue-600 transition-colors">
                 Sobre Nosotros
               </Link>
-              <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
-                Contacto
-              </Link>
-              <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
-                <Link href="/login">
-                  <Button variant="outline" size="sm" className="w-full">
-                    Iniciar Sesión
-                  </Button>
-                </Link>
-                <Link href="/register">
-                  <Button variant="primary" size="sm" className="w-full">
-                    Registrarse
-                  </Button>
-                </Link>
-              </div>
+                {session ? (
+                  <>
+                    {role === 'STUDENT' && (
+                      <>
+                        <Link href="/dashboard/student/profile" className="text-gray-600 hover:text-blue-600 transition-colors">
+                          Mi Perfil
+                        </Link>
+                        <Link href="/dashboard/student/reservations" className="text-gray-600 hover:text-blue-600 transition-colors">
+                          Mis Reservas
+                        </Link>
+                      </>
+                    )}
+                    {role === 'INSTRUCTOR' && (
+                      <>
+                        <Link href="/dashboard/instructor" className="text-gray-600 hover:text-blue-600 transition-colors">
+                          Instructor
+                        </Link>
+                        <Link href="/dashboard/instructor/classes" className="text-gray-600 hover:text-blue-600 transition-colors">
+                          Mis Clases
+                        </Link>
+                      </>
+                    )}
+                    {role === 'SCHOOL' && (
+                      <>
+                        <Link href="/dashboard/school" className="text-gray-600 hover:text-blue-600 transition-colors">
+                          Escuela
+                        </Link>
+                        <Link href="/dashboard/school/classes" className="text-gray-600 hover:text-blue-600 transition-colors">
+                          Clases Escuela
+                        </Link>
+                      </>
+                    )}
+                    {role === 'ADMIN' && (
+                      <Link href="/dashboard/admin" className="text-gray-600 hover:text-blue-600 transition-colors">
+                        Admin
+                      </Link>
+                    )}
+                    <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Contacto
+                    </Link>
+                    <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => signOut({ callbackUrl: '/' })}>
+                        Cerrar sesión
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/dashboard/admin/schools" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Escuelas
+                    </Link>
+                    <Link href="/dashboard/student/profile" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Mi Perfil
+                    </Link>
+                    <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
+                      Contacto
+                    </Link>
+                    <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+                      <Link href="/login">
+                        <Button variant="outline" size="sm" className="w-full">
+                          Iniciar Sesión
+                        </Button>
+                      </Link>
+                      <Link href="/register">
+                        <Button variant="primary" size="sm" className="w-full">
+                          Registrarse
+                        </Button>
+                      </Link>
+                    </div>
+                  </>
+                )}
             </nav>
           </div>
         )}

@@ -16,7 +16,7 @@ export default withAuth(
     // Redirect to dashboard if logged in and trying to access login/register
     if (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/register')) {
       if (request.nextauth.token) {
-        return NextResponse.redirect(new URL('/dashboard/student', request.url));
+        return NextResponse.redirect(new URL('/dashboard/student/profile', request.url));
       }
     }
   },

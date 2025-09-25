@@ -17,6 +17,7 @@ export default function RegisterPage() {
     setError(null);
     setSuccess(null);
 
+    // Post to the frontend API proxy so client-side calls are routed correctly
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
@@ -25,12 +26,19 @@ export default function RegisterPage() {
       body: JSON.stringify({ name, email, password }),
     });
 
-    const data = await response.json();
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch (e) {
+      // response was not JSON — read as text
+      const txt = await response.text();
+      data = { message: txt };
+    }
 
     if (!response.ok) {
-      setError(data.message || 'Registration failed');
+      setError(data?.message || 'Registration failed');
     } else {
-      setSuccess(data.message || 'Registration successful!');
+      setSuccess(data?.message || 'Registration successful!');
       router.push('/login'); // Redirect to login page after successful registration
     }
   };

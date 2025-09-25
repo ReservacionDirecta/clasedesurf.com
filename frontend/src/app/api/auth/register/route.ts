@@ -1,41 +1,37 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { hashPassword } from '@/lib/auth';
-import { UserRole } from '@/types';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:4000';
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const body = await req.json();
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      return NextResponse.json({ message: 'User with this email already exists' }, { status: 409 });
-    }
-
-    const hashedPassword = await hashPassword(password);
-
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: UserRole.STUDENT, // Default role for new registrations
+    const backendRes = await fetch(`${BACKEND_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify(body),
     });
 
-    // Exclude password from the response
-    const { password: _, ...userWithoutPassword } = newUser;
-
-    return NextResponse.json({ message: 'User registered successfully', user: userWithoutPassword }, { status: 201 });
+    const data = await backendRes.text();
+    if (backendRes.status >= 400) {
+      // server-side log to help debugging in dev
+      try {
+        console.error('[proxy] /api/auth/register backend error', backendRes.status, data);
+      } catch (e) {
+        console.error('[proxy] /api/auth/register backend error', backendRes.status);
+      }
+    }
+    // Try to parse JSON, otherwise return text
+    try {
+      const json = JSON.parse(data);
+      return NextResponse.json(json, { status: backendRes.status });
+    } catch (_e) {
+      return new NextResponse(data, { status: backendRes.status });
+    }
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Proxy registration error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

@@ -46,13 +46,83 @@
 }
 
 body {
-  color: var(--foreground);
+  /* Prefer explicit text variables for better contrast control */
+  color: var(--text-primary);
   background: var(--background);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 16px; /* Base font size for better readability */
+}
+
+/* Make sure common text elements use the readable color by default */
+h1,h2,h3,h4,h5,h6,p,span,a,li,button,label,input,textarea,select {
+  color: var(--text-primary);
+}
+
+/* Form controls: readable background and text, with clear borders */
+input, textarea, select, button {
+  color: var(--text-primary);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+/* Placeholder tone */
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* Focus states for accessibility */
+input:focus, textarea:focus, select:focus, button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+  border-color: var(--primary);
+}
+
+/* Prevent accidental white text on white backgrounds in light mode when utility classes conflict */
+@media (prefers-color-scheme: light), (prefers-color-scheme: no-preference) {
+  /* If some components incorrectly use text-white, render them readable in light mode */
+  .text-white {
+    color: var(--text-primary) !important;
+  }
+  /* Ensure bg-white utilities map correctly to the card/background variables */
+  .bg-white {
+    background-color: var(--card) !important;
+  }
+}
+
+/* Stronger overrides to catch utility combinations and non-dark pages */
+html:not(.dark) .text-white,
+body:not(.dark) .text-white,
+html[data-theme="light"] .text-white,
+[data-theme="light"] .text-white,
+.bg-white.text-white,
+.bg-card.text-white {
+  color: var(--text-primary) !important;
+}
+
+/* Force readable colors for form controls (higher specificity) */
+html:not(.dark) input,
+html:not(.dark) textarea,
+html:not(.dark) select,
+html:not(.dark) button,
+body:not(.dark) input,
+body:not(.dark) textarea,
+body:not(.dark) select,
+body:not(.dark) button {
+  color: var(--text-primary) !important;
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
+}
+
+/* Specific case: buttons that use bg-white + text-white should be readable in light mode */
+.bg-white.text-white[role="button"],
+.bg-white.text-white.button,
+.bg-white.text-white.btn {
+  color: var(--text-primary) !important;
 }
 
 @layer utilities {

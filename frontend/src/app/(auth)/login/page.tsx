@@ -24,7 +24,7 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error);
     } else if (result?.ok) {
-      router.push('/dashboard/student'); // Redirect to student dashboard on successful login
+  router.push('/dashboard/student/profile'); // Redirect to student profile on successful login
     }
   };
 

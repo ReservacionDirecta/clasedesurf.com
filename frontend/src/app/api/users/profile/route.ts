@@ -1,84 +1,29 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import prisma from '@/lib/prisma';
-import { UpdateProfileData } from '@/types';
+
+// Proxy the frontend profile API to the backend so the frontend doesn't access Prisma directly.
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:4000';
+
+async function proxy(req: Request) {
+  // Build backend URL by stripping the /api prefix
+  const url = new URL(req.url);
+  const path = url.pathname.replace('/api', ''); // /api/users/profile -> /users/profile
+  const backendUrl = `${BACKEND}${path}`;
+
+  const res = await fetch(backendUrl, {
+    method: req.method,
+    headers: Object.fromEntries(req.headers),
+    body: req.method !== 'GET' && req.method !== 'HEAD' ? await req.arrayBuffer() : undefined,
+  });
+
+  // Return backend response (preserve status and headers)
+  const text = await res.text();
+  return new NextResponse(text, { status: res.status, headers: Object.fromEntries(res.headers) });
+}
 
 export async function GET(req: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user?.id) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  }
-
-  try {
-    const userId = parseInt(session.user.id);
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        age: true,
-        weight: true,
-        height: true,
-        canSwim: true,
-        injuries: true,
-        phone: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json(user, { status: 200 });
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
-  }
+  return proxy(req);
 }
 
 export async function PUT(req: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session || !session.user?.id) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  }
-
-  try {
-    const userId = parseInt(session.user.id);
-    const { name, age, weight, height, canSwim, injuries, phone } = (await req.json()) as UpdateProfileData;
-
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        name,
-        age,
-        weight,
-        height,
-        canSwim,
-        injuries,
-        phone,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        age: true,
-        weight: true,
-        height: true,
-        canSwim: true,
-        injuries: true,
-        phone: true,
-      },
-    });
-
-    return NextResponse.json({ message: 'Profile updated successfully', user: updatedUser }, { status: 200 });
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
-  }
+  return proxy(req);
 }
