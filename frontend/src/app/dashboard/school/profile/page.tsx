@@ -81,10 +81,10 @@ export default function SchoolProfilePage({ params }: { params: { id?: string } 
             <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Instructors</h2>
             <div className="space-y-3">
               {instructors.map((i: any) => (
-                <div key={i.id} className="p-3 bg-white dark:bg-gray-800 rounded shadow">
+                <Link href={`/dashboard/instructor/profile/${i.id}`} key={i.id} className="block p-3 bg-white dark:bg-gray-800 rounded shadow hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <p className="font-semibold text-gray-900 dark:text-white">{i.name}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">{i.email}</p>
-                </div>
+                </Link>
               ))}
             </div>
             <h2 className="text-2xl font-bold mt-6 mb-4 text-gray-900 dark:text-white">Students</h2>
