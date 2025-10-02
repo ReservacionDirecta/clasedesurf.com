@@ -11,18 +11,24 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     const { reservationId, amount, paymentMethod, transactionId } = req.body;
     if (!reservationId || !amount) return res.status(400).json({ message: 'reservationId and amount required' });
 
-    // Optional: Verify the reservation belongs to userId (simple check)
     const reservation = await prisma.reservation.findUnique({ where: { id: Number(reservationId) } });
     if (!reservation) return res.status(404).json({ message: 'Reservation not found' });
     if (reservation.userId !== userId) return res.status(403).json({ message: 'Forbidden' });
 
+    const totalAmount = Number(amount);
+    const platformFee = totalAmount * 0.15; // 15% platform fee
+    const netAmount = totalAmount - platformFee;
+
     const payment = await prisma.payment.create({
       data: {
         reservation: { connect: { id: Number(reservationId) } },
-        amount: Number(amount),
+        amount: totalAmount,
+        platformFee,
+        netAmount,
         status: 'PAID',
-        paymentMethod: paymentMethod || 'manual',
-        transactionId: transactionId || null
+        paidAt: new Date(),
+        paymentMethod: paymentMethod || 'manual_simulation',
+        transactionId: transactionId || `txn_${Date.now()}`
       }
     });
 

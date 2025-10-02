@@ -26,12 +26,34 @@ async function main() {
     },
   });
 
+  const school1 = await prisma.school.create({
+    data: {
+      name: 'Lima Surf Academy',
+      location: 'Miraflores, Lima',
+      description: 'Pioneering surf school in Lima with over 8 years of experience.',
+      email: 'contact@limasurf.com',
+      phone: '+5112345678',
+    },
+  });
+
+  const school2 = await prisma.school.create({
+    data: {
+      name: 'Waikiki Surf School',
+      location: 'San Bartolo, Lima',
+      description: 'Specializing in intermediate and advanced surf techniques.',
+      email: 'info@waikikisurf.pe',
+      phone: '+5118765432',
+    },
+  });
+  console.log('Created schools.');
+
   const schoolAdmin = await prisma.user.create({
     data: {
       email: 'schooladmin@surfschool.com',
       name: 'School Admin',
       password: hashedPassword,
       role: UserRole.SCHOOL_ADMIN,
+      schoolId: school1.id,
     },
   });
 
@@ -75,28 +97,6 @@ async function main() {
     },
   });
   console.log('Created users.');
-
-  // --- Create Schools ---
-  const school1 = await prisma.school.create({
-    data: {
-      name: 'Lima Surf Academy',
-      location: 'Miraflores, Lima',
-      description: 'Pioneering surf school in Lima with over 8 years of experience.',
-      email: 'contact@limasurf.com',
-      phone: '+5112345678',
-    },
-  });
-
-  const school2 = await prisma.school.create({
-    data: {
-      name: 'Waikiki Surf School',
-      location: 'San Bartolo, Lima',
-      description: 'Specializing in intermediate and advanced surf techniques.',
-      email: 'info@waikikisurf.pe',
-      phone: '+5118765432',
-    },
-  });
-  console.log('Created schools.');
 
   // --- Create Classes ---
   const class1 = await prisma.class.create({

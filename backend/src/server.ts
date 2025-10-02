@@ -8,6 +8,7 @@ import reservationsRouter from './routes/reservations';
 import paymentsRouter from './routes/payments';
 import authRouter from './routes/auth';
 import schoolsRouter from './routes/schools';
+import payoutsRouter from './routes/payouts';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -22,6 +23,7 @@ app.use('/reservations', reservationsRouter);
 app.use('/payments', paymentsRouter);
 app.use('/auth', authRouter);
 app.use('/schools', schoolsRouter);
+app.use('/payouts', payoutsRouter);
 
 app.get('/', (_req, res) => res.json({ message: 'Backend API running' }));
 

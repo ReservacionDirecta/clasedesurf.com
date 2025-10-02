@@ -55,7 +55,7 @@ export default function AdminSchoolsPage() {
                 <div className="text-sm text-gray-600 dark:text-gray-400">{s.location}</div>
               </div>
               <div>
-                <Link href={`/dashboard/admin/schools/${s.id}`} className="text-blue-600 dark:text-blue-400">View / Edit</Link>
+                <Link href={`/dashboard/school/profile/${s.id}`} className="text-blue-600 dark:text-blue-400">View / Edit</Link>
               </div>
             </div>
           ))}

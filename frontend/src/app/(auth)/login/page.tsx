@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -9,7 +9,31 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const { data: session, status } = useSession();
   const router = useRouter();
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      const user = (session as any)?.user;
+      const role = user?.role;
+      const schoolId = user?.schoolId;
+
+      if (role === 'ADMIN') {
+        router.push('/dashboard/admin');
+      } else if (role === 'SCHOOL_ADMIN') {
+        if (schoolId) {
+          router.push(`/dashboard/school/profile/${schoolId}`);
+        } else {
+          console.error("School admin is missing schoolId.");
+          router.push('/');
+        }
+      } else if (role === 'INSTRUCTOR') {
+        router.push('/dashboard/instructor/profile');
+      } else {
+        router.push('/dashboard/student/profile');
+      }
+    }
+  }, [status, session, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,10 +47,16 @@ export default function LoginPage() {
 
     if (result?.error) {
       setError(result.error);
-    } else if (result?.ok) {
-  router.push('/dashboard/student/profile'); // Redirect to student profile on successful login
     }
   };
+
+  if (status === 'authenticated') {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+        <p className="dark:text-white">Login successful. Redirecting...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">

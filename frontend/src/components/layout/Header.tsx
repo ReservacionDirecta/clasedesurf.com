@@ -52,27 +52,27 @@ export function Header() {
                 )}
                 {role === 'INSTRUCTOR' && (
                   <>
-                    <Link href="/dashboard/instructor" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                      Instructor
+                    <Link href="/dashboard/instructor/profile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      Mi Perfil
                     </Link>
                     <Link href="/dashboard/instructor/classes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       Mis Clases
                     </Link>
                   </>
                 )}
-                {role === 'SCHOOL' && (
+                {role === 'SCHOOL_ADMIN' && (
                   <>
-                    <Link href="/dashboard/school" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                      Escuela
+                    <Link href={`/dashboard/school/profile/${(session as any)?.user?.schoolId}`} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      Dashboard Escuela
                     </Link>
                     <Link href="/dashboard/school/classes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                      Clases Escuela
+                      Gestionar Clases
                     </Link>
                   </>
                 )}
                 {role === 'ADMIN' && (
                   <Link href="/dashboard/admin" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                    Admin
+                    Admin Dashboard
                   </Link>
                 )}
 
@@ -160,27 +160,27 @@ export function Header() {
                     )}
                     {role === 'INSTRUCTOR' && (
                       <>
-                        <Link href="/dashboard/instructor" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                          Instructor
+                        <Link href="/dashboard/instructor/profile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          Mi Perfil
                         </Link>
                         <Link href="/dashboard/instructor/classes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                           Mis Clases
                         </Link>
                       </>
                     )}
-                    {role === 'SCHOOL' && (
+                    {role === 'SCHOOL_ADMIN' && (
                       <>
-                        <Link href="/dashboard/school" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                          Escuela
+                        <Link href={`/dashboard/school/profile/${(session as any)?.user?.schoolId}`} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          Dashboard Escuela
                         </Link>
                         <Link href="/dashboard/school/classes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                          Clases Escuela
+                          Gestionar Clases
                         </Link>
                       </>
                     )}
                     {role === 'ADMIN' && (
                       <Link href="/dashboard/admin" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                        Admin
+                        Admin Dashboard
                       </Link>
                     )}
                     <Link href="#contacto" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
