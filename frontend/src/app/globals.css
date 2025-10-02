@@ -180,11 +180,17 @@ body:not(.dark) button {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-color: #e5e7eb;
   }
+  .dark .marketplace-card {
+    @apply bg-gray-800 border-gray-700;
+  }
   
   .marketplace-card:hover {
     @apply shadow-2xl border-blue-300;
     transform: translateY(-6px);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  }
+  .dark .marketplace-card:hover {
+    @apply border-blue-500;
   }
   
   /* High contrast buttons optimized for all devices */
@@ -197,6 +203,9 @@ body:not(.dark) button {
     min-height: 48px;
     font-size: 16px;
     letter-spacing: 0.025em;
+  }
+  .dark .btn-primary-marketplace {
+    @apply dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-400;
   }
   
   .btn-primary-marketplace:hover {
@@ -213,6 +222,9 @@ body:not(.dark) button {
     min-height: 48px;
     font-size: 16px;
   }
+  .dark .btn-outline-marketplace {
+    @apply dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-600;
+  }
   
   /* Enhanced form inputs with better accessibility */
   .input-marketplace {
@@ -225,6 +237,9 @@ body:not(.dark) button {
     min-height: 48px;
     font-weight: 500;
   }
+  .dark .input-marketplace {
+    @apply dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-500/50;
+  }
   
   /* School rating badges with high contrast */
   .rating-badge {
@@ -232,23 +247,38 @@ body:not(.dark) button {
     @apply bg-yellow-100 text-yellow-900 border-2 border-yellow-300;
     min-height: 32px;
   }
+  .dark .rating-badge {
+    @apply dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700;
+  }
   
   .verified-badge {
     @apply inline-flex items-center px-3 py-2 rounded-full text-sm font-bold;
     @apply bg-blue-100 text-blue-900 border-2 border-blue-300;
+  }
+  .dark .verified-badge {
+    @apply dark:bg-blue-900/50 dark:text-blue-300 dark:border-blue-700;
   }
   
   /* Level badges with enhanced contrast */
   .level-beginner {
     @apply bg-green-100 text-green-900 border-2 border-green-400 font-bold px-3 py-2 rounded-full text-sm;
   }
+  .dark .level-beginner {
+    @apply dark:bg-green-900/50 dark:text-green-300 dark:border-green-700;
+  }
   
   .level-intermediate {
     @apply bg-yellow-100 text-yellow-900 border-2 border-yellow-400 font-bold px-3 py-2 rounded-full text-sm;
   }
+  .dark .level-intermediate {
+    @apply dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700;
+  }
   
   .level-advanced {
     @apply bg-red-100 text-red-900 border-2 border-red-400 font-bold px-3 py-2 rounded-full text-sm;
+  }
+  .dark .level-advanced {
+    @apply dark:bg-red-900/50 dark:text-red-300 dark:border-red-700;
   }
   
   /* Enhanced navigation with better touch targets */

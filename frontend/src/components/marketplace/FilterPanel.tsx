@@ -38,7 +38,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
       {/* Mobile Filter Toggle */}
       <div className="md:hidden mb-4">
         <Button
@@ -46,9 +46,9 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
           onClick={() => setIsOpen(!isOpen)}
           className="w-full flex items-center justify-between"
         >
-          <span>Filtros</span>
+          <span className="dark:text-white">Filtros</span>
           <svg 
-            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''} dark:text-white`}
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -64,13 +64,13 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
           
           {/* Location Filter */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
+            <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
               Ubicación
             </label>
             <select
               value={filters.location}
               onChange={(e) => handleFilterChange('location', e.target.value)}
-              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
+              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
               <option value="">Todas las playas</option>
               {locations.map(location => (
@@ -81,13 +81,13 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Level Filter */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
+            <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
               Nivel
             </label>
             <select
               value={filters.level}
               onChange={(e) => handleFilterChange('level', e.target.value)}
-              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
+              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
               <option value="">Todos los niveles</option>
               <option value="BEGINNER">Principiante</option>
@@ -98,13 +98,13 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Type Filter */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
+            <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
               Tipo de Clase
             </label>
             <select
               value={filters.type}
               onChange={(e) => handleFilterChange('type', e.target.value)}
-              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
+              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
               <option value="">Todos los tipos</option>
               <option value="GROUP">Grupal</option>
@@ -116,7 +116,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Price Range */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
+            <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
               Precio (USD)
             </label>
             <div className="flex items-center space-x-2">
@@ -125,28 +125,28 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
                 placeholder="Min"
                 value={filters.priceRange[0]}
                 onChange={(e) => handleFilterChange('priceRange', [parseInt(e.target.value) || 0, filters.priceRange[1]])}
-                className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm placeholder-gray-500"
+                className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm placeholder-gray-500"
               />
-              <span className="text-gray-700 font-bold">-</span>
+              <span className="text-gray-700 dark:text-gray-300 font-bold">-</span>
               <input
                 type="number"
                 placeholder="Max"
                 value={filters.priceRange[1]}
                 onChange={(e) => handleFilterChange('priceRange', [filters.priceRange[0], parseInt(e.target.value) || 100])}
-                className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm placeholder-gray-500"
+                className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm placeholder-gray-500"
               />
             </div>
           </div>
 
           {/* Rating Filter */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
+            <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
               Rating Mínimo
             </label>
             <select
               value={filters.rating}
               onChange={(e) => handleFilterChange('rating', parseFloat(e.target.value))}
-              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
+              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
               <option value={0}>Cualquier rating</option>
               <option value={4.0}>4.0+ ⭐</option>
@@ -157,7 +157,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Verified Schools */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
+            <label className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-2">
               Opciones
             </label>
             <div className="flex items-center space-x-2">
@@ -168,7 +168,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
                 onChange={(e) => handleFilterChange('verified', e.target.checked)}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
               />
-              <label htmlFor="verified" className="text-sm font-medium text-gray-900">
+              <label htmlFor="verified" className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 Solo escuelas verificadas
               </label>
             </div>
@@ -177,13 +177,13 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
         </div>
 
         {/* Quick Filters */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleFilterChange('level', 'BEGINNER')}
-              className={filters.level === 'BEGINNER' ? 'bg-blue-50 border-blue-300' : ''}
+              className={filters.level === 'BEGINNER' ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700' : ''}
             >
               Principiantes
             </Button>
@@ -191,7 +191,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
               variant="outline"
               size="sm"
               onClick={() => handleFilterChange('type', 'PRIVATE')}
-              className={filters.type === 'PRIVATE' ? 'bg-blue-50 border-blue-300' : ''}
+              className={filters.type === 'PRIVATE' ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700' : ''}
             >
               Clases Privadas
             </Button>
@@ -199,7 +199,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
               variant="outline"
               size="sm"
               onClick={() => handleFilterChange('rating', 4.8)}
-              className={filters.rating === 4.8 ? 'bg-blue-50 border-blue-300' : ''}
+              className={filters.rating === 4.8 ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700' : ''}
             >
               Top Rated
             </Button>
@@ -207,7 +207,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
               variant="outline"
               size="sm"
               onClick={() => handleFilterChange('verified', true)}
-              className={filters.verified ? 'bg-blue-50 border-blue-300' : ''}
+              className={filters.verified ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/50 dark:border-blue-700' : ''}
             >
               Verificadas
             </Button>

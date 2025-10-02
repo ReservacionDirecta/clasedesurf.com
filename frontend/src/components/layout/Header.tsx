@@ -12,7 +12,7 @@ export function Header() {
   const role = (session as any)?.user?.role;
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-40">
+    <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
@@ -22,18 +22,18 @@ export function Header() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-2xl font-bold text-gray-900">Clase de Surf</span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">Clase de Surf</span>
           </Link>
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex space-x-8 items-center">
-            <Link href="#clases" className="text-gray-600 hover:text-blue-600 transition-colors">
+            <Link href="#clases" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Clases
             </Link>
-            <Link href="#instructores" className="text-gray-600 hover:text-blue-600 transition-colors">
+            <Link href="#instructores" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Instructores
             </Link>
-            <Link href="#sobre-nosotros" className="text-gray-600 hover:text-blue-600 transition-colors">
+            <Link href="#sobre-nosotros" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Sobre Nosotros
             </Link>
 
@@ -42,50 +42,50 @@ export function Header() {
               <>
                 {role === 'STUDENT' && (
                   <>
-                    <Link href="/dashboard/student/profile" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <Link href="/dashboard/student/profile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       Mi Perfil
                     </Link>
-                    <Link href="/dashboard/student/reservations" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <Link href="/dashboard/student/reservations" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       Mis Reservas
                     </Link>
                   </>
                 )}
                 {role === 'INSTRUCTOR' && (
                   <>
-                    <Link href="/dashboard/instructor" className="text-gray-600 hover:text-blue-600 transition-colors">
-                      Instructor
+                    <Link href="/dashboard/instructor/profile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      Mi Perfil
                     </Link>
-                    <Link href="/dashboard/instructor/classes" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <Link href="/dashboard/instructor/classes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       Mis Clases
                     </Link>
                   </>
                 )}
-                {role === 'SCHOOL' && (
+                {role === 'SCHOOL_ADMIN' && (
                   <>
-                    <Link href="/dashboard/school" className="text-gray-600 hover:text-blue-600 transition-colors">
-                      Escuela
+                    <Link href={`/dashboard/school/profile/${(session as any)?.user?.schoolId}`} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      Dashboard Escuela
                     </Link>
-                    <Link href="/dashboard/school/classes" className="text-gray-600 hover:text-blue-600 transition-colors">
-                      Clases Escuela
+                    <Link href="/dashboard/school/classes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      Gestionar Clases
                     </Link>
                   </>
                 )}
                 {role === 'ADMIN' && (
-                  <Link href="/dashboard/admin" className="text-gray-600 hover:text-blue-600 transition-colors">
-                    Admin
+                  <Link href="/dashboard/admin" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    Admin Dashboard
                   </Link>
                 )}
 
-                <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
+                <Link href="#contacto" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   Contacto
                 </Link>
               </>
             ) : (
               <>
-                <Link href="/dashboard/admin/schools" className="text-gray-600 hover:text-blue-600 transition-colors">
+                <Link href="/dashboard/admin/schools" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   Escuelas
                 </Link>
-                <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
+                <Link href="#contacto" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                   Contacto
                 </Link>
               </>
@@ -96,7 +96,7 @@ export function Header() {
           <div className="hidden md:flex items-center space-x-4">
             {session ? (
               <>
-                <span className="text-sm text-gray-700">{(session as any).user?.name}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{(session as any).user?.name}</span>
                 <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: '/' })}>
                   Cerrar sesión
                 </Button>
@@ -120,7 +120,7 @@ export function Header() {
           {/* Mobile menu button */}
           <button
             aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            className="md:hidden p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-100"
+            className="md:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,58 +135,58 @@ export function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
+          <div className="md:hidden mt-4 pb-4 border-t border-gray-200 dark:border-gray-700">
             <nav className="flex flex-col space-y-4 mt-4">
-              <Link href="#clases" className="text-gray-600 hover:text-blue-600 transition-colors">
+              <Link href="#clases" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                 Clases
               </Link>
-              <Link href="#instructores" className="text-gray-600 hover:text-blue-600 transition-colors">
+              <Link href="#instructores" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                 Instructores
               </Link>
-              <Link href="#sobre-nosotros" className="text-gray-600 hover:text-blue-600 transition-colors">
+              <Link href="#sobre-nosotros" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                 Sobre Nosotros
               </Link>
                 {session ? (
                   <>
                     {role === 'STUDENT' && (
                       <>
-                        <Link href="/dashboard/student/profile" className="text-gray-600 hover:text-blue-600 transition-colors">
+                        <Link href="/dashboard/student/profile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                           Mi Perfil
                         </Link>
-                        <Link href="/dashboard/student/reservations" className="text-gray-600 hover:text-blue-600 transition-colors">
+                        <Link href="/dashboard/student/reservations" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                           Mis Reservas
                         </Link>
                       </>
                     )}
                     {role === 'INSTRUCTOR' && (
                       <>
-                        <Link href="/dashboard/instructor" className="text-gray-600 hover:text-blue-600 transition-colors">
-                          Instructor
+                        <Link href="/dashboard/instructor/profile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          Mi Perfil
                         </Link>
-                        <Link href="/dashboard/instructor/classes" className="text-gray-600 hover:text-blue-600 transition-colors">
+                        <Link href="/dashboard/instructor/classes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                           Mis Clases
                         </Link>
                       </>
                     )}
-                    {role === 'SCHOOL' && (
+                    {role === 'SCHOOL_ADMIN' && (
                       <>
-                        <Link href="/dashboard/school" className="text-gray-600 hover:text-blue-600 transition-colors">
-                          Escuela
+                        <Link href={`/dashboard/school/profile/${(session as any)?.user?.schoolId}`} className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          Dashboard Escuela
                         </Link>
-                        <Link href="/dashboard/school/classes" className="text-gray-600 hover:text-blue-600 transition-colors">
-                          Clases Escuela
+                        <Link href="/dashboard/school/classes" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                          Gestionar Clases
                         </Link>
                       </>
                     )}
                     {role === 'ADMIN' && (
-                      <Link href="/dashboard/admin" className="text-gray-600 hover:text-blue-600 transition-colors">
-                        Admin
+                      <Link href="/dashboard/admin" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                        Admin Dashboard
                       </Link>
                     )}
-                    <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <Link href="#contacto" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       Contacto
                     </Link>
-                    <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+                    <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <Button variant="outline" size="sm" className="w-full" onClick={() => signOut({ callbackUrl: '/' })}>
                         Cerrar sesión
                       </Button>
@@ -194,16 +194,16 @@ export function Header() {
                   </>
                 ) : (
                   <>
-                    <Link href="/dashboard/admin/schools" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <Link href="/dashboard/admin/schools" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       Escuelas
                     </Link>
-                    <Link href="/dashboard/student/profile" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <Link href="/dashboard/student/profile" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       Mi Perfil
                     </Link>
-                    <Link href="#contacto" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <Link href="#contacto" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                       Contacto
                     </Link>
-                    <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200">
+                    <div className="flex flex-col space-y-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                       <Link href="/login">
                         <Button variant="outline" size="sm" className="w-full">
                           Iniciar Sesión

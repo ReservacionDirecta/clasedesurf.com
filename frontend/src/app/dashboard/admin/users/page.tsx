@@ -41,21 +41,21 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, [session, status, router]);
 
-  if (status === 'loading' || loading) return <div className="p-8">Loading users...</div>;
+  if (status === 'loading' || loading) return <div className="p-8 dark:text-white">Loading users...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">Manage Users</h1>
+        <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Manage Users</h1>
         <div className="space-y-4">
           {users.map((u) => (
-            <div key={u.id} className="p-4 bg-white rounded shadow flex justify-between items-center">
+            <div key={u.id} className="p-4 bg-white dark:bg-gray-800 rounded shadow flex justify-between items-center">
               <div>
-                <div className="font-semibold">{u.name} ({u.email})</div>
-                <div className="text-sm text-gray-600">Role: {u.role}</div>
+                <div className="font-semibold text-gray-900 dark:text-white">{u.name} ({u.email})</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Role: {u.role}</div>
               </div>
               <div>
-                <Link href={`/dashboard/admin/users/${u.id}`} className="text-blue-600">View / Edit</Link>
+                <Link href={`/dashboard/admin/users/${u.id}`} className="text-blue-600 dark:text-blue-400">View / Edit</Link>
               </div>
             </div>
           ))}

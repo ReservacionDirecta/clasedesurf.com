@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -8,22 +9,26 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  email        String        @unique
-  name         String
-  password     String
-  role         UserRole      @default(STUDENT)
-  age          Int?
-  weight       Float?
-  height       Float?
-  canSwim      Boolean       @default(false)
-  injuries     String?
-  phone        String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  reservations Reservation[]
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  name          String
+  password      String
+  role          UserRole      @default(STUDENT)
+  age           Int?
+  weight        Float?
+  height        Float?
+  canSwim       Boolean       @default(false)
+  injuries      String?
+  phone         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  reservations  Reservation[]
   refreshTokens RefreshToken[]
-  
+  classes       Class[] // for instructors
+
+  schoolId      Int?
+  school        School?       @relation(fields: [schoolId], references: [id]) // for school admins
+
   @@map("users")
 }
 model School {
@@ -36,23 +41,27 @@ model School {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   classes     Class[]
+  admins      User[]
+  payouts     Payout[]
   
   @@map("schools")
 }
 model Class {
-  id           Int           @id @default(autoincrement())
-  title        String
-  description  String?
-  date         DateTime
-  duration     Int           // duración en minutos
-  capacity     Int
-  price        Float
-  level        ClassLevel    @default(BEGINNER)
-  school       School        @relation(fields: [schoolId], references: [id])
-  schoolId     Int
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  reservations Reservation[]
+  id            Int           @id @default(autoincrement())
+  title         String
+  description   String?
+  date          DateTime
+  duration      Int
+  capacity      Int
+  price         Float
+  level         ClassLevel    @default(BEGINNER)
+  school        School        @relation(fields: [schoolId], references: [id])
+  schoolId      Int
+  instructor    User?         @relation(fields: [instructorId], references: [id])
+  instructorId  Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  reservations  Reservation[]
   
   @@map("classes")
 }
@@ -79,15 +88,37 @@ model Payment {
   paymentMethod String?
   transactionId String?
   paidAt        DateTime?
+  platformFee   Float?
+  netAmount     Float?
+  payoutId      Int?
+  payout        Payout?       @relation(fields: [payoutId], references: [id])
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   
   @@map("payments")
 }
+
+model Payout {
+  id                   Int           @id @default(autoincrement())
+  school               School        @relation(fields: [schoolId], references: [id])
+  schoolId             Int
+  amount               Float
+  status               PayoutStatus  @default(PENDING)
+  periodStartDate      DateTime
+  periodEndDate        DateTime
+  transactionReference String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  payments             Payment[]
+
+  @@map("payouts")
+}
+
 enum UserRole {
   STUDENT
   ADMIN
   SCHOOL_ADMIN
+  INSTRUCTOR
 }
 enum ClassLevel {
   BEGINNER
@@ -105,6 +136,12 @@ enum PaymentStatus {
   UNPAID
   PAID
   REFUNDED
+}
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
 }
 
 model RefreshToken {

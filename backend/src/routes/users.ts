@@ -10,7 +10,21 @@ router.get('/profile', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.userId;
   if (!userId) return res.status(401).json({ message: 'Unauthorized' });
   try {
-    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
+    const user = await prisma.user.findUnique({
+      where: { id: Number(userId) },
+      include: {
+        classes: { // For instructors, get the classes they teach
+          include: {
+            reservations: { // For each class, get the reservations
+              include: {
+                user: true, // For each reservation, get the student info
+                payment: true // Include payment details for financial calculations
+              }
+            }
+          }
+        }
+      }
+    });
     if (!user) return res.status(404).json({ message: 'User not found' });
     const { password, ...safe } = user as any;
     res.json(safe);
@@ -67,7 +81,21 @@ router.get('/', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest, re
 router.get('/:id', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest, res) => {
   try {
     const id = Number(req.params.id);
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        classes: { // For instructors, get the classes they teach
+          include: {
+            reservations: { // For each class, get the reservations
+              include: {
+                user: true, // For each reservation, get the student info
+                payment: true // Include payment details for financial calculations
+              }
+            }
+          }
+        }
+      }
+    });
     if (!user) return res.status(404).json({ message: 'User not found' });
     const { password, ...safe } = user as any;
     res.json(safe);

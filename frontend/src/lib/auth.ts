@@ -38,6 +38,7 @@ export const authOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
+            schoolId: user.schoolId,
             backendToken: token,
             backendTokenExpires: Date.now() + 15 * 60 * 1000, // match backend 15m access token
           };
@@ -58,6 +59,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.schoolId = (user as any).schoolId;
         if ((user as any).backendToken) token.backendToken = (user as any).backendToken;
         if ((user as any).backendTokenExpires) token.backendTokenExpires = (user as any).backendTokenExpires;
       }
@@ -88,6 +90,7 @@ export const authOptions = {
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
+        session.user.schoolId = token.schoolId as number | undefined;
         // expose backend token on session for client-side calls if needed
         (session as any).backendToken = (token as any).backendToken;
       }

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 export interface AuthRequest extends Request {
   userId?: number;
   role?: string;
+  schoolId?: number;
 }
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
@@ -14,6 +15,9 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret') as any;
     req.userId = Number(payload.userId);
     req.role = payload.role;
+    if (payload.schoolId) {
+      req.schoolId = Number(payload.schoolId);
+    }
     return next();
   } catch (err) {
     console.error('JWT error', err);

@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-gray-900 text-white dark:bg-gray-800">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and Description */}
@@ -15,7 +15,7 @@ export function Footer() {
               </div>
               <span className="text-2xl font-bold">Clase de Surf</span>
             </div>
-            <p className="text-gray-400 mb-6 max-w-md">
+            <p className="text-gray-400 dark:text-gray-300 mb-6 max-w-md">
               La plataforma líder de clases de surf en Lima, Perú. 
               Conectamos surfistas con las mejores escuelas e instructores. Expandiéndose a nuevos destinos.
             </p>
@@ -48,32 +48,32 @@ export function Footer() {
             <h3 className="text-lg font-semibold mb-4">Enlaces Rápidos</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/classes" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/classes" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 transition-colors">
                   Todas las Clases
                 </Link>
               </li>
               <li>
-                <Link href="/instructors" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/instructors" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 transition-colors">
                   Nuestros Instructores
                 </Link>
               </li>
               <li>
-                <Link href="/locations" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/locations" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 transition-colors">
                   Ubicaciones
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/pricing" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 transition-colors">
                   Precios
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/faq" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 transition-colors">
                   Preguntas Frecuentes
                 </Link>
               </li>
               <li>
-                <Link href="/new-destinations" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/new-destinations" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 transition-colors">
                   Nuevos Destinos
                 </Link>
               </li>
@@ -83,7 +83,7 @@ export function Footer() {
           {/* Contact Info */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Contacto</h3>
-            <ul className="space-y-2 text-gray-400">
+            <ul className="space-y-2 text-gray-400 dark:text-gray-300">
               <li className="flex items-center space-x-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -108,18 +108,18 @@ export function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-sm">
+        <div className="border-t border-gray-800 dark:border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-gray-400 dark:text-gray-500 text-sm">
             © 2024 Clase de Surf. Todos los derechos reservados.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">
+            <Link href="/privacy" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 text-sm transition-colors">
               Política de Privacidad
             </Link>
-            <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
+            <Link href="/terms" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 text-sm transition-colors">
               Términos de Uso
             </Link>
-            <Link href="/cookies" className="text-gray-400 hover:text-white text-sm transition-colors">
+            <Link href="/cookies" className="text-gray-400 dark:text-gray-300 hover:text-white dark:hover:text-blue-400 text-sm transition-colors">
               Cookies
             </Link>
           </div>

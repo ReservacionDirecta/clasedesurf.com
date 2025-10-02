@@ -1,7 +1,7 @@
 export default function ClassesPage() {
   return (
-    <div className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-8">Clases Disponibles</h1>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-8">
+      <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">Clases Disponibles</h1>
       {/* Classes listing will be implemented in later tasks */}
     </div>
   )

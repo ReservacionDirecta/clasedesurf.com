@@ -14,7 +14,7 @@ export function Hero() {
       />
       
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50" />
+      <div className="absolute inset-0 bg-black bg-opacity-50 dark:bg-opacity-70" />
       
       {/* Content Container */}
       <div className="relative z-10 w-full h-full flex flex-col">

@@ -200,32 +200,32 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
       <div className="mx-auto max-w-4xl">
         <div className="bg-white dark:bg-card text-gray-900 dark:text-white shadow-lg rounded-lg p-6">
           <div className="flex flex-col md:flex-row gap-6">
             {/* Left: photo & basic info */}
             <div className="w-full md:w-1/3 flex flex-col items-center">
-              <div className="w-40 h-40 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
+              <div className="w-40 h-40 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center">
                 {profilePhoto ? (
                   // preview uploaded photo
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
                 ) : userProfile.name ? (
-                  <span className="text-3xl font-bold text-gray-700">{(userProfile.name || '').split(' ').map(n=>n[0]).join('').toUpperCase()}</span>
+                  <span className="text-3xl font-bold text-gray-700 dark:text-gray-300">{(userProfile.name || '').split(' ').map(n=>n[0]).join('').toUpperCase()}</span>
                 ) : (
-                  <span className="text-3xl font-bold text-gray-700">U</span>
+                  <span className="text-3xl font-bold text-gray-700 dark:text-gray-300">U</span>
                 )}
               </div>
-              <label htmlFor="photo" className="mt-3 text-sm">Change photo</label>
-              <input id="photo" aria-label="Change photo" type="file" accept="image/*" onChange={handlePhoto} className="mt-2" />
+              <label htmlFor="photo" className="mt-3 text-sm dark:text-gray-300">Change photo</label>
+              <input id="photo" aria-label="Change photo" type="file" accept="image/*" onChange={handlePhoto} className="mt-2 text-sm dark:text-gray-400" />
               <h3 className="text-xl font-bold mt-4">{userProfile.name}</h3>
-              <p className="text-sm text-gray-500">{userProfile.email}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{userProfile.email}</p>
               <div className="mt-4 w-full">
                 <div className="text-sm font-medium">Level Progress</div>
                 <LevelProgress total={totalClasses} />
-                <div className="mt-2 text-sm text-gray-600">Total clases: <strong>{totalClasses}</strong></div>
-                <div className="mt-1 text-sm text-gray-600">Mejor día: <strong>{bestDay || '—'}</strong></div>
+                <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">Total clases: <strong>{totalClasses}</strong></div>
+                <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">Mejor día: <strong>{bestDay || '—'}</strong></div>
               </div>
             </div>
 
@@ -235,11 +235,11 @@ export default function ProfilePage() {
               <form onSubmit={handleSubmit}>
                 <div className="mt-4 grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block" htmlFor="name">Name</label>
+                    <label className="block dark:text-gray-100" htmlFor="name">Name</label>
                     <input
                       type="text"
                       placeholder="Your Name"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
                       id="name"
                       value={userProfile.name || ''}
                       onChange={handleChange}
@@ -247,22 +247,22 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
-                    <label className="block" htmlFor="email">Email</label>
+                    <label className="block dark:text-gray-100" htmlFor="email">Email</label>
                     <input
                       type="email"
                       placeholder="Email"
-                      className="w-full px-4 py-2 mt-2 border rounded-md bg-gray-100 cursor-not-allowed"
+                      className="w-full px-4 py-2 mt-2 border rounded-md bg-gray-100 cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400"
                       id="email"
                       value={userProfile.email || ''}
                       readOnly
                     />
                   </div>
                   <div>
-                    <label className="block" htmlFor="age">Age</label>
+                    <label className="block dark:text-gray-100" htmlFor="age">Age</label>
                     <input
                       type="number"
                       placeholder="Age"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
                       id="age"
                       value={userProfile.age || ''}
                       onChange={handleChange}
@@ -271,11 +271,11 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
-                    <label className="block" htmlFor="weight">Weight (kg)</label>
+                    <label className="block dark:text-gray-100" htmlFor="weight">Weight (kg)</label>
                     <input
                       type="number"
                       placeholder="Weight in kg"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
                       id="weight"
                       value={userProfile.weight || ''}
                       onChange={handleChange}
@@ -285,11 +285,11 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
-                    <label className="block" htmlFor="height">Height (cm)</label>
+                    <label className="block dark:text-gray-100" htmlFor="height">Height (cm)</label>
                     <input
                       type="number"
                       placeholder="Height in cm"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
                       id="height"
                       value={userProfile.height || ''}
                       onChange={handleChange}
@@ -306,13 +306,13 @@ export default function ProfilePage() {
                       checked={userProfile.canSwim || false}
                       onChange={handleChange}
                     />
-                    <label className="ml-2 block text-gray-900" htmlFor="canSwim">Can Swim?</label>
+                    <label className="ml-2 block text-gray-900 dark:text-gray-100" htmlFor="canSwim">Can Swim?</label>
                   </div>
                   <div>
-                    <label className="block" htmlFor="injuries">Past Injuries/Medical Conditions</label>
+                    <label className="block dark:text-gray-100" htmlFor="injuries">Past Injuries/Medical Conditions</label>
                     <textarea
                       placeholder="Any past injuries or medical conditions?"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
                       id="injuries"
                       value={userProfile.injuries || ''}
                       onChange={handleChange}
@@ -320,11 +320,11 @@ export default function ProfilePage() {
                     ></textarea>
                   </div>
                   <div>
-                    <label className="block" htmlFor="phone">Phone Number</label>
+                    <label className="block dark:text-gray-100" htmlFor="phone">Phone Number</label>
                     <input
                       type="tel"
                       placeholder="e.g., +1234567890"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
                       id="phone"
                       value={userProfile.phone || ''}
                       onChange={handleChange}
@@ -348,14 +348,14 @@ export default function ProfilePage() {
                 <h4 className="text-lg font-semibold">Class attendance</h4>
                 <div className="mt-3 grid grid-cols-1 gap-3">
                   {attendances.length === 0 ? (
-                    <p className="text-sm text-gray-600">No classes attended yet.</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">No classes attended yet.</p>
                   ) : (
                     attendances.map((a) => (
-                      <div key={a.classId} className="p-3 bg-gray-50 rounded">
+                      <div key={a.classId} className="p-3 bg-gray-50 dark:bg-gray-800 rounded">
                         <div className="flex justify-between items-center">
                           <div>
                             <div className="font-medium">{a.title}</div>
-                            <div className="text-sm text-gray-500">Última asistencia: {a.lastAttended ? new Date(a.lastAttended).toLocaleDateString() : '—'}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">Última asistencia: {a.lastAttended ? new Date(a.lastAttended).toLocaleDateString() : '—'}</div>
                           </div>
                           <div className="text-sm font-semibold">Asistencias: {a.count}</div>
                         </div>
@@ -366,7 +366,7 @@ export default function ProfilePage() {
 
                 <div className="mt-6">
                   <h4 className="text-lg font-semibold">Recomendaciones del profe</h4>
-                  <ul className="mt-2 list-disc list-inside text-sm text-gray-700">
+                  <ul className="mt-2 list-disc list-inside text-sm text-gray-700 dark:text-gray-300">
                     {teacherRecommendations().map((r, i) => (
                       <li key={i}>{r}</li>
                     ))}

@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 // POST /classes - create class
 router.post('/', async (req, res) => {
   try {
-    const { title, description, date, duration, capacity, price, level, schoolId } = req.body;
+    const { title, description, date, duration, capacity, price, level, schoolId, instructorId } = req.body;
     if (!title || !date || !duration || !capacity || !price || !level || !schoolId) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -36,7 +36,8 @@ router.post('/', async (req, res) => {
         capacity: Number(capacity),
         price: Number(price),
         level,
-        school: { connect: { id: Number(schoolId) } }
+        school: { connect: { id: Number(schoolId) } },
+        instructor: instructorId ? { connect: { id: Number(instructorId) } } : undefined,
       }
     });
 
