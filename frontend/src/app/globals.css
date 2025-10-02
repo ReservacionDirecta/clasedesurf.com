@@ -82,48 +82,9 @@ input:focus, textarea:focus, select:focus, button:focus {
   border-color: var(--primary);
 }
 
-/* Prevent accidental white text on white backgrounds in light mode when utility classes conflict */
-@media (prefers-color-scheme: light), (prefers-color-scheme: no-preference) {
-  /* If some components incorrectly use text-white, render them readable in light mode */
-  .text-white {
-    color: var(--text-primary) !important;
-  }
-  /* Ensure bg-white utilities map correctly to the card/background variables */
-  .bg-white {
-    background-color: var(--card) !important;
-  }
-}
+/* Allow text-white to remain white when explicitly set (e.g., on dark backgrounds like Hero/Footer) */
 
-/* Stronger overrides to catch utility combinations and non-dark pages */
-html:not(.dark) .text-white,
-body:not(.dark) .text-white,
-html[data-theme="light"] .text-white,
-[data-theme="light"] .text-white,
-.bg-white.text-white,
-.bg-card.text-white {
-  color: var(--text-primary) !important;
-}
-
-/* Force readable colors for form controls (higher specificity) */
-html:not(.dark) input,
-html:not(.dark) textarea,
-html:not(.dark) select,
-html:not(.dark) button,
-body:not(.dark) input,
-body:not(.dark) textarea,
-body:not(.dark) select,
-body:not(.dark) button {
-  color: var(--text-primary) !important;
-  background-color: var(--card) !important;
-  border-color: var(--border) !important;
-}
-
-/* Specific case: buttons that use bg-white + text-white should be readable in light mode */
-.bg-white.text-white[role="button"],
-.bg-white.text-white.button,
-.bg-white.text-white.btn {
-  color: var(--text-primary) !important;
-}
+/* Form controls maintain their specified colors */
 
 @layer utilities {
   .text-balance {

@@ -15,7 +15,13 @@ const auth_1 = __importDefault(require("./routes/auth"));
 const schools_1 = __importDefault(require("./routes/schools"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
-app.use((0, cors_1.default)());
+// Configure CORS to support credentials (cookies)
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use(body_parser_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use('/classes', classes_1.default);

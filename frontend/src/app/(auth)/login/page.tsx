@@ -24,7 +24,33 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error);
     } else if (result?.ok) {
-  router.push('/dashboard/student/profile'); // Redirect to student profile on successful login
+      // Get user session to determine role-based redirect
+      try {
+        const response = await fetch('/api/auth/session');
+        const session = await response.json();
+        
+        if (session?.user?.role) {
+          switch (session.user.role) {
+            case 'ADMIN':
+              router.push('/dashboard/admin');
+              break;
+            case 'SCHOOL_ADMIN':
+              router.push('/dashboard/school');
+              break;
+            case 'STUDENT':
+            default:
+              router.push('/dashboard/student/profile');
+              break;
+          }
+        } else {
+          // Fallback to student dashboard if role is not available
+          router.push('/dashboard/student/profile');
+        }
+      } catch (error) {
+        console.error('Error getting session:', error);
+        // Fallback to student dashboard on error
+        router.push('/dashboard/student/profile');
+      }
     }
   };
 

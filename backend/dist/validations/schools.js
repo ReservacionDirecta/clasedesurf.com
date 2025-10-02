@@ -22,6 +22,37 @@ exports.createSchoolSchema = zod_1.z.object({
         .email('Invalid email format')
         .max(255, 'Email must be less than 255 characters')
         .nullable()
+        .optional(),
+    website: zod_1.z.string()
+        .url('Invalid website URL')
+        .max(500, 'Website URL must be less than 500 characters')
+        .nullable()
+        .optional(),
+    instagram: zod_1.z.string()
+        .max(100, 'Instagram handle must be less than 100 characters')
+        .nullable()
+        .optional(),
+    facebook: zod_1.z.string()
+        .max(100, 'Facebook page must be less than 100 characters')
+        .nullable()
+        .optional(),
+    whatsapp: zod_1.z.string()
+        .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, 'Invalid WhatsApp number format')
+        .nullable()
+        .optional(),
+    address: zod_1.z.string()
+        .max(500, 'Address must be less than 500 characters')
+        .nullable()
+        .optional(),
+    logo: zod_1.z.string()
+        .url('Invalid logo URL')
+        .max(500, 'Logo URL must be less than 500 characters')
+        .nullable()
+        .optional(),
+    coverImage: zod_1.z.string()
+        .url('Invalid cover image URL')
+        .max(500, 'Cover image URL must be less than 500 characters')
+        .nullable()
         .optional()
 });
 // Schema for updating a school
@@ -45,6 +76,37 @@ exports.updateSchoolSchema = zod_1.z.object({
     email: zod_1.z.string()
         .email('Invalid email format')
         .max(255, 'Email must be less than 255 characters')
+        .nullable()
+        .optional(),
+    website: zod_1.z.string()
+        .url('Invalid website URL')
+        .max(500, 'Website URL must be less than 500 characters')
+        .nullable()
+        .optional(),
+    instagram: zod_1.z.string()
+        .max(100, 'Instagram handle must be less than 100 characters')
+        .nullable()
+        .optional(),
+    facebook: zod_1.z.string()
+        .max(100, 'Facebook page must be less than 100 characters')
+        .nullable()
+        .optional(),
+    whatsapp: zod_1.z.string()
+        .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, 'Invalid WhatsApp number format')
+        .nullable()
+        .optional(),
+    address: zod_1.z.string()
+        .max(500, 'Address must be less than 500 characters')
+        .nullable()
+        .optional(),
+    logo: zod_1.z.string()
+        .url('Invalid logo URL')
+        .max(500, 'Logo URL must be less than 500 characters')
+        .nullable()
+        .optional(),
+    coverImage: zod_1.z.string()
+        .url('Invalid cover image URL')
+        .max(500, 'Cover image URL must be less than 500 characters')
         .nullable()
         .optional()
 });

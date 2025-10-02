@@ -10,6 +10,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
 const validation_1 = require("../middleware/validation");
 const auth_1 = require("../validations/auth");
+const rateLimiter_1 = require("../middleware/rateLimiter");
 const router = express_1.default.Router();
 function signAccessToken(user) {
     const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
@@ -21,11 +22,17 @@ function generateRefreshToken() {
 }
 // helper to set refresh token cookie
 function setRefreshCookie(res, token, maxAgeSeconds = 60 * 60 * 24 * 30) {
-    // httpOnly, secure in production
-    res.cookie('refreshToken', token, { httpOnly: true, secure: false, maxAge: maxAgeSeconds * 1000, sameSite: 'lax' });
+    // httpOnly, secure in production, strict sameSite
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.cookie('refreshToken', token, {
+        httpOnly: true,
+        secure: isProduction,
+        maxAge: maxAgeSeconds * 1000,
+        sameSite: 'strict'
+    });
 }
 // POST /auth/register
-router.post('/register', (0, validation_1.validateBody)(auth_1.registerSchema), async (req, res) => {
+router.post('/register', rateLimiter_1.authLimiter, (0, validation_1.validateBody)(auth_1.registerSchema), async (req, res) => {
     try {
         // registration request
         // console.log('[auth] POST /register body ->', req.body);
@@ -51,7 +58,7 @@ router.post('/register', (0, validation_1.validateBody)(auth_1.registerSchema), 
     }
 });
 // POST /auth/login
-router.post('/login', (0, validation_1.validateBody)(auth_1.loginSchema), async (req, res) => {
+router.post('/login', rateLimiter_1.authLimiter, (0, validation_1.validateBody)(auth_1.loginSchema), async (req, res) => {
     try {
         // login request
         const { email, password } = req.body;
@@ -128,7 +135,12 @@ router.post('/logout', async (req, res) => {
                 }
             }
         }
-        res.clearCookie('refreshToken');
+        const isProduction = process.env.NODE_ENV === 'production';
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: 'strict'
+        });
         res.json({ ok: true });
     }
     catch (err) {

@@ -33,6 +33,13 @@ model School {
   description String?
   phone       String?
   email       String?
+  website     String?
+  instagram   String?
+  facebook    String?
+  whatsapp    String?
+  address     String?
+  logo        String?
+  coverImage  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   classes     Class[]

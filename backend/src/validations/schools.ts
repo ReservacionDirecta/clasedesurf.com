@@ -20,6 +20,37 @@ export const createSchoolSchema = z.object({
     .email('Invalid email format')
     .max(255, 'Email must be less than 255 characters')
     .nullable()
+    .optional(),
+  website: z.string()
+    .url('Invalid website URL')
+    .max(500, 'Website URL must be less than 500 characters')
+    .nullable()
+    .optional(),
+  instagram: z.string()
+    .max(100, 'Instagram handle must be less than 100 characters')
+    .nullable()
+    .optional(),
+  facebook: z.string()
+    .max(100, 'Facebook page must be less than 100 characters')
+    .nullable()
+    .optional(),
+  whatsapp: z.string()
+    .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, 'Invalid WhatsApp number format')
+    .nullable()
+    .optional(),
+  address: z.string()
+    .max(500, 'Address must be less than 500 characters')
+    .nullable()
+    .optional(),
+  logo: z.string()
+    .url('Invalid logo URL')
+    .max(500, 'Logo URL must be less than 500 characters')
+    .nullable()
+    .optional(),
+  coverImage: z.string()
+    .url('Invalid cover image URL')
+    .max(500, 'Cover image URL must be less than 500 characters')
+    .nullable()
     .optional()
 });
 
@@ -44,6 +75,37 @@ export const updateSchoolSchema = z.object({
   email: z.string()
     .email('Invalid email format')
     .max(255, 'Email must be less than 255 characters')
+    .nullable()
+    .optional(),
+  website: z.string()
+    .url('Invalid website URL')
+    .max(500, 'Website URL must be less than 500 characters')
+    .nullable()
+    .optional(),
+  instagram: z.string()
+    .max(100, 'Instagram handle must be less than 100 characters')
+    .nullable()
+    .optional(),
+  facebook: z.string()
+    .max(100, 'Facebook page must be less than 100 characters')
+    .nullable()
+    .optional(),
+  whatsapp: z.string()
+    .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, 'Invalid WhatsApp number format')
+    .nullable()
+    .optional(),
+  address: z.string()
+    .max(500, 'Address must be less than 500 characters')
+    .nullable()
+    .optional(),
+  logo: z.string()
+    .url('Invalid logo URL')
+    .max(500, 'Logo URL must be less than 500 characters')
+    .nullable()
+    .optional(),
+  coverImage: z.string()
+    .url('Invalid cover image URL')
+    .max(500, 'Cover image URL must be less than 500 characters')
     .nullable()
     .optional()
 });

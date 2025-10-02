@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { validateBody } from '../middleware/validation';
 import { registerSchema, loginSchema } from '../validations/auth';
+import { authLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 
@@ -20,12 +21,18 @@ function generateRefreshToken() {
 
 // helper to set refresh token cookie
 function setRefreshCookie(res: express.Response, token: string, maxAgeSeconds = 60 * 60 * 24 * 30) {
-  // httpOnly, secure in production
-  res.cookie('refreshToken', token, { httpOnly: true, secure: false, maxAge: maxAgeSeconds * 1000, sameSite: 'lax' });
+  // httpOnly, secure in production, strict sameSite
+  const isProduction = process.env.NODE_ENV === 'production';
+  res.cookie('refreshToken', token, { 
+    httpOnly: true, 
+    secure: isProduction, 
+    maxAge: maxAgeSeconds * 1000, 
+    sameSite: 'strict' 
+  });
 }
 
 // POST /auth/register
-router.post('/register', validateBody(registerSchema), async (req, res) => {
+router.post('/register', authLimiter, validateBody(registerSchema), async (req, res) => {
   try {
   // registration request
   // console.log('[auth] POST /register body ->', req.body);
@@ -54,7 +61,7 @@ router.post('/register', validateBody(registerSchema), async (req, res) => {
 });
 
 // POST /auth/login
-router.post('/login', validateBody(loginSchema), async (req, res) => {
+router.post('/login', authLimiter, validateBody(loginSchema), async (req, res) => {
   try {
   // login request
     const { email, password } = req.body;
@@ -135,7 +142,12 @@ router.post('/logout', async (req, res) => {
         }
       }
     }
-    res.clearCookie('refreshToken');
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'strict'
+    });
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

@@ -48,15 +48,33 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
   }
 });
 
-// GET /reservations - if authenticated returns user's reservations; otherwise returns all (for admin use)
+// GET /reservations - returns reservations based on user role
 router.get('/', requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    if (userId) {
-      const reservations = await prisma.reservation.findMany({ where: { userId: Number(userId) }, include: { class: true } });
+    const userRole = req.role; // Fixed: use req.role instead of req.userRole
+    
+    // ADMIN and SCHOOL_ADMIN can see all reservations with full details
+    if (userRole === 'ADMIN' || userRole === 'SCHOOL_ADMIN') {
+      const reservations = await prisma.reservation.findMany({ 
+        include: { 
+          user: true, 
+          class: { include: { school: true } },
+          payment: true
+        } 
+      });
       return res.json(reservations);
     }
-    // If no userId (shouldn't happen due to requireAuth), fallback to admin-only listing
+    
+    // Regular users only see their own reservations
+    if (userId) {
+      const reservations = await prisma.reservation.findMany({ 
+        where: { userId: Number(userId) }, 
+        include: { class: true } 
+      });
+      return res.json(reservations);
+    }
+    
     return res.status(403).json({ message: 'Forbidden' });
   } catch (err) {
     console.error(err);

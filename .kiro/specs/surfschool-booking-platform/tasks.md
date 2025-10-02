@@ -66,33 +66,52 @@
     - Validar fechas futuras, capacidad positiva, etc.
     - _Requerimientos: 8.3, 4.4, 10.1_
 
-- [ ] 2. Mejorar seguridad de cookies y tokens
-  - [ ] 2.1 Configurar cookies seguras para producción
+- [x] 2. Mejorar seguridad de cookies y tokens
+
+
+
+
+
+  - [x] 2.1 Configurar cookies seguras para producción
+
+
     - Actualizar `setRefreshCookie` para usar `secure: true` en producción
     - Configurar `sameSite: 'strict'` para mayor seguridad
     - _Requerimientos: 10.4_
   
-  - [ ] 2.2 Implementar rate limiting en endpoints críticos
+
+  - [x] 2.2 Implementar rate limiting en endpoints críticos
+
     - Instalar y configurar `express-rate-limit`
     - Aplicar rate limiting a `/auth/login`, `/auth/register`
     - _Requerimientos: 10.1_
 
 ### Fase 2: Funcionalidad de Clases y Calendario
 
-- [ ] 3. Implementar página de listado de clases funcional
-  - [ ] 3.1 Crear componente ClassList con fetching de datos
+- [x] 3. Implementar página de listado de clases funcional
+
+
+
+  - [x] 3.1 Crear componente ClassList con fetching de datos
+
+
+
     - Implementar `frontend/src/app/classes/page.tsx` para mostrar clases disponibles
     - Usar componente `ClassCard` existente para cada clase
     - Mostrar loading states y manejo de errores
     - _Requerimientos: 3.1, 3.4_
   
-  - [ ] 3.2 Implementar filtros de clases
+  - [x] 3.2 Implementar filtros de clases
+
+
     - Crear componente de filtros por fecha, nivel, tipo
     - Integrar con endpoint `GET /classes` con query params
     - Actualizar backend para soportar filtros en `GET /classes`
     - _Requerimientos: 3.2_
   
-  - [ ] 3.3 Calcular y mostrar plazas disponibles
+  - [x] 3.3 Calcular y mostrar plazas disponibles
+
+
     - Modificar endpoint `GET /classes` para incluir `availableSpots`
     - Calcular spots = capacity - reservas activas (no canceladas)
     - Mostrar disponibilidad en ClassCard
