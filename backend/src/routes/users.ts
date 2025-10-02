@@ -1,6 +1,8 @@
 import express from 'express';
 import prisma from '../prisma';
 import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
+import { validateBody } from '../middleware/validation';
+import { updateProfileSchema } from '../validations/users';
 
 const router = express.Router();
 
@@ -21,22 +23,13 @@ router.get('/profile', requireAuth, async (req: AuthRequest, res) => {
 });
 
 // PUT /users/profile - update profile
-router.put('/profile', requireAuth, async (req: AuthRequest, res) => {
+router.put('/profile', requireAuth, validateBody(updateProfileSchema), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-    const raw = req.body || {};
-    // coerce numeric fields if they come as strings from the frontend
-    const data: any = {
-      ...(raw.name !== undefined ? { name: raw.name } : {}),
-      ...(raw.email !== undefined ? { email: raw.email } : {}),
-      age: raw.age !== undefined && raw.age !== null && raw.age !== '' ? Number(raw.age) : null,
-      weight: raw.weight !== undefined && raw.weight !== null && raw.weight !== '' ? Number(raw.weight) : null,
-      height: raw.height !== undefined && raw.height !== null && raw.height !== '' ? Number(raw.height) : null,
-      ...(raw.canSwim !== undefined ? { canSwim: Boolean(raw.canSwim) } : {}),
-      ...(raw.injuries !== undefined ? { injuries: raw.injuries } : {}),
-      ...(raw.phone !== undefined ? { phone: raw.phone } : {}),
-    };
+    
+    // The data is already validated and transformed by the middleware
+    const data = req.body;
 
     const updated = await prisma.user.update({ where: { id: Number(userId) }, data });
     const { password, ...safe } = updated as any;

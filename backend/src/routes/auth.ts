@@ -3,11 +3,15 @@ import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { validateBody } from '../middleware/validation';
+import { registerSchema, loginSchema } from '../validations/auth';
 
 const router = express.Router();
 
 function signAccessToken(user: any) {
-  return jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '15m' });
+  const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
+  console.log('Signing token with JWT_SECRET:', jwtSecret.substring(0, 10) + '...');
+  return jwt.sign({ userId: user.id, role: user.role }, jwtSecret, { expiresIn: '15m' });
 }
 
 function generateRefreshToken() {
@@ -21,12 +25,11 @@ function setRefreshCookie(res: express.Response, token: string, maxAgeSeconds = 
 }
 
 // POST /auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', validateBody(registerSchema), async (req, res) => {
   try {
   // registration request
   // console.log('[auth] POST /register body ->', req.body);
     const { name, email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'email and password required' });
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(400).json({ message: 'Email already in use' });
@@ -51,11 +54,10 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', validateBody(loginSchema), async (req, res) => {
   try {
   // login request
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'email and password required' });
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });

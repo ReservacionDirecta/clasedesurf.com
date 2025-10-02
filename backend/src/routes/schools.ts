@@ -1,6 +1,8 @@
 import express from 'express';
 import prisma from '../prisma';
 import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
+import { validateBody, validateParams } from '../middleware/validation';
+import { createSchoolSchema, updateSchoolSchema, schoolIdSchema } from '../validations/schools';
 
 const router = express.Router();
 
@@ -16,10 +18,10 @@ router.get('/', async (req, res) => {
 });
 
 // GET /schools/:id
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateParams(schoolIdSchema), async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    const school = await prisma.school.findUnique({ where: { id } });
+    const { id } = req.params as any;
+    const school = await prisma.school.findUnique({ where: { id: Number(id) } });
     if (!school) return res.status(404).json({ message: 'School not found' });
     res.json(school);
   } catch (err) {
@@ -29,11 +31,10 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /schools - create (requires ADMIN or SCHOOL_ADMIN)
-router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), async (req: AuthRequest, res) => {
+router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBody(createSchoolSchema), async (req: AuthRequest, res) => {
   try {
     // TODO: role check (ADMIN or SCHOOL_ADMIN)
     const { name, location, description, phone, email } = req.body;
-    if (!name || !location) return res.status(400).json({ message: 'name and location required' });
     const created = await prisma.school.create({ data: { name, location, description: description || null, phone: phone || null, email: email || null } });
     res.status(201).json(created);
   } catch (err) {
@@ -43,11 +44,11 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), async (req
 });
 
 // PUT /schools/:id - update (requires ADMIN or SCHOOL_ADMIN)
-router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), async (req: AuthRequest, res) => {
+router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateParams(schoolIdSchema), validateBody(updateSchoolSchema), async (req: AuthRequest, res) => {
   try {
-    const id = Number(req.params.id);
+    const { id } = req.params as any;
     const data = req.body;
-    const updated = await prisma.school.update({ where: { id }, data });
+    const updated = await prisma.school.update({ where: { id: Number(id) }, data });
     res.json(updated);
   } catch (err) {
     console.error(err);

@@ -2,20 +2,22 @@ import express from 'express';
 import prisma from '../prisma';
 import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
+import { validateBody } from '../middleware/validation';
+import { createReservationSchema } from '../validations/reservations';
 
 const router = express.Router();
 
 // POST /reservations - create reservation (requires auth)
-router.post('/', requireAuth, async (req: AuthRequest, res) => {
+router.post('/', requireAuth, validateBody(createReservationSchema), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
     const { classId, specialRequest, participants } = req.body;
-    if (!userId || !classId) return res.status(400).json({ message: 'Missing classId or user not authenticated' });
+    if (!userId) return res.status(401).json({ message: 'User not authenticated' });
 
-    const requested = Number(participants || 1);
+    const requested = participants;
 
     // Use transaction: re-check capacity and create reservation atomically
-    const result = await prisma.$transaction(async (tx: PrismaClient) => {
+    const result = await prisma.$transaction(async (tx) => {
       const cls = await tx.class.findUnique({ where: { id: Number(classId) } });
       if (!cls) throw new Error('Class not found');
 

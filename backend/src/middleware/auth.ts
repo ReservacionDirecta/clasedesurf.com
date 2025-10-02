@@ -11,7 +11,9 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
   if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ message: 'Missing or invalid Authorization header' });
   const token = auth.split(' ')[1];
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret') as any;
+    const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
+    console.log('Using JWT_SECRET:', jwtSecret.substring(0, 10) + '...');
+    const payload = jwt.verify(token, jwtSecret) as any;
     req.userId = Number(payload.userId);
     req.role = payload.role;
     return next();

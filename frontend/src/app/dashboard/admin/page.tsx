@@ -50,6 +50,10 @@ export default function AdminDashboardPage() {
               <h3 className="text-xl font-semibold text-blue-600">View All Reservations</h3>
               <p className="mt-2 text-gray-600">Monitor and manage all bookings across schools.</p>
             </Link>
+            <Link href="/dashboard/admin/payments" className="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+              <h3 className="text-xl font-semibold text-blue-600">Payment Management</h3>
+              <p className="mt-2 text-gray-600">Register, edit, and manage payments for reservations.</p>
+            </Link>
             <Link href="/dashboard/admin/reports" className="block p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow duration-200">
               <h3 className="text-xl font-semibold text-blue-600">Generate Reports</h3>
               <p className="mt-2 text-gray-600">Access sales and class statistics.</p>

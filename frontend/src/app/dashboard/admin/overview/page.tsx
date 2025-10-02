@@ -59,22 +59,23 @@ export default function AdminOverviewPage() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 bg-white rounded shadow">
             <h2 className="text-xl font-semibold">Classes</h2>
-            <p className="mt-2 text-3xl">{summary.classes.length}</p>
+            <p className="mt-2 text-3xl">{summary.classes?.length || 0}</p>
           </div>
           <div className="p-6 bg-white rounded shadow">
             <h2 className="text-xl font-semibold">Reservations</h2>
-            <p className="mt-2 text-3xl">{summary.reservations.length}</p>
+            <p className="mt-2 text-3xl">{summary.reservations?.length || 0}</p>
           </div>
           <div className="p-6 bg-white rounded shadow">
             <h2 className="text-xl font-semibold">Payments</h2>
-            <p className="mt-2 text-3xl">{summary.payments.length}</p>
+            <p className="mt-2 text-3xl">{summary.payments?.length || 0}</p>
           </div>
         </section>
 
         <section className="mt-8">
           <h2 className="text-2xl font-semibold mb-2">Recent Reservations</h2>
           <div className="space-y-4">
-            {summary.reservations.slice(0, 10).map((r: any) => (
+            {summary.reservations && summary.reservations.length > 0 ? (
+              summary.reservations.slice(0, 10).map((r: any) => (
               <div key={r.id} className="p-4 bg-white rounded shadow">
                 <div className="flex justify-between">
                   <div>
@@ -85,7 +86,12 @@ export default function AdminOverviewPage() {
                   <div className="text-sm text-gray-500">{r.status}</div>
                 </div>
               </div>
-            ))}
+              ))
+            ) : (
+              <div className="p-4 bg-white rounded shadow text-center text-gray-500">
+                No reservations found
+              </div>
+            )}
           </div>
         </section>
       </div>

@@ -1,0 +1,28 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const body_parser_1 = __importDefault(require("body-parser"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const classes_1 = __importDefault(require("./routes/classes"));
+const users_1 = __importDefault(require("./routes/users"));
+const reservations_1 = __importDefault(require("./routes/reservations"));
+const payments_1 = __importDefault(require("./routes/payments"));
+const auth_1 = __importDefault(require("./routes/auth"));
+const schools_1 = __importDefault(require("./routes/schools"));
+const app = (0, express_1.default)();
+const PORT = process.env.PORT || 4000;
+app.use((0, cors_1.default)());
+app.use(body_parser_1.default.json());
+app.use((0, cookie_parser_1.default)());
+app.use('/classes', classes_1.default);
+app.use('/users', users_1.default);
+app.use('/reservations', reservations_1.default);
+app.use('/payments', payments_1.default);
+app.use('/auth', auth_1.default);
+app.use('/schools', schools_1.default);
+app.get('/', (_req, res) => res.json({ message: 'Backend API running' }));
+app.listen(PORT, () => console.log(`Backend listening on port ${PORT}`));
