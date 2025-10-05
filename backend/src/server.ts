@@ -45,6 +45,11 @@ app.get('/test/:id', (req, res) => {
   res.json({ message: 'Test route working', id: req.params.id, timestamp: new Date().toISOString() });
 });
 
+// Simple test route for schools
+app.get('/simple-school/:id', (req, res) => {
+  res.json({ message: 'Simple school route', id: req.params.id, type: typeof req.params.id });
+});
+
 async function startServer() {
   try {
     await prisma.$connect();
