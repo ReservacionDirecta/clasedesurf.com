@@ -5,6 +5,23 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
+// Helper functions for filtering data
+function filterReservationsByDateRange(reservations: any[], startDate: string, endDate: string) {
+  return reservations.filter((r: any) => {
+    if (!r.createdAt) return false;
+    const reservationDate = new Date(r.createdAt).toISOString().split('T')[0];
+    return reservationDate >= startDate && reservationDate <= endDate;
+  });
+}
+
+function filterClassesByDateRange(classes: any[], startDate: string, endDate: string) {
+  return classes.filter((c: any) => {
+    if (!c.date) return false;
+    const classDate = new Date(c.date).toISOString().split('T')[0];
+    return classDate >= startDate && classDate <= endDate;
+  });
+}
+
 export default function AdminReportsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -68,19 +85,13 @@ export default function AdminReportsPage() {
 
   // Filter data by date range with safety checks using useMemo for performance
   const filteredData = useMemo(() => {
-    const reservations = (data.reservations || []).filter((r: any) => {
-      if (!r.createdAt) return false;
-      const reservationDate = new Date(r.createdAt).toISOString().split('T')[0];
-      return reservationDate >= dateRange.start && reservationDate <= dateRange.end;
-    });
-
-    const classes = (data.classes || []).filter((c: any) => {
-      if (!c.date) return false;
-      const classDate = new Date(c.date).toISOString().split('T')[0];
-      return classDate >= dateRange.start && classDate <= dateRange.end;
-    });
-
-    return { reservations, classes };
+    const reservationsArray = data.reservations || [];
+    const classesArray = data.classes || [];
+    
+    return { 
+      reservations: filterReservationsByDateRange(reservationsArray, dateRange.start, dateRange.end),
+      classes: filterClassesByDateRange(classesArray, dateRange.start, dateRange.end)
+    };
   }, [data.reservations, data.classes, dateRange.start, dateRange.end]);
 
   // Calculate metrics using useMemo
