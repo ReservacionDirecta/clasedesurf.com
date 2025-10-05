@@ -1,8 +1,6 @@
 {
   "extends": ["next", "next/core-web-vitals", "prettier"],
   "rules": {
-    // Disable the rule that causes warnings with array filter methods
-    "@typescript-eslint/no-explicit-any": "off",
     "react-hooks/exhaustive-deps": "warn"
   }
 }

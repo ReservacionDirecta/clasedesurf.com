@@ -6,9 +6,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
 // Helper functions for filtering data
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function filterReservationsByDateRange(reservations: any[], startDate: string, endDate: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return reservations.filter((r: any) => {
     if (!r.createdAt) return false;
     const reservationDate = new Date(r.createdAt).toISOString().split('T')[0];
@@ -16,9 +14,7 @@ function filterReservationsByDateRange(reservations: any[], startDate: string, e
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function filterClassesByDateRange(classes: any[], startDate: string, endDate: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return classes.filter((c: any) => {
     if (!c.date) return false;
     const classDate = new Date(c.date).toISOString().split('T')[0];
