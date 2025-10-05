@@ -32,8 +32,9 @@ export async function GET(req: Request) {
     
   } catch (error) {
     console.error('Instructors proxy error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { message: 'Proxy error', error: error.message }, 
+      { message: 'Proxy error', error: errorMessage }, 
       { status: 500 }
     );
   }
