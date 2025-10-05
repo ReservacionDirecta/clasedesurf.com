@@ -45,28 +45,12 @@ export interface UpdateProfileData {
   injuries?: string;
   phone?: string;
 }
-export enum UserRole {
-  STUDENT,
-  ADMIN,
-  SCHOOL_ADMIN,
-}
-export enum ClassLevel {
-  BEGINNER,
-  INTERMEDIATE,
-  ADVANCED,
-}
-export enum ReservationStatus {
-  PENDING,
-  CONFIRMED,
-  PAID,
-  CANCELED,
-  COMPLETED,
-}
-export enum PaymentStatus {
-  UNPAID,
-  PAID,
-  REFUNDED,
-}
+export type UserRole = 'STUDENT' | 'ADMIN' | 'SCHOOL_ADMIN';
+export type ClassLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+
+export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'PAID' | 'CANCELED' | 'COMPLETED';
+
+export type PaymentStatus = 'UNPAID' | 'PAID' | 'REFUNDED';
 export interface School {
     id: number;
     name: string;

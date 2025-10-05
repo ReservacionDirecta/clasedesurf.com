@@ -36,7 +36,7 @@ function Write-ColorOutput($ForegroundColor, $Message) {
 
 function Show-Header {
     Write-ColorOutput $Cyan "`n==============================================="
-    Write-ColorOutput $Cyan "🏄 SURF SCHOOL - DOCKER DEPLOYMENT"
+    Write-ColorOutput $Cyan "SURF SCHOOL - DOCKER DEPLOYMENT"
     Write-ColorOutput $Cyan "===============================================`n"
 }
 
@@ -55,7 +55,7 @@ function Test-Docker {
 }
 
 function Stop-Services {
-    Write-ColorOutput $Yellow "`n🛑 Deteniendo servicios..."
+    Write-ColorOutput $Yellow "`nDeteniendo servicios..."
     
     # Stop all possible compose files
     docker-compose -f docker-compose.yml down --remove-orphans 2>$null
@@ -66,7 +66,7 @@ function Stop-Services {
 }
 
 function Clean-Docker {
-    Write-ColorOutput $Yellow "`n🧹 Limpiando Docker..."
+    Write-ColorOutput $Yellow "`nLimpiando Docker..."
     
     # Remove stopped containers
     docker container prune -f
@@ -84,10 +84,10 @@ function Clean-Docker {
 }
 
 function Build-Images {
-    Write-ColorOutput $Yellow "`n🔨 Construyendo imágenes..."
+    Write-ColorOutput $Yellow "`nConstruyendo imagenes..."
     
     # Build backend
-    Write-ColorOutput $Blue "📦 Construyendo Backend..."
+    Write-ColorOutput $Blue "Construyendo Backend..."
     docker build -t surfschool-backend:latest ./backend
     if ($LASTEXITCODE -ne 0) {
         Write-ColorOutput $Red "❌ Error construyendo backend"
@@ -95,14 +95,14 @@ function Build-Images {
     }
     
     # Build frontend
-    Write-ColorOutput $Blue "📦 Construyendo Frontend..."
+    Write-ColorOutput $Blue "Construyendo Frontend..."
     docker build -t surfschool-frontend:latest ./frontend
     if ($LASTEXITCODE -ne 0) {
         Write-ColorOutput $Red "❌ Error construyendo frontend"
         exit 1
     }
     
-    Write-ColorOutput $Green "✅ Imágenes construidas exitosamente"
+    Write-ColorOutput $Green "Imagenes construidas exitosamente"
 }
 
 function Start-Development {
