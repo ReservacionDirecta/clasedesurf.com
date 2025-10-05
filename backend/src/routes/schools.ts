@@ -17,8 +17,39 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /schools/my-school - get current user's school (MUST be before /:id route)
+router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    // For now, return the first school if user is SCHOOL_ADMIN
+    // In a real implementation, you'd have a userId field in School model
+    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
+    
+    if (!user || user.role !== 'SCHOOL_ADMIN') {
+      return res.status(403).json({ message: 'Only school admins can access this endpoint' });
+    }
+
+    // For demo purposes, return the first school
+    // TODO: Implement proper user-school association
+    const school = await prisma.school.findFirst({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!school) {
+      return res.status(404).json({ message: 'No school found for this user' });
+    }
+
+    res.json(school);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // GET /schools/:id
-router.get('/:id', validateParams(schoolIdSchema), async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params as any;
     const school = await prisma.school.findUnique({ where: { id: Number(id) } });
@@ -30,12 +61,56 @@ router.get('/:id', validateParams(schoolIdSchema), async (req, res) => {
   }
 });
 
+// GET /schools/:id/classes - get classes for a specific school
+router.get('/:id/classes', async (req, res) => {
+  try {
+    const { id } = req.params as any;
+    const classes = await prisma.class.findMany({
+      where: { schoolId: Number(id) },
+      orderBy: { date: 'asc' }
+    });
+    res.json(classes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // POST /schools - create (requires ADMIN or SCHOOL_ADMIN)
 router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBody(createSchoolSchema), async (req: AuthRequest, res) => {
   try {
-    // TODO: role check (ADMIN or SCHOOL_ADMIN)
-    const { name, location, description, phone, email } = req.body;
-    const created = await prisma.school.create({ data: { name, location, description: description || null, phone: phone || null, email: email || null } });
+    const userId = req.userId;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    // For now, handle as JSON. We'll add file upload later
+    const { 
+      name, 
+      location, 
+      description, 
+      phone, 
+      email, 
+      website, 
+      instagram, 
+      facebook, 
+      whatsapp, 
+      address 
+    } = req.body;
+
+    const created = await prisma.school.create({ 
+      data: { 
+        name, 
+        location, 
+        description: description || null, 
+        phone: phone || null, 
+        email: email || null,
+        website: website || null,
+        instagram: instagram || null,
+        facebook: facebook || null,
+        whatsapp: whatsapp || null,
+        address: address || null
+      } 
+    });
+
     res.status(201).json(created);
   } catch (err) {
     console.error(err);
