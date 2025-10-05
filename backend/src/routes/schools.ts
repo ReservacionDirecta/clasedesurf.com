@@ -51,28 +51,54 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
 // GET /schools/:id
 router.get('/:id', async (req, res) => {
   try {
+    console.log('GET /schools/:id - params:', req.params);
     const { id } = req.params as any;
-    const school = await prisma.school.findUnique({ where: { id: Number(id) } });
+    console.log('Parsed ID:', id, 'Type:', typeof id);
+    
+    const numericId = Number(id);
+    console.log('Numeric ID:', numericId, 'isNaN:', isNaN(numericId));
+    
+    if (isNaN(numericId)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+    
+    console.log('Querying school with ID:', numericId);
+    const school = await prisma.school.findUnique({ where: { id: numericId } });
+    console.log('Query result:', school);
+    
     if (!school) return res.status(404).json({ message: 'School not found' });
     res.json(school);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error in GET /schools/:id:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
 
 // GET /schools/:id/classes - get classes for a specific school
 router.get('/:id/classes', async (req, res) => {
   try {
+    console.log('GET /schools/:id/classes - params:', req.params);
     const { id } = req.params as any;
+    console.log('Parsed ID:', id, 'Type:', typeof id);
+    
+    const numericId = Number(id);
+    console.log('Numeric ID:', numericId, 'isNaN:', isNaN(numericId));
+    
+    if (isNaN(numericId)) {
+      return res.status(400).json({ message: 'Invalid ID format' });
+    }
+    
+    console.log('Querying classes for school ID:', numericId);
     const classes = await prisma.class.findMany({
-      where: { schoolId: Number(id) },
+      where: { schoolId: numericId },
       orderBy: { date: 'asc' }
     });
+    console.log('Query result:', classes);
+    
     res.json(classes);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error in GET /schools/:id/classes:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
 
