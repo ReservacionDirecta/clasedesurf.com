@@ -65,7 +65,7 @@ app.get('/db-test', async (req, res) => {
     console.error('Database test error:', error);
     res.status(500).json({ 
       message: 'Database connection failed', 
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });
   }
