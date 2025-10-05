@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { User } from "@/types";
+import { StudentNavbar } from "@/components/layout/StudentNavbar";
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -212,6 +213,9 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+      {/* Navigation */}
+      <StudentNavbar />
+      
       {/* Header con wave */}
       <div className="relative bg-gradient-to-r from-blue-600 to-cyan-600 pb-32">
         <div className="absolute inset-0">
