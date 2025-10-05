@@ -56,13 +56,13 @@ export default function SchoolProfilePage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
       // Fetch classes first to determine which school has classes
-      const classesRes = await fetch(`${BACKEND}/classes`, { headers });
+      const classesRes = await fetch('/api/classes', { headers });
       const classesData = classesRes.ok ? await classesRes.json() : [];
       
-      const res = await fetch(`${BACKEND}/schools`, { headers });
+      const res = await fetch('/api/schools', { headers });
       if (!res.ok) throw new Error('Failed to fetch schools');
       
       const schools = await res.json();
@@ -107,9 +107,9 @@ export default function SchoolProfilePage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
-      const res = await fetch(`${BACKEND}/schools/${school.id}`, {
+      const res = await fetch(`/api/schools/${school.id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(school)
