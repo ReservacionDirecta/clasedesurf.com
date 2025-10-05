@@ -98,7 +98,7 @@ export default function TestAdminLoginPage() {
           <h2 className="text-xl font-semibold mb-4">Role Comparison Test</h2>
           {session?.user?.role && (
             <div>
-              <p><strong>Current Role:</strong> "{session.user.role}"</p>
+              <p><strong>Current Role:</strong> &quot;{session.user.role}&quot;</p>
               <p><strong>Is ADMIN (===):</strong> {String(session.user.role === 'ADMIN')}</p>
               <p><strong>Is ADMIN (==):</strong> {String(session.user.role == 'ADMIN')}</p>
               <p><strong>Includes ADMIN:</strong> {String(session.user.role.includes('ADMIN'))}</p>
