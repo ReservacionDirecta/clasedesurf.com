@@ -1,36 +1,133 @@
 import { NextResponse } from 'next/server';
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || '/api';
-
-async function proxy(req: Request) {
-  // Build backend URL by stripping the /api prefix
-  const url = new URL(req.url);
-  const path = url.pathname.replace('/api', ''); // /api/instructors -> /instructors
-  const backendUrl = `${BACKEND}${path}${url.search}`;
-
-  const res = await fetch(backendUrl, {
-    method: req.method,
-    headers: Object.fromEntries(req.headers),
-    body: req.method !== 'GET' && req.method !== 'HEAD' ? await req.arrayBuffer() : undefined,
-  });
-
-  // Return backend response (preserve status and headers)
-  const text = await res.text();
-  return new NextResponse(text, { status: res.status, headers: Object.fromEntries(res.headers) });
-}
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 export async function GET(req: Request) {
-  return proxy(req);
+  try {
+    console.log('Instructors proxy GET called');
+    console.log('BACKEND URL:', BACKEND);
+    
+    const url = new URL(req.url);
+    const searchParams = url.search;
+    const backendUrl = `${BACKEND}/instructors${searchParams}`;
+    console.log('Fetching from:', backendUrl);
+    
+    const res = await fetch(backendUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('Backend response status:', res.status);
+    
+    if (!res.ok) {
+      throw new Error(`Backend responded with ${res.status}`);
+    }
+    
+    const data = await res.json();
+    console.log('Backend data received:', data.length, 'instructors');
+    
+    return NextResponse.json(data);
+    
+  } catch (error) {
+    console.error('Instructors proxy error:', error);
+    return NextResponse.json(
+      { message: 'Proxy error', error: error.message }, 
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: Request) {
-  return proxy(req);
+  try {
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const body = await req.json();
+    
+    const response = await fetch(`${BACKEND}/instructors`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
+    
+  } catch (error) {
+    console.error('Error creating instructor:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(req: Request) {
-  return proxy(req);
+  try {
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const body = await req.json();
+    
+    const response = await fetch(`${BACKEND}/instructors`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
+    
+  } catch (error) {
+    console.error('Error updating instructor:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(req: Request) {
-  return proxy(req);
+  try {
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+    
+    const response = await fetch(`${BACKEND}/instructors`, {
+      method: 'DELETE',
+      headers
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
+    
+  } catch (error) {
+    console.error('Error deleting instructor:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
 }

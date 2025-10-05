@@ -37,7 +37,36 @@ app.use('/payments', payments_1.default);
 app.use('/auth', auth_1.default);
 app.use('/schools', schools_1.default);
 app.use('/instructors', instructors_1.default);
-app.get('/', (_req, res) => res.json({ message: 'Backend API running' }));
+app.get('/', (_req, res) => res.json({ message: 'Backend API running', timestamp: new Date().toISOString() }));
+// Test route to verify deployment
+app.get('/test/:id', (req, res) => {
+    res.json({ message: 'Test route working', id: req.params.id, timestamp: new Date().toISOString() });
+});
+// Simple test route for schools
+app.get('/simple-school/:id', (req, res) => {
+    res.json({ message: 'Simple school route', id: req.params.id, type: typeof req.params.id });
+});
+// Database diagnostic endpoint
+app.get('/db-test', async (req, res) => {
+    try {
+        const schoolCount = await prisma.school.count();
+        const schools = await prisma.school.findMany({ take: 2 });
+        res.json({
+            message: 'Database connection working',
+            schoolCount,
+            schools,
+            timestamp: new Date().toISOString()
+        });
+    }
+    catch (error) {
+        console.error('Database test error:', error);
+        res.status(500).json({
+            message: 'Database connection failed',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
 async function startServer() {
     try {
         await prisma.$connect();

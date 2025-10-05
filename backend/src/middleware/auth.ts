@@ -8,7 +8,13 @@ export interface AuthRequest extends Request {
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ message: 'Missing or invalid Authorization header' });
+  if (!auth || !auth.startsWith('Bearer ')) {
+    return res.status(401).json({ 
+      message: 'Missing or invalid Authorization header',
+      code: 'NO_TOKEN'
+    });
+  }
+  
   const token = auth.split(' ')[1];
   try {
     const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
@@ -17,9 +23,27 @@ export function requireAuth(req: AuthRequest, res: Response, next: NextFunction)
     req.userId = Number(payload.userId);
     req.role = payload.role;
     return next();
-  } catch (err) {
-    console.error('JWT error', err);
-    return res.status(401).json({ message: 'Invalid token' });
+  } catch (err: any) {
+    console.error('JWT error', err.name, err.message);
+    
+    // Handle different JWT errors
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        message: 'Token expired',
+        code: 'TOKEN_EXPIRED',
+        expiredAt: err.expiredAt
+      });
+    } else if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ 
+        message: 'Invalid token',
+        code: 'INVALID_TOKEN'
+      });
+    } else {
+      return res.status(401).json({ 
+        message: 'Token verification failed',
+        code: 'TOKEN_ERROR'
+      });
+    }
   }
 }
 

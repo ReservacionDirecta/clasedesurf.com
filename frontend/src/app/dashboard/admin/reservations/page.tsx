@@ -48,7 +48,7 @@ export default function AdminReservationsPage() {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      const res = await fetch('/api/reservations/${reservationId}', {
+      const res = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ status: newStatus })

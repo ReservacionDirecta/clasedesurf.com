@@ -12,7 +12,9 @@ const router = express.Router();
 function signAccessToken(user: any) {
   const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
   console.log('Signing token with JWT_SECRET:', jwtSecret.substring(0, 10) + '...');
-  return jwt.sign({ userId: user.id, role: user.role }, jwtSecret, { expiresIn: '15m' });
+  // Use longer expiration for development, shorter for production
+  const expiresIn = process.env.NODE_ENV === 'production' ? '1h' : '2h';
+  return jwt.sign({ userId: user.id, role: user.role }, jwtSecret, { expiresIn });
 }
 
 function generateRefreshToken() {

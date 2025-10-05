@@ -114,7 +114,7 @@ export default function AdminPaymentsPage() {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      const res = await fetch('/api/payments/${editingPayment.id}', {
+      const res = await fetch(`/api/payments/${editingPayment.id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({
@@ -148,7 +148,7 @@ export default function AdminPaymentsPage() {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      const res = await fetch('/api/payments/${paymentId}', {
+      const res = await fetch(`/api/payments/${paymentId}`, {
         method: 'DELETE',
         headers
       });

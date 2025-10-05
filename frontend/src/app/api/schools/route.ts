@@ -1,52 +1,64 @@
 import { NextResponse } from 'next/server';
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || '/api';
-
-async function proxy(req: Request) {
-  const url = new URL(req.url);
-  const path = url.pathname.replace('/api', ''); // /api/schools -> /schools
-  const backendUrl = `${BACKEND}${path}`;
-
-  const res = await fetch(backendUrl, {
-    method: req.method,
-    headers: Object.fromEntries(req.headers),
-    body: req.method !== 'GET' && req.method !== 'HEAD' ? await req.text() : undefined,
-  });
-
-  const text = await res.text();
-  return new NextResponse(text, { status: res.status, headers: Object.fromEntries(res.headers) });
-}
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 export async function GET(req: Request) {
-  return proxy(req);
+  try {
+    console.log('Schools proxy GET called');
+    console.log('BACKEND URL:', BACKEND);
+    
+    const backendUrl = `${BACKEND}/schools`;
+    console.log('Fetching from:', backendUrl);
+    
+    const res = await fetch(backendUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('Backend response status:', res.status);
+    
+    if (!res.ok) {
+      throw new Error(`Backend responded with ${res.status}`);
+    }
+    
+    const data = await res.json();
+    console.log('Backend data received:', data.length, 'schools');
+    
+    return NextResponse.json(data);
+    
+  } catch (error) {
+    console.error('Schools proxy error:', error);
+    return NextResponse.json(
+      { message: 'Proxy error', error: error.message }, 
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(req: Request) {
   try {
-    // Get authorization header
     const authHeader = req.headers.get('authorization');
     
-    const headers: any = {};
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
 
-    // Get form data (includes file upload)
-    const formData = await req.formData();
+    const body = await req.json();
     
-    // Forward the form data to backend
     const response = await fetch(`${BACKEND}/schools`, {
       method: 'POST',
       headers,
-      body: formData
+      body: JSON.stringify(body)
     });
 
-    const data = await response.text();
+    const data = await response.json();
     
-    return new NextResponse(data, { 
-      status: response.status, 
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return NextResponse.json(data, { status: response.status });
     
   } catch (error) {
     console.error('Error creating school:', error);
@@ -58,9 +70,62 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-  return proxy(req);
+  try {
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const body = await req.json();
+    
+    const response = await fetch(`${BACKEND}/schools`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
+    
+  } catch (error) {
+    console.error('Error updating school:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(req: Request) {
-  return proxy(req);
+  try {
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+    
+    const response = await fetch(`${BACKEND}/schools`, {
+      method: 'DELETE',
+      headers
+    });
+
+    const data = await response.json();
+    
+    return NextResponse.json(data, { status: response.status });
+    
+  } catch (error) {
+    console.error('Error deleting school:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
 }

@@ -119,7 +119,7 @@ export default function AdminClassesPage() {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      const res = await fetch('/api/classes/${classId}', {
+      const res = await fetch(`/api/classes/${classId}`, {
         method: 'DELETE',
         headers
       });

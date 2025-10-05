@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
 export default function AdminUserDetail({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
@@ -31,7 +32,7 @@ export default function AdminUserDetail({ params }: { params: { id: string } }) 
 
         // Using API proxy routes instead of direct backend calls
         const [userRes, reservationsRes] = await Promise.all([
-          fetch('/api/users/${id}', { headers }),
+          fetch(`/api/users/${id}`, { headers }),
           fetch('/api/reservations/all', { headers })
         ]);
         
@@ -64,7 +65,7 @@ export default function AdminUserDetail({ params }: { params: { id: string } }) 
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      const res = await fetch('/api/users/${id}', {
+      const res = await fetch(`/api/users/${id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(editData)
@@ -86,19 +87,27 @@ export default function AdminUserDetail({ params }: { params: { id: string } }) 
   if (!user) return <div className="p-8">User not found</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">User Details</h1>
-          <button
-            onClick={() => router.back()}
-            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-          >
-            Back to Users
-          </button>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Breadcrumbs items={[
+        { label: 'Dashboard', href: '/dashboard/admin' },
+        { label: 'Users', href: '/dashboard/admin/users' },
+        { label: user?.name || 'User Details' }
+      ]} />
+      
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">User Details</h1>
+          <p className="text-gray-600 mt-1">Manage user information and view activity</p>
         </div>
+        <button
+          onClick={() => router.back()}
+          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+        >
+          ← Back to Users
+        </button>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* User Information */}
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex justify-between items-center mb-4">
@@ -281,6 +290,5 @@ export default function AdminUserDetail({ params }: { params: { id: string } }) 
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
 }
