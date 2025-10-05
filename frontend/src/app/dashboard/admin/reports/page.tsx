@@ -85,8 +85,8 @@ export default function AdminReportsPage() {
 
   // Filter data by date range with safety checks using useMemo for performance
   const filteredData = useMemo(() => {
-    const reservationsArray = data.reservations || [];
-    const classesArray = data.classes || [];
+    const reservationsArray = Array.isArray(data.reservations) ? data.reservations : [];
+    const classesArray = Array.isArray(data.classes) ? data.classes : [];
     
     return { 
       reservations: filterReservationsByDateRange(reservationsArray, dateRange.start, dateRange.end),
