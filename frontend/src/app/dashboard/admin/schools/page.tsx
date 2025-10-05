@@ -34,8 +34,8 @@ export default function AdminSchoolsPage() {
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-  const res = await fetch(`${BACKEND}/schools`, { headers });
+  // Using API proxy routes instead of direct backend calls
+  const res = await fetch('/api/schools', { headers });
         if (!res.ok) throw new Error('Failed to fetch schools');
         const data = await res.json();
         setSchools(data);
@@ -56,8 +56,8 @@ export default function AdminSchoolsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${BACKEND}/schools`, {
+      // Using API proxy routes instead of direct backend calls
+      const res = await fetch('/api/schools', {
         method: 'POST',
         headers,
         body: JSON.stringify(formData)
@@ -66,7 +66,7 @@ export default function AdminSchoolsPage() {
       if (!res.ok) throw new Error('Failed to create school');
       
       // Refresh schools list
-      const schoolsRes = await fetch(`${BACKEND}/schools`, { headers: { Authorization: `Bearer ${token}` } });
+      const schoolsRes = await fetch('/api/schools', { headers: { Authorization: `Bearer ${token}` } });
       const schoolsData = await schoolsRes.json();
       setSchools(schoolsData);
       

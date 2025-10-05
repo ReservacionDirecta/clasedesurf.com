@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Proxy the frontend profile API to the backend so the frontend doesn't access Prisma directly.
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:4000';
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '/api';
 
 async function proxy(req: Request) {
   // Build backend URL by stripping the /api prefix

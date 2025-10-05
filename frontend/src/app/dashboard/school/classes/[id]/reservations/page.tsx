@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { PaymentVoucherModal } from '@/components/payments/PaymentVoucherModal';
 
 interface Reservation {
   id: number;
@@ -28,6 +29,8 @@ interface Reservation {
     status: string;
     paymentMethod?: string;
     transactionId?: string;
+    voucherImage?: string;
+    voucherNotes?: string;
     paidAt?: string;
     createdAt: string;
   };
@@ -59,6 +62,8 @@ export default function ClassReservationsPage() {
   const [updating, setUpdating] = useState<number | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -87,10 +92,10 @@ export default function ClassReservationsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
       // Fetch class details
-      const classRes = await fetch(`${BACKEND}/classes`, { headers });
+      const classRes = await fetch('/api/classes', { headers });
       if (!classRes.ok) throw new Error('Failed to fetch class');
       
       const allClasses = await classRes.json();
@@ -103,7 +108,7 @@ export default function ClassReservationsPage() {
       setClassData(currentClass);
       
       // Fetch reservations
-      const reservationsRes = await fetch(`${BACKEND}/reservations`, { headers });
+      const reservationsRes = await fetch('/api/reservations', { headers });
       if (reservationsRes.ok) {
         const allReservations = await reservationsRes.json();
         const classReservations = allReservations.filter((res: any) => res.classId === parseInt(classId));
@@ -125,9 +130,9 @@ export default function ClassReservationsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
-      const res = await fetch(`${BACKEND}/reservations/${reservationId}`, {
+      const res = await fetch('/api/reservations/${reservationId}', {
         method: 'PUT',
         headers,
         body: JSON.stringify({ status: newStatus })
@@ -153,14 +158,14 @@ export default function ClassReservationsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
       const reservation = reservations.find(r => r.id === reservationId);
       if (!reservation?.payment) {
         throw new Error('No payment found for this reservation');
       }
       
-      const res = await fetch(`${BACKEND}/payments/${reservation.payment.id}`, {
+      const res = await fetch('/api/payments/${reservation.payment.id}', {
         method: 'PUT',
         headers,
         body: JSON.stringify({ 
@@ -210,6 +215,10 @@ export default function ClassReservationsPage() {
         return 'Cancelada';
       case 'COMPLETED':
         return 'Completada';
+      case 'UNPAID':
+        return 'Sin Pagar';
+      case 'REFUNDED':
+        return 'Reembolsado';
       default:
         return status;
     }
@@ -326,130 +335,179 @@ export default function ClassReservationsPage() {
           </div>
         )}
 
-        {/* Reservations Table */}
+        {/* Reservations List */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Lista de Reservas</h2>
+          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
+            <h2 className="text-xl font-bold text-gray-900">Lista de Reservas</h2>
+            <p className="text-sm text-gray-600 mt-1">Gestiona las reservas de esta clase</p>
           </div>
 
           {reservations.length === 0 ? (
-            <div className="text-center py-12">
-              <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay reservas</h3>
-              <p className="text-gray-600">Esta clase aún no tiene reservas</p>
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 rounded-full mb-4">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No hay reservas</h3>
+              <p className="text-gray-600">Esta clase aún no tiene reservas registradas</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estudiante
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estado Reserva
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Estado Pago
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Fecha Reserva
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Solicitud Especial
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {reservations.map((reservation) => (
-                    <tr key={reservation.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{reservation.user.name}</div>
-                          <div className="text-sm text-gray-500">{reservation.user.email}</div>
+            <div className="divide-y divide-gray-200">
+              {reservations.map((reservation) => (
+                <div key={reservation.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  {/* Header Row */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start space-x-4">
+                      {/* Avatar */}
+                      <div className="flex-shrink-0">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                          {reservation.user.name.charAt(0).toUpperCase()}
+                        </div>
+                      </div>
+                      
+                      {/* User Info */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900">{reservation.user.name}</h3>
+                        <div className="flex flex-wrap items-center gap-3 mt-1">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            {reservation.user.email}
+                          </div>
                           {reservation.user.phone && (
-                            <div className="text-sm text-gray-500">{reservation.user.phone}</div>
+                            <div className="flex items-center text-sm text-gray-600">
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                              </svg>
+                              {reservation.user.phone}
+                            </div>
+                          )}
+                          {!reservation.user.canSwim && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              No sabe nadar
+                            </span>
                           )}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(reservation.status)}`}>
-                          {getStatusLabel(reservation.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {reservation.payment ? (
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(reservation.payment.status)}`}>
-                            {getStatusLabel(reservation.payment.status)}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-gray-500">Sin pago</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(reservation.createdAt)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">
-                          {reservation.specialRequest || '—'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex flex-col space-y-2">
-                          <button
-                            onClick={() => {
-                              setSelectedReservation(reservation);
-                              setShowDetailsModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-900"
-                          >
-                            Ver Detalles
-                          </button>
-                          
-                          <div className="flex space-x-2">
-                            {/* Reservation Status Actions */}
-                            {reservation.status === 'PENDING' && (
-                              <button
-                                onClick={() => updateReservationStatus(reservation.id, 'CONFIRMED')}
-                                disabled={updating === reservation.id}
-                                className="text-green-600 hover:text-green-900 disabled:opacity-50 text-xs"
-                              >
-                                Confirmar
-                              </button>
-                            )}
-                            
-                            {reservation.status !== 'CANCELED' && reservation.status !== 'COMPLETED' && (
-                              <button
-                                onClick={() => updateReservationStatus(reservation.id, 'CANCELED')}
-                                disabled={updating === reservation.id}
-                                className="text-red-600 hover:text-red-900 disabled:opacity-50 text-xs"
-                              >
-                                Cancelar
-                              </button>
-                            )}
+                      </div>
+                    </div>
 
-                            {/* Payment Status Actions */}
-                            {reservation.payment && reservation.payment.status === 'UNPAID' && (
-                              <button
-                                onClick={() => updatePaymentStatus(reservation.id, 'PAID')}
-                                disabled={updating === reservation.id}
-                                className="text-blue-600 hover:text-blue-900 disabled:opacity-50 text-xs"
-                              >
-                                Marcar Pagado
-                              </button>
-                            )}
-                          </div>
+                    {/* Status Badges */}
+                    <div className="flex flex-col items-end space-y-2">
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(reservation.status)}`}>
+                        {getStatusLabel(reservation.status)}
+                      </span>
+                      {reservation.payment ? (
+                        <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(reservation.payment.status)}`}>
+                          💳 {getStatusLabel(reservation.payment.status)}
+                        </span>
+                      ) : (
+                        <span className="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                          Sin pago
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Details Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="font-medium">Reservado:</span>
+                      <span className="ml-1">{formatDate(reservation.createdAt)}</span>
+                    </div>
+                    {reservation.payment && reservation.payment.paymentMethod && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <span className="font-medium">Método:</span>
+                        <span className="ml-1 capitalize">{reservation.payment.paymentMethod.replace('_', ' ')}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Special Request */}
+                  {reservation.specialRequest && (
+                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-start">
+                        <svg className="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm font-medium text-yellow-900">Solicitud Especial:</p>
+                          <p className="text-sm text-yellow-800 mt-1">{reservation.specialRequest}</p>
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions Row */}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedReservation(reservation);
+                        setShowDetailsModal(true);
+                      }}
+                      className="inline-flex items-center px-4 py-2 border border-blue-300 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Ver Detalles
+                    </button>
+
+                    {reservation.status === 'PENDING' && (
+                      <button
+                        onClick={() => updateReservationStatus(reservation.id, 'CONFIRMED')}
+                        disabled={updating === reservation.id}
+                        className="inline-flex items-center px-4 py-2 border border-green-300 rounded-lg text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 disabled:opacity-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Confirmar
+                      </button>
+                    )}
+
+                    {reservation.payment && (
+                      <button
+                        onClick={() => {
+                          setSelectedPayment(reservation.payment);
+                          setShowPaymentModal(true);
+                        }}
+                        disabled={updating === reservation.id}
+                        className="inline-flex items-center px-4 py-2 border border-purple-300 rounded-lg text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Registrar Pago
+                      </button>
+                    )}
+
+                    {reservation.status !== 'CANCELED' && reservation.status !== 'COMPLETED' && (
+                      <button
+                        onClick={() => updateReservationStatus(reservation.id, 'CANCELED')}
+                        disabled={updating === reservation.id}
+                        className="inline-flex items-center px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 disabled:opacity-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -460,7 +518,7 @@ export default function ClassReservationsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between rounded-t-lg">
+            <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0 z-10">
               <h2 className="text-2xl font-bold">Detalles de la Reserva #{selectedReservation.id}</h2>
               <button
                 onClick={() => {
@@ -606,6 +664,24 @@ export default function ClassReservationsPage() {
                           <p className="text-sm font-medium text-gray-900">{formatDate(selectedReservation.payment.paidAt)}</p>
                         </div>
                       )}
+                      {selectedReservation.payment.voucherImage && (
+                        <div className="md:col-span-2">
+                          <p className="text-sm text-gray-500 mb-2">Voucher</p>
+                          <img 
+                            src={selectedReservation.payment.voucherImage} 
+                            alt="Voucher" 
+                            className="max-w-full h-auto rounded-lg border border-gray-300"
+                          />
+                        </div>
+                      )}
+                      {selectedReservation.payment.voucherNotes && (
+                        <div className="md:col-span-2">
+                          <p className="text-sm text-gray-500 mb-1">Notas del Pago</p>
+                          <p className="text-sm text-gray-900 bg-blue-50 p-3 rounded border border-blue-200">
+                            {selectedReservation.payment.voucherNotes}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -712,6 +788,21 @@ export default function ClassReservationsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Payment Voucher Modal */}
+      {showPaymentModal && selectedPayment && (
+        <PaymentVoucherModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedPayment(null);
+          }}
+          payment={selectedPayment}
+          onSuccess={() => {
+            fetchClassAndReservations();
+          }}
+        />
       )}
     </div>
   );

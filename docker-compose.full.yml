@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: surfschool-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: clasedesurf.com
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/prisma/migrations:/docker-entrypoint-initdb.d/
+    networks:
+      - surfschool-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: surfschool-backend
+    ports:
+      - "4000:4000"
+    environment:
+      # Database
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/clasedesurf.com"
+      
+      # JWT
+      JWT_SECRET: "dev-secret-key-for-development-only"
+      
+      # Server
+      PORT: 4000
+      NODE_ENV: "development"
+      
+      # Frontend URL
+      FRONTEND_URL: "http://localhost:3000"
+      
+      # WhatsApp (WPPConnect - más estable que Evolution API)
+      WHATSAPP_ENABLED: "true"
+      WHATSAPP_SESSION: "surfschool"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_sessions:/app/sessions
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - surfschool-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: surfschool-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # API URL
+      NEXT_PUBLIC_API_URL: "http://localhost:4000"
+      
+      # NextAuth
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXTAUTH_SECRET: "dev-nextauth-secret-key"
+      
+      # Database (for NextAuth)
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/clasedesurf.com"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+      - postgres
+    networks:
+      - surfschool-network
+    restart: unless-stopped
+
+  # Redis (opcional - para caché y sesiones)
+  redis:
+    image: redis:7-alpine
+    container_name: surfschool-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - surfschool-network
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  # Nginx (Reverse Proxy)
+  nginx:
+    image: nginx:alpine
+    container_name: surfschool-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - surfschool-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_sessions:
+
+networks:
+  surfschool-network:
+    driver: bridge

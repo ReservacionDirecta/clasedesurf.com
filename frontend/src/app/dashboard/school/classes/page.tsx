@@ -52,43 +52,31 @@ export default function SchoolClassesPage() {
       setLoading(true);
       setError(null);
       
-      const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      
       // Fetch all classes
-      const res = await fetch(`${BACKEND}/classes`, { headers });
-      if (!res.ok) throw new Error('Failed to fetch classes');
-      
-      const allClasses = await res.json();
+      const allClasses = await fetch('/api/classes').then(res => res.json());
       
       // Fetch schools to determine which school has classes
-      const schoolRes = await fetch(`${BACKEND}/schools`, { headers });
-      if (schoolRes.ok) {
-        const schools = await schoolRes.json();
+      const schools = await fetch('/api/schools').then(res => res.json());
         
-        // Find the school that has classes assigned
-        let selectedSchoolId = null;
-        
-        for (const school of schools) {
-          const classesForSchool = allClasses.filter((cls: any) => cls.schoolId === school.id);
-          if (classesForSchool.length > 0) {
-            selectedSchoolId = school.id;
-            break;
-          }
+      // Find the school that has classes assigned
+      let selectedSchoolId = null;
+      
+      for (const school of schools) {
+        const classesForSchool = allClasses.filter((cls: any) => cls.schoolId === school.id);
+        if (classesForSchool.length > 0) {
+          selectedSchoolId = school.id;
+          break;
         }
-        
-        // Fallback to first school if no school has classes
-        if (!selectedSchoolId && schools.length > 0) {
-          selectedSchoolId = schools[0].id;
-        }
-        
-        if (selectedSchoolId) {
-          const schoolClasses = allClasses.filter((cls: any) => cls.schoolId === selectedSchoolId);
-          setClasses(schoolClasses);
-        }
+      }
+      
+      // Fallback to first school if no school has classes
+      if (!selectedSchoolId && schools.length > 0) {
+        selectedSchoolId = schools[0].id;
+      }
+      
+      if (selectedSchoolId) {
+        const schoolClasses = allClasses.filter((cls: any) => cls.schoolId === selectedSchoolId);
+        setClasses(schoolClasses);
       }
     } catch (err) {
       console.error('Error fetching classes:', err);

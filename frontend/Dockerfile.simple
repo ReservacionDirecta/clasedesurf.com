@@ -1,0 +1,42 @@
+# Dockerfile simple para evitar problemas con Husky
+
+FROM node:18-alpine AS base
+WORKDIR /app
+
+# Instalar dependencias del sistema
+RUN apk add --no-cache libc6-compat
+
+# Copiar package files
+COPY package*.json ./
+
+# Instalar dependencias (sin ejecutar prepare/husky)
+RUN npm ci --ignore-scripts
+
+# Copiar código fuente
+COPY . .
+
+# Generar Prisma client si existe
+RUN npx prisma generate 2>/dev/null || echo "No Prisma schema found"
+
+# Build de la aplicación
+RUN npm run build
+
+# Crear usuario no-root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copiar archivos de build
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Cambiar a usuario no-root
+USER nextjs
+
+# Exponer puerto
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Comando de inicio
+CMD ["npm", "start"]

@@ -34,12 +34,12 @@ export default function AdminReportsPage() {
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        // Using API proxy routes instead of direct backend calls
         const [classesRes, reservationsRes, schoolsRes, usersRes] = await Promise.all([
-          fetch(`${BACKEND}/classes`, { headers }),
-          fetch(`${BACKEND}/reservations/all`, { headers }),
-          fetch(`${BACKEND}/schools`, { headers }),
-          fetch(`${BACKEND}/users`, { headers })
+          fetch('/api/classes', { headers }),
+          fetch('/api/reservations/all', { headers }),
+          fetch('/api/schools', { headers }),
+          fetch('/api/users', { headers })
         ]);
 
         const [classesData, reservationsData, schoolsData, usersData] = await Promise.all([

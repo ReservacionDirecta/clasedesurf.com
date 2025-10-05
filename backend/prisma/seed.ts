@@ -10,6 +10,8 @@ async function main() {
   console.log('🧹 Cleaning existing data...');
   await prisma.payment.deleteMany();
   await prisma.reservation.deleteMany();
+  await prisma.instructorReview.deleteMany();
+  await prisma.instructor.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.class.deleteMany();
   await prisma.school.deleteMany();
@@ -123,6 +125,137 @@ async function main() {
   });
 
   console.log('✅ Schools created');
+
+  // Create Instructors
+  console.log('👨‍🏫 Creating instructors...');
+  
+  const instructor1User = await prisma.user.create({
+    data: {
+      email: 'carlos.mendoza@limasurf.com',
+      password: hashedPassword,
+      name: 'Carlos Mendoza',
+      role: 'INSTRUCTOR',
+      age: 32,
+      canSwim: true,
+      phone: '+5119871234'
+    }
+  });
+
+  const instructor1 = await prisma.instructor.create({
+    data: {
+      userId: instructor1User.id,
+      schoolId: limaSurfAcademy.id,
+      bio: 'Instructor certificado ISA con más de 10 años de experiencia enseñando surf. Especializado en técnicas de iniciación y seguridad acuática.',
+      yearsExperience: 10,
+      specialties: ['Iniciación', 'Técnica básica', 'Seguridad acuática'],
+      certifications: ['ISA Level 1', 'Lifeguard', 'First Aid'],
+      rating: 4.8,
+      totalReviews: 45,
+      profileImage: 'https://i.pravatar.cc/150?img=12'
+    }
+  });
+
+  const instructor2User = await prisma.user.create({
+    data: {
+      email: 'ana.rodriguez@limasurf.com',
+      password: hashedPassword,
+      name: 'Ana Rodriguez',
+      role: 'INSTRUCTOR',
+      age: 28,
+      canSwim: true,
+      phone: '+5119871235'
+    }
+  });
+
+  const instructor2 = await prisma.instructor.create({
+    data: {
+      userId: instructor2User.id,
+      schoolId: limaSurfAcademy.id,
+      bio: 'Ex-competidora nacional con pasión por enseñar. Especializada en maniobras avanzadas y preparación para competencias.',
+      yearsExperience: 8,
+      specialties: ['Maniobras avanzadas', 'Lectura de olas', 'Competición'],
+      certifications: ['ISA Level 2', 'Surf Coach', 'Sports Psychology'],
+      rating: 4.9,
+      totalReviews: 38,
+      profileImage: 'https://i.pravatar.cc/150?img=5'
+    }
+  });
+
+  const instructor3User = await prisma.user.create({
+    data: {
+      email: 'miguel.santos@limasurf.com',
+      password: hashedPassword,
+      name: 'Miguel Santos',
+      role: 'INSTRUCTOR',
+      age: 35,
+      canSwim: true,
+      phone: '+5119871236'
+    }
+  });
+
+  const instructor3 = await prisma.instructor.create({
+    data: {
+      userId: instructor3User.id,
+      schoolId: limaSurfAcademy.id,
+      bio: 'Instructor de élite con certificación internacional. Especializado en coaching personalizado y técnicas avanzadas.',
+      yearsExperience: 12,
+      specialties: ['Coaching personalizado', 'Técnica avanzada', 'Mentalidad competitiva'],
+      certifications: ['ISA Level 2', 'Performance Coach', 'Video Analysis'],
+      rating: 5.0,
+      totalReviews: 28,
+      profileImage: 'https://i.pravatar.cc/150?img=8'
+    }
+  });
+
+  // Add reviews for instructors
+  await prisma.instructorReview.createMany({
+    data: [
+      {
+        instructorId: instructor1.id,
+        studentName: 'María García',
+        rating: 5,
+        comment: 'Excelente instructor! Muy paciente y claro en sus explicaciones. Aprendí mucho en mi primera clase.'
+      },
+      {
+        instructorId: instructor1.id,
+        studentName: 'Pedro López',
+        rating: 5,
+        comment: 'Carlos es increíble. Me ayudó a superar mi miedo al agua y ahora puedo surfear con confianza.'
+      },
+      {
+        instructorId: instructor1.id,
+        studentName: 'Laura Martínez',
+        rating: 4,
+        comment: 'Muy buen instructor, recomendado para principiantes.'
+      },
+      {
+        instructorId: instructor2.id,
+        studentName: 'Diego Fernández',
+        rating: 5,
+        comment: 'Ana es una maestra del surf. Sus consejos técnicos me ayudaron a mejorar muchísimo.'
+      },
+      {
+        instructorId: instructor2.id,
+        studentName: 'Sofía Ramírez',
+        rating: 5,
+        comment: 'La mejor instructora que he tenido. Sabe exactamente cómo corregir tu técnica.'
+      },
+      {
+        instructorId: instructor3.id,
+        studentName: 'Roberto Silva',
+        rating: 5,
+        comment: 'Miguel es un profesional de clase mundial. Vale cada centavo de las clases privadas.'
+      },
+      {
+        instructorId: instructor3.id,
+        studentName: 'Carmen Torres',
+        rating: 5,
+        comment: 'Coaching excepcional. Mi nivel mejoró dramáticamente en pocas sesiones.'
+      }
+    ]
+  });
+
+  console.log('✅ Instructors created');
 
   // Create Classes
   console.log('🏄 Creating classes...');

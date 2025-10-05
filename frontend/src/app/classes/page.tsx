@@ -52,7 +52,7 @@ export default function ClassesPage() {
       if (filters.minPrice) queryParams.append('minPrice', filters.minPrice.toString())
       if (filters.maxPrice) queryParams.append('maxPrice', filters.maxPrice.toString())
       
-      const url = `http://localhost:4000/classes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+      const url = `/api/classes${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
       const response = await fetch(url)
       
       if (!response.ok) {
@@ -88,6 +88,17 @@ export default function ClassesPage() {
   const handleCloseModal = () => {
     setShowBookingModal(false)
     setSelectedClass(null)
+  }
+
+  const handleBookingSubmit = async (bookingData: any) => {
+    try {
+      // TODO: Implement booking submission logic
+      console.log('Booking data:', bookingData)
+      // For now, just close the modal
+      handleCloseModal()
+    } catch (error) {
+      console.error('Error submitting booking:', error)
+    }
   }
 
   const calculateAvailableSpots = (classData: ClassData) => {
@@ -261,6 +272,7 @@ export default function ClassesPage() {
           isOpen={showBookingModal}
           onClose={handleCloseModal}
           classData={transformClassData(selectedClass)}
+          onSubmit={handleBookingSubmit}
         />
       )}
       </div>

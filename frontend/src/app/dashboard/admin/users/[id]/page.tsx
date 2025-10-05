@@ -29,10 +29,10 @@ export default function AdminUserDetail({ params }: { params: { id: string } }) 
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        // Using API proxy routes instead of direct backend calls
         const [userRes, reservationsRes] = await Promise.all([
-          fetch(`${BACKEND}/users/${id}`, { headers }),
-          fetch(`${BACKEND}/reservations/all`, { headers })
+          fetch('/api/users/${id}', { headers }),
+          fetch('/api/reservations/all', { headers })
         ]);
         
         if (!userRes.ok) throw new Error('Failed to fetch user');
@@ -63,8 +63,8 @@ export default function AdminUserDetail({ params }: { params: { id: string } }) 
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${BACKEND}/users/${id}`, {
+      // Using API proxy routes instead of direct backend calls
+      const res = await fetch('/api/users/${id}', {
         method: 'PUT',
         headers,
         body: JSON.stringify(editData)

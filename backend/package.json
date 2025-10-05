@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "start": "node dist/server.js",
-    "build": "tsc -p .",
+    "start": "ts-node src/server.ts",
+    "start:prod": "npx prisma migrate deploy && node dist/server.js",
+    "build": "npx prisma generate && tsc -p .",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init --preview-feature",
+    "prisma:deploy": "prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts"
   },
   "prisma": {
@@ -16,6 +18,7 @@
   "dependencies": {
     "@prisma/client": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.10",
+    "@wppconnect-team/wppconnect": "^1.37.5",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",

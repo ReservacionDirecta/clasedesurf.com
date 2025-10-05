@@ -1,16 +1,66 @@
 import { z } from 'zod'
-import {
-  Role,
-  SchoolRole,
-  Level,
-  SwimmingLevel,
-  ClassType,
-  ReservationStatus,
-  PaymentStatus,
-  PaymentMethod,
-  EquipmentType,
-  EquipmentCondition
-} from '@prisma/client'
+
+// Enums locales que coinciden con los del backend
+enum UserRole {
+  STUDENT = 'STUDENT',
+  INSTRUCTOR = 'INSTRUCTOR',
+  ADMIN = 'ADMIN',
+  SCHOOL_ADMIN = 'SCHOOL_ADMIN'
+}
+
+enum ClassLevel {
+  BEGINNER = 'BEGINNER',
+  INTERMEDIATE = 'INTERMEDIATE',
+  ADVANCED = 'ADVANCED'
+}
+
+enum ReservationStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  PAID = 'PAID',
+  CANCELED = 'CANCELED',
+  COMPLETED = 'COMPLETED'
+}
+
+enum PaymentStatus {
+  UNPAID = 'UNPAID',
+  PAID = 'PAID',
+  REFUNDED = 'REFUNDED'
+}
+
+enum SwimmingLevel {
+  NONE = 'NONE',
+  BASIC = 'BASIC',
+  INTERMEDIATE = 'INTERMEDIATE',
+  ADVANCED = 'ADVANCED'
+}
+
+enum ClassType {
+  GROUP = 'GROUP',
+  PRIVATE = 'PRIVATE',
+  SEMI_PRIVATE = 'SEMI_PRIVATE'
+}
+
+enum PaymentMethod {
+  CASH = 'CASH',
+  CARD = 'CARD',
+  TRANSFER = 'TRANSFER',
+  PAYPAL = 'PAYPAL'
+}
+
+enum EquipmentType {
+  BOARD = 'BOARD',
+  WETSUIT = 'WETSUIT',
+  LEASH = 'LEASH',
+  WAX = 'WAX'
+}
+
+enum EquipmentCondition {
+  NEW = 'NEW',
+  GOOD = 'GOOD',
+  FAIR = 'FAIR',
+  POOR = 'POOR'
+}
 
 // ============================================================================
 // USER VALIDATION SCHEMAS
@@ -138,7 +188,7 @@ export const classSchema = z.object({
   price: z.number()
     .min(0, 'El precio no puede ser negativo')
     .max(1000, 'El precio máximo es 1000€'),
-  level: z.nativeEnum(Level),
+  level: z.nativeEnum(ClassLevel),
   type: z.nativeEnum(ClassType),
   location: z.string()
     .max(200, 'La ubicación no puede exceder 200 caracteres')
@@ -289,7 +339,7 @@ export const equipmentSchema = z.object({
 
 export const classFiltersSchema = z.object({
   schoolId: z.string().cuid().optional(),
-  level: z.nativeEnum(Level).optional(),
+  level: z.nativeEnum(ClassLevel).optional(),
   type: z.nativeEnum(ClassType).optional(),
   dateFrom: z.string().refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida').optional(),
   dateTo: z.string().refine((date) => !isNaN(Date.parse(date)), 'Fecha inválida').optional(),

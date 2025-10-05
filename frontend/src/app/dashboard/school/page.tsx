@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import CreateSchoolForm from '@/components/school/CreateSchoolForm';
 
 interface School {
   id: number;
@@ -32,6 +33,7 @@ export default function SchoolDashboardPage() {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -55,50 +57,51 @@ export default function SchoolDashboardPage() {
       setLoading(true);
       setError(null);
       
+      // Get authentication token
       const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      
-      // Fetch classes first to determine which school has classes
-      const classesRes = await fetch(`${BACKEND}/classes`, { headers });
-      if (!classesRes.ok) throw new Error('Failed to fetch classes');
-      const classesData = await classesRes.json();
-      
-      // Fetch schools
-      const schoolsRes = await fetch(`${BACKEND}/schools`, { headers });
-      if (!schoolsRes.ok) throw new Error('Failed to fetch schools');
-      const schoolsData = await schoolsRes.json();
-      
-      // Find the school that has classes assigned
-      let selectedSchool = null;
-      let schoolClasses = [];
-      
-      for (const school of schoolsData) {
-        const classesForSchool = classesData.filter((cls: any) => cls.schoolId === school.id);
-        if (classesForSchool.length > 0) {
-          selectedSchool = school;
-          schoolClasses = classesForSchool;
-          break;
-        }
+      const headers: any = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
       
-      // Fallback to first school if no school has classes
-      if (!selectedSchool && schoolsData.length > 0) {
-        selectedSchool = schoolsData[0];
+      // Try to fetch school associated with current user
+      const response = await fetch('/api/schools/my-school', { headers });
+      
+      if (response.status === 404) {
+        // No school found for this user
+        setSchool(null);
+        setClasses([]);
+        return;
       }
       
-      if (selectedSchool) {
-        setSchool(selectedSchool);
-        setClasses(schoolClasses);
+      if (!response.ok) {
+        throw new Error('Failed to fetch school data');
       }
+      
+      const schoolData = await response.json();
+      setSchool(schoolData);
+      
+      // Fetch classes for this school
+      const classesResponse = await fetch(`/api/schools/${schoolData.id}/classes`, { headers });
+      if (classesResponse.ok) {
+        const classesData = await classesResponse.json();
+        setClasses(classesData);
+      } else {
+        setClasses([]);
+      }
+      
     } catch (err) {
       console.error('Error fetching school data:', err);
       setError(err instanceof Error ? err.message : 'Error loading data');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSchoolCreated = (newSchool: School) => {
+    setSchool(newSchool);
+    setShowCreateForm(false);
+    setClasses([]);
   };
 
   if (status === 'loading' || loading) {
@@ -140,14 +143,48 @@ export default function SchoolDashboardPage() {
     );
   }
 
+  // Show create form if no school exists or user wants to create one
+  if (showCreateForm || (!school && !loading)) {
+    return (
+      <CreateSchoolForm 
+        onSchoolCreated={handleSchoolCreated}
+        onCancel={school ? () => setShowCreateForm(false) : undefined}
+      />
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-8">
         {/* Welcome Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard de Escuela</h1>
-          <p className="text-gray-600 mt-1">
-            Bienvenido, {session?.user?.name}
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard de Escuela</h1>
+              <p className="text-gray-600 mt-1">
+                Bienvenido, {session?.user?.name}
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <Link
+                href="/dashboard/school/instructors"
+                className="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Instructores
+              </Link>
+              <Link
+                href="/dashboard/school/classes"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                Clases
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* School Info */}

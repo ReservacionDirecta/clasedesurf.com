@@ -29,6 +29,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // additional student stats
   const [attendances, setAttendances] = useState<ClassAttendance[]>([]);
@@ -48,8 +49,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const token = (session as any)?.backendToken;
-        const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-        const res = await fetch(`${BACKEND}/users/profile`, {
+        const res = await fetch(`/api/users/profile`, {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         if (!res.ok) {
@@ -69,7 +69,7 @@ export default function ProfilePage() {
 
         // also fetch reservations to compute stats
         try {
-          const res2 = await fetch(`${BACKEND}/reservations`, {
+          const res2 = await fetch(`/api/reservations`, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           });
           if (res2.ok) {
@@ -145,13 +145,21 @@ export default function ProfilePage() {
 
     try {
       const token = (session as any)?.backendToken;
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${BACKEND}/users/profile`, {
+      
+      // Convert string values to appropriate types
+      const profileData = {
+        ...userProfile,
+        age: userProfile.age ? Number(userProfile.age) : null,
+        weight: userProfile.weight ? Number(userProfile.weight) : null,
+        height: userProfile.height ? Number(userProfile.height) : null,
+      };
+      
+      const res = await fetch(`/api/users/profile`, {
         method: "PUT",
         headers,
-        body: JSON.stringify(userProfile),
+        body: JSON.stringify(profileData),
       });
 
       const data = await res.json();
@@ -193,184 +201,368 @@ export default function ProfilePage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p>Loading profile...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando perfil...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="mx-auto max-w-4xl">
-        <div className="bg-white dark:bg-card text-gray-900 dark:text-white shadow-lg rounded-lg p-6">
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Left: photo & basic info */}
-            <div className="w-full md:w-1/3 flex flex-col items-center">
-              <div className="w-40 h-40 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
-                {profilePhoto ? (
-                  // preview uploaded photo
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
-                ) : userProfile.name ? (
-                  <span className="text-3xl font-bold text-gray-700">{(userProfile.name || '').split(' ').map(n=>n[0]).join('').toUpperCase()}</span>
-                ) : (
-                  <span className="text-3xl font-bold text-gray-700">U</span>
-                )}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+      {/* Header con wave */}
+      <div className="relative bg-gradient-to-r from-blue-600 to-cyan-600 pb-32">
+        <div className="absolute inset-0">
+          <svg className="absolute bottom-0 w-full h-20" viewBox="0 0 1440 120" fill="none">
+            <path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,64C960,75,1056,85,1152,80C1248,75,1344,53,1392,42.7L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z" fill="white"/>
+          </svg>
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-white mb-2">Mi Perfil de Surfista</h1>
+            <p className="text-blue-100">Gestiona tu información y sigue tu progreso</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="relative -mt-32 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Profile Card */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-8 text-center">
+                <div className="relative inline-block">
+                  <div className="w-32 h-32 bg-white rounded-full overflow-hidden flex items-center justify-center shadow-lg mx-auto">
+                    {profilePhoto ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                    ) : userProfile.name ? (
+                      <span className="text-4xl font-bold text-blue-600">
+                        {(userProfile.name || '').split(' ').map(n=>n[0]).join('').toUpperCase()}
+                      </span>
+                    ) : (
+                      <svg className="w-16 h-16 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <label htmlFor="photo" className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </label>
+                  <input id="photo" type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mt-4">{userProfile.name || 'Surfista'}</h2>
+                <p className="text-blue-100 text-sm">{userProfile.email}</p>
               </div>
-              <label htmlFor="photo" className="mt-3 text-sm">Change photo</label>
-              <input id="photo" aria-label="Change photo" type="file" accept="image/*" onChange={handlePhoto} className="mt-2" />
-              <h3 className="text-xl font-bold mt-4">{userProfile.name}</h3>
-              <p className="text-sm text-gray-500">{userProfile.email}</p>
-              <div className="mt-4 w-full">
-                <div className="text-sm font-medium">Level Progress</div>
-                <LevelProgress total={totalClasses} />
-                <div className="mt-2 text-sm text-gray-600">Total clases: <strong>{totalClasses}</strong></div>
-                <div className="mt-1 text-sm text-gray-600">Mejor día: <strong>{bestDay || '—'}</strong></div>
+              
+              <div className="p-6">
+                {/* Level Progress */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Nivel de Surf</span>
+                    <span className="text-sm text-gray-500">Nivel {computeLevel(totalClasses).level}</span>
+                  </div>
+                  <LevelProgress total={totalClasses} />
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-xl">
+                    <div className="text-2xl font-bold text-blue-600">{totalClasses}</div>
+                    <div className="text-sm text-gray-600">Clases Totales</div>
+                  </div>
+                  <div className="text-center p-4 bg-cyan-50 rounded-xl">
+                    <div className="text-2xl font-bold text-cyan-600">{bestDay || '—'}</div>
+                    <div className="text-sm text-gray-600">Mejor Día</div>
+                  </div>
+                </div>
+
+                {/* Swimming Badge */}
+                <div className="mt-4 flex items-center justify-center">
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    userProfile.canSwim 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    {userProfile.canSwim ? 'Sabe Nadar' : 'Aprendiendo a Nadar'}
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Right: editable profile and stats */}
-            <div className="w-full md:w-2/3">
-              <h3 className="text-2xl font-bold">Your Profile</h3>
-              <form onSubmit={handleSubmit}>
-                <div className="mt-4 grid grid-cols-1 gap-4">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* Profile Form */}
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-gray-900">Información Personal</h3>
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  {isEditing ? 'Cancelar' : 'Editar'}
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block" htmlFor="name">Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>
                     <input
                       type="text"
-                      placeholder="Your Name"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
                       id="name"
                       value={userProfile.name || ''}
                       onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'
+                      }`}
+                      placeholder="Tu nombre completo"
                       required
                     />
                   </div>
+                  
                   <div>
-                    <label className="block" htmlFor="email">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                     <input
                       type="email"
-                      placeholder="Email"
-                      className="w-full px-4 py-2 mt-2 border rounded-md bg-gray-100 cursor-not-allowed"
-                      id="email"
                       value={userProfile.email || ''}
-                      readOnly
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                      disabled
                     />
                   </div>
+                  
                   <div>
-                    <label className="block" htmlFor="age">Age</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Edad</label>
                     <input
                       type="number"
-                      placeholder="Age"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
                       id="age"
                       value={userProfile.age || ''}
                       onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'
+                      }`}
+                      placeholder="Tu edad"
                       min="10"
                       max="100"
                     />
                   </div>
+                  
                   <div>
-                    <label className="block" htmlFor="weight">Weight (kg)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      value={userProfile.phone || ''}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'
+                      }`}
+                      placeholder="+51 999 999 999"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Peso (kg)</label>
                     <input
                       type="number"
-                      placeholder="Weight in kg"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
                       id="weight"
                       value={userProfile.weight || ''}
                       onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'
+                      }`}
+                      placeholder="70"
                       min="30"
                       max="200"
                       step="0.1"
                     />
                   </div>
+                  
                   <div>
-                    <label className="block" htmlFor="height">Height (cm)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Altura (cm)</label>
                     <input
                       type="number"
-                      placeholder="Height in cm"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
                       id="height"
                       value={userProfile.height || ''}
                       onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        !isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'
+                      }`}
+                      placeholder="175"
                       min="100"
                       max="250"
                       step="0.1"
                     />
                   </div>
-                  <div className="flex items-center mt-2">
+                </div>
+                
+                <div className="mt-6">
+                  <div className="flex items-center">
                     <input
                       type="checkbox"
-                      className="form-checkbox h-5 w-5 text-blue-600 rounded"
                       id="canSwim"
                       checked={userProfile.canSwim || false}
                       onChange={handleChange}
+                      disabled={!isEditing}
+                      className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
-                    <label className="ml-2 block text-gray-900" htmlFor="canSwim">Can Swim?</label>
+                    <label htmlFor="canSwim" className="ml-3 text-sm font-medium text-gray-700">
+                      ¿Sabes nadar?
+                    </label>
                   </div>
-                  <div>
-                    <label className="block" htmlFor="injuries">Past Injuries/Medical Conditions</label>
-                    <textarea
-                      placeholder="Any past injuries or medical conditions?"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
-                      id="injuries"
-                      value={userProfile.injuries || ''}
-                      onChange={handleChange}
-                      rows={3}
-                    ></textarea>
+                </div>
+                
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Lesiones o Condiciones Médicas
+                  </label>
+                  <textarea
+                    id="injuries"
+                    value={userProfile.injuries || ''}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    rows={4}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      !isEditing ? 'bg-gray-50 cursor-not-allowed' : 'bg-white'
+                    }`}
+                    placeholder="Describe cualquier lesión previa o condición médica relevante..."
+                  />
+                </div>
+                
+                {/* Error/Success Messages */}
+                {error && (
+                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex">
+                      <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      <p className="ml-3 text-sm text-red-700">{error}</p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block" htmlFor="phone">Phone Number</label>
-                    <input
-                      type="tel"
-                      placeholder="e.g., +1234567890"
-                      className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
-                      id="phone"
-                      value={userProfile.phone || ''}
-                      onChange={handleChange}
-                    />
+                )}
+                
+                {success && (
+                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex">
+                      <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <p className="ml-3 text-sm text-green-700">{success}</p>
+                    </div>
                   </div>
-                  {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-                  {success && <p className="text-green-500 text-sm mt-2">{success}</p>}
-                  <div className="flex items-baseline justify-between">
+                )}
+                
+                {isEditing && (
+                  <div className="mt-6 flex items-center justify-end space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      className="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      Cancelar
+                    </button>
                     <button
                       type="submit"
-                      className="px-6 py-2 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-900"
                       disabled={loading}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-cyan-700 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {loading ? 'Updating...' : 'Update Profile'}
+                      {loading ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Guardando...
+                        </div>
+                      ) : (
+                        'Guardar Cambios'
+                      )}
                     </button>
                   </div>
-                </div>
+                )}
               </form>
+            </div>
 
-              <div className="mt-6">
-                <h4 className="text-lg font-semibold">Class attendance</h4>
-                <div className="mt-3 grid grid-cols-1 gap-3">
-                  {attendances.length === 0 ? (
-                    <p className="text-sm text-gray-600">No classes attended yet.</p>
-                  ) : (
-                    attendances.map((a) => (
-                      <div key={a.classId} className="p-3 bg-gray-50 rounded">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="font-medium">{a.title}</div>
-                            <div className="text-sm text-gray-500">Última asistencia: {a.lastAttended ? new Date(a.lastAttended).toLocaleDateString() : '—'}</div>
+            {/* Class Attendance */}
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-900">Historial de Clases</h3>
+              </div>
+              <div className="p-6">
+                {attendances.length === 0 ? (
+                  <div className="text-center py-12">
+                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v11a2 2 0 002 2h2m0-13h10a2 2 0 012 2v11a2 2 0 01-2 2H9m0-13v13" />
+                    </svg>
+                    <p className="text-gray-500">Aún no has asistido a ninguna clase</p>
+                    <p className="text-sm text-gray-400 mt-1">¡Reserva tu primera clase de surf!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {attendances.map((attendance) => (
+                      <div key={attendance.classId} className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
                           </div>
-                          <div className="text-sm font-semibold">Asistencias: {a.count}</div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900">{attendance.title}</h4>
+                            <p className="text-sm text-gray-600">
+                              Última clase: {attendance.lastAttended ? new Date(attendance.lastAttended).toLocaleDateString('es-ES', { 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              }) : '—'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-blue-600">{attendance.count}</div>
+                          <div className="text-sm text-gray-500">clases</div>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="mt-6">
-                  <h4 className="text-lg font-semibold">Recomendaciones del profe</h4>
-                  <ul className="mt-2 list-disc list-inside text-sm text-gray-700">
-                    {teacherRecommendations().map((r, i) => (
-                      <li key={i}>{r}</li>
                     ))}
-                  </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Teacher Recommendations */}
+            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-900">Recomendaciones del Instructor</h3>
+              </div>
+              <div className="p-6">
+                <div className="space-y-4">
+                  {teacherRecommendations().map((recommendation, index) => (
+                    <div key={index} className="flex items-start space-x-3 p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+                      <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-700 leading-relaxed">{recommendation}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -391,16 +583,31 @@ function LevelProgress({ total }: { total: number }) {
     return { level: 1, percent: Math.round((total / 3) * 100) };
   })(total);
 
+  const getLevelName = (level: number) => {
+    const levels = ['', 'Principiante', 'Intermedio', 'Avanzado', 'Experto', 'Pro'];
+    return levels[level] || 'Principiante';
+  };
+
+  const getLevelColor = (level: number) => {
+    const colors = ['', 'from-green-400 to-green-600', 'from-blue-400 to-blue-600', 'from-purple-400 to-purple-600', 'from-orange-400 to-orange-600', 'from-red-400 to-red-600'];
+    return colors[level] || 'from-gray-400 to-gray-600';
+  };
+
   return (
     <div className="w-full">
-      <div className="flex items-center gap-3">
-        <div className="text-sm font-semibold">Nivel {level}</div>
-        <div className="flex-1">
-          <div className="w-full">
-            <progress value={percent} max={100} className="w-full h-3 appearance-none" />
-          </div>
-        </div>
-        <div className="text-sm w-12 text-right">{percent}%</div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium text-gray-700">{getLevelName(level)}</span>
+        <span className="text-sm text-gray-500">{percent}%</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+        <div 
+          className={`h-full bg-gradient-to-r ${getLevelColor(level)} transition-all duration-500 ease-out rounded-full`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-gray-500 mt-1">
+        <span>Nivel {level}</span>
+        <span>Siguiente: {level < 5 ? `Nivel ${level + 1}` : 'Máximo'}</span>
       </div>
     </div>
   );

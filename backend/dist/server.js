@@ -13,8 +13,14 @@ const reservations_1 = __importDefault(require("./routes/reservations"));
 const payments_1 = __importDefault(require("./routes/payments"));
 const auth_1 = __importDefault(require("./routes/auth"));
 const schools_1 = __importDefault(require("./routes/schools"));
+const instructors_1 = __importDefault(require("./routes/instructors"));
+const whatsapp_service_1 = require("./services/whatsapp.service");
+const client_1 = require("@prisma/client");
+const prisma = new client_1.PrismaClient();
 const app = (0, express_1.default)();
-const PORT = process.env.PORT || 4000;
+const port = process.env.PORT || 3000;
+// Trust proxy for Railway deployment
+app.set('trust proxy', 1);
 // Configure CORS to support credentials (cookies)
 const corsOptions = {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -30,5 +36,27 @@ app.use('/reservations', reservations_1.default);
 app.use('/payments', payments_1.default);
 app.use('/auth', auth_1.default);
 app.use('/schools', schools_1.default);
+app.use('/instructors', instructors_1.default);
 app.get('/', (_req, res) => res.json({ message: 'Backend API running' }));
-app.listen(PORT, () => console.log(`Backend listening on port ${PORT}`));
+async function startServer() {
+    try {
+        await prisma.$connect();
+        console.log('✅ Connected to PostgreSQL');
+        // Solo inicializar WhatsApp si está habilitado
+        if (process.env.WHATSAPP_ENABLED === 'true') {
+            await whatsapp_service_1.whatsappService.initialize();
+            console.log('✅ WhatsApp Service Initialized');
+        }
+        else {
+            console.log('⚠️ WhatsApp Service Disabled');
+        }
+        app.listen(port, () => {
+            console.log(`🚀 Server is running on port ${port}`);
+        });
+    }
+    catch (error) {
+        console.error('❌ Error connecting to the database or starting server:', error);
+        process.exit(1);
+    }
+}
+startServer();

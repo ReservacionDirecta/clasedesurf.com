@@ -23,7 +23,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

@@ -87,10 +87,10 @@ export default function EditClassPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
       // Fetch schools
-      const schoolRes = await fetch(`${BACKEND}/schools`, { headers });
+      const schoolRes = await fetch('/api/schools', { headers });
       if (!schoolRes.ok) throw new Error('Failed to fetch schools');
       
       const schools = await schoolRes.json();
@@ -99,7 +99,7 @@ export default function EditClassPage() {
       }
 
       // Fetch classes
-      const classRes = await fetch(`${BACKEND}/classes`, { headers });
+      const classRes = await fetch('/api/classes', { headers });
       if (!classRes.ok) throw new Error('Failed to fetch classes');
       
       const allClasses = await classRes.json();
@@ -160,7 +160,7 @@ export default function EditClassPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
       const classData = {
         title: formData.title,
@@ -173,7 +173,7 @@ export default function EditClassPage() {
         instructor: formData.instructor
       };
 
-      const res = await fetch(`${BACKEND}/classes/${classId}`, {
+      const res = await fetch('/api/classes/${classId}', {
         method: 'PUT',
         headers,
         body: JSON.stringify(classData)
@@ -216,9 +216,9 @@ export default function EditClassPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
-      const res = await fetch(`${BACKEND}/classes/${classId}`, {
+      const res = await fetch('/api/classes/${classId}', {
         method: 'DELETE',
         headers
       });

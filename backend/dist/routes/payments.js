@@ -177,8 +177,8 @@ router.get('/:id', auth_1.default, (0, validation_1.validateParams)(payments_1.p
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-// PUT /payments/:id - update payment (admin only)
-router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN']), (0, validation_1.validateParams)(payments_1.paymentIdSchema), (0, validation_1.validateBody)(payments_1.updatePaymentSchema), async (req, res) => {
+// PUT /payments/:id - update payment (admin and school_admin)
+router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), (0, validation_1.validateParams)(payments_1.paymentIdSchema), (0, validation_1.validateBody)(payments_1.updatePaymentSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;

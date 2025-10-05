@@ -153,8 +153,8 @@ router.get('/:id', requireAuth, validateParams(paymentIdSchema), async (req: Aut
   }
 });
 
-// PUT /payments/:id - update payment (admin only)
-router.put('/:id', requireAuth, requireRole(['ADMIN']), validateParams(paymentIdSchema), validateBody(updatePaymentSchema), async (req: AuthRequest, res) => {
+// PUT /payments/:id - update payment (admin and school_admin)
+router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateParams(paymentIdSchema), validateBody(updatePaymentSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
     const updateData = req.body;

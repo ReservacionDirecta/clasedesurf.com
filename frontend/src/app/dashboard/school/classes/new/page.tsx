@@ -67,9 +67,9 @@ export default function NewClassPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
-      const res = await fetch(`${BACKEND}/schools`, { headers });
+      const res = await fetch('/api/schools', { headers });
       if (!res.ok) throw new Error('Failed to fetch schools');
       
       const schools = await res.json();
@@ -103,7 +103,7 @@ export default function NewClassPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+      // Using API proxy routes instead of direct backend calls
       
       const classData = {
         title: formData.title,
@@ -117,7 +117,7 @@ export default function NewClassPage() {
         schoolId: school.id
       };
 
-      const res = await fetch(`${BACKEND}/classes`, {
+      const res = await fetch('/api/classes', {
         method: 'POST',
         headers,
         body: JSON.stringify(classData)

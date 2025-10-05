@@ -36,10 +36,10 @@ export default function AdminPaymentsPage() {
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        // Using API proxy routes instead of direct backend calls
         const [paymentsRes, reservationsRes] = await Promise.all([
-          fetch(`${BACKEND}/payments`, { headers }),
-          fetch(`${BACKEND}/reservations/all`, { headers })
+          fetch('/api/payments', { headers }),
+          fetch('/api/reservations/all', { headers })
         ]);
 
         if (!paymentsRes.ok || !reservationsRes.ok) throw new Error('Failed to fetch data');
@@ -68,8 +68,8 @@ export default function AdminPaymentsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${BACKEND}/payments`, {
+      // Using API proxy routes instead of direct backend calls
+      const res = await fetch('/api/payments', {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -85,7 +85,7 @@ export default function AdminPaymentsPage() {
       }
       
       // Refresh payments list
-      const paymentsRes = await fetch(`${BACKEND}/payments`, { headers: { Authorization: `Bearer ${token}` } });
+      const paymentsRes = await fetch('/api/payments', { headers: { Authorization: `Bearer ${token}` } });
       const paymentsData = await paymentsRes.json();
       setPayments(paymentsData);
       
@@ -113,8 +113,8 @@ export default function AdminPaymentsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${BACKEND}/payments/${editingPayment.id}`, {
+      // Using API proxy routes instead of direct backend calls
+      const res = await fetch('/api/payments/${editingPayment.id}', {
         method: 'PUT',
         headers,
         body: JSON.stringify({
@@ -128,7 +128,7 @@ export default function AdminPaymentsPage() {
       if (!res.ok) throw new Error('Failed to update payment');
       
       // Refresh payments list
-      const paymentsRes = await fetch(`${BACKEND}/payments`, { headers: { Authorization: `Bearer ${token}` } });
+      const paymentsRes = await fetch('/api/payments', { headers: { Authorization: `Bearer ${token}` } });
       const paymentsData = await paymentsRes.json();
       setPayments(paymentsData);
       
@@ -147,8 +147,8 @@ export default function AdminPaymentsPage() {
       const headers: any = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${BACKEND}/payments/${paymentId}`, {
+      // Using API proxy routes instead of direct backend calls
+      const res = await fetch('/api/payments/${paymentId}', {
         method: 'DELETE',
         headers
       });
@@ -156,7 +156,7 @@ export default function AdminPaymentsPage() {
       if (!res.ok) throw new Error('Failed to refund payment');
       
       // Refresh payments list
-      const paymentsRes = await fetch(`${BACKEND}/payments`, { headers: { Authorization: `Bearer ${token}` } });
+      const paymentsRes = await fetch('/api/payments', { headers: { Authorization: `Bearer ${token}` } });
       const paymentsData = await paymentsRes.json();
       setPayments(paymentsData);
     } catch (err) {

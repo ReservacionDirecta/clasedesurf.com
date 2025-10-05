@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const BACKEND = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+const BACKEND = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || '/api';
 
 async function proxy(req: Request) {
   const url = new URL(req.url);
@@ -22,7 +22,39 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  return proxy(req);
+  try {
+    // Get authorization header
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {};
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    // Get form data (includes file upload)
+    const formData = await req.formData();
+    
+    // Forward the form data to backend
+    const response = await fetch(`${BACKEND}/schools`, {
+      method: 'POST',
+      headers,
+      body: formData
+    });
+
+    const data = await response.text();
+    
+    return new NextResponse(data, { 
+      status: response.status, 
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error) {
+    console.error('Error creating school:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
 }
 
 export async function PUT(req: Request) {

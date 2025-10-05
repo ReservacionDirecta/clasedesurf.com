@@ -39,10 +39,10 @@ export default function AdminClassesPage() {
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        // Using API proxy routes instead of direct backend calls
         const [classesRes, schoolsRes] = await Promise.all([
-          fetch(`${BACKEND}/classes`, { headers }),
-          fetch(`${BACKEND}/schools`, { headers })
+          fetch('/api/classes', { headers }),
+          fetch('/api/schools', { headers })
         ]);
 
         if (!classesRes.ok || !schoolsRes.ok) throw new Error('Failed to fetch data');
@@ -71,8 +71,8 @@ export default function AdminClassesPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${BACKEND}/classes`, {
+      // Using API proxy routes instead of direct backend calls
+      const res = await fetch('/api/classes', {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -87,7 +87,7 @@ export default function AdminClassesPage() {
       if (!res.ok) throw new Error('Failed to create class');
       
       // Refresh classes list
-      const classesRes = await fetch(`${BACKEND}/classes`, { headers: { Authorization: `Bearer ${token}` } });
+      const classesRes = await fetch('/api/classes', { headers: { Authorization: `Bearer ${token}` } });
       const classesData = await classesRes.json();
       setClasses(classesData);
       
@@ -118,8 +118,8 @@ export default function AdminClassesPage() {
       const headers: any = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${BACKEND}/classes/${classId}`, {
+      // Using API proxy routes instead of direct backend calls
+      const res = await fetch('/api/classes/${classId}', {
         method: 'DELETE',
         headers
       });

@@ -26,8 +26,8 @@ export default function AdminUsersPage() {
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-  const res = await fetch(`${BACKEND}/users`, { headers });
+  // Using API proxy routes instead of direct backend calls
+  const res = await fetch('/api/users', { headers });
         if (!res.ok) throw new Error('Failed to fetch users');
         const data = await res.json();
         setUsers(data);

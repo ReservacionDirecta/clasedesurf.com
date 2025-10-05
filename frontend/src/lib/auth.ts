@@ -3,7 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '@/types';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '/api';
 
 export const authOptions = {
   providers: [
@@ -68,7 +68,7 @@ export const authOptions = {
 
       // Otherwise attempt to refresh via backend
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:4000'}/auth/refresh`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '/api'}/auth/refresh`, {
           method: 'POST',
           credentials: 'include', // send cookie
         });

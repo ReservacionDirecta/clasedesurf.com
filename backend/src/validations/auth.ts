@@ -10,7 +10,10 @@ export const registerSchema = z.object({
     .max(255, 'Email must be less than 255 characters'),
   password: z.string()
     .min(6, 'Password must be at least 6 characters')
-    .max(100, 'Password must be less than 100 characters')
+    .max(100, 'Password must be less than 100 characters'),
+  role: z.enum(['STUDENT', 'INSTRUCTOR', 'SCHOOL_ADMIN', 'ADMIN'])
+    .optional()
+    .default('STUDENT')
 });
 
 // Schema for user login

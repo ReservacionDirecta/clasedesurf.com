@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution API - Conectar WhatsApp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status.connected {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        #qrcode {
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        #qrcode img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        
+        .instructions {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            color: #666;
+            line-height: 1.8;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #004085;
+            font-size: 14px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .connection-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .connection-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .connection-info strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏄 Surf School - WhatsApp</h1>
+        <p class="subtitle">Conecta tu WhatsApp con Evolution API</p>
+        
+        <div id="status" class="status loading">
+            <div class="spinner"></div>
+            Conectando con Evolution API...
+        </div>
+        
+        <div id="qrcode"></div>
+        
+        <div id="connectionInfo" class="connection-info" style="display: none;"></div>
+        
+        <div>
+            <button id="refreshBtn" onclick="getQRCode()" disabled>🔄 Actualizar QR</button>
+            <button id="checkBtn" onclick="checkConnection()" disabled>✓ Verificar Conexión</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📱 Cómo conectar:</h3>
+            <ol>
+                <li>Abre <strong>WhatsApp</strong> en tu teléfono</li>
+                <li>Ve a <strong>Configuración</strong> > <strong>Dispositivos vinculados</strong></li>
+                <li>Toca <strong>Vincular un dispositivo</strong></li>
+                <li>Escanea el código QR que aparece arriba</li>
+                <li>¡Listo! Tu WhatsApp estará conectado</li>
+            </ol>
+        </div>
+        
+        <div class="info">
+            💡 <strong>Nota:</strong> El código QR se actualiza automáticamente cada 30 segundos. 
+            Si expira, haz clic en "Actualizar QR".
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8080';
+        const API_KEY = 'change-this-api-key-for-production';
+        const INSTANCE_NAME = 'surfschool';
+        
+        let autoRefreshInterval;
+        
+        async function getQRCode() {
+            const statusDiv = document.getElementById('status');
+            const qrcodeDiv = document.getElementById('qrcode');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const checkBtn = document.getElementById('checkBtn');
+            
+            try {
+                statusDiv.className = 'status loading';
+                statusDiv.innerHTML = '<div class="spinner"></div>Obteniendo código QR...';
+                qrcodeDiv.innerHTML = '';
+                refreshBtn.disabled = true;
+                checkBtn.disabled = true;
+                
+                // Primero verificar si ya está conectado
+                const statusResponse = await fetch(
+                    `${API_URL}/instance/fetchInstances?instanceName=${INSTANCE_NAME}`,
+                    {
+                        headers: {
+                            'apikey': API_KEY
+                        }
+                    }
+                );
+                
+                if (!statusResponse.ok) {
+                    throw new Error('Error al verificar estado de la instancia');
+                }
+                
+                const statusData = await statusResponse.json();
+                
+                // La API puede devolver un objeto directamente o un array en 'value'
+                let instance;
+                if (Array.isArray(statusData)) {
+                    instance = statusData[0];
+                } else if (statusData.value && Array.isArray(statusData.value)) {
+                    instance = statusData.value[0];
+                } else if (statusData.id) {
+                    instance = statusData;
+                }
+                
+                if (instance && instance.connectionStatus === 'open') {
+                    statusDiv.className = 'status connected';
+                    statusDiv.innerHTML = '✅ WhatsApp ya está conectado!';
+                    showConnectionInfo(instance);
+                    refreshBtn.disabled = false;
+                    checkBtn.disabled = false;
+                    return;
+                }
+                
+                // Obtener QR code
+                const response = await fetch(
+                    `${API_URL}/instance/connect/${INSTANCE_NAME}`,
+                    {
+                        headers: {
+                            'apikey': API_KEY
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.base64) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = '📱 Escanea el código QR con WhatsApp';
+                    qrcodeDiv.innerHTML = `<img src="${data.base64}" alt="QR Code">`;
+                    
+                    // Auto-refresh cada 30 segundos
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = setInterval(() => {
+                        checkConnection();
+                    }, 5000);
+                    
+                } else if (data.count === 0) {
+                    // La instancia necesita ser reiniciada para generar QR
+                    statusDiv.className = 'status loading';
+                    statusDiv.innerHTML = '⏳ Reiniciando instancia para generar QR...';
+                    
+                    try {
+                        // Reiniciar la instancia
+                        await fetch(
+                            `${API_URL}/instance/restart/${INSTANCE_NAME}`,
+                            {
+                                method: 'PUT',
+                                headers: {
+                                    'apikey': API_KEY
+                                }
+                            }
+                        );
+                        
+                        // Esperar y reintentar
+                        setTimeout(getQRCode, 5000);
+                    } catch (error) {
+                        statusDiv.className = 'status error';
+                        statusDiv.innerHTML = '❌ Error al reiniciar instancia. Recarga la página.';
+                    }
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = '❌ No se pudo obtener el código QR. Intenta de nuevo.';
+                }
+                
+                refreshBtn.disabled = false;
+                checkBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `❌ Error: ${error.message}<br><small>Verifica que Evolution API esté corriendo en ${API_URL}</small>`;
+                refreshBtn.disabled = false;
+                checkBtn.disabled = false;
+            }
+        }
+        
+        async function checkConnection() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                const response = await fetch(
+                    `${API_URL}/instance/fetchInstances?instanceName=${INSTANCE_NAME}`,
+                    {
+                        headers: {
+                            'apikey': API_KEY
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error('Error al verificar conexión');
+                }
+                
+                const data = await response.json();
+                
+                // La API puede devolver un objeto directamente o un array en 'value'
+                let instance;
+                if (Array.isArray(data)) {
+                    instance = data[0];
+                } else if (data.value && Array.isArray(data.value)) {
+                    instance = data.value[0];
+                } else if (data.id) {
+                    // Es un objeto directo
+                    instance = data;
+                }
+                
+                if (instance && instance.connectionStatus === 'open') {
+                    clearInterval(autoRefreshInterval);
+                    statusDiv.className = 'status connected';
+                    statusDiv.innerHTML = '✅ ¡WhatsApp conectado exitosamente!';
+                    document.getElementById('qrcode').innerHTML = '';
+                    showConnectionInfo(instance);
+                } else if (instance) {
+                    statusDiv.className = 'status loading';
+                    statusDiv.innerHTML = '⏳ Esperando conexión... Escanea el código QR.';
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = '❌ No se encontró la instancia. Recarga la página.';
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        function showConnectionInfo(instance) {
+            const infoDiv = document.getElementById('connectionInfo');
+            infoDiv.style.display = 'block';
+            infoDiv.innerHTML = `
+                <p><strong>📱 Número:</strong> ${instance.number || 'No disponible'}</p>
+                <p><strong>👤 Perfil:</strong> ${instance.profileName || 'No disponible'}</p>
+                <p><strong>🔌 Estado:</strong> Conectado</p>
+                <p><strong>🆔 Instancia:</strong> ${instance.name}</p>
+            `;
+        }
+        
+        // Iniciar al cargar la página
+        window.onload = () => {
+            setTimeout(getQRCode, 1000);
+        };
+        
+        // Limpiar interval al cerrar
+        window.onbeforeunload = () => {
+            clearInterval(autoRefreshInterval);
+        };
+    </script>
+</body>
+</html>

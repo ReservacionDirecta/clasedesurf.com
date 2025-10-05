@@ -26,8 +26,8 @@ export default function AdminReservationsPage() {
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-        const res = await fetch(`${BACKEND}/reservations/all`, { headers });
+        // Using API proxy routes instead of direct backend calls
+        const res = await fetch('/api/reservations/all', { headers });
         if (!res.ok) throw new Error('Failed to fetch reservations');
         const data = await res.json();
         setReservations(data);
@@ -47,8 +47,8 @@ export default function AdminReservationsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-      const res = await fetch(`${BACKEND}/reservations/${reservationId}`, {
+      // Using API proxy routes instead of direct backend calls
+      const res = await fetch('/api/reservations/${reservationId}', {
         method: 'PUT',
         headers,
         body: JSON.stringify({ status: newStatus })

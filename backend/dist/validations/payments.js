@@ -35,6 +35,15 @@ exports.updatePaymentSchema = zod_1.z.object({
         .max(100, 'Transaction ID must be less than 100 characters')
         .nullable()
         .optional(),
+    voucherImage: zod_1.z.string()
+        .url('Voucher image must be a valid URL')
+        .max(500, 'Voucher image URL must be less than 500 characters')
+        .nullable()
+        .optional(),
+    voucherNotes: zod_1.z.string()
+        .max(500, 'Voucher notes must be less than 500 characters')
+        .nullable()
+        .optional(),
     paidAt: zod_1.z.string()
         .datetime('Invalid date format')
         .nullable()

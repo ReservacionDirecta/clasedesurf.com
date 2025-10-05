@@ -36,12 +36,19 @@ router.post('/register', rateLimiter_1.authLimiter, (0, validation_1.validateBod
     try {
         // registration request
         // console.log('[auth] POST /register body ->', req.body);
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
         const existing = await prisma_1.default.user.findUnique({ where: { email } });
         if (existing)
             return res.status(400).json({ message: 'Email already in use' });
         const hashed = await bcryptjs_1.default.hash(password, 10);
-        const user = await prisma_1.default.user.create({ data: { name: name || '', email, password: hashed } });
+        const user = await prisma_1.default.user.create({
+            data: {
+                name: name || '',
+                email,
+                password: hashed,
+                role: role || 'STUDENT' // Default to STUDENT if no role provided
+            }
+        });
         const accessToken = signAccessToken(user);
         // create refresh token stored hashed in DB
         const rawRefresh = generateRefreshToken();
