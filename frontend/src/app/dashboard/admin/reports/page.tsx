@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
 export default function AdminReportsPage() {
@@ -66,62 +66,84 @@ export default function AdminReportsPage() {
     fetchData();
   }, [session, status, router]);
 
-  // Filter data by date range with safety checks
-  const filteredReservations = (data.reservations || []).filter((r: any) => {
-    if (!r.createdAt) return false;
-    const reservationDate = new Date(r.createdAt).toISOString().split('T')[0];
-    return reservationDate >= dateRange.start && reservationDate <= dateRange.end;
-  });
+  // Filter data by date range with safety checks using useMemo for performance
+  const filteredData = useMemo(() => {
+    const reservations = (data.reservations || []).filter((r: any) => {
+      if (!r.createdAt) return false;
+      const reservationDate = new Date(r.createdAt).toISOString().split('T')[0];
+      return reservationDate >= dateRange.start && reservationDate <= dateRange.end;
+    });
 
-  const filteredClasses = (data.classes || []).filter((c: any) => {
-    if (!c.date) return false;
-    const classDate = new Date(c.date).toISOString().split('T')[0];
-    return classDate >= dateRange.start && classDate <= dateRange.end;
-  });
+    const classes = (data.classes || []).filter((c: any) => {
+      if (!c.date) return false;
+      const classDate = new Date(c.date).toISOString().split('T')[0];
+      return classDate >= dateRange.start && classDate <= dateRange.end;
+    });
 
-  // Calculate metrics
-  const totalRevenue = filteredReservations
-    .filter((r: any) => r.status === 'PAID')
-    .reduce((sum: number, r: any) => sum + (r.class?.price || 0), 0);
+    return { reservations, classes };
+  }, [data.reservations, data.classes, dateRange.start, dateRange.end]);
 
-  const averageClassCapacity = filteredClasses.length > 0 
-    ? filteredClasses.reduce((sum: number, c: any) => sum + (c.capacity || 0), 0) / filteredClasses.length 
-    : 0;
-
-  const bookingRate = filteredClasses.length > 0
-    ? (filteredReservations.filter((r: any) => r.status !== 'CANCELED').length / 
-       filteredClasses.reduce((sum: number, c: any) => sum + (c.capacity || 0), 0)) * 100
-    : 0;
-
-  // Group reservations by status
-  const reservationsByStatus = filteredReservations.reduce((acc: any, r: any) => {
-    acc[r.status] = (acc[r.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  // Group classes by level
-  const classesByLevel = filteredClasses.reduce((acc: any, c: any) => {
-    acc[c.level] = (acc[c.level] || 0) + 1;
-    return acc;
-  }, {});
-
-  // Top performing schools with safety checks
-  const schoolPerformance = (data.schools || []).map((school: any) => {
-    const schoolClasses = filteredClasses.filter((c: any) => c.schoolId === school.id);
-    const schoolReservations = filteredReservations.filter((r: any) => 
-      schoolClasses.some((c: any) => c.id === r.classId)
-    );
-    const revenue = schoolReservations
+  // Calculate metrics using useMemo
+  const metrics = useMemo(() => {
+    const { reservations: filteredReservations, classes: filteredClasses } = filteredData;
+    
+    const totalRevenue = filteredReservations
       .filter((r: any) => r.status === 'PAID')
       .reduce((sum: number, r: any) => sum + (r.class?.price || 0), 0);
-    
+
+    const averageClassCapacity = filteredClasses.length > 0 
+      ? filteredClasses.reduce((sum: number, c: any) => sum + (c.capacity || 0), 0) / filteredClasses.length 
+      : 0;
+
+    const totalCapacity = filteredClasses.reduce((sum: number, c: any) => sum + (c.capacity || 0), 0);
+    const bookingRate = totalCapacity > 0
+      ? (filteredReservations.filter((r: any) => r.status !== 'CANCELED').length / totalCapacity) * 100
+      : 0;
+
+    // Group reservations by status
+    const reservationsByStatus = filteredReservations.reduce((acc: any, r: any) => {
+      acc[r.status] = (acc[r.status] || 0) + 1;
+      return acc;
+    }, {});
+
     return {
-      ...school,
-      classCount: schoolClasses.length,
-      reservationCount: schoolReservations.length,
-      revenue
+      totalRevenue,
+      averageClassCapacity,
+      bookingRate,
+      reservationsByStatus
     };
-  }).sort((a: any, b: any) => b.revenue - a.revenue);
+  }, [filteredData]);
+
+  // Additional calculations using useMemo
+  const additionalData = useMemo(() => {
+    const { reservations: filteredReservations, classes: filteredClasses } = filteredData;
+    
+    // Group classes by level
+    const classesByLevel = filteredClasses.reduce((acc: any, c: any) => {
+      acc[c.level] = (acc[c.level] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Top performing schools with safety checks
+    const schoolPerformance = (data.schools || []).map((school: any) => {
+      const schoolClasses = filteredClasses.filter((c: any) => c.schoolId === school.id);
+      const schoolReservations = filteredReservations.filter((r: any) => 
+        schoolClasses.some((c: any) => c.id === r.classId)
+      );
+      const revenue = schoolReservations
+        .filter((r: any) => r.status === 'PAID')
+        .reduce((sum: number, r: any) => sum + (r.class?.price || 0), 0);
+      
+      return {
+        ...school,
+        classCount: schoolClasses.length,
+        reservationCount: schoolReservations.length,
+        revenue
+      };
+    }).sort((a: any, b: any) => b.revenue - a.revenue);
+
+    return { classesByLevel, schoolPerformance };
+  }, [filteredData, data.schools]);
 
   if (status === 'loading' || loading) {
     return (
@@ -176,7 +198,7 @@ export default function AdminReportsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Total Revenue</h3>
-              <p className="text-3xl font-bold text-green-600">${totalRevenue.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-green-600">${metrics.totalRevenue.toFixed(2)}</p>
               <p className="text-xs text-gray-500 mt-1">From paid reservations</p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -189,7 +211,7 @@ export default function AdminReportsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Total Reservations</h3>
-              <p className="text-3xl font-bold text-blue-600">{filteredReservations.length}</p>
+              <p className="text-3xl font-bold text-blue-600">{filteredData.reservations.length}</p>
               <p className="text-xs text-gray-500 mt-1">In selected period</p>
             </div>
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -202,7 +224,7 @@ export default function AdminReportsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Booking Rate</h3>
-              <p className="text-3xl font-bold text-purple-600">{bookingRate.toFixed(1)}%</p>
+              <p className="text-3xl font-bold text-purple-600">{metrics.bookingRate.toFixed(1)}%</p>
               <p className="text-xs text-gray-500 mt-1">Capacity utilization</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -215,7 +237,7 @@ export default function AdminReportsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Avg Class Size</h3>
-              <p className="text-3xl font-bold text-orange-600">{averageClassCapacity.toFixed(0)}</p>
+              <p className="text-3xl font-bold text-orange-600">{metrics.averageClassCapacity.toFixed(0)}</p>
               <p className="text-xs text-gray-500 mt-1">Students per class</p>
             </div>
             <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -230,14 +252,14 @@ export default function AdminReportsPage() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Reservations by Status</h2>
           <div className="space-y-3">
-            {Object.entries(reservationsByStatus).map(([status, count]) => (
+            {Object.entries(metrics.reservationsByStatus).map(([status, count]) => (
               <div key={status} className="flex justify-between items-center">
                 <span className="capitalize text-gray-700">{status.toLowerCase()}</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-20 bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-blue-600 h-2 rounded-full" 
-                      style={{width: `${filteredReservations.length > 0 ? ((count as number) / filteredReservations.length) * 100 : 0}%`}}
+                      style={{width: `${filteredData.reservations.length > 0 ? ((count as number) / filteredData.reservations.length) * 100 : 0}%`}}
                     ></div>
                   </div>
                   <span className="font-semibold text-gray-900">{count as number}</span>
@@ -251,14 +273,14 @@ export default function AdminReportsPage() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Classes by Level</h2>
           <div className="space-y-3">
-            {Object.entries(classesByLevel).map(([level, count]) => (
+            {Object.entries(additionalData.classesByLevel).map(([level, count]) => (
               <div key={level} className="flex justify-between items-center">
                 <span className="capitalize text-gray-700">{level.toLowerCase()}</span>
                 <div className="flex items-center space-x-2">
                   <div className="w-20 bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-green-600 h-2 rounded-full" 
-                      style={{width: `${filteredClasses.length > 0 ? ((count as number) / filteredClasses.length) * 100 : 0}%`}}
+                      style={{width: `${filteredData.classes.length > 0 ? ((count as number) / filteredData.classes.length) * 100 : 0}%`}}
                     ></div>
                   </div>
                   <span className="font-semibold text-gray-900">{count as number}</span>
@@ -293,7 +315,7 @@ export default function AdminReportsPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {schoolPerformance.map((school: any) => (
+              {additionalData.schoolPerformance.map((school: any) => (
                 <tr key={school.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
