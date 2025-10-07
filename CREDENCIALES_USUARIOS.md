@@ -20,6 +20,13 @@
 - **Rol:** `INSTRUCTOR`
 - **Descripción:** Instructor certificado con 5 años de experiencia
 
+Credenciales creadas:
+Email: gbarrera@clasedesurf.com
+
+Contraseña temporal: instruc123
+
+* Comparte estas credenciales con el instructor de forma segura
+
 ### 🌊 **ESTUDIANTES**
 
 #### **Estudiante 1 - Principiante**

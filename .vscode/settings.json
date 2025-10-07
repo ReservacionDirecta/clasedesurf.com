@@ -1,4 +1,5 @@
 {
     "IDX.agenticWorkspace": true,
-    "IDX.aI.showChatInEditorTab": true
+    "IDX.aI.showChatInEditorTab": true,
+    "typescript.autoClosingTags": false
 }

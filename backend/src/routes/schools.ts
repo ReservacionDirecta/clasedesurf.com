@@ -23,18 +23,29 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
     const userId = req.userId;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    // For now, return the first school if user is SCHOOL_ADMIN
-    // In a real implementation, you'd have a userId field in School model
     const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
     
     if (!user || user.role !== 'SCHOOL_ADMIN') {
       return res.status(403).json({ message: 'Only school admins can access this endpoint' });
     }
 
-    // For demo purposes, return the first school
-    // TODO: Implement proper user-school association
+    // Find school owned by this user
     const school = await prisma.school.findFirst({
-      orderBy: { createdAt: 'desc' }
+      where: { ownerId: Number(userId) },
+      include: {
+        classes: {
+          orderBy: { date: 'asc' },
+          take: 10
+        },
+        instructors: {
+          where: { isActive: true },
+          include: {
+            user: {
+              select: { name: true, email: true, phone: true }
+            }
+          }
+        }
+      }
     });
 
     if (!school) {
@@ -43,7 +54,7 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
 
     res.json(school);
   } catch (err) {
-    console.error(err);
+    console.error('Error in /my-school:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -82,7 +93,6 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBo
     const userId = req.userId;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    // For now, handle as JSON. We'll add file upload later
     const { 
       name, 
       location, 
@@ -96,6 +106,15 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBo
       address 
     } = req.body;
 
+    // Check if user already has a school
+    const existingSchool = await prisma.school.findFirst({
+      where: { ownerId: Number(userId) }
+    });
+
+    if (existingSchool) {
+      return res.status(400).json({ message: 'User already has a school' });
+    }
+
     const created = await prisma.school.create({ 
       data: { 
         name, 
@@ -107,7 +126,8 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBo
         instagram: instagram || null,
         facebook: facebook || null,
         whatsapp: whatsapp || null,
-        address: address || null
+        address: address || null,
+        ownerId: Number(userId)
       } 
     });
 

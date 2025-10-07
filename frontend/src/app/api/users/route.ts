@@ -2,25 +2,76 @@ import { NextResponse } from 'next/server';
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-async function proxy(req: Request) {
-  const url = new URL(req.url);
-  const path = url.pathname.replace('/api', '');
-  const backendUrl = `${BACKEND}${path}`;
-
-  const res = await fetch(backendUrl, {
-    method: req.method,
-    headers: Object.fromEntries(req.headers),
-    body: req.method !== 'GET' && req.method !== 'HEAD' ? await req.text() : undefined,
-  });
-
-  const text = await res.text();
-  return new NextResponse(text, { status: res.status, headers: Object.fromEntries(res.headers) });
-}
-
 export async function GET(req: Request) {
-  return proxy(req);
+  try {
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const url = new URL(req.url);
+    const searchParams = url.search;
+    const backendUrl = `${BACKEND}/users${searchParams}`;
+    
+    const response = await fetch(backendUrl, {
+      method: 'GET',
+      headers
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Backend error' }));
+      return NextResponse.json(errorData, { status: response.status });
+    }
+    
+    const data = await response.json();
+    return NextResponse.json(data);
+    
+  } catch (error) {
+    console.error('Users proxy error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json(
+      { message: 'Proxy error', error: errorMessage }, 
+      { status: 500 }
+    );
+  }
 }
 
-export async function PUT(req: Request) {
-  return proxy(req);
+export async function POST(req: Request) {
+  try {
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+
+    const body = await req.json();
+    
+    const response = await fetch(`${BACKEND}/users`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Backend error' }));
+      return NextResponse.json(errorData, { status: response.status });
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
+    
+  } catch (error) {
+    console.error('Error creating user:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' }, 
+      { status: 500 }
+    );
+  }
 }

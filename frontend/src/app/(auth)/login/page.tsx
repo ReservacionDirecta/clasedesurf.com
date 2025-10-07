@@ -37,6 +37,9 @@ export default function LoginPage() {
             case 'SCHOOL_ADMIN':
               router.push('/dashboard/school');
               break;
+            case 'INSTRUCTOR':
+              router.push('/dashboard/instructor');
+              break;
             case 'STUDENT':
             default:
               router.push('/dashboard/student/profile');

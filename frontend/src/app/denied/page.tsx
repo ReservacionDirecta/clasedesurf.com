@@ -24,6 +24,8 @@ export default function DeniedPage() {
         return '/dashboard/admin';
       case 'SCHOOL_ADMIN':
         return '/dashboard/school';
+      case 'INSTRUCTOR':
+        return '/dashboard/instructor';
       case 'STUDENT':
       default:
         return '/dashboard/student/profile';

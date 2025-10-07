@@ -42,29 +42,74 @@ export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get('authorization');
     
-    const headers: any = {
-      'Content-Type': 'application/json'
-    };
+    console.log('Schools POST proxy called');
+    console.log('Auth header present:', !!authHeader);
+    
+    const headers: any = {};
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
 
-    const body = await req.json();
+    // Check if it's FormData (for file upload) or JSON
+    const contentType = req.headers.get('content-type');
+    let body;
+    let requestBody;
+
+    if (contentType && contentType.includes('multipart/form-data')) {
+      // Handle FormData (with file upload)
+      const formData = await req.formData();
+      
+      // Convert FormData to JSON for now (we'll handle file upload later)
+      const jsonData: any = {};
+      formData.forEach((value, key) => {
+        if (key !== 'logo') { // Skip file for now
+          jsonData[key] = value;
+        }
+      });
+      
+      headers['Content-Type'] = 'application/json';
+      requestBody = JSON.stringify(jsonData);
+      console.log('FormData converted to JSON:', jsonData);
+    } else {
+      // Handle regular JSON
+      body = await req.json();
+      headers['Content-Type'] = 'application/json';
+      requestBody = JSON.stringify(body);
+      console.log('Request body:', body);
+    }
     
     const response = await fetch(`${BACKEND}/schools`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(body)
+      body: requestBody
     });
 
+    console.log('Backend POST response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Backend error response:', errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        return NextResponse.json(errorData, { status: response.status });
+      } catch {
+        return NextResponse.json(
+          { message: errorText || 'Backend error' }, 
+          { status: response.status }
+        );
+      }
+    }
+    
     const data = await response.json();
     
+    // Return the same status code from backend
     return NextResponse.json(data, { status: response.status });
     
   } catch (error) {
     console.error('Error creating school:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { message: 'Internal server error' }, 
+      { message: 'Internal server error', error: errorMessage }, 
       { status: 500 }
     );
   }

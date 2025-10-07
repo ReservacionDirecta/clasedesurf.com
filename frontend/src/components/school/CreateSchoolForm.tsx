@@ -82,37 +82,46 @@ export default function CreateSchoolForm({ onSchoolCreated, onCancel }: CreateSc
     setError(null);
 
     try {
-      // Crear FormData para enviar archivo
-      const submitData = new FormData();
-      
-      // Agregar datos del formulario
-      Object.entries(formData).forEach(([key, value]) => {
-        submitData.append(key, value);
-      });
-      
-      // Agregar logo si existe
-      if (logoFile) {
-        submitData.append('logo', logoFile);
-      }
-
       const token = (session as any)?.backendToken;
-      const headers: any = {};
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      // Por ahora enviamos solo los datos del formulario como JSON
+      // TODO: Implementar upload de logo más tarde
+      const submitData = {
+        ...formData,
+        // Agregar campos vacíos si no están definidos
+        description: formData.description || '',
+        phone: formData.phone || '',
+        website: formData.website || '',
+        instagram: formData.instagram || '',
+        facebook: formData.facebook || '',
+        whatsapp: formData.whatsapp || '',
+        address: formData.address || ''
+      };
+
+      console.log('Submitting school data:', submitData);
+
       const response = await fetch('/api/schools', {
         method: 'POST',
         headers,
-        body: submitData
+        body: JSON.stringify(submitData)
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+        console.error('Error response:', errorData);
         throw new Error(errorData.message || 'Error al crear la escuela');
       }
 
       const newSchool = await response.json();
+      console.log('School created:', newSchool);
       onSchoolCreated(newSchool);
       
     } catch (err) {

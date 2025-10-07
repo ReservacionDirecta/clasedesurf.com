@@ -14,7 +14,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 // Trust proxy for Railway deployment
 app.set('trust proxy', 1);
