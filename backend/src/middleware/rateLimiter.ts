@@ -1,10 +1,10 @@
 import rateLimit from 'express-rate-limit';
 
 // Rate limiter for authentication endpoints (login, register)
-// Allows 20 requests per 15 minutes per IP (increased for better UX)
+// Allows 100 requests per 15 minutes per IP (increased for better UX)
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 requests per windowMs
+  max: 100, // Limit each IP to 100 requests per windowMs
   message: 'Demasiados intentos desde esta IP, por favor intente nuevamente después de 15 minutos',
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
@@ -13,10 +13,10 @@ export const authLimiter = rateLimit({
 });
 
 // General rate limiter for API endpoints
-// Allows 100 requests per 15 minutes per IP
+// Allows 500 requests per 15 minutes per IP
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 500, // Limit each IP to 500 requests per windowMs
   message: 'Demasiadas solicitudes desde esta IP, por favor intente nuevamente más tarde',
   standardHeaders: true,
   legacyHeaders: false,
