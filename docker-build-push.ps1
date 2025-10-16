@@ -1,176 +1,177 @@
-# Script de PowerShell para build y push a Docker Hub
+# ============================================
+# BUILD Y PUSH A DOCKER HUB
+# ============================================
 
-Write-Host "`n=== SURF SCHOOL - BUILD Y PUSH A DOCKER HUB ===`n" -ForegroundColor Cyan
+param(
+    [string]$DockerUsername = "reservaciondirecta",
+    [string]$Version = "latest"
+)
 
-# Verificar Docker
+$ErrorActionPreference = "Stop"
+
+# Colores
+function Write-Color {
+    param(
+        [string]$Message,
+        [string]$Color = "White"
+    )
+    Write-Host $Message -ForegroundColor $Color
+}
+
+function Write-Header {
+    param([string]$Message)
+    Write-Host ""
+    Write-Color "============================================" "Cyan"
+    Write-Color $Message "Cyan"
+    Write-Color "============================================" "Cyan"
+    Write-Host ""
+}
+
+# Verificar que Docker esté corriendo
+Write-Header "Verificando Docker"
 try {
-    $dockerVersion = docker --version
-    Write-Host "✅ Docker encontrado: $dockerVersion" -ForegroundColor Green
+    docker version | Out-Null
+    Write-Color "OK Docker esta corriendo" "Green"
 } catch {
-    Write-Host "❌ Docker no está instalado o no está corriendo" -ForegroundColor Red
+    Write-Color "ERROR Docker no esta corriendo. Por favor inicia Docker Desktop." "Red"
     exit 1
 }
 
-# Solicitar username
-$dockerUsername = Read-Host "`nIngresa tu username de Docker Hub"
-if ([string]::IsNullOrEmpty($dockerUsername)) {
-    Write-Host "❌ Username es requerido" -ForegroundColor Red
-    exit 1
-}
+# Verificar login en Docker Hub
+Write-Header "Verificando login en Docker Hub"
+$ErrorActionPreference = "Continue"
+$loginCheck = docker info 2>&1 | Select-String "Username"
+$ErrorActionPreference = "Stop"
 
-Write-Host "`n📝 Username: $dockerUsername" -ForegroundColor Yellow
-
-# Login a Docker Hub
-Write-Host "`n🔐 Iniciando sesión en Docker Hub..." -ForegroundColor Yellow
-try {
+if (-not $loginCheck) {
+    Write-Color "No estas logueado en Docker Hub" "Yellow"
+    Write-Color "Ejecutando docker login..." "Yellow"
     docker login
-    Write-Host "✅ Sesión iniciada correctamente" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Error al iniciar sesión en Docker Hub" -ForegroundColor Red
-    exit 1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Color "ERROR al hacer login en Docker Hub" "Red"
+        exit 1
+    }
 }
+Write-Color "OK Logueado en Docker Hub" "Green"
 
-Write-Host "`n🔨 CONSTRUYENDO IMÁGENES..." -ForegroundColor Cyan
+# Nombres de las imágenes
+$BackendImage = "${DockerUsername}/clasedesurf-backend"
+$FrontendImage = "${DockerUsername}/clasedesurf-frontend"
 
-# Build Frontend
-Write-Host "`n📦 Construyendo Frontend (Next.js)..." -ForegroundColor Yellow
+# ============================================
+# BUILD BACKEND
+# ============================================
+Write-Header "Construyendo Backend"
+Write-Color "Imagen: ${BackendImage}:${Version}" "Cyan"
+
+Push-Location backend
 try {
-    docker build -t "$dockerUsername/surfschool-frontend:latest" ./frontend
-    Write-Host "✅ Frontend construido exitosamente" -ForegroundColor Green
+    Write-Color "Construyendo imagen..." "Yellow"
+    docker build -t "${BackendImage}:${Version}" -t "${BackendImage}:latest" .
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Color "OK Backend construido exitosamente" "Green"
+    } else {
+        throw "Error al construir backend"
+    }
 } catch {
-    Write-Host "❌ Error al construir frontend" -ForegroundColor Red
+    Write-Color "ERROR al construir backend: $_" "Red"
+    Pop-Location
     exit 1
+} finally {
+    Pop-Location
 }
 
-# Build Backend
-Write-Host "`n📦 Construyendo Backend (Node.js)..." -ForegroundColor Yellow
+# ============================================
+# BUILD FRONTEND
+# ============================================
+Write-Header "Construyendo Frontend"
+Write-Color "Imagen: ${FrontendImage}:${Version}" "Cyan"
+
+Push-Location frontend
 try {
-    docker build -t "$dockerUsername/surfschool-backend:latest" ./backend
-    Write-Host "✅ Backend construido exitosamente" -ForegroundColor Green
+    Write-Color "Construyendo imagen..." "Yellow"
+    docker build -t "${FrontendImage}:${Version}" -t "${FrontendImage}:latest" .
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Color "OK Frontend construido exitosamente" "Green"
+    } else {
+        throw "Error al construir frontend"
+    }
 } catch {
-    Write-Host "❌ Error al construir backend" -ForegroundColor Red
+    Write-Color "ERROR al construir frontend: $_" "Red"
+    Pop-Location
+    exit 1
+} finally {
+    Pop-Location
+}
+
+# ============================================
+# PUSH BACKEND
+# ============================================
+Write-Header "Subiendo Backend a Docker Hub"
+Write-Color "Subiendo ${BackendImage}:${Version}..." "Yellow"
+
+docker push "${BackendImage}:${Version}"
+if ($LASTEXITCODE -eq 0) {
+    Write-Color "OK Backend subido exitosamente" "Green"
+} else {
+    Write-Color "ERROR al subir backend" "Red"
     exit 1
 }
 
-Write-Host "`n🚀 SUBIENDO IMÁGENES A DOCKER HUB..." -ForegroundColor Cyan
+if ($Version -ne "latest") {
+    Write-Color "Subiendo ${BackendImage}:latest..." "Yellow"
+    docker push "${BackendImage}:latest"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Color "OK Backend:latest subido exitosamente" "Green"
+    } else {
+        Write-Color "ADVERTENCIA Error al subir backend:latest" "Yellow"
+    }
+}
 
-# Push Frontend
-Write-Host "`n📤 Subiendo Frontend..." -ForegroundColor Yellow
-try {
-    docker push "$dockerUsername/surfschool-frontend:latest"
-    Write-Host "✅ Frontend subido exitosamente" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Error al subir frontend" -ForegroundColor Red
+# ============================================
+# PUSH FRONTEND
+# ============================================
+Write-Header "Subiendo Frontend a Docker Hub"
+Write-Color "Subiendo ${FrontendImage}:${Version}..." "Yellow"
+
+docker push "${FrontendImage}:${Version}"
+if ($LASTEXITCODE -eq 0) {
+    Write-Color "OK Frontend subido exitosamente" "Green"
+} else {
+    Write-Color "ERROR al subir frontend" "Red"
     exit 1
 }
 
-# Push Backend
-Write-Host "`n📤 Subiendo Backend..." -ForegroundColor Yellow
-try {
-    docker push "$dockerUsername/surfschool-backend:latest"
-    Write-Host "✅ Backend subido exitosamente" -ForegroundColor Green
-} catch {
-    Write-Host "❌ Error al subir backend" -ForegroundColor Red
-    exit 1
+if ($Version -ne "latest") {
+    Write-Color "Subiendo ${FrontendImage}:latest..." "Yellow"
+    docker push "${FrontendImage}:latest"
+    if ($LASTEXITCODE -eq 0) {
+        Write-Color "OK Frontend:latest subido exitosamente" "Green"
+    } else {
+        Write-Color "ADVERTENCIA Error al subir frontend:latest" "Yellow"
+    }
 }
 
-# Crear docker-compose para producción
-Write-Host "`n📝 Creando docker-compose.prod.yml..." -ForegroundColor Yellow
+# ============================================
+# RESUMEN
+# ============================================
+Write-Header "Resumen"
+Write-Color "Imágenes creadas y subidas:" "Green"
+Write-Host ""
+Write-Color "Backend:" "Cyan"
+Write-Color "  docker pull ${BackendImage}:${Version}" "White"
+Write-Color "  docker pull ${BackendImage}:latest" "White"
+Write-Host ""
+Write-Color "Frontend:" "Cyan"
+Write-Color "  docker pull ${FrontendImage}:${Version}" "White"
+Write-Color "  docker pull ${FrontendImage}:latest" "White"
+Write-Host ""
 
-$prodCompose = @"
-version: '3.8'
+Write-Color "Docker Hub URLs:" "Cyan"
+Write-Color "  Backend:  https://hub.docker.com/r/${DockerUsername}/clasedesurf-backend" "White"
+Write-Color "  Frontend: https://hub.docker.com/r/${DockerUsername}/clasedesurf-frontend" "White"
+Write-Host ""
 
-services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: surfschool-postgres
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: `${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: `${POSTGRES_DB:-clasedesurf.com}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - surfschool-network
-    restart: unless-stopped
-
-  # Backend API
-  backend:
-    image: $dockerUsername/surfschool-backend:latest
-    container_name: surfschool-backend
-    ports:
-      - "4000:4000"
-    environment:
-      DATABASE_URL: "postgresql://postgres:`${POSTGRES_PASSWORD:-postgres}@postgres:5432/`${POSTGRES_DB:-clasedesurf.com}"
-      JWT_SECRET: "`${JWT_SECRET:-change-this-in-production}"
-      PORT: 4000
-      NODE_ENV: "production"
-      FRONTEND_URL: "`${FRONTEND_URL:-http://localhost:3000}"
-    depends_on:
-      - postgres
-    networks:
-      - surfschool-network
-    restart: unless-stopped
-
-  # Frontend (Next.js)
-  frontend:
-    image: $dockerUsername/surfschool-frontend:latest
-    container_name: surfschool-frontend
-    ports:
-      - "3000:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: "`${NEXT_PUBLIC_API_URL:-http://localhost:4000}"
-      NEXTAUTH_URL: "`${NEXTAUTH_URL:-http://localhost:3000}"
-      NEXTAUTH_SECRET: "`${NEXTAUTH_SECRET:-change-this-in-production}"
-      DATABASE_URL: "postgresql://postgres:`${POSTGRES_PASSWORD:-postgres}@postgres:5432/`${POSTGRES_DB:-clasedesurf.com}"
-    depends_on:
-      - backend
-      - postgres
-    networks:
-      - surfschool-network
-    restart: unless-stopped
-
-  # Redis (opcional)
-  redis:
-    image: redis:7-alpine
-    container_name: surfschool-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - surfschool-network
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-  redis_data:
-
-networks:
-  surfschool-network:
-    driver: bridge
-"@
-
-$prodCompose | Out-File -FilePath "docker-compose.prod.yml" -Encoding UTF8
-
-Write-Host "`n🎉 PROCESO COMPLETADO EXITOSAMENTE!" -ForegroundColor Green
-Write-Host "`n📦 IMÁGENES DISPONIBLES EN DOCKER HUB:" -ForegroundColor Cyan
-Write-Host "   🌐 Frontend: $dockerUsername/surfschool-frontend:latest" -ForegroundColor White
-Write-Host "   🔧 Backend:  $dockerUsername/surfschool-backend:latest" -ForegroundColor White
-
-Write-Host "`n🚀 PARA USAR EN PRODUCCIÓN:" -ForegroundColor Yellow
-Write-Host "   1. Copia docker-compose.prod.yml a tu servidor" -ForegroundColor White
-Write-Host "   2. Configura variables de entorno:" -ForegroundColor White
-Write-Host "      export POSTGRES_PASSWORD=tu-password-seguro" -ForegroundColor Gray
-Write-Host "      export JWT_SECRET=tu-jwt-secret-seguro" -ForegroundColor Gray
-Write-Host "      export NEXTAUTH_SECRET=tu-nextauth-secret" -ForegroundColor Gray
-Write-Host "   3. Ejecuta: docker-compose -f docker-compose.prod.yml up -d" -ForegroundColor White
-
-Write-Host "`n🔗 ENLACES DE DOCKER HUB:" -ForegroundColor Yellow
-Write-Host "   Frontend: https://hub.docker.com/r/$dockerUsername/surfschool-frontend" -ForegroundColor Blue
-Write-Host "   Backend:  https://hub.docker.com/r/$dockerUsername/surfschool-backend" -ForegroundColor Blue
-
-Write-Host "`n===============================================`n" -ForegroundColor Cyan
+Write-Header "PROCESO COMPLETADO"
