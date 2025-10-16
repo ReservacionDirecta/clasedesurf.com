@@ -4,6 +4,8 @@ import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
 import { validateBody } from '../middleware/validation';
 import { createReservationSchema } from '../validations/reservations';
+import resolveSchool from '../middleware/resolve-school';
+import { buildMultiTenantWhere } from '../middleware/multi-tenant';
 
 const router = express.Router();
 
@@ -48,36 +50,44 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
   }
 });
 
-// GET /reservations - returns reservations based on user role
-router.get('/', requireAuth, async (req: AuthRequest, res) => {
+// GET /reservations - returns reservations based on user role (multi-tenant filtered)
+router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId;
-    const userRole = req.role; // Fixed: use req.role instead of req.userRole
+    // Build where clause with multi-tenant filtering
+    const where = await buildMultiTenantWhere(req, 'reservation');
     
-    // ADMIN and SCHOOL_ADMIN can see all reservations with full details
-    if (userRole === 'ADMIN' || userRole === 'SCHOOL_ADMIN') {
-      const reservations = await prisma.reservation.findMany({ 
-        include: { 
-          user: true, 
-          class: { include: { school: true } },
-          payment: true
-        } 
-      });
-      return res.json(reservations);
-    }
+    const reservations = await prisma.reservation.findMany({ 
+      where,
+      include: { 
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
+          }
+        }, 
+        class: { 
+          include: { 
+            school: {
+              select: {
+                id: true,
+                name: true,
+                location: true
+              }
+            } 
+          } 
+        },
+        payment: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
     
-    // Regular users only see their own reservations
-    if (userId) {
-      const reservations = await prisma.reservation.findMany({ 
-        where: { userId: Number(userId) }, 
-        include: { class: true } 
-      });
-      return res.json(reservations);
-    }
-    
-    return res.status(403).json({ message: 'Forbidden' });
+    res.json(reservations);
   } catch (err) {
-    console.error(err);
+    console.error('[GET /reservations] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

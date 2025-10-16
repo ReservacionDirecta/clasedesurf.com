@@ -2,16 +2,30 @@ import express from 'express';
 import prisma from '../prisma';
 import { validateBody, validateParams } from '../middleware/validation';
 import { createClassSchema, updateClassSchema, classIdSchema } from '../validations/classes';
+import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
+import resolveSchool from '../middleware/resolve-school';
+import { buildMultiTenantWhere } from '../middleware/multi-tenant';
 
 const router = express.Router();
 
-// GET /classes - list classes with filters
-router.get('/', async (req, res) => {
+// GET /classes - list classes with filters (supports multi-tenant filtering)
+router.get('/', async (req: AuthRequest, res) => {
   try {
-    const { date, level, type, minPrice, maxPrice } = req.query;
+    const { date, level, type, minPrice, maxPrice, schoolId } = req.query;
     
     // Build filter object
     const where: any = {};
+    
+    // Apply multi-tenant filtering if authenticated
+    if (req.userId && req.role) {
+      const multiTenantWhere = await buildMultiTenantWhere(req, 'class');
+      Object.assign(where, multiTenantWhere);
+    }
+    
+    // Filter by schoolId if provided (and not already filtered by multi-tenant)
+    if (schoolId && !where.schoolId) {
+      where.schoolId = Number(schoolId);
+    }
     
     // Filter by date (exact date match)
     if (date && typeof date === 'string') {
@@ -87,12 +101,24 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /classes - create class
-router.post('/', validateBody(createClassSchema), async (req, res) => {
+// POST /classes - create class (ADMIN or SCHOOL_ADMIN)
+router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createClassSchema), async (req: AuthRequest, res) => {
   try {
-    const { title, description, date, duration, capacity, price, level, instructor, schoolId } = req.body;
+    const { title, description, date, duration, capacity, price, level, instructor, schoolId, studentDetails } = req.body;
+    
+    console.log('📝 Creando clase con datos:', { title, description, date, duration, capacity, price, level, instructor, studentDetails });
     
     const classDate = new Date(date);
+
+    // Determine final schoolId
+    let finalSchoolId: number | undefined = schoolId ? Number(schoolId) : undefined;
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) return res.status(404).json({ message: 'No school found for this user' });
+      finalSchoolId = req.schoolId;
+    }
+    if (!finalSchoolId) return res.status(400).json({ message: 'School ID is required' });
+
+    console.log('🏫 School ID final:', finalSchoolId);
 
     const newClass = await prisma.class.create({
       data: {
@@ -104,22 +130,33 @@ router.post('/', validateBody(createClassSchema), async (req, res) => {
         price: Number(price),
         level,
         instructor,
-        school: { connect: { id: Number(schoolId) } }
+        school: { connect: { id: Number(finalSchoolId) } }
       }
     });
 
+    console.log('✅ Clase creada exitosamente:', newClass.id);
     res.status(201).json(newClass);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('❌ Error al crear clase:', err);
+    res.status(500).json({ message: 'Internal server error', error: String(err) });
   }
 });
 
-// PUT /classes/:id - update class
-router.put('/:id', validateParams(classIdSchema), validateBody(updateClassSchema), async (req, res) => {
+// PUT /classes/:id - update class (ADMIN or SCHOOL_ADMIN)
+router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), validateBody(updateClassSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
     const data = req.body;
+
+    // If SCHOOL_ADMIN, verify class belongs to their school
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) return res.status(404).json({ message: 'No school found for this user' });
+      const existing = await prisma.class.findUnique({ where: { id: Number(id) } });
+      if (!existing) return res.status(404).json({ message: 'Class not found' });
+      if (existing.schoolId !== req.schoolId) {
+        return res.status(403).json({ message: 'You can only update classes from your school' });
+      }
+    }
 
     const updated = await prisma.class.update({ where: { id: Number(id) }, data });
     res.json(updated);
@@ -129,10 +166,19 @@ router.put('/:id', validateParams(classIdSchema), validateBody(updateClassSchema
   }
 });
 
-// DELETE /classes/:id
-router.delete('/:id', validateParams(classIdSchema), async (req, res) => {
+// DELETE /classes/:id (ADMIN or SCHOOL_ADMIN)
+router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
+    // If SCHOOL_ADMIN, verify ownership
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) return res.status(404).json({ message: 'No school found for this user' });
+      const existing = await prisma.class.findUnique({ where: { id: Number(id) } });
+      if (!existing) return res.status(404).json({ message: 'Class not found' });
+      if (existing.schoolId !== req.schoolId) {
+        return res.status(403).json({ message: 'You can only delete classes from your school' });
+      }
+    }
     await prisma.class.delete({ where: { id: Number(id) } });
     res.json({ message: 'Deleted' });
   } catch (err) {

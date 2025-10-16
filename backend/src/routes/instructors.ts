@@ -1,39 +1,56 @@
 import express from 'express';
-import bcrypt from 'bcryptjs';
 import prisma from '../prisma';
+import { validateBody, validateParams } from '../middleware/validation';
 import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
+import resolveSchool from '../middleware/resolve-school';
+import { buildMultiTenantWhere, enforceSchoolAccess } from '../middleware/multi-tenant';
+import { z } from 'zod';
 
 const router = express.Router();
 
-// GET /instructors - Get all instructors (filtered by school for SCHOOL_ADMIN)
-router.get('/', requireAuth, async (req: AuthRequest, res) => {
+// Validation schemas
+const createInstructorSchema = z.object({
+  userId: z.number().int().positive(),
+  schoolId: z.number().int().positive().optional(),
+  bio: z.string().optional(),
+  yearsExperience: z.number().int().min(0).default(0),
+  specialties: z.array(z.string()).default([]),
+  certifications: z.array(z.string()).default([]),
+  profileImage: z.string().url().optional(),
+  instructorRole: z.enum(['INSTRUCTOR', 'HEAD_COACH']).default('INSTRUCTOR')
+});
+
+const updateInstructorSchema = z.object({
+  bio: z.string().optional(),
+  yearsExperience: z.number().int().min(0).optional(),
+  specialties: z.array(z.string()).optional(),
+  certifications: z.array(z.string()).optional(),
+  profileImage: z.string().url().optional(),
+  instructorRole: z.enum(['INSTRUCTOR', 'HEAD_COACH']).optional(),
+  isActive: z.boolean().optional()
+});
+
+const instructorIdSchema = z.object({
+  id: z.string().regex(/^\d+$/, 'ID must be a number')
+});
+
+// GET /instructors - List instructors (filtered by role)
+router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId;
-    const { schoolId } = req.query;
+    const { schoolId, isActive } = req.query;
     
-    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-
-    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    if (!user) return res.status(401).json({ message: 'User not found' });
-
-    let where: any = { isActive: true };
-
-    // If SCHOOL_ADMIN, only show instructors from their school
-    if (user.role === 'SCHOOL_ADMIN') {
-      const userSchool = await prisma.school.findFirst({
-        where: { ownerId: Number(userId) }
-      });
-      
-      if (!userSchool) {
-        return res.status(404).json({ message: 'No school found for this user' });
-      }
-      
-      where.schoolId = userSchool.id;
-    } else if (schoolId) {
-      // ADMIN can filter by specific school
+    // Build where clause with multi-tenant filtering
+    const where = await buildMultiTenantWhere(req, 'instructor');
+    
+    // Additional filters
+    if (schoolId && req.role === 'ADMIN') {
       where.schoolId = Number(schoolId);
     }
-
+    
+    if (isActive !== undefined) {
+      where.isActive = isActive === 'true';
+    }
+    
     const instructors = await prisma.instructor.findMany({
       where,
       include: {
@@ -53,27 +70,142 @@ router.get('/', requireAuth, async (req: AuthRequest, res) => {
           }
         },
         reviews: {
-          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            studentName: true,
+            createdAt: true
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
           take: 5
         }
       },
-      orderBy: { rating: 'desc' }
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
-
+    
     res.json(instructors);
   } catch (err) {
-    console.error(err);
+    console.error('[GET /instructors] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// GET /instructors/:id - Get specific instructor
-router.get('/:id', async (req, res) => {
+// GET /instructors/:id - Get instructor details
+router.get('/:id', requireAuth, validateParams(instructorIdSchema), enforceSchoolAccess('instructor'), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-
+    
     const instructor = await prisma.instructor.findUnique({
       where: { id: Number(id) },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            createdAt: true
+          }
+        },
+        school: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            phone: true,
+            email: true,
+            website: true
+          }
+        },
+        reviews: {
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            studentName: true,
+            createdAt: true
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }
+      }
+    });
+    
+    if (!instructor) {
+      return res.status(404).json({ message: 'Instructor not found' });
+    }
+    
+    res.json(instructor);
+  } catch (err) {
+    console.error('[GET /instructors/:id] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// POST /instructors - Create instructor (ADMIN or SCHOOL_ADMIN)
+router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createInstructorSchema), async (req: AuthRequest, res) => {
+  try {
+    const { userId, schoolId, bio, yearsExperience, specialties, certifications, profileImage, instructorRole } = req.body;
+    
+    // Determine final schoolId
+    let finalSchoolId: number;
+    
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) {
+        return res.status(404).json({ message: 'No school found for this user' });
+      }
+      finalSchoolId = req.schoolId;
+    } else if (req.role === 'ADMIN') {
+      if (!schoolId) {
+        return res.status(400).json({ message: 'School ID is required' });
+      }
+      finalSchoolId = schoolId;
+    } else {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    
+    // Verify user exists and doesn't already have an instructor profile
+    const user = await prisma.user.findUnique({ 
+      where: { id: Number(userId) },
+      include: { instructor: true }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    if (user.instructor) {
+      return res.status(400).json({ message: 'User already has an instructor profile' });
+    }
+    
+    // Verify school exists
+    const school = await prisma.school.findUnique({ 
+      where: { id: Number(finalSchoolId) } 
+    });
+    
+    if (!school) {
+      return res.status(404).json({ message: 'School not found' });
+    }
+    
+    // Create instructor profile
+    const instructor = await prisma.instructor.create({
+      data: {
+        userId: Number(userId),
+        schoolId: Number(finalSchoolId),
+        bio: bio || null,
+        yearsExperience: yearsExperience || 0,
+        specialties: specialties || [],
+        certifications: certifications || [],
+        profileImage: profileImage || null,
+        instructorRole: instructorRole || 'INSTRUCTOR',
+        isActive: true
+      },
       include: {
         user: {
           select: {
@@ -89,298 +221,197 @@ router.get('/:id', async (req, res) => {
             name: true,
             location: true
           }
-        },
-        reviews: {
-          orderBy: { createdAt: 'desc' }
         }
       }
     });
+    
+    // Update user role to INSTRUCTOR if not already
+    if (user.role !== 'INSTRUCTOR') {
+      await prisma.user.update({
+        where: { id: Number(userId) },
+        data: { role: 'INSTRUCTOR' }
+      });
+    }
+    
+    res.status(201).json(instructor);
+  } catch (err) {
+    console.error('[POST /instructors] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
+// PUT /instructors/:id - Update instructor (ADMIN, SCHOOL_ADMIN, or own profile)
+router.put('/:id', requireAuth, validateParams(instructorIdSchema), enforceSchoolAccess('instructor'), validateBody(updateInstructorSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    
+    // Get existing instructor
+    const existing = await prisma.instructor.findUnique({ 
+      where: { id: Number(id) } 
+    });
+    
+    if (!existing) {
+      return res.status(404).json({ message: 'Instructor not found' });
+    }
+    
+    // INSTRUCTOR can only update their own profile
+    if (req.role === 'INSTRUCTOR' && existing.userId !== req.userId) {
+      return res.status(403).json({ message: 'You can only update your own profile' });
+    }
+    
+    // Update instructor
+    const updated = await prisma.instructor.update({
+      where: { id: Number(id) },
+      data,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
+          }
+        },
+        school: {
+          select: {
+            id: true,
+            name: true,
+            location: true
+          }
+        }
+      }
+    });
+    
+    res.json(updated);
+  } catch (err) {
+    console.error('[PUT /instructors/:id] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// DELETE /instructors/:id - Delete instructor (ADMIN or SCHOOL_ADMIN)
+router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateParams(instructorIdSchema), enforceSchoolAccess('instructor'), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get existing instructor
+    const existing = await prisma.instructor.findUnique({ 
+      where: { id: Number(id) } 
+    });
+    
+    if (!existing) {
+      return res.status(404).json({ message: 'Instructor not found' });
+    }
+    
+    // Delete instructor profile
+    await prisma.instructor.delete({
+      where: { id: Number(id) }
+    });
+    
+    // Optionally update user role back to STUDENT
+    await prisma.user.update({
+      where: { id: existing.userId },
+      data: { role: 'STUDENT' }
+    });
+    
+    res.json({ message: 'Instructor deleted successfully' });
+  } catch (err) {
+    console.error('[DELETE /instructors/:id] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// GET /instructors/:id/classes - Get classes for an instructor
+router.get('/:id/classes', requireAuth, validateParams(instructorIdSchema), enforceSchoolAccess('instructor'), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    
+    const instructor = await prisma.instructor.findUnique({
+      where: { id: Number(id) },
+      select: { schoolId: true, user: { select: { name: true } } }
+    });
+    
     if (!instructor) {
       return res.status(404).json({ message: 'Instructor not found' });
     }
-
-    res.json(instructor);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// POST /instructors/create-with-user - Create user and instructor in one operation
-router.post('/create-with-user', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), async (req: AuthRequest, res) => {
-  try {
-    const { userData, bio, yearsExperience, specialties, certifications, sendWelcomeEmail } = req.body;
-    const currentUserId = req.userId;
-
-    if (!currentUserId) return res.status(401).json({ message: 'Unauthorized' });
-
-    const currentUser = await prisma.user.findUnique({ where: { id: Number(currentUserId) } });
-    if (!currentUser) return res.status(401).json({ message: 'User not found' });
-
-    // Get school for SCHOOL_ADMIN
-    let schoolId: number | undefined;
-    if (currentUser.role === 'SCHOOL_ADMIN') {
-      const userSchool = await prisma.school.findFirst({
-        where: { ownerId: Number(currentUserId) }
-      });
-      
-      if (!userSchool) {
-        return res.status(404).json({ message: 'No school found for this user' });
-      }
-      
-      schoolId = userSchool.id;
-    }
-
-    // Validate that we have a schoolId
-    if (!schoolId) {
-      return res.status(400).json({ message: 'School ID is required' });
-    }
-
-    // Check if user with email already exists
-    const existingUser = await prisma.user.findUnique({ 
-      where: { email: userData.email } 
-    });
     
-    if (existingUser) {
-      return res.status(400).json({ message: 'User with this email already exists' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-
-    // Create user and instructor in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create user
-      const newUser = await tx.user.create({
-        data: {
-          name: userData.name,
-          email: userData.email,
-          phone: userData.phone,
-          password: hashedPassword,
-          role: 'INSTRUCTOR'
-        }
-      });
-
-      // Create instructor profile
-      const instructor = await tx.instructor.create({
-        data: {
-          userId: newUser.id,
-          schoolId: schoolId,
-          bio: bio || `Instructor de surf. Perfil creado por la escuela.`,
-          yearsExperience: Number(yearsExperience) || 1,
-          specialties: specialties || ['Surf para principiantes'],
-          certifications: certifications || [],
-          isActive: true
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true
-            }
-          },
-          school: {
-            select: {
-              id: true,
-              name: true,
-              location: true
-            }
-          }
-        }
-      });
-
-      return { user: newUser, instructor };
-    });
-
-    // TODO: Send welcome email if requested
-    if (sendWelcomeEmail) {
-      console.log(`Welcome email should be sent to ${userData.email}`);
-      // Implement email sending logic here
-    }
-
-    res.status(201).json(result.instructor);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// POST /instructors - Create instructor (SCHOOL_ADMIN or ADMIN only)
-router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), async (req: AuthRequest, res) => {
-  try {
-    const {
-      userId,
-      schoolId,
-      bio,
-      yearsExperience,
-      specialties,
-      certifications,
-      profileImage
-    }: {
-      userId: number;
-      schoolId?: number;
-      bio?: string;
-      yearsExperience?: number;
-      specialties?: string[];
-      certifications?: string[];
-      profileImage?: string;
-    } = req.body;
-
-    const currentUserId = req.userId;
-    if (!currentUserId) return res.status(401).json({ message: 'Unauthorized' });
-
-    const currentUser = await prisma.user.findUnique({ where: { id: Number(currentUserId) } });
-    if (!currentUser) return res.status(401).json({ message: 'User not found' });
-
-    // Check if target user exists
-    const targetUser = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    if (!targetUser) {
-      return res.status(404).json({ message: 'Target user not found' });
-    }
-
-    // Check if instructor profile already exists
-    const existing = await prisma.instructor.findUnique({ where: { userId: Number(userId) } });
-    if (existing) {
-      return res.status(400).json({ message: 'Instructor profile already exists' });
-    }
-
-    let finalSchoolId = schoolId;
-
-    // If SCHOOL_ADMIN, force schoolId to be their school
-    if (currentUser.role === 'SCHOOL_ADMIN') {
-      const userSchool = await prisma.school.findFirst({
-        where: { ownerId: Number(currentUserId) }
-      });
-      
-      if (!userSchool) {
-        return res.status(404).json({ message: 'No school found for this user' });
-      }
-      
-      finalSchoolId = userSchool.id;
-    }
-
-    // Verify school exists
-    const school = await prisma.school.findUnique({ where: { id: Number(finalSchoolId) } });
-    if (!school) {
-      return res.status(404).json({ message: 'School not found' });
-    }
-
-    const instructor = await prisma.instructor.create({
-      data: {
-        userId: Number(userId),
-        schoolId: Number(finalSchoolId),
-        bio,
-        yearsExperience: Number(yearsExperience) || 0,
-        specialties: specialties || [],
-        certifications: certifications || [],
-        profileImage
+    // Find classes where instructor name matches
+    const classes = await prisma.class.findMany({
+      where: {
+        schoolId: instructor.schoolId,
+        instructor: instructor.user.name
       },
       include: {
-        user: {
+        school: {
           select: {
             id: true,
             name: true,
-            email: true,
-            phone: true
+            location: true
           }
         },
-        school: true
+        reservations: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
+            payment: true
+          }
+        }
+      },
+      orderBy: {
+        date: 'asc'
       }
     });
-
-    res.status(201).json(instructor);
+    
+    res.json(classes);
   } catch (err) {
-    console.error(err);
+    console.error('[GET /instructors/:id/classes] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// PUT /instructors/:id - Update instructor (SCHOOL_ADMIN or ADMIN only)
-router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), async (req: AuthRequest, res) => {
+// POST /instructors/:id/reviews - Add review for instructor
+router.post('/:id/reviews', requireAuth, validateParams(instructorIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
-    const userId = req.userId;
-
-    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-
-    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    if (!user) return res.status(401).json({ message: 'User not found' });
-
-    // Check if instructor exists
-    const existingInstructor = await prisma.instructor.findUnique({
-      where: { id: Number(id) },
-      include: { school: true }
-    });
-
-    if (!existingInstructor) {
-      return res.status(404).json({ message: 'Instructor not found' });
-    }
-
-    // If SCHOOL_ADMIN, verify they own the school
-    if (user.role === 'SCHOOL_ADMIN') {
-      const userSchool = await prisma.school.findFirst({
-        where: { ownerId: Number(userId) }
-      });
-      
-      if (!userSchool || userSchool.id !== existingInstructor.schoolId) {
-        return res.status(403).json({ message: 'You can only update instructors from your school' });
-      }
-    }
-
-    const instructor = await prisma.instructor.update({
-      where: { id: Number(id) },
-      data: updateData,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true
-          }
-        },
-        school: true,
-        reviews: true
-      }
-    });
-
-    res.json(instructor);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// POST /instructors/:id/reviews - Add review to instructor
-router.post('/:id/reviews', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { studentName, rating, comment } = req.body;
-
-    if (rating < 1 || rating > 5) {
+    const { rating, comment } = req.body;
+    
+    // Validate input
+    if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({ message: 'Rating must be between 1 and 5' });
     }
-
+    
+    // Get user info
+    const user = await prisma.user.findUnique({
+      where: { id: Number(req.userId) }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Create review
     const review = await prisma.instructorReview.create({
       data: {
         instructorId: Number(id),
-        studentName,
+        studentName: user.name,
         rating: Number(rating),
-        comment
+        comment: comment || null
       }
     });
-
-    // Update instructor's average rating
+    
+    // Update instructor rating
     const allReviews = await prisma.instructorReview.findMany({
       where: { instructorId: Number(id) }
     });
-
+    
     const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
-
+    
     await prisma.instructor.update({
       where: { id: Number(id) },
       data: {
@@ -388,54 +419,10 @@ router.post('/:id/reviews', async (req, res) => {
         totalReviews: allReviews.length
       }
     });
-
+    
     res.status(201).json(review);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// DELETE /instructors/:id - Deactivate instructor (ADMIN or SCHOOL_ADMIN only)
-router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.userId;
-
-    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-
-    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    if (!user) return res.status(401).json({ message: 'User not found' });
-
-    // Check if instructor exists
-    const existingInstructor = await prisma.instructor.findUnique({
-      where: { id: Number(id) },
-      include: { school: true }
-    });
-
-    if (!existingInstructor) {
-      return res.status(404).json({ message: 'Instructor not found' });
-    }
-
-    // If SCHOOL_ADMIN, verify they own the school
-    if (user.role === 'SCHOOL_ADMIN') {
-      const userSchool = await prisma.school.findFirst({
-        where: { ownerId: Number(userId) }
-      });
-      
-      if (!userSchool || userSchool.id !== existingInstructor.schoolId) {
-        return res.status(403).json({ message: 'You can only delete instructors from your school' });
-      }
-    }
-
-    await prisma.instructor.update({
-      where: { id: Number(id) },
-      data: { isActive: false }
-    });
-
-    res.json({ message: 'Instructor deactivated successfully' });
-  } catch (err) {
-    console.error(err);
+    console.error('[POST /instructors/:id/reviews] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
