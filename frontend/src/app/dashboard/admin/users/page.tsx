@@ -48,6 +48,11 @@ export default function UsersManagementPage() {
     }
   });
 
+  // Wrapper function to match UserForm interface
+  const handleUserSubmit = async (data: Partial<User>): Promise<void> => {
+    await handleSubmit(data);
+  };
+
   useEffect(() => {
     if (status === 'loading') return;
     
@@ -171,7 +176,7 @@ export default function UsersManagementPage() {
         >
           <UserForm
             user={selectedItem || undefined}
-            onSubmit={handleSubmit}
+            onSubmit={handleUserSubmit}
             onCancel={closeModal}
             isLoading={isLoading}
           />

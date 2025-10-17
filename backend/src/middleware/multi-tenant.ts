@@ -264,21 +264,29 @@ export const buildMultiTenantWhere = async (
 
   // SCHOOL_ADMIN: Filter by school
   if (role === 'SCHOOL_ADMIN') {
-    if (!schoolId) {
-      throw new Error('School ID not found for SCHOOL_ADMIN');
+    // Get school ID if not already set
+    let adminSchoolId = schoolId;
+    if (!adminSchoolId) {
+      const school = await prisma.school.findFirst({ 
+        where: { ownerId: Number(userId) } 
+      });
+      if (!school) {
+        throw new Error('No school found for this SCHOOL_ADMIN');
+      }
+      adminSchoolId = school.id;
     }
 
     switch (resourceType) {
       case 'class':
       case 'instructor':
       case 'student':
-        where.schoolId = schoolId;
+        where.schoolId = adminSchoolId;
         break;
       case 'reservation':
-        where.class = { schoolId };
+        where.class = { schoolId: adminSchoolId };
         break;
       case 'payment':
-        where.reservation = { class: { schoolId } };
+        where.reservation = { class: { schoolId: adminSchoolId } };
         break;
     }
 

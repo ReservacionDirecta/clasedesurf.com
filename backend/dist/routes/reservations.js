@@ -41,6 +41,8 @@ const prisma_1 = __importDefault(require("../prisma"));
 const auth_1 = __importStar(require("../middleware/auth"));
 const validation_1 = require("../middleware/validation");
 const reservations_1 = require("../validations/reservations");
+const resolve_school_1 = __importDefault(require("../middleware/resolve-school"));
+const multi_tenant_1 = require("../middleware/multi-tenant");
 const router = express_1.default.Router();
 // POST /reservations - create reservation (requires auth)
 router.post('/', auth_1.default, (0, validation_1.validateBody)(reservations_1.createReservationSchema), async (req, res) => {
@@ -82,34 +84,43 @@ router.post('/', auth_1.default, (0, validation_1.validateBody)(reservations_1.c
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-// GET /reservations - returns reservations based on user role
-router.get('/', auth_1.default, async (req, res) => {
+// GET /reservations - returns reservations based on user role (multi-tenant filtered)
+router.get('/', auth_1.default, resolve_school_1.default, async (req, res) => {
     try {
-        const userId = req.userId;
-        const userRole = req.role; // Fixed: use req.role instead of req.userRole
-        // ADMIN and SCHOOL_ADMIN can see all reservations with full details
-        if (userRole === 'ADMIN' || userRole === 'SCHOOL_ADMIN') {
-            const reservations = await prisma_1.default.reservation.findMany({
-                include: {
-                    user: true,
-                    class: { include: { school: true } },
-                    payment: true
-                }
-            });
-            return res.json(reservations);
-        }
-        // Regular users only see their own reservations
-        if (userId) {
-            const reservations = await prisma_1.default.reservation.findMany({
-                where: { userId: Number(userId) },
-                include: { class: true }
-            });
-            return res.json(reservations);
-        }
-        return res.status(403).json({ message: 'Forbidden' });
+        // Build where clause with multi-tenant filtering
+        const where = await (0, multi_tenant_1.buildMultiTenantWhere)(req, 'reservation');
+        const reservations = await prisma_1.default.reservation.findMany({
+            where,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true
+                    }
+                },
+                class: {
+                    include: {
+                        school: {
+                            select: {
+                                id: true,
+                                name: true,
+                                location: true
+                            }
+                        }
+                    }
+                },
+                payment: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+        res.json(reservations);
     }
     catch (err) {
-        console.error(err);
+        console.error('[GET /reservations] Error:', err);
         res.status(500).json({ message: 'Internal server error' });
     }
 });

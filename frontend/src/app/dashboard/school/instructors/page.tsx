@@ -1,388 +1,408 @@
-'use client';
+"use client";
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Plus, Star, Users, Award } from 'lucide-react';
-import { useCrudOperations } from '@/hooks/useCrudOperations';
-import { useApiCall } from '@/hooks/useApiCall';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import InstructorForm from '@/components/forms/InstructorForm';
+import { useCallback, useEffect, useState } from 'react';
+import { Users, Plus, Edit, Trash2, Mail, Phone, Star, Award } from 'lucide-react';
 import SimpleInstructorForm from '@/components/forms/SimpleInstructorForm';
-import DataTable, { Column } from '@/components/tables/DataTable';
-import InstructorPermissions from '@/components/instructors/InstructorPermissions';
-import { Instructor } from '@/types';
+import Image from 'next/image';
+import InstructorForm from '@/components/forms/InstructorForm';
 
-export default function InstructorsManagementPage() {
+interface Instructor {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  specialties?: string[];
+  rating?: number;
+  totalClasses?: number;
+  profileImage?: string;
+  // Campos para edición
+  userId?: number;
+  bio?: string;
+  yearsExperience?: number;
+  certifications?: string[];
+  isActive?: boolean;
+}
+
+export default function InstructorsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [instructors, setInstructors] = useState<Instructor[]>([]);
-  const [schoolId, setSchoolId] = useState<number | null>(null);
-  const [schoolName, setSchoolName] = useState<string>('');
-  const [createMode, setCreateMode] = useState<'simple' | 'complete'>('simple');
-  const { makeRequest } = useApiCall();
+  const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Instructor | null>(null);
 
-  const {
-    isModalOpen,
-    isDeleteDialogOpen,
-    selectedItem,
-    itemToDelete,
-    isLoading,
-    handleSubmit,
-    openCreateModal,
-    openEditModal,
-    closeModal,
-    openDeleteDialog,
-    closeDeleteDialog,
-    confirmDelete
-  } = useCrudOperations<Instructor>({
-    endpoint: '/api/instructors',
-    onSuccess: (action) => {
-      fetchInstructors();
-      if (action === 'create') {
-        alert('Instructor creado exitosamente');
-      } else if (action === 'update') {
-        alert('Instructor actualizado exitosamente');
-      } else if (action === 'delete') {
-        alert('Instructor eliminado exitosamente');
+  const fetchInstructors = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = (session as any)?.backendToken;
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const response = await fetch('/api/instructors', { headers });
+      if (response.ok) {
+        const data = await response.json();
+        const normalized = Array.isArray(data)
+          ? data.map((it: any) => ({
+              id: it.id,
+              name: it.user?.name ?? it.name ?? 'Instructor',
+              email: it.user?.email ?? it.email ?? '',
+              phone: it.user?.phone ?? it.phone,
+              specialties: it.specialties ?? [],
+              rating: it.rating ?? 0,
+              totalClasses: it.totalClasses ?? 0,
+              profileImage: it.profileImage ?? undefined,
+              userId: it.userId ?? it.user?.id,
+              bio: it.bio ?? '',
+              yearsExperience: it.yearsExperience ?? 0,
+              certifications: it.certifications ?? [],
+              isActive: it.isActive ?? true
+            }))
+          : [];
+        setInstructors(normalized);
       }
-    },
-    onError: (error) => {
-      alert(`Error: ${error}`);
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
+    } finally {
+      setLoading(false);
     }
-  });
+  }, [session]);
 
   useEffect(() => {
     if (status === 'loading') return;
-    
     if (!session) {
       router.push('/login');
       return;
     }
-
-    if (session.user?.role !== 'SCHOOL_ADMIN' && session.user?.role !== 'ADMIN') {
+    if (session.user?.role !== 'SCHOOL_ADMIN') {
       router.push('/dashboard/student/profile');
       return;
     }
+    fetchInstructors();
+  }, [session, status, router, fetchInstructors]);
 
-    fetchSchoolAndInstructors();
-  }, [session, status, router]);
-
-  const fetchSchoolAndInstructors = async () => {
+  const handleCreateInstructor = async (payload: any) => {
     try {
-      // Si es SCHOOL_ADMIN, obtener su escuela
-      if (session?.user?.role === 'SCHOOL_ADMIN') {
-        const schoolResult = await makeRequest('/api/schools/my-school', { method: 'GET' });
-        if (schoolResult.data) {
-          setSchoolId(schoolResult.data.id);
-          setSchoolName(schoolResult.data.name);
-        }
-      }
-      
-      await fetchInstructors();
-    } catch (error) {
-      console.error('Error fetching school:', error);
-    }
-  };
+      setIsCreating(true);
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const fetchInstructors = async () => {
-    try {
-      // Para SCHOOL_ADMIN, el backend automáticamente filtra por su escuela
-      // Para ADMIN, puede ver todos los instructores
-      const result = await makeRequest('/api/instructors', { method: 'GET' });
-      if (result.data) {
-        setInstructors(result.data);
-      }
-    } catch (error) {
-      console.error('Error fetching instructors:', error);
-      // Si hay error de permisos, mostrar mensaje apropiado
-      if (error instanceof Error && error.message.includes('403')) {
-        alert('No tienes permisos para ver instructores de otras escuelas');
-      }
-    }
-  };
-
-  const handleSimpleCreate = async (data: any) => {
-    try {
-      const result = await makeRequest('/api/instructors/create-simple', {
+      const res = await fetch('/api/instructors', {
         method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message || 'No se pudo crear el instructor');
+      }
+      await fetchInstructors();
+      setShowCreateModal(false);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const openEdit = (instructor: Instructor) => {
+    setSelectedInstructor(instructor);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateInstructor = async (data: Partial<Instructor>) => {
+    if (!selectedInstructor) return;
+    try {
+      setIsUpdating(true);
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/instructors/${selectedInstructor.id}`, {
+        method: 'PUT',
+        headers,
         body: JSON.stringify(data)
       });
-      
-      if (result.data) {
-        await fetchInstructors();
-        alert('Instructor creado exitosamente. Se ha enviado un email de bienvenida.');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message || 'No se pudo actualizar el instructor');
       }
-    } catch (error) {
-      console.error('Error creating instructor:', error);
-      throw error;
+      await fetchInstructors();
+      setShowEditModal(false);
+      setSelectedInstructor(null);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  const openCreateModalSimple = () => {
-    setCreateMode('simple');
-    openCreateModal();
+  const confirmDelete = (instructor: Instructor) => {
+    setDeleteTarget(instructor);
   };
 
-  const openCreateModalComplete = () => {
-    setCreateMode('complete');
-    openCreateModal();
-  };
+  const handleDeleteInstructor = async () => {
+    if (!deleteTarget) return;
+    try {
+      setIsDeleting(true);
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const columns: Column<Instructor>[] = [
-    {
-      key: 'user',
-      label: 'Instructor',
-      render: (item) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <Users className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <div className="font-medium text-gray-900">{item.user?.name || 'N/A'}</div>
-            <div className="text-sm text-gray-500">{item.user?.email || 'N/A'}</div>
-          </div>
-        </div>
-      )
-    },
-    {
-      key: 'yearsExperience',
-      label: 'Experiencia',
-      render: (item) => `${item.yearsExperience} años`
-    },
-    {
-      key: 'specialties',
-      label: 'Especialidades',
-      render: (item) => (
-        <div className="max-w-xs">
-          {item.specialties && item.specialties.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {item.specialties.slice(0, 2).map((specialty, index) => (
-                <span
-                  key={index}
-                  className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-                >
-                  {specialty}
-                </span>
-              ))}
-              {item.specialties.length > 2 && (
-                <span className="inline-flex px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                  +{item.specialties.length - 2}
-                </span>
-              )}
-            </div>
-          ) : (
-            <span className="text-gray-400">Sin especialidades</span>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'certifications',
-      label: 'Certificaciones',
-      render: (item) => (
-        <div className="flex items-center gap-2">
-          <Award className="w-4 h-4 text-green-600" />
-          <span className="text-sm">
-            {item.certifications?.length || 0} certificaciones
-          </span>
-        </div>
-      )
-    },
-    {
-      key: 'rating',
-      label: 'Calificación',
-      render: (item) => (
-        <div className="flex items-center gap-1">
-          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-          <span className="font-medium">
-            {item.rating > 0 ? item.rating.toFixed(1) : 'N/A'}
-          </span>
-          <span className="text-sm text-gray-500">
-            ({item.totalReviews} reseñas)
-          </span>
-        </div>
-      )
-    },
-    {
-      key: 'isActive',
-      label: 'Estado',
-      render: (item) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          item.isActive 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-red-100 text-red-800'
-        }`}>
-          {item.isActive ? 'Activo' : 'Inactivo'}
-        </span>
-      )
-    },
-    {
-      key: 'school',
-      label: 'Escuela',
-      render: (item) => item.school?.name || 'N/A'
+      const res = await fetch(`/api/instructors/${deleteTarget.id}`, {
+        method: 'DELETE',
+        headers
+      });
+      if (!res.ok && res.status !== 204) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message || 'No se pudo eliminar el instructor');
+      }
+      await fetchInstructors();
+      setDeleteTarget(null);
+    } finally {
+      setIsDeleting(false);
     }
-  ];
+  };
 
-  if (status === 'loading') {
+  if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando instructores...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Gestión de Instructores</h1>
-              <p className="text-gray-600 mt-1">
-                Administra el equipo de instructores de {session?.user?.role === 'SCHOOL_ADMIN' ? 'tu escuela' : 'todas las escuelas'}
-              </p>
+    <div className="min-h-screen bg-gray-100 pb-20 sm:pb-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        {/* Header - Mobile Optimized */}
+        <div className="mb-6 sm:mb-8">
+          <button
+            onClick={() => router.push('/dashboard/school')}
+            className="text-blue-600 hover:text-blue-800 mb-3 sm:mb-4 flex items-center text-sm sm:text-base"
+          >
+            ← Volver al Dashboard
+          </button>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">Gestión de Instructores</h1>
+              <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Administra el equipo de instructores de tu escuela</p>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={openCreateModalSimple}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Crear Instructor
-              </button>
-              <button
-                onClick={openCreateModalComplete}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
-              >
-                Crear Completo
-              </button>
-            </div>
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Nuevo Instructor</span>
+              <span className="sm:hidden">Nuevo</span>
+            </button>
           </div>
         </div>
 
-        {/* Permissions Info */}
-        <InstructorPermissions 
-          schoolName={schoolName}
-          totalInstructors={instructors.length}
-        />
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Total</h3>
-                <p className="text-3xl font-bold text-blue-600">{instructors.length}</p>
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+              <div className="ml-2 sm:ml-4 min-w-0">
+                <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Total</h3>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold text-blue-600">{instructors.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-full">
-                <Users className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Activos</h3>
-                <p className="text-3xl font-bold text-green-600">
-                  {instructors.filter(i => i.isActive).length}
-                </p>
+              <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 flex-shrink-0" />
+              <div className="ml-2 sm:ml-4 min-w-0">
+                <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Rating</h3>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold text-yellow-600">4.8</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-yellow-100 rounded-full">
-                <Star className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Calificación Promedio</h3>
-                <p className="text-3xl font-bold text-yellow-600">
-                  {instructors.length > 0 
-                    ? (instructors.reduce((sum, i) => sum + i.rating, 0) / instructors.length).toFixed(1)
-                    : '0.0'
-                  }
-                </p>
+              <Award className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" />
+              <div className="ml-2 sm:ml-4 min-w-0">
+                <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Activos</h3>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold text-green-600">{instructors.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
             <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-full">
-                <Award className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Experiencia Promedio</h3>
-                <p className="text-3xl font-bold text-purple-600">
-                  {instructors.length > 0 
-                    ? Math.round(instructors.reduce((sum, i) => sum + i.yearsExperience, 0) / instructors.length)
-                    : 0
-                  } años
-                </p>
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 flex-shrink-0" />
+              <div className="ml-2 sm:ml-4 min-w-0">
+                <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Clases</h3>
+                <p className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-600">156</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Instructors Table */}
-        <DataTable
-          data={instructors}
-          columns={columns}
-          onEdit={(item) => openEditModal(item)}
-          onDelete={(item) => openDeleteDialog(item.id, item.user?.name || 'Instructor')}
-          emptyMessage="No hay instructores registrados. Crea el primer instructor para comenzar."
-        />
-
-        {/* Create/Edit Modal */}
-        <Modal
-          isOpen={isModalOpen}
-          onClose={closeModal}
-          title={
-            selectedItem 
-              ? 'Editar Instructor' 
-              : createMode === 'simple' 
-                ? 'Crear Instructor Rápido' 
-                : 'Crear Instructor Completo'
-          }
-          size="lg"
-        >
-          {selectedItem || createMode === 'complete' ? (
-            <InstructorForm
-              instructor={selectedItem || undefined}
-              onSubmit={handleSubmit}
-              onCancel={closeModal}
-              isLoading={isLoading}
-              userRole={session?.user?.role}
-            />
+        {/* Instructors List */}
+        <div className="space-y-4 sm:space-y-6">
+          {instructors.length === 0 ? (
+            <div className="bg-white rounded-lg shadow p-8 text-center">
+              <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No hay instructores</h3>
+              <p className="text-gray-600 mb-4">Agrega tu primer instructor para comenzar</p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Agregar Instructor
+              </button>
+            </div>
           ) : (
-            <SimpleInstructorForm
-              onSubmit={handleSimpleCreate}
-              onCancel={closeModal}
-              isLoading={isLoading}
-            />
-          )}
-        </Modal>
+            instructors.map((instructor) => (
+              <div key={instructor.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                    {instructor.profileImage ? (
+                      <Image
+                        src={instructor.profileImage}
+                        alt={instructor.name}
+                        width={64}
+                        height={64}
+                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                      </div>
+                    )}
+                    
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{instructor.name}</h3>
+                      
+                      <div className="flex flex-col gap-1 mt-2">
+                        <div className="flex items-center text-gray-600 text-xs sm:text-sm">
+                          <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                          <span className="truncate">{instructor.email}</span>
+                        </div>
+                        
+                        {instructor.phone && (
+                          <div className="flex items-center text-gray-600 text-xs sm:text-sm">
+                            <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                            <span>{instructor.phone}</span>
+                          </div>
+                        )}
+                      </div>
 
-        {/* Delete Confirmation Dialog */}
-        <ConfirmDialog
-          isOpen={isDeleteDialogOpen}
-          onClose={closeDeleteDialog}
-          onConfirm={confirmDelete}
-          title="Eliminar Instructor"
-          message={`¿Estás seguro de que deseas eliminar al instructor "${itemToDelete?.name}"? Esta acción no se puede deshacer y afectará las clases asignadas.`}
-          confirmText="Eliminar"
-          cancelText="Cancelar"
-          variant="danger"
-          isLoading={isLoading}
-        />
+                      {instructor.specialties && instructor.specialties.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {instructor.specialties.map((specialty, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            >
+                              {specialty}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-row sm:flex-col gap-2 sm:gap-3">
+                    <button
+                      onClick={() => openEdit(instructor)}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-xs sm:text-sm"
+                    >
+                      <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                      <span className="hidden sm:inline">Editar</span>
+                      <span className="sm:hidden">Edit</span>
+                    </button>
+                    <button
+                      onClick={() => confirmDelete(instructor)}
+                      className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs sm:text-sm"
+                    >
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                      <span className="hidden sm:inline">Eliminar</span>
+                      <span className="sm:hidden">Del</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Create Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <SimpleInstructorForm
+                onSubmit={handleCreateInstructor}
+                onCancel={() => setShowCreateModal(false)}
+                isLoading={isCreating}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && selectedInstructor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
+              <h3 className="text-lg sm:text-xl font-bold mb-4">Editar Instructor</h3>
+              <InstructorForm
+                instructor={{
+                  // Adaptar al contrato del formulario
+                  id: selectedInstructor.id as any,
+                  userId: selectedInstructor.userId as any,
+                  bio: selectedInstructor.bio,
+                  yearsExperience: selectedInstructor.yearsExperience,
+                  specialties: selectedInstructor.specialties,
+                  certifications: selectedInstructor.certifications,
+                  isActive: selectedInstructor.isActive
+                } as any}
+                onSubmit={handleUpdateInstructor}
+                onCancel={() => setShowEditModal(false)}
+                isLoading={isUpdating}
+                userRole={(session as any)?.user?.role}
+                mode="complete"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirm Modal */}
+        {deleteTarget && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar Instructor</h3>
+              <p className="text-gray-600 mb-4">
+                ¿Seguro que deseas eliminar a <span className="font-semibold">{deleteTarget.name}</span>? Esta acción desactivará su perfil.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  disabled={isDeleting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteInstructor}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

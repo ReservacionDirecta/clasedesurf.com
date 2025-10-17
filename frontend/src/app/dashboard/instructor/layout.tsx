@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import InstructorNavbar from '@/components/layout/InstructorNavbar';
+import { MobileBottomNav } from '@/components/navigation/MobileBottomNav';
 
 export default function InstructorLayout({
   children,
@@ -45,7 +46,8 @@ export default function InstructorLayout({
   return (
     <div className="min-h-screen bg-gray-100">
       <InstructorNavbar />
-      <main>{children}</main>
+      <main className="pb-20 md:pb-0">{children}</main>
+      <MobileBottomNav />
     </div>
   );
 }

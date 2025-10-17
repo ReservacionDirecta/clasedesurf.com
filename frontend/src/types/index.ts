@@ -52,7 +52,7 @@ export interface UpdateProfileData {
   injuries?: string;
   phone?: string;
 }
-export type UserRole = 'STUDENT' | 'ADMIN' | 'SCHOOL_ADMIN';
+export type UserRole = 'STUDENT' | 'ADMIN' | 'SCHOOL_ADMIN' | 'INSTRUCTOR';
 export type ClassLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 
 export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'PAID' | 'CANCELED' | 'COMPLETED';

@@ -41,6 +41,7 @@ const prisma_1 = __importDefault(require("../prisma"));
 const auth_1 = __importStar(require("../middleware/auth"));
 const validation_1 = require("../middleware/validation");
 const schools_1 = require("../validations/schools");
+const resolve_school_1 = __importDefault(require("../middleware/resolve-school"));
 const router = express_1.default.Router();
 // GET /schools - list schools
 router.get('/', async (req, res) => {
@@ -59,16 +60,27 @@ router.get('/my-school', auth_1.default, async (req, res) => {
         const userId = req.userId;
         if (!userId)
             return res.status(401).json({ message: 'Unauthorized' });
-        // For now, return the first school if user is SCHOOL_ADMIN
-        // In a real implementation, you'd have a userId field in School model
         const user = await prisma_1.default.user.findUnique({ where: { id: Number(userId) } });
         if (!user || user.role !== 'SCHOOL_ADMIN') {
             return res.status(403).json({ message: 'Only school admins can access this endpoint' });
         }
-        // For demo purposes, return the first school
-        // TODO: Implement proper user-school association
+        // Find school owned by this user
         const school = await prisma_1.default.school.findFirst({
-            orderBy: { createdAt: 'desc' }
+            where: { ownerId: Number(userId) },
+            include: {
+                classes: {
+                    orderBy: { date: 'asc' },
+                    take: 10
+                },
+                instructors: {
+                    where: { isActive: true },
+                    include: {
+                        user: {
+                            select: { name: true, email: true, phone: true }
+                        }
+                    }
+                }
+            }
         });
         if (!school) {
             return res.status(404).json({ message: 'No school found for this user' });
@@ -76,7 +88,7 @@ router.get('/my-school', auth_1.default, async (req, res) => {
         res.json(school);
     }
     catch (err) {
-        console.error(err);
+        console.error('Error in /my-school:', err);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
@@ -115,8 +127,14 @@ router.post('/', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN
         const userId = req.userId;
         if (!userId)
             return res.status(401).json({ message: 'Unauthorized' });
-        // For now, handle as JSON. We'll add file upload later
         const { name, location, description, phone, email, website, instagram, facebook, whatsapp, address } = req.body;
+        // Check if user already has a school
+        const existingSchool = await prisma_1.default.school.findFirst({
+            where: { ownerId: Number(userId) }
+        });
+        if (existingSchool) {
+            return res.status(400).json({ message: 'User already has a school' });
+        }
         const created = await prisma_1.default.school.create({
             data: {
                 name,
@@ -128,7 +146,8 @@ router.post('/', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN
                 instagram: instagram || null,
                 facebook: facebook || null,
                 whatsapp: whatsapp || null,
-                address: address || null
+                address: address || null,
+                ownerId: Number(userId)
             }
         });
         res.status(201).json(created);
@@ -139,10 +158,17 @@ router.post('/', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN
     }
 });
 // PUT /schools/:id - update (requires ADMIN or SCHOOL_ADMIN)
-router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), (0, validation_1.validateParams)(schools_1.schoolIdSchema), (0, validation_1.validateBody)(schools_1.updateSchoolSchema), async (req, res) => {
+router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateParams)(schools_1.schoolIdSchema), (0, validation_1.validateBody)(schools_1.updateSchoolSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const data = req.body;
+        if (req.role === 'SCHOOL_ADMIN') {
+            if (!req.schoolId)
+                return res.status(404).json({ message: 'No school found for this user' });
+            if (Number(id) !== req.schoolId) {
+                return res.status(403).json({ message: 'You can only update your own school' });
+            }
+        }
         const updated = await prisma_1.default.school.update({ where: { id: Number(id) }, data });
         res.json(updated);
     }

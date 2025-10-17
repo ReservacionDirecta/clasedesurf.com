@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+  engineType = "library"
 }
 
 datasource db {
@@ -22,28 +24,30 @@ model User {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   reservations Reservation[]
-  refreshTokens RefreshToken[]
   instructor   Instructor?
+  student      Student?
+  refreshTokens RefreshToken[]
   
   @@map("users")
 }
 
 model Instructor {
-  id              Int      @id @default(autoincrement())
-  user            User     @relation(fields: [userId], references: [id])
-  userId          Int      @unique
-  school          School   @relation(fields: [schoolId], references: [id])
+  id              Int            @id @default(autoincrement())
+  user            User           @relation(fields: [userId], references: [id])
+  userId          Int            @unique
+  school          School         @relation(fields: [schoolId], references: [id])
   schoolId        Int
   bio             String?
-  yearsExperience Int      @default(0)
-  specialties     String[] // Array of specialties
-  certifications  String[] // Array of certifications
-  rating          Float    @default(0)
-  totalReviews    Int      @default(0)
+  yearsExperience Int            @default(0)
+  specialties     String[]       // Array of specialties
+  certifications  String[]       // Array of certifications
+  rating          Float          @default(0)
+  totalReviews    Int            @default(0)
   profileImage    String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive        Boolean        @default(true)
+  instructorRole  InstructorRole @default(INSTRUCTOR)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
   reviews         InstructorReview[]
   
   @@map("instructors")
@@ -60,6 +64,23 @@ model InstructorReview {
   
   @@map("instructor_reviews")
 }
+
+model Student {
+  id         Int       @id @default(autoincrement())
+  user       User      @relation(fields: [userId], references: [id])
+  userId     Int       @unique
+  school     School?   @relation(fields: [schoolId], references: [id])
+  schoolId   Int?
+  birthdate  DateTime?
+  notes      String?
+  level      ClassLevel @default(BEGINNER)
+  canSwim    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  
+  @@map("students")
+}
+
 model School {
   id          Int          @id @default(autoincrement())
   name        String
@@ -79,6 +100,7 @@ model School {
   updatedAt   DateTime     @updatedAt
   classes     Class[]
   instructors Instructor[]
+  students    Student[]
   
   @@map("schools")
 }
@@ -152,6 +174,10 @@ enum PaymentStatus {
   UNPAID
   PAID
   REFUNDED
+}
+enum InstructorRole {
+  INSTRUCTOR
+  HEAD_COACH
 }
 
 model RefreshToken {

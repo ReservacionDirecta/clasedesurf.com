@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: clasedesurf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: clasedesurf.com
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - clasedesurf-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clasedesurf-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/clasedesurf.com
+      
+      # Server
+      PORT: 4000
+      NODE_ENV: production
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
+      
+      # CORS
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      
+      # WhatsApp (optional)
+      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-false}
+      WHATSAPP_SESSION_PATH: ${WHATSAPP_SESSION_PATH:-./whatsapp-session}
+      
+      # Email (optional)
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-}
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - clasedesurf-network
+    volumes:
+      - ./whatsapp-session:/app/whatsapp-session
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  clasedesurf-network:
+    driver: bridge

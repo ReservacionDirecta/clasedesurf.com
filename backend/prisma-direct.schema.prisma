@@ -1,0 +1,169 @@
+// Alternative Prisma schema forcing direct connection
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  name         String
+  password     String
+  role         UserRole      @default(STUDENT)
+  age          Int?
+  weight       Float?
+  height       Float?
+  canSwim      Boolean       @default(false)
+  injuries     String?
+  phone        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
+  refreshTokens RefreshToken[]
+  instructor   Instructor?
+  
+  @@map("users")
+}
+
+model Instructor {
+  id              Int      @id @default(autoincrement())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          Int      @unique
+  school          School   @relation(fields: [schoolId], references: [id])
+  schoolId        Int
+  bio             String?
+  yearsExperience Int      @default(0)
+  specialties     String[] // Array of specialties
+  certifications  String[] // Array of certifications
+  rating          Float    @default(0)
+  totalReviews    Int      @default(0)
+  profileImage    String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  reviews         InstructorReview[]
+  
+  @@map("instructors")
+}
+
+model InstructorReview {
+  id           Int        @id @default(autoincrement())
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+  instructorId Int
+  studentName  String
+  rating       Int        // 1-5 stars
+  comment      String?
+  createdAt    DateTime   @default(now())
+  
+  @@map("instructor_reviews")
+}
+model School {
+  id          Int          @id @default(autoincrement())
+  name        String
+  location    String
+  description String?
+  phone       String?
+  email       String?
+  website     String?
+  instagram   String?
+  facebook    String?
+  whatsapp    String?
+  address     String?
+  logo        String?
+  coverImage  String?
+  ownerId     Int?         // Owner of the school (SCHOOL_ADMIN)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  classes     Class[]
+  instructors Instructor[]
+  
+  @@map("schools")
+}
+model Class {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String?
+  date         DateTime
+  duration     Int           // duración en minutos
+  capacity     Int
+  price        Float
+  level        ClassLevel    @default(BEGINNER)
+  instructor   String?       // nombre del instructor
+  school       School        @relation(fields: [schoolId], references: [id])
+  schoolId     Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
+  
+  @@map("classes")
+}
+model Reservation {
+  id             Int                @id @default(autoincrement())
+  user           User               @relation(fields: [userId], references: [id])
+  userId         Int
+  class          Class              @relation(fields: [classId], references: [id])
+  classId        Int
+  status         ReservationStatus  @default(PENDING)
+  specialRequest String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  payment        Payment?
+  
+  @@map("reservations")
+}
+model Payment {
+  id            Int           @id @default(autoincrement())
+  reservation   Reservation   @relation(fields: [reservationId], references: [id])
+  reservationId Int           @unique
+  amount        Float
+  status        PaymentStatus @default(UNPAID)
+  paymentMethod String?
+  transactionId String?
+  voucherImage  String?       // URL or path to voucher image
+  voucherNotes  String?       // Additional notes about the payment
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  @@map("payments")
+}
+enum UserRole {
+  STUDENT
+  INSTRUCTOR
+  ADMIN
+  SCHOOL_ADMIN
+}
+enum ClassLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  CANCELED
+  COMPLETED
+}
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}

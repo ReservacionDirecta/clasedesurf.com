@@ -8,8 +8,25 @@ import { buildMultiTenantWhere } from '../middleware/multi-tenant';
 
 const router = express.Router();
 
+// Middleware to optionally extract auth info without requiring it
+const optionalAuth = (req: AuthRequest, res: any, next: any) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-key-for-development-only') as any;
+      req.userId = decoded.userId;
+      req.role = decoded.role;
+    } catch (err) {
+      // Invalid token, but we don't fail - just continue without auth
+    }
+  }
+  next();
+};
+
 // GET /classes - list classes with filters (supports multi-tenant filtering)
-router.get('/', async (req: AuthRequest, res) => {
+router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   try {
     const { date, level, type, minPrice, maxPrice, schoolId } = req.query;
     

@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { ClassCard } from '@/components/classes/ClassCard'
 import { BookingModal } from '@/components/booking/BookingModal'
-import { Header } from '@/components/layout/Header'
 import { Hero } from '@/components/layout/Hero'
 import { Footer } from '@/components/layout/Footer'
 import { FilterPanel } from '@/components/marketplace/FilterPanel'
@@ -423,7 +422,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <Hero />
       
       {/* Marketplace Stats */}

@@ -138,7 +138,7 @@ export function useCrudOperations<T = any>({ endpoint, onSuccess, onError }: Cru
 
   // Submit handler (create or update)
   const handleSubmit = useCallback(async (data: Partial<T>) => {
-    if (selectedItem && 'id' in selectedItem) {
+    if (selectedItem && typeof selectedItem === 'object' && selectedItem !== null && 'id' in selectedItem) {
       return await handleUpdate((selectedItem as any).id, data);
     } else {
       return await handleCreate(data);

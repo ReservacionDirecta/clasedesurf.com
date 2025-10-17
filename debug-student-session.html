@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Student Session</title>
+    <script>
+        async function testSession() {
+            const output = document.getElementById('output');
+            
+            try {
+                // Test 1: Check session
+                output.innerHTML += '<h3>Test 1: Checking Session</h3>';
+                const sessionRes = await fetch('/api/auth/session');
+                const sessionData = await sessionRes.json();
+                output.innerHTML += '<pre>' + JSON.stringify(sessionData, null, 2) + '</pre>';
+                
+                // Test 2: Try to fetch reservations
+                output.innerHTML += '<h3>Test 2: Fetching Reservations</h3>';
+                const token = sessionData?.backendToken;
+                output.innerHTML += '<p>Token found: ' + (token ? 'YES' : 'NO') + '</p>';
+                
+                if (token) {
+                    const reservationsRes = await fetch('/api/reservations', {
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        }
+                    });
+                    
+                    output.innerHTML += '<p>Status: ' + reservationsRes.status + '</p>';
+                    
+                    if (reservationsRes.ok) {
+                        const reservationsData = await reservationsRes.json();
+                        output.innerHTML += '<pre>' + JSON.stringify(reservationsData, null, 2) + '</pre>';
+                    } else {
+                        const errorData = await reservationsRes.text();
+                        output.innerHTML += '<p style="color: red;">Error: ' + errorData + '</p>';
+                    }
+                } else {
+                    output.innerHTML += '<p style="color: red;">No token found in session!</p>';
+                    output.innerHTML += '<p>Please login first at <a href="/login">/login</a></p>';
+                }
+                
+            } catch (error) {
+                output.innerHTML += '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Debug Student Session</h1>
+    <button onclick="testSession()">Run Tests</button>
+    <div id="output"></div>
+</body>
+</html>

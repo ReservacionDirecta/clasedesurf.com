@@ -139,7 +139,7 @@ export class EmailService {
                 </tr>
                 <tr>
                   <td style="padding: 8px 0; color: #666; font-weight: bold;">Precio:</td>
-                  <td style="padding: 8px 0; color: #333; font-weight: bold;">${{amount}}</td>
+                  <td style="padding: 8px 0; color: #333; font-weight: bold;">$\{{amount}}</td>
                 </tr>
               </table>
             </div>
@@ -167,7 +167,7 @@ export class EmailService {
         - Hora: {{classTime}}
         - Instructor: {{instructor}}
         - Ubicación: {{location}}
-        - Precio: ${{amount}}
+        - Precio: $\{{amount}}
         
         Recuerda llegar 15 minutos antes de la clase para el check-in.
         

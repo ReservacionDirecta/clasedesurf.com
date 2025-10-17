@@ -55,8 +55,65 @@ export default function InstructorEarnings() {
 
   const fetchEarnings = async () => {
     try {
-      // Datos mock de ganancias de Gabriel Barrera
-      const mockEarnings: Earning[] = [
+      const token = (session as any)?.backendToken;
+      const headers: any = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Fetch real earnings data from backend
+      const [earningsRes, classesRes] = await Promise.all([
+        fetch('/api/instructor/earnings', { headers }),
+        fetch('/api/instructor/classes', { headers })
+      ]);
+
+      if (!earningsRes.ok || !classesRes.ok) {
+        throw new Error('Failed to fetch earnings data');
+      }
+
+      const earningsData = await earningsRes.json();
+      const classesData = await classesRes.json();
+
+      // Process earnings data
+      const processedEarnings: Earning[] = (earningsData.recentPayments || []).map((payment: any) => {
+        // Find the corresponding class
+        const classInfo = classesData.classes?.find((c: any) => c.title === payment.className);
+        const duration = classInfo?.duration || 120;
+        const students = classInfo?.reservations?.filter((r: any) => r.status !== 'CANCELED').length || 0;
+        
+        return {
+          id: payment.id,
+          date: payment.classDate,
+          className: payment.className,
+          students: students,
+          instructorPayment: Number(payment.amount),
+          duration: duration,
+          status: 'paid' as const,
+          paymentDate: payment.date
+        };
+      });
+
+      // Calculate stats
+      const totalHours = processedEarnings.reduce((sum, e) => sum + (e.duration / 60), 0);
+      const monthlyEarnings = processedEarnings
+        .filter(e => e.date.startsWith(selectedMonth))
+        .reduce((sum, e) => sum + e.instructorPayment, 0);
+
+      const calculatedStats: EarningsStats = {
+        totalEarnings: earningsData.totalEarnings || 0,
+        monthlyEarnings: monthlyEarnings,
+        pendingPayments: 0, // TODO: Calculate from pending payments
+        averagePerClass: processedEarnings.length > 0 
+          ? (earningsData.totalEarnings || 0) / processedEarnings.length 
+          : 0,
+        totalClasses: earningsData.totalClasses || 0,
+        totalStudents: processedEarnings.reduce((sum, e) => sum + e.students, 0),
+        averagePerHour: totalHours > 0 ? (earningsData.totalEarnings || 0) / totalHours : 0
+      };
+
+      // Fallback to mock data if no real data
+      if (processedEarnings.length === 0) {
+        const mockEarnings: Earning[] = [
         {
           id: 1,
           date: '2024-12-15',
@@ -143,8 +200,13 @@ export default function InstructorEarnings() {
         averagePerHour: mockEarnings.reduce((sum, e) => sum + e.instructorPayment, 0) / totalHours
       };
 
-      setEarnings(mockEarnings);
-      setStats(mockStats);
+        setEarnings(mockEarnings);
+        setStats(mockStats);
+      } else {
+        setEarnings(processedEarnings);
+        setStats(calculatedStats);
+      }
+      
       setLoading(false);
     } catch (error) {
       console.error('Error fetching earnings:', error);

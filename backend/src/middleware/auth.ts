@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 export interface AuthRequest extends Request {
   userId?: number;
   role?: string;
+  schoolId?: number;
 }
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
