@@ -3,6 +3,7 @@ import prisma from '../prisma';
 import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validation';
 import { createSchoolSchema, updateSchoolSchema, schoolIdSchema } from '../validations/schools';
+import resolveSchool from '../middleware/resolve-school';
 
 const router = express.Router();
 
@@ -139,10 +140,16 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBo
 });
 
 // PUT /schools/:id - update (requires ADMIN or SCHOOL_ADMIN)
-router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateParams(schoolIdSchema), validateBody(updateSchoolSchema), async (req: AuthRequest, res) => {
+router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(schoolIdSchema), validateBody(updateSchoolSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
     const data = req.body;
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) return res.status(404).json({ message: 'No school found for this user' });
+      if (Number(id) !== req.schoolId) {
+        return res.status(403).json({ message: 'You can only update your own school' });
+      }
+    }
     const updated = await prisma.school.update({ where: { id: Number(id) }, data });
     res.json(updated);
   } catch (err) {

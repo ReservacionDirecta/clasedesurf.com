@@ -16,8 +16,10 @@ export const createClassSchema = z.object({
     .datetime('Invalid date format')
     .refine((dateStr) => {
       const date = new Date(dateStr);
-      return date > new Date();
-    }, 'Class date must be in the future'),
+      const now = new Date();
+      // Permitir fechas de hoy en adelante (no solo futuro estricto)
+      return date.getTime() >= now.getTime() - (24 * 60 * 60 * 1000); // Permite hasta 24h atrás
+    }, 'Class date must be today or in the future'),
   duration: z.number()
     .int('Duration must be a whole number')
     .min(30, 'Duration must be at least 30 minutes')
@@ -37,6 +39,11 @@ export const createClassSchema = z.object({
   schoolId: z.number()
     .int('School ID must be a whole number')
     .min(1, 'Invalid school ID')
+    .optional(),
+  studentDetails: z.string()
+    .max(2000, 'Student details must be less than 2000 characters')
+    .nullable()
+    .optional()
 });
 
 // Schema for updating a class
@@ -53,8 +60,9 @@ export const updateClassSchema = z.object({
     .datetime('Invalid date format')
     .refine((dateStr) => {
       const date = new Date(dateStr);
-      return date > new Date();
-    }, 'Class date must be in the future')
+      const now = new Date();
+      return date.getTime() >= now.getTime() - (24 * 60 * 60 * 1000);
+    }, 'Class date must be today or in the future')
     .optional(),
   duration: z.number()
     .int('Duration must be a whole number')
@@ -78,6 +86,10 @@ export const updateClassSchema = z.object({
   schoolId: z.number()
     .int('School ID must be a whole number')
     .min(1, 'Invalid school ID')
+    .optional(),
+  studentDetails: z.string()
+    .max(2000, 'Student details must be less than 2000 characters')
+    .nullable()
     .optional()
 });
 

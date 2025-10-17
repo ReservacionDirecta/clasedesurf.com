@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { MapPin, Phone, Mail, Globe, Instagram, Facebook, MessageCircle, Camera, Edit, Save, X } from 'lucide-react';
 
 interface School {
   id: number;

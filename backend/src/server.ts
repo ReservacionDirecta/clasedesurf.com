@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -9,10 +12,11 @@ import paymentsRouter from './routes/payments';
 import authRouter from './routes/auth';
 import schoolsRouter from './routes/schools';
 import instructorsRouter from './routes/instructors';
+import instructorClassesRouter from './routes/instructor-classes';
+import studentsRouter from './routes/students';
+import statsRouter from './routes/stats';
 import { whatsappService } from './services/whatsapp.service';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from './prisma';
 const app = express();
 const port = process.env.PORT || 4000;
 
@@ -37,6 +41,9 @@ app.use('/payments', paymentsRouter);
 app.use('/auth', authRouter);
 app.use('/schools', schoolsRouter);
 app.use('/instructors', instructorsRouter);
+app.use('/instructor', instructorClassesRouter);
+app.use('/students', studentsRouter);
+app.use('/stats', statsRouter);
 
 app.get('/', (_req, res) => res.json({ 
   message: 'Backend API running', 

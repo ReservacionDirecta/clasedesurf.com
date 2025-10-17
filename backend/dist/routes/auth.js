@@ -15,7 +15,9 @@ const router = express_1.default.Router();
 function signAccessToken(user) {
     const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
     console.log('Signing token with JWT_SECRET:', jwtSecret.substring(0, 10) + '...');
-    return jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, jwtSecret, { expiresIn: '15m' });
+    // Use longer expiration for development, shorter for production
+    const expiresIn = process.env.NODE_ENV === 'production' ? '1h' : '2h';
+    return jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, jwtSecret, { expiresIn });
 }
 function generateRefreshToken() {
     return crypto_1.default.randomBytes(48).toString('hex');
@@ -69,7 +71,16 @@ router.post('/login', rateLimiter_1.authLimiter, (0, validation_1.validateBody)(
     try {
         // login request
         const { email, password } = req.body;
-        const user = await prisma_1.default.user.findUnique({ where: { email } });
+        const user = await prisma_1.default.user.findUnique({
+            where: { email },
+            include: {
+                instructor: {
+                    include: {
+                        school: true
+                    }
+                }
+            }
+        });
         if (!user)
             return res.status(401).json({ message: 'Invalid credentials' });
         const ok = await bcryptjs_1.default.compare(password, user.password || '');

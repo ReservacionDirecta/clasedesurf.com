@@ -59,3 +59,9 @@ backend/prisma/migrations/*_dev/
 # Misc
 *.tsbuildinfo
 .turbo
+
+# Database exports (sensitive data)
+export_local_*.sql
+backup_railway_*.sql
+data_only_*.sql
+temp_*.sql

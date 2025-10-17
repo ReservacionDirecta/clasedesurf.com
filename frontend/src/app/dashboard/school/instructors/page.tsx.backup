@@ -1,0 +1,620 @@
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Plus, Star, Users, Award, Mail, Phone, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
+
+interface Instructor {
+  id: number;
+  userId: number;
+  schoolId: number;
+  bio: string;
+  yearsExperience: number;
+  specialties: string[];
+  certifications: string[];
+  rating: number;
+  totalReviews: number;
+  profileImage?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  school: {
+    id: number;
+    name: string;
+    location: string;
+  };
+  reviews: any[];
+}
+
+interface School {
+  id: number;
+  name: string;
+  location: string;
+  description?: string;
+}
+
+export default function InstructorsManagementPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [school, setSchool] = useState<School | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedInstructor, setSelectedInstructor] = useState<Instructor | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+
+  useEffect(() => {
+    if (status === 'loading') return;
+    
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'SCHOOL_ADMIN') {
+      router.push('/dashboard/student/profile');
+      return;
+    }
+
+    fetchSchoolAndInstructors();
+  }, [session, status, router]);
+
+  const fetchSchoolAndInstructors = async () => {
+    try {
+      setLoading(true);
+      
+      // Obtener información de la escuela
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const schoolResponse = await fetch('/api/schools/my-school', { headers });
+      if (schoolResponse.ok) {
+        const schoolData = await schoolResponse.json();
+        setSchool(schoolData);
+      }
+
+      // Obtener instructores
+      await fetchInstructors();
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchInstructors = async () => {
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/api/instructors', { headers });
+      if (response.ok) {
+        const data = await response.json();
+        setInstructors(data);
+      }
+    } catch (error) {
+      console.error('Error fetching instructors:', error);
+    }
+  };
+
+  const handleCreateInstructor = async (instructorData: any) => {
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/api/instructors', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          ...instructorData,
+          schoolId: school?.id
+        })
+      });
+
+      if (response.ok) {
+        await fetchInstructors();
+        setShowCreateModal(false);
+        alert('Instructor creado exitosamente');
+      } else {
+        throw new Error('Error al crear el instructor');
+      }
+    } catch (error) {
+      console.error('Error creating instructor:', error);
+      alert('Error al crear el instructor');
+    }
+  };
+
+  const handleEditInstructor = async (instructorData: any) => {
+    if (!selectedInstructor) return;
+
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/instructors/${selectedInstructor.id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(instructorData)
+      });
+
+      if (response.ok) {
+        await fetchInstructors();
+        setShowEditModal(false);
+        setSelectedInstructor(null);
+        alert('Instructor actualizado exitosamente');
+      } else {
+        throw new Error('Error al actualizar el instructor');
+      }
+    } catch (error) {
+      console.error('Error updating instructor:', error);
+      alert('Error al actualizar el instructor');
+    }
+  };
+
+  const handleDeleteInstructor = async () => {
+    if (!selectedInstructor) return;
+
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/instructors/${selectedInstructor.id}`, {
+        method: 'DELETE',
+        headers
+      });
+
+      if (response.ok) {
+        await fetchInstructors();
+        setShowDeleteModal(false);
+        setSelectedInstructor(null);
+        alert('Instructor eliminado exitosamente');
+      } else {
+        throw new Error('Error al eliminar el instructor');
+      }
+    } catch (error) {
+      console.error('Error deleting instructor:', error);
+      alert('Error al eliminar el instructor');
+    }
+  };
+
+  const activeInstructors = instructors.filter(i => i.isActive);
+  const averageRating = instructors.length > 0 
+    ? instructors.reduce((sum, i) => sum + i.rating, 0) / instructors.length 
+    : 0;
+  const averageExperience = instructors.length > 0 
+    ? instructors.reduce((sum, i) => sum + i.yearsExperience, 0) / instructors.length 
+    : 0;
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando instructores...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Header - Mobile Optimized */}
+        <div className="mb-6 sm:mb-8">
+          <button
+            onClick={() => router.push('/dashboard/school')}
+            className="text-blue-600 hover:text-blue-800 mb-3 sm:mb-4 flex items-center text-sm sm:text-base"
+          >
+            ← Volver al Dashboard
+          </button>
+          <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Instructores</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Administra el equipo de instructores de {school?.name || 'tu escuela'}</p>
+            </div>
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+              Nuevo Instructor
+            </button>
+          </div>
+        </div>
+
+        {/* Stats - Mobile Optimized */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center">
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mb-2 sm:mb-0" />
+              <div className="sm:ml-4">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900">Total</h3>
+                <p className="text-xl sm:text-3xl font-bold text-blue-600">{instructors.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center">
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mb-2 sm:mb-0" />
+              <div className="sm:ml-4">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900">Activos</h3>
+                <p className="text-xl sm:text-3xl font-bold text-green-600">{activeInstructors.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center">
+              <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 mb-2 sm:mb-0" />
+              <div className="sm:ml-4">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900">Rating</h3>
+                <p className="text-xl sm:text-3xl font-bold text-yellow-600">{averageRating.toFixed(1)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center">
+              <Award className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mb-2 sm:mb-0" />
+              <div className="sm:ml-4">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900">Experiencia</h3>
+                <p className="text-xl sm:text-3xl font-bold text-purple-600">{Math.round(averageExperience)} años</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Instructors List - Mobile Optimized */}
+        <div className="space-y-4 sm:space-y-6">
+          {instructors.map((instructor) => (
+            <div key={instructor.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    {instructor.profileImage ? (
+                      <img 
+                        src={instructor.profileImage} 
+                        alt={instructor.user.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">{instructor.user.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
+                          <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current mr-1" />
+                          <span className="text-xs sm:text-sm font-semibold text-yellow-700">{instructor.rating.toFixed(1)}</span>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          instructor.isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {instructor.isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{instructor.bio}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 text-sm">
+                      <div className="flex items-center text-gray-600">
+                        <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="truncate">{instructor.user.email}</span>
+                      </div>
+                      {instructor.user.phone && (
+                        <div className="flex items-center text-gray-600">
+                          <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <span>{instructor.user.phone}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center text-gray-600">
+                        <Award className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span>{instructor.yearsExperience} años exp.</span>
+                      </div>
+                    </div>
+                    
+                    {/* Especialidades - Mobile Optimized */}
+                    {instructor.specialties && instructor.specialties.length > 0 && (
+                      <div className="mt-3">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                          {instructor.specialties.slice(0, 3).map((specialty, index) => (
+                            <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                              {specialty}
+                            </span>
+                            ))}
+                            {instructor.specialties.length > 4 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                                +{instructor.specialties.length - 4} más
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Certificaciones */}
+                      {instructor.certifications && instructor.certifications.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-600">
+                            <Award className="w-4 h-4 inline mr-1" />
+                            {instructor.certifications.length} certificaciones
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">
+                      {instructor.totalReviews} reseñas • Miembro desde {new Date(instructor.createdAt).toLocaleDateString('es-ES')}
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          setSelectedInstructor(instructor);
+                          setShowViewModal(true);
+                        }}
+                        className="flex items-center px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Ver Perfil
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedInstructor(instructor);
+                          setShowEditModal(true);
+                        }}
+                        className="flex items-center px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Editar
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedInstructor(instructor);
+                          setShowDeleteModal(true);
+                        }}
+                        className="flex items-center px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {instructors.length === 0 && (
+          <div className="text-center py-12">
+            <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay instructores</h3>
+            <p className="text-gray-600 mb-4">Aún no tienes instructores registrados en tu escuela</p>
+            <button 
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center mx-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Crear Primer Instructor
+            </button>
+          </div>
+        )}
+
+        {/* Modales - Simplificados por ahora */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-lg font-bold mb-4">Crear Nuevo Instructor</h3>
+              <p className="text-gray-600 mb-4">Funcionalidad de creación en desarrollo...</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showEditModal && selectedInstructor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-lg font-bold mb-4">Editar Instructor</h3>
+              <p className="text-gray-600 mb-4">Editando: {selectedInstructor.user.name}</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setSelectedInstructor(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDeleteModal && selectedInstructor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-lg font-bold mb-4">Eliminar Instructor</h3>
+              <p className="text-gray-600 mb-4">
+                ¿Estás seguro de que quieres eliminar al instructor &quot;{selectedInstructor.user.name}&quot;?
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setSelectedInstructor(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleDeleteInstructor}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showViewModal && selectedInstructor && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">Perfil del Instructor</h3>
+                <button 
+                  onClick={() => {
+                    setShowViewModal(false);
+                    setSelectedInstructor(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Información básica */}
+                <div className="flex items-start gap-4">
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    {selectedInstructor.profileImage ? (
+                      <img 
+                        src={selectedInstructor.profileImage} 
+                        alt={selectedInstructor.user.name}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      <Users className="w-10 h-10 text-blue-600" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-xl font-bold text-gray-900 mb-2">{selectedInstructor.user.name}</h4>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <div className="flex items-center">
+                        <Mail className="w-4 h-4 mr-2" />
+                        <span>{selectedInstructor.user.email}</span>
+                      </div>
+                      {selectedInstructor.user.phone && (
+                        <div className="flex items-center">
+                          <Phone className="w-4 h-4 mr-2" />
+                          <span>{selectedInstructor.user.phone}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>Miembro desde: {new Date(selectedInstructor.createdAt).toLocaleDateString('es-ES')}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Estadísticas */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600">{selectedInstructor.yearsExperience}</div>
+                    <div className="text-sm text-blue-800">Años de Experiencia</div>
+                  </div>
+                  <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-yellow-600">{selectedInstructor.rating.toFixed(1)}</div>
+                    <div className="text-sm text-yellow-800">Rating Promedio</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600">{selectedInstructor.totalReviews}</div>
+                    <div className="text-sm text-green-800">Reseñas</div>
+                  </div>
+                </div>
+
+                {/* Biografía */}
+                {selectedInstructor.bio && (
+                  <div>
+                    <h5 className="font-semibold text-gray-900 mb-2">Biografía</h5>
+                    <p className="text-gray-600 bg-gray-50 rounded-lg p-3">{selectedInstructor.bio}</p>
+                  </div>
+                )}
+
+                {/* Especialidades */}
+                {selectedInstructor.specialties && selectedInstructor.specialties.length > 0 && (
+                  <div>
+                    <h5 className="font-semibold text-gray-900 mb-3">Especialidades</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedInstructor.specialties.map((specialty, index) => (
+                        <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                          {specialty}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Certificaciones */}
+                {selectedInstructor.certifications && selectedInstructor.certifications.length > 0 && (
+                  <div>
+                    <h5 className="font-semibold text-gray-900 mb-3">Certificaciones</h5>
+                    <div className="space-y-2">
+                      {selectedInstructor.certifications.map((cert, index) => (
+                        <div key={index} className="flex items-center p-2 bg-green-50 rounded-lg">
+                          <Award className="w-5 h-5 text-green-600 mr-2" />
+                          <span className="text-green-800">{cert}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+                <button 
+                  onClick={() => {
+                    setShowViewModal(false);
+                    setSelectedInstructor(null);
+                  }}
+                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -50,8 +50,68 @@ export default function InstructorStudents() {
 
   const fetchStudents = async () => {
     try {
-      // Datos mock de estudiantes de Gabriel Barrera
-      const mockStudents: Student[] = [
+      const token = (session as any)?.backendToken;
+      const headers: any = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Fetch real students data from backend
+      const studentsRes = await fetch('/api/instructor/students', { headers });
+
+      if (!studentsRes.ok) {
+        throw new Error('Failed to fetch students');
+      }
+
+      const studentsData = await studentsRes.json();
+
+      // Process students to match the expected format
+      const processedStudents: Student[] = studentsData.map((student: any) => {
+        // Determine level based on classes taken
+        let level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' = 'BEGINNER';
+        const classLevels = student.classes?.map((c: any) => c.level) || [];
+        if (classLevels.includes('ADVANCED')) {
+          level = 'ADVANCED';
+        } else if (classLevels.includes('INTERMEDIATE')) {
+          level = 'INTERMEDIATE';
+        }
+
+        // Calculate progress based on completed classes
+        const completedClasses = student.classes?.filter((c: any) => 
+          c.reservationStatus === 'CONFIRMED' && new Date(c.date) < new Date()
+        ).length || 0;
+        const progress = Math.min(Math.round((completedClasses / 10) * 100), 100);
+
+        // Get last class date
+        const sortedClasses = (student.classes || []).sort((a: any, b: any) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        const lastClass = sortedClasses[0]?.date || new Date().toISOString();
+        const joinDate = sortedClasses[sortedClasses.length - 1]?.date || new Date().toISOString();
+
+        return {
+          id: student.id,
+          name: student.name,
+          age: student.age || 25,
+          level: level,
+          totalClasses: student.totalReservations || 0,
+          completedClasses: completedClasses,
+          rating: 4.5, // TODO: Calculate from reviews
+          joinDate: joinDate,
+          lastClass: lastClass,
+          canSwim: student.canSwim !== false,
+          injuries: student.injuries || undefined,
+          progress: progress,
+          notes: '' // TODO: Add notes field to backend
+        };
+      });
+
+      setStudents(processedStudents);
+      setLoading(false);
+
+      // Fallback to mock data if no real data
+      if (processedStudents.length === 0) {
+        const mockStudents: Student[] = [
         {
           id: 1,
           name: 'María González',
@@ -139,7 +199,8 @@ export default function InstructorStudents() {
         }
       ];
 
-      setStudents(mockStudents);
+        setStudents(mockStudents);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching students:', error);

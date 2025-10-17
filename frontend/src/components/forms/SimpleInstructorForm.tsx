@@ -7,20 +7,21 @@ interface SimpleInstructorFormProps {
   onSubmit: (data: any) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  instructorRole?: 'INSTRUCTOR' | 'HEAD_COACH';
 }
 
-export default function SimpleInstructorForm({ onSubmit, onCancel, isLoading }: SimpleInstructorFormProps) {
+export default function SimpleInstructorForm({ onSubmit, onCancel, isLoading, instructorRole }: SimpleInstructorFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     password: '',
-    sendWelcomeEmail: true
+    sendWelcomeEmail: true,
+    instructorRole: (instructorRole || 'INSTRUCTOR') as 'INSTRUCTOR' | 'HEAD_COACH'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState<'form' | 'success'>('form');
-
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
@@ -56,7 +57,8 @@ export default function SimpleInstructorForm({ onSubmit, onCancel, isLoading }: 
         specialties: ['Surf para principiantes'], // Especialidad básica
         certifications: [],
         isActive: true,
-        sendWelcomeEmail: formData.sendWelcomeEmail
+        sendWelcomeEmail: formData.sendWelcomeEmail,
+        instructorRole: formData.instructorRole
       };
 
       await onSubmit(instructorData);
@@ -66,8 +68,9 @@ export default function SimpleInstructorForm({ onSubmit, onCancel, isLoading }: 
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     
     setFormData(prev => ({ 
       ...prev, 
@@ -202,6 +205,28 @@ export default function SimpleInstructorForm({ onSubmit, onCancel, isLoading }: 
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
           />
+        </div>
+
+        {/* Rol del Instructor */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Rol del Instructor *
+          </label>
+          <select
+            name="instructorRole"
+            value={formData.instructorRole}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            disabled={isLoading}
+          >
+            <option value="INSTRUCTOR">Instructor</option>
+            <option value="HEAD_COACH">Head Coach (Coordinador)</option>
+          </select>
+          <p className="text-gray-500 text-xs mt-1">
+            {formData.instructorRole === 'HEAD_COACH' 
+              ? 'El Head Coach tendrá acceso a un dashboard especial con calendario y gestión de instructores'
+              : 'Instructor regular con acceso a su calendario de clases'}
+          </p>
         </div>
 
         {/* Contraseña temporal */}

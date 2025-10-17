@@ -1,127 +1,112 @@
+version: '3.8'
+
 services:
-  # Evolution API - WhatsApp API
-  evolution-api:
-    image: atendai/evolution-api:latest
-    container_name: evolution-api
-    ports:
-      - "8080:8080"
-    environment:
-      # Database
-      DB_CONNECTION: postgresql
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_DATABASE: clasedesurf.com
-
-      # Redis (deshabilitado por problemas conocidos)
-      REDIS_ENABLED: 'false'
-      CACHE_REDIS_ENABLED: 'false'
-      CACHE_LOCAL_ENABLED: 'true'
-
-      # Authentication
-      AUTHENTICATION_API_KEY: change-this-api-key-for-production
-      AUTHENTICATION_JWT_SECRET: your-secret-key-here
-
-      # Evolution API Configuration
-      SERVER_URL: http://localhost:8080
-      SERVER_PORT: 8080
-      WEBHOOK_BASE_URL: http://host.docker.internal:4000
-
-      # Logging
-      LOG_LEVEL: DEBUG
-      LOG_COLOR: 'true'
-
-      # CORS
-      CORS_ORIGIN: '*'
-
-      # Webhook Events
-      WEBHOOK_GLOBAL_ENABLED: 'false'
-      WEBHOOK_EVENTS_QRCODE: 'false'
-      WEBHOOK_EVENTS_MESSAGES: 'true'
-      WEBHOOK_EVENTS_MESSAGES_SET: 'false'
-      WEBHOOK_EVENTS_MESSAGES_UPSERT: 'true'
-      WEBHOOK_EVENTS_MESSAGES_UPDATE: 'false'
-
-      # Instance Configuration
-      INSTANCE_MAX_RETRY_QR: 5
-      INSTANCE_MAX_QR_TIMEOUT: 60
-
-      # WhatsApp Configuration
-      WA_SESSION_PHONE_CLIENT: SurfSchool
-      WA_METRICS_ENABLED: 'false'
-
-      # File Upload
-      FILE_UPLOAD_SIZE_LIMIT: 10485760  # 10MB
-
-      # Archive Configuration
-      EXCLUDE_ARCHIVED_CHATS: 'false'
-
-    volumes:
-      - evolution_instances:/evolution/instances
-      - evolution_store:/evolution/store
-      - ./backend/evolution-qr-codes:/evolution/qr-codes
-    networks:
-      - surfschool-network
-    depends_on:
-      - postgres
-      - redis
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: surfschool-postgres
+    container_name: clasedesurf-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: clasedesurf.com
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - surfschool-network
-    restart: unless-stopped
+      - clasedesurf-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
-  # Redis Cache (re-habilitado pero Evolution API lo usa opcionalmente)
-  redis:
-    image: redis:7-alpine
-    container_name: surfschool-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - surfschool-network
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME:-yerct}/clasedesurf-backend:${VERSION:-latest}
+    container_name: clasedesurf-backend
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/clasedesurf.com
+      
+      # Server
+      PORT: 4000
+      NODE_ENV: production
+      
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
+      
+      # CORS
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      
+      # WhatsApp (optional)
+      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-false}
+      WHATSAPP_SESSION_PATH: ${WHATSAPP_SESSION_PATH:-./whatsapp-session}
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - clasedesurf-network
+    volumes:
+      - ./backend/whatsapp-session:/app/whatsapp-session
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 3
+      start_period: 40s
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4000}
+    image: ${DOCKER_USERNAME:-yerct}/clasedesurf-frontend:${VERSION:-latest}
+    container_name: clasedesurf-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      # Backend URLs
+      NEXT_PUBLIC_API_URL: http://backend:4000
+      NEXT_PUBLIC_BACKEND_URL: http://backend:4000
+      BACKEND_URL: http://backend:4000
+      
+      # NextAuth
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-nextauth-secret-change-in-production}
+      
+      # Node
+      NODE_ENV: production
+      
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - clasedesurf-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   postgres_data:
     driver: local
-  redis_data:
-    driver: local
-  evolution_instances:
-    driver: local
-  evolution_store:
-    driver: local
 
 networks:
-  surfschool-network:
+  clasedesurf-network:
     driver: bridge

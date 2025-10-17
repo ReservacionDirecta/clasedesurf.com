@@ -12,9 +12,13 @@ export function SchoolNavbar() {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/school', icon: '🏠' },
-    { name: 'Mis Clases', href: '/dashboard/school/classes', icon: '🏄' },
-    { name: 'Perfil de Escuela', href: '/dashboard/school/profile', icon: '🏫' },
-    { name: 'Ver Clases Públicas', href: '/classes', icon: '🌊' },
+    { name: 'Clases', href: '/dashboard/school/classes', icon: '🏄' },
+    { name: 'Instructores', href: '/dashboard/school/instructors', icon: '👨‍🏫' },
+    { name: 'Estudiantes', href: '/dashboard/school/students', icon: '👥' },
+    { name: 'Reservas', href: '/dashboard/school/reservations', icon: '📅' },
+    { name: 'Pagos', href: '/dashboard/school/payments', icon: '💰' },
+    { name: 'Calendario', href: '/dashboard/school/calendar', icon: '📆' },
+    { name: 'Perfil', href: '/dashboard/school/profile', icon: '🏫' },
   ];
 
   const isActive = (href: string) => {

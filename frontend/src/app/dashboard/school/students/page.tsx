@@ -3,7 +3,8 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Users, Search, Filter, Eye, Mail, Phone, Calendar, Star, TrendingUp, Award } from 'lucide-react';
+import { Users, Search, Filter, Eye, Mail, Phone, Calendar, Star, TrendingUp, Award, Plus } from 'lucide-react';
+import SimpleStudentForm from '@/components/forms/SimpleStudentForm';
 
 interface Student {
   id: number;
@@ -32,6 +33,8 @@ export default function SchoolStudents() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [isCreatingStudent, setIsCreatingStudent] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -51,110 +54,45 @@ export default function SchoolStudents() {
 
   const fetchStudents = async () => {
     try {
-      // Datos mock de estudiantes de la escuela
-      const mockStudents: Student[] = [
-        {
-          id: 1,
-          name: 'María González',
-          email: 'maria.gonzalez@email.com',
-          phone: '+51 999 111 222',
-          age: 25,
-          level: 'BEGINNER',
-          totalClasses: 8,
-          completedClasses: 6,
-          joinDate: '2024-10-15',
-          lastClass: '2024-12-10',
-          canSwim: true,
-          status: 'active',
-          totalPaid: 640,
-          averageRating: 4.8
-        },
-        {
-          id: 2,
-          name: 'Carlos Mendoza',
-          email: 'carlos.mendoza@email.com',
-          phone: '+51 999 333 444',
-          age: 32,
-          level: 'INTERMEDIATE',
-          totalClasses: 15,
-          completedClasses: 12,
-          joinDate: '2024-08-20',
-          lastClass: '2024-12-12',
-          canSwim: true,
-          status: 'active',
-          totalPaid: 1800,
-          averageRating: 4.9
-        },
-        {
-          id: 3,
-          name: 'Ana Rodríguez',
-          email: 'ana.rodriguez@email.com',
-          phone: '+51 999 555 666',
-          age: 28,
-          level: 'BEGINNER',
-          totalClasses: 4,
-          completedClasses: 3,
-          joinDate: '2024-11-01',
-          lastClass: '2024-12-08',
-          canSwim: true,
-          status: 'active',
-          totalPaid: 320,
-          averageRating: 4.2
-        },
-        {
-          id: 4,
-          name: 'Diego Fernández',
-          email: 'diego.fernandez@email.com',
-          phone: '+51 999 777 888',
-          age: 35,
-          level: 'ADVANCED',
-          totalClasses: 25,
-          completedClasses: 22,
-          joinDate: '2024-06-10',
-          lastClass: '2024-12-11',
-          canSwim: true,
-          status: 'active',
-          totalPaid: 3750,
-          averageRating: 4.7
-        },
-        {
-          id: 5,
-          name: 'Sofía López',
-          email: 'sofia.lopez@email.com',
-          phone: '+51 999 999 000',
-          age: 22,
-          level: 'BEGINNER',
-          totalClasses: 2,
-          completedClasses: 1,
-          joinDate: '2024-12-01',
-          lastClass: '2024-12-05',
-          canSwim: false,
-          status: 'active',
-          totalPaid: 160,
-          averageRating: 4.0
-        },
-        {
-          id: 6,
-          name: 'Roberto Silva',
-          email: 'roberto.silva@email.com',
-          phone: '+51 999 222 333',
-          age: 29,
-          level: 'INTERMEDIATE',
-          totalClasses: 18,
-          completedClasses: 16,
-          joinDate: '2024-07-15',
-          lastClass: '2024-11-20',
-          canSwim: true,
-          status: 'inactive',
-          totalPaid: 2160,
-          averageRating: 4.6
-        }
-      ];
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-      setStudents(mockStudents);
+      const response = await fetch('/api/students', { headers });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Transform backend data to match frontend interface
+        const transformedStudents: Student[] = data.map((student: any) => ({
+          id: student.id,
+          name: student.user?.name || 'Sin nombre',
+          email: student.user?.email || '',
+          phone: student.user?.phone || '',
+          age: student.user?.age || 0,
+          level: student.level || 'BEGINNER',
+          totalClasses: 0, // TODO: Calculate from reservations
+          completedClasses: 0, // TODO: Calculate from reservations
+          joinDate: student.createdAt || new Date().toISOString(),
+          lastClass: student.updatedAt || new Date().toISOString(),
+          canSwim: student.user?.canSwim || false,
+          status: 'active', // TODO: Determine from last activity
+          totalPaid: 0, // TODO: Calculate from payments
+          averageRating: 4.5 // TODO: Calculate from reviews
+        }));
+        
+        setStudents(transformedStudents);
+      } else {
+        console.error('Error fetching students:', response.statusText);
+        setStudents([]);
+      }
+      
       setLoading(false);
     } catch (error) {
       console.error('Error fetching students:', error);
+      setStudents([]);
       setLoading(false);
     }
   };
@@ -201,6 +139,33 @@ export default function SchoolStudents() {
     setShowDetailModal(true);
   };
 
+  const handleCreateStudent = async (studentData: any) => {
+    setIsCreatingStudent(true);
+    try {
+      const response = await fetch('/api/students', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(studentData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear el estudiante');
+      }
+
+      // Refrescar la lista de estudiantes
+      await fetchStudents();
+      setShowAddStudentModal(false);
+    } catch (error) {
+      console.error('Error creating student:', error);
+      throw error;
+    } finally {
+      setIsCreatingStudent(false);
+    }
+  };
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -214,40 +179,54 @@ export default function SchoolStudents() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Header - Mobile Optimized */}
+        <div className="mb-6 sm:mb-8">
           <button
             onClick={() => router.push('/dashboard/school')}
-            className="text-blue-600 hover:text-blue-800 mb-4 flex items-center"
+            className="text-blue-600 hover:text-blue-800 mb-3 sm:mb-4 flex items-center text-sm sm:text-base"
           >
             ← Volver al Dashboard
           </button>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Estudiantes</h1>
-              <p className="text-gray-600 mt-2">Gestiona la base de estudiantes de tu escuela</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Estudiantes</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Gestiona la base de estudiantes de tu escuela</p>
             </div>
+            <button
+              onClick={() => setShowAddStudentModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-medium">Agregar Estudiante</span>
+            </button>
+            <button
+              onClick={() => setShowAddStudentModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-medium">Agregar Estudiante</span>
+            </button>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Users className="w-8 h-8 text-blue-600" />
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Total</h3>
-                <p className="text-3xl font-bold text-blue-600">{students.length}</p>
+        {/* Stats - Mobile Optimized */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center">
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mb-2 sm:mb-0" />
+              <div className="sm:ml-4">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900">Total</h3>
+                <p className="text-xl sm:text-3xl font-bold text-blue-600">{students.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <TrendingUp className="w-8 h-8 text-green-600" />
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Activos</h3>
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center">
+              <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mb-2 sm:mb-0" />
+              <div className="sm:ml-4">
+                <h3 className="text-sm sm:text-lg font-semibold text-gray-900">Activos</h3>
                 <p className="text-3xl font-bold text-green-600">
                   {students.filter(s => s.status === 'active').length}
                 </p>
@@ -523,6 +502,19 @@ export default function SchoolStudents() {
                   Cerrar
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Agregar Estudiante */}
+        {showAddStudentModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <SimpleStudentForm
+                onSubmit={handleCreateStudent}
+                onCancel={() => setShowAddStudentModal(false)}
+                isLoading={isCreatingStudent}
+              />
             </div>
           </div>
         )}

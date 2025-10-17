@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "start": "ts-node src/server.ts",
+    "start": "node scripts/start.js",
+    "start:dev": "ts-node src/server.ts",
     "start:prod": "npx prisma migrate deploy && node dist/server.js",
+    "start:simple": "node dist/server.js",
     "build": "npx prisma generate && tsc -p .",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init --preview-feature",
@@ -16,7 +18,7 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.0.0",
+    "@prisma/client": "^5.22.0",
     "@types/bcrypt": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@wppconnect-team/wppconnect": "^1.37.5",
@@ -25,9 +27,11 @@
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "express-rate-limit": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
     "zod": "^4.1.11"
   },
   "devDependencies": {
@@ -36,7 +40,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.17",
     "@types/node": "^20.4.2",
-    "prisma": "^5.0.0",
+    "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.0.0"

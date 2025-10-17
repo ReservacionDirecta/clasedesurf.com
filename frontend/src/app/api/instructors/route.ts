@@ -53,8 +53,9 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    // Si es SCHOOL_ADMIN, obtener su escuela y agregar schoolId
-    if (authHeader) {
+    // Si es admin, obtener su escuela y agregar schoolId para la creación estándar
+    // Para la ruta create-with-user el backend ya determina la escuela del admin
+    if (!body?.userData && authHeader) {
       try {
         const schoolResponse = await fetch(`${BACKEND}/schools/my-school`, {
           method: 'GET',
@@ -70,7 +71,12 @@ export async function POST(req: Request) {
       }
     }
 
-    const response = await fetch(`${BACKEND}/instructors`, {
+    // Seleccionar endpoint según el contenido del body
+    const endpoint = body?.userData
+      ? `${BACKEND}/instructors/create-with-user`
+      : `${BACKEND}/instructors`;
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify(body)

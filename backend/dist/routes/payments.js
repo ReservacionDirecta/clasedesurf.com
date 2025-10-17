@@ -41,6 +41,7 @@ const prisma_1 = __importDefault(require("../prisma"));
 const auth_1 = __importStar(require("../middleware/auth"));
 const validation_1 = require("../middleware/validation");
 const payments_1 = require("../validations/payments");
+const resolve_school_1 = __importDefault(require("../middleware/resolve-school"));
 const router = express_1.default.Router();
 // POST /payments - create a payment record (requires auth)
 router.post('/', auth_1.default, (0, validation_1.validateBody)(payments_1.createPaymentSchema), async (req, res) => {
@@ -97,7 +98,7 @@ router.post('/', auth_1.default, (0, validation_1.validateBody)(payments_1.creat
     }
 });
 // GET /payments - get payments (user gets their own, admin gets all)
-router.get('/', auth_1.default, async (req, res) => {
+router.get('/', auth_1.default, resolve_school_1.default, async (req, res) => {
     try {
         const userId = req.userId;
         const { reservationId } = req.query;
@@ -107,14 +108,24 @@ router.get('/', auth_1.default, async (req, res) => {
         let whereClause = {};
         if (reservationId) {
             whereClause.reservationId = Number(reservationId);
-            // If not admin, ensure they can only see their own reservation's payments
-            if (user.role !== 'ADMIN') {
+            // If not admin, ensure they can only see permitted payments
+            if (user.role === 'SCHOOL_ADMIN') {
+                if (!req.schoolId)
+                    return res.status(404).json({ message: 'No school found for this user' });
+                whereClause.reservation = { class: { schoolId: Number(req.schoolId) } };
+            }
+            else if (user.role !== 'ADMIN') {
                 whereClause.reservation = { userId: Number(userId) };
             }
         }
         else {
-            // If not admin, only show payments for user's reservations
-            if (user.role !== 'ADMIN') {
+            // If not admin, only show allowed payments
+            if (user.role === 'SCHOOL_ADMIN') {
+                if (!req.schoolId)
+                    return res.status(404).json({ message: 'No school found for this user' });
+                whereClause.reservation = { class: { schoolId: Number(req.schoolId) } };
+            }
+            else if (user.role !== 'ADMIN') {
                 whereClause.reservation = { userId: Number(userId) };
             }
         }
@@ -142,7 +153,7 @@ router.get('/', auth_1.default, async (req, res) => {
     }
 });
 // GET /payments/:id - get specific payment
-router.get('/:id', auth_1.default, (0, validation_1.validateParams)(payments_1.paymentIdSchema), async (req, res) => {
+router.get('/:id', auth_1.default, resolve_school_1.default, (0, validation_1.validateParams)(payments_1.paymentIdSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.userId;
@@ -166,8 +177,19 @@ router.get('/:id', auth_1.default, (0, validation_1.validateParams)(payments_1.p
         });
         if (!payment)
             return res.status(404).json({ message: 'Payment not found' });
-        // Check if user owns the payment or is admin
-        if (payment.reservation.userId !== Number(userId) && user.role !== 'ADMIN') {
+        // Check access: ADMIN ok; SCHOOL_ADMIN must own the school; otherwise only owner user
+        if (user.role === 'ADMIN') {
+            return res.json(payment);
+        }
+        if (user.role === 'SCHOOL_ADMIN') {
+            if (!req.schoolId)
+                return res.status(404).json({ message: 'No school found for this user' });
+            if (payment.reservation.class.schoolId !== req.schoolId) {
+                return res.status(403).json({ message: 'Forbidden' });
+            }
+            return res.json(payment);
+        }
+        if (payment.reservation.userId !== Number(userId)) {
             return res.status(403).json({ message: 'Forbidden' });
         }
         res.json(payment);
@@ -178,16 +200,23 @@ router.get('/:id', auth_1.default, (0, validation_1.validateParams)(payments_1.p
     }
 });
 // PUT /payments/:id - update payment (admin and school_admin)
-router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), (0, validation_1.validateParams)(payments_1.paymentIdSchema), (0, validation_1.validateBody)(payments_1.updatePaymentSchema), async (req, res) => {
+router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateParams)(payments_1.paymentIdSchema), (0, validation_1.validateBody)(payments_1.updatePaymentSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
         const payment = await prisma_1.default.payment.findUnique({
             where: { id: Number(id) },
-            include: { reservation: true }
+            include: { reservation: { include: { class: true } } }
         });
         if (!payment)
             return res.status(404).json({ message: 'Payment not found' });
+        if (req.role === 'SCHOOL_ADMIN') {
+            if (!req.schoolId)
+                return res.status(404).json({ message: 'No school found for this user' });
+            if (payment.reservation.class.schoolId !== req.schoolId) {
+                return res.status(403).json({ message: 'You can only update payments from your school' });
+            }
+        }
         // If status is being changed to PAID, set paidAt
         if (updateData.status === 'PAID' && payment.status !== 'PAID') {
             updateData.paidAt = new Date().toISOString();

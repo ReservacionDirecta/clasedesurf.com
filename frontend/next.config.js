@@ -1,8 +1,7 @@
 /** @type {import('next').NextConfig} */
-// In production on Railway, both frontend and backend run on the same domain
-// Backend runs on port 4000, frontend on port 3000, but Railway handles the routing
+// Backend URL configuration for different environments
 const BACKEND = process.env.NODE_ENV === 'production' 
-  ? process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'
+  ? process.env.NEXT_PUBLIC_BACKEND_URL || 'https://surfschool-backend-production.up.railway.app'
   : process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 console.log('Next.js config - NODE_ENV:', process.env.NODE_ENV);

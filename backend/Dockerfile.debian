@@ -1,0 +1,80 @@
+# Alternative Dockerfile using Debian base for better Prisma compatibility
+
+# Stage 1: Builder
+FROM node:18-slim AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install all dependencies (including devDependencies for build)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client and build TypeScript
+RUN npm run build
+
+# Stage 2: Production
+FROM node:18-slim AS production
+
+# Set working directory
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install only production dependencies
+RUN npm ci --only=production
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy other necessary files
+COPY healthcheck.js ./
+COPY start-production.sh ./
+COPY force-direct-prisma.js ./
+COPY debug-db.js ./
+COPY prisma-direct.schema.prisma ./
+COPY use-direct-schema.sh ./
+
+# Make startup script executable
+RUN chmod +x start-production.sh
+
+# Create non-root user for security
+RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
+
+# Change ownership of the app directory
+RUN chown -R nodejs:nodejs /app
+USER nodejs
+
+# Expose port
+EXPOSE 4000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node healthcheck.js
+
+# Start the application using our custom script
+CMD ["./start-production.sh"]

@@ -269,7 +269,7 @@ export default function ReservationCalendar({
                         </div>
                       </div>
                       <div className="text-xs opacity-90">
-                        {reservation.class?.date ? formatTime(reservation.class.date) : ''}
+                        {reservation.class?.date ? formatTime(reservation.class.date.toString()) : ''}
                       </div>
                     </div>
                   ))}

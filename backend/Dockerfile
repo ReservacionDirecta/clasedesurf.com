@@ -1,92 +1,91 @@
-# Multi-stage build para optimizar el tamaño de la imagen
+# Multi-stage build for production
+FROM node:18-alpine AS builder
 
-# Stage 1: Dependencies
-FROM node:18-slim AS deps
+# Set working directory
 WORKDIR /app
 
-# Instalar dependencias del sistema necesarias
-RUN apt-get update && apt-get install -y \
+# Install dependencies including OpenSSL
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
     openssl \
-    ca-certificates \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+    openssl-dev \
+    libc6-compat
 
-# Copiar archivos de dependencias
+# Copy package files
 COPY package*.json ./
-COPY prisma ./prisma/
+COPY tsconfig.json ./
 
-# Instalar TODAS las dependencias (incluyendo devDependencies para el build)
+# Install all dependencies (including dev dependencies for build)
 RUN npm ci
 
-# Stage 2: Builder
-FROM node:18-slim AS builder
-WORKDIR /app
-
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
-    openssl \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copiar dependencias desde la etapa anterior
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code and prisma schema
 COPY . .
 
-# Generar Prisma client
+# Generate Prisma client and build TypeScript
 RUN npx prisma generate
-
-# Build de la aplicación TypeScript
 RUN npm run build
 
-# Stage 2.5: Production Dependencies
-FROM node:18-slim AS prod-deps
+# Production stage
+FROM node:18-alpine AS production
+
+# Set working directory
 WORKDIR /app
 
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
+# Install runtime dependencies including OpenSSL
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
     openssl \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    openssl-dev \
+    libc6-compat \
+    curl
 
-# Copiar archivos de dependencias
+# Copy package files
 COPY package*.json ./
-COPY prisma ./prisma/
 
-# Instalar solo dependencias de producción
+# Install only production dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# Stage 3: Runner
-FROM node:18-slim AS runner
-WORKDIR /app
-
-# Instalar dependencias del sistema para runtime
-RUN apt-get update && apt-get install -y \
-    openssl \
-    ca-certificates \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Crear usuario no-root
-RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 --gid nodejs backend
-
-# Copiar archivos necesarios
+# Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Cambiar ownership
+# Copy prisma schema for migrations
+COPY prisma/schema.prisma ./prisma/
+
+# Copy scripts directory
+COPY scripts ./scripts
+
+# Copy startup scripts (backup)
+COPY start.sh ./start.sh
+COPY start-simple.sh ./start-simple.sh
+
+# Make startup scripts executable
+RUN chmod +x start.sh start-simple.sh scripts/start.js
+
+# Generate Prisma client for production
+RUN npx prisma generate
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S backend -u 1001
+
+# Change ownership of the app directory
 RUN chown -R backend:nodejs /app
 
+# Switch to non-root user
 USER backend
 
-# Exponer puerto
+# Expose port
 EXPOSE 4000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:4000/health || exit 1
+  CMD curl -f http://localhost:4000/health || exit 1
 
-# Comando para ejecutar la aplicación
-CMD ["npm", "run", "start:prod"]
+# Start the application
+CMD ["npm", "start"]

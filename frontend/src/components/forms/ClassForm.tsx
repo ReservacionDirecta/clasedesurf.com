@@ -1,7 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Class } from '@/types';
+
+interface Instructor {
+  id: number;
+  name: string;
+  userId: number;
+}
 
 interface ClassFormProps {
   classData?: Class;
@@ -11,6 +18,7 @@ interface ClassFormProps {
 }
 
 export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: ClassFormProps) {
+  const { data: session } = useSession();
   const [formData, setFormData] = useState({
     title: classData?.title || '',
     description: classData?.description || '',
@@ -19,10 +27,44 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
     capacity: classData?.capacity || 10,
     price: classData?.price || 0,
     level: classData?.level || 'BEGINNER',
-    instructor: classData?.instructor || ''
+    instructor: classData?.instructor || '',
+    studentDetails: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [loadingInstructors, setLoadingInstructors] = useState(true);
+
+  useEffect(() => {
+    const fetchInstructors = async () => {
+      try {
+        const token = (session as any)?.backendToken;
+        const headers: any = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const response = await fetch('/api/instructors', { headers });
+        if (response.ok) {
+          const data = await response.json();
+          const instructorList = Array.isArray(data)
+            ? data.map((it: any) => ({
+                id: it.id,
+                name: it.user?.name ?? it.name ?? 'Instructor',
+                userId: it.userId ?? it.user?.id
+              }))
+            : [];
+          setInstructors(instructorList);
+        }
+      } catch (error) {
+        console.error('Error fetching instructors:', error);
+      } finally {
+        setLoadingInstructors(false);
+      }
+    };
+
+    if (session) {
+      fetchInstructors();
+    }
+  }, [session]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -41,13 +83,19 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
     e.preventDefault();
     if (!validate()) return;
     
-    await onSubmit({
-      ...formData,
+    const submitData: any = {
+      title: formData.title,
+      description: formData.description || null,
       date: new Date(formData.date).toISOString(),
       duration: Number(formData.duration),
       capacity: Number(formData.capacity),
-      price: Number(formData.price)
-    });
+      price: Number(formData.price),
+      level: formData.level,
+      instructor: formData.instructor || null,
+      studentDetails: formData.studentDetails || null
+    };
+    
+    await onSubmit(submitData);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -192,21 +240,50 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
         </div>
 
         {/* Instructor */}
-        <div>
+        <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Instructor
+            Instructor *
           </label>
-          <input
-            type="text"
+          <select
             name="instructor"
             value={formData.instructor}
             onChange={handleChange}
-            placeholder="Nombre del instructor (ej: Juan Pérez)"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            disabled={isLoading || loadingInstructors}
+          >
+            <option value="">Selecciona un instructor</option>
+            {instructors.map((instructor) => (
+              <option key={instructor.id} value={instructor.name}>
+                {instructor.name}
+              </option>
+            ))}
+          </select>
+          {loadingInstructors && (
+            <p className="text-xs text-gray-500 mt-1">Cargando instructores...</p>
+          )}
+          {!loadingInstructors && instructors.length === 0 && (
+            <p className="text-xs text-yellow-600 mt-1">
+              No hay instructores disponibles. Crea instructores primero en la sección de Gestión de Instructores.
+            </p>
+          )}
+        </div>
+
+        {/* Student Details */}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Detalles de Estudiantes
+          </label>
+          <textarea
+            name="studentDetails"
+            value={formData.studentDetails}
+            onChange={handleChange}
+            rows={4}
+            placeholder="Ingresa nombres y detalles de los estudiantes que asistirán a esta clase&#10;Ejemplo:&#10;- Juan Pérez (Principiante, primera clase)&#10;- María García (Intermedio, clase de repaso)&#10;- Carlos López (Avanzado)"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
           />
           <p className="text-xs text-gray-500 mt-1">
-            Por ahora ingresa el nombre manualmente. Pronto podrás seleccionar de la lista de instructores.
+            Opcional: Registra los nombres y cualquier detalle relevante de los estudiantes que participarán en esta clase.
           </p>
         </div>
       </div>

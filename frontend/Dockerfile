@@ -1,60 +1,49 @@
-# Multi-stage build para optimizar el tamaño de la imagen
+# Simple single-stage build for Next.js application
+FROM node:18-alpine
 
-# Stage 1: Dependencies
-FROM node:18-alpine AS deps
+# Install dependencies for native modules
 RUN apk add --no-cache libc6-compat
+
+# Set working directory
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copy package files
 COPY package*.json ./
-# Instalar todas las dependencias (incluyendo dev) para el build
-RUN npm ci
 
-# Stage 2: Builder
-FROM node:18-alpine AS builder
-WORKDIR /app
+# Install all dependencies (including devDependencies needed for build)
+RUN npm ci --no-audit --no-fund
 
-# Copiar dependencias desde la etapa anterior
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
 
-# Variables de entorno para el build
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_ENV production
+# Copy production environment file
+COPY .env.production .env.production
 
-# Generar Prisma client si es necesario
-RUN npx prisma generate || echo "No Prisma schema found"
+# Set environment variables
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Generar Prisma client si es necesario
-RUN npx prisma generate || echo "No Prisma schema found"
-
-# Build de la aplicación
+# Build the application
 RUN npm run build
 
-# Stage 3: Runner
-FROM node:18-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Crear usuario no-root
+# Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copiar archivos necesarios
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
+# Copy standalone output
+RUN cp -r .next/standalone ./standalone
+RUN cp -r .next/static ./standalone/.next/static
+RUN cp -r public ./standalone/public
 
-# Copiar archivos de build
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
+# Change ownership
+RUN chown -R nextjs:nodejs /app
 USER nextjs
 
+# Expose port
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Start the standalone server
+CMD ["node", "standalone/server.js"]
