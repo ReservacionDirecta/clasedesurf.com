@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # PostgreSQL para pruebas
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: clasedesurf-postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: clasedesurf_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend construido localmente
+  backend-test:
+    image: clasedesurf/clasedesurf-backend:latest
+    container_name: clasedesurf-backend-test
+    restart: unless-stopped
+    ports:
+      - "4001:4000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://postgres:postgres@postgres-test:5432/clasedesurf_test
+      
+      # Server
+      PORT: 4000
+      NODE_ENV: production
+      
+      # JWT
+      JWT_SECRET: test-jwt-secret-for-local-development-only
+      JWT_REFRESH_SECRET: test-refresh-secret-for-local-development-only
+      
+      # CORS
+      FRONTEND_URL: http://localhost:3001
+      
+      # WhatsApp (disabled for testing)
+      WHATSAPP_ENABLED: false
+      
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend construido localmente
+  frontend-test:
+    image: clasedesurf/clasedesurf-frontend:latest
+    container_name: clasedesurf-frontend-test
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      # Backend URLs
+      NEXT_PUBLIC_API_URL: http://localhost:4001
+      NEXT_PUBLIC_BACKEND_URL: http://localhost:4001
+      BACKEND_URL: http://backend-test:4000
+      
+      # NextAuth
+      NEXTAUTH_URL: http://localhost:3001
+      NEXTAUTH_SECRET: test-nextauth-secret-for-local-development-only
+      
+      # Node
+      NODE_ENV: production
+      PORT: 3000
+      
+    depends_on:
+      backend-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_test_data:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge

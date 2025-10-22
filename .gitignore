@@ -65,3 +65,8 @@ export_local_*.sql
 backup_railway_*.sql
 data_only_*.sql
 temp_*.sql
+
+# Railway secrets (sensitive data)
+railway-secrets.txt
+railway-secrets-*.txt
+generate-secrets.js

@@ -10,7 +10,9 @@ interface FilterPanelProps {
 export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [filters, setFilters] = useState({
-    location: '',
+    country: 'Peru',
+    region: '',
+    locality: '',
     level: '',
     type: '',
     priceRange: [0, 100],
@@ -19,20 +21,64 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
     date: ''
   })
 
-  const locations = [
-    'Miraflores',
-    'San Bartolo', 
-    'Chorrillos',
-    'Callao',
-    'Punta Negra',
-    'Punta Hermosa'
-  ]
+  // Estructura jerárquica de ubicaciones (misma que QuickBookingEngine)
+  const surfLocations = {
+    'Peru': {
+      'Lima': {
+        'Costa Verde': [
+          'Playa Punta Roquitas',
+          'Playa Pampilla', 
+          'Playa Makaha',
+          'Playa Redondo',
+          'Playa Barranquito',
+          'Los Yuyos',
+          'Playa Sombrillas',
+          'Playa Agua Dulce'
+        ],
+        'Punta Hermosa': [
+          'Playa Negra',
+          'Señoritas',
+          'Caballeros', 
+          'La Isla'
+        ],
+        'San Bartolo': [
+          'Playa Derechitas',
+          'Playa Izquierditas',
+          'Playa Peñascal'
+        ]
+      }
+    }
+  }
+
+  // Funciones para obtener opciones jerárquicas
+  const getRegions = () => {
+    if (!filters.country || !surfLocations[filters.country as keyof typeof surfLocations]) return []
+    return Object.keys(surfLocations[filters.country as keyof typeof surfLocations])
+  }
+
+  const getLocalities = () => {
+    if (!filters.country || !filters.region) return []
+    const countryData = surfLocations[filters.country as keyof typeof surfLocations]
+    if (!countryData || !countryData[filters.region as keyof typeof countryData]) return []
+    return Object.keys(countryData[filters.region as keyof typeof countryData])
+  }
+
+
 
   const levels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED']
   const types = ['GROUP', 'PRIVATE', 'INTENSIVE', 'KIDS']
 
   const handleFilterChange = (key: string, value: any) => {
     const newFilters = { ...filters, [key]: value }
+    
+    // Reset cascading selects when parent changes
+    if (key === 'country') {
+      newFilters.region = ''
+      newFilters.locality = ''
+    } else if (key === 'region') {
+      newFilters.locality = ''
+    }
+    
     setFilters(newFilters)
     onFiltersChange(newFilters)
   }
@@ -60,29 +106,30 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
       {/* Filter Content */}
       <div className={`${isOpen ? 'block' : 'hidden'} md:block`}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-          
-          {/* Location Filter */}
+        {/* Filtros Simplificados */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          {/* Ubicación - Misma lista que QuickBookingEngine */}
           <div>
             <label className="block text-sm font-bold text-gray-900 mb-2">
-              Ubicación
+              📍 Ubicación
             </label>
             <select
-              value={filters.location}
-              onChange={(e) => handleFilterChange('location', e.target.value)}
+              value={filters.locality}
+              onChange={(e) => handleFilterChange('locality', e.target.value)}
               className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
-              <option value="">Todas las playas</option>
-              {locations.map(location => (
-                <option key={location} value={location}>{location}</option>
-              ))}
+              <option value="">🏖️ Todas las localidades</option>
+              <option value="Costa Verde">🏖️ Costa Verde</option>
+              <option value="Punta Hermosa">🏖️ Punta Hermosa</option>
+              <option value="San Bartolo">🏖️ San Bartolo</option>
             </select>
           </div>
 
-          {/* Level Filter */}
+          {/* Nivel */}
           <div>
             <label className="block text-sm font-bold text-gray-900 mb-2">
-              Nivel
+              🏄‍♂️ Nivel
             </label>
             <select
               value={filters.level}
@@ -96,10 +143,10 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
             </select>
           </div>
 
-          {/* Type Filter */}
+          {/* Tipo */}
           <div>
             <label className="block text-sm font-bold text-gray-900 mb-2">
-              Tipo de Clase
+              👥 Tipo
             </label>
             <select
               value={filters.type}
@@ -110,131 +157,81 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
               <option value="GROUP">Grupal</option>
               <option value="PRIVATE">Privada</option>
               <option value="INTENSIVE">Intensivo</option>
-              <option value="KIDS">Niños</option>
             </select>
           </div>
 
-          {/* Price Range */}
+          {/* Precio */}
           <div>
             <label className="block text-sm font-bold text-gray-900 mb-2">
-              Precio (USD)
-            </label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="number"
-                placeholder="Min"
-                value={filters.priceRange[0]}
-                onChange={(e) => handleFilterChange('priceRange', [parseInt(e.target.value) || 0, filters.priceRange[1]])}
-                className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm placeholder-gray-500"
-              />
-              <span className="text-gray-700 font-bold">-</span>
-              <input
-                type="number"
-                placeholder="Max"
-                value={filters.priceRange[1]}
-                onChange={(e) => handleFilterChange('priceRange', [filters.priceRange[0], parseInt(e.target.value) || 100])}
-                className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm placeholder-gray-500"
-              />
-            </div>
-          </div>
-
-          {/* Rating Filter */}
-          <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
-              Rating Mínimo
+              💰 Precio (USD)
             </label>
             <select
-              value={filters.rating}
-              onChange={(e) => handleFilterChange('rating', parseFloat(e.target.value))}
+              value={filters.priceRange[1]}
+              onChange={(e) => handleFilterChange('priceRange', [0, parseInt(e.target.value)])}
               className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
-              <option value={0}>Cualquier rating</option>
-              <option value={4.0}>4.0+ ⭐</option>
-              <option value={4.5}>4.5+ ⭐</option>
-              <option value={4.8}>4.8+ ⭐</option>
+              <option value={100}>Cualquier precio</option>
+              <option value={30}>Hasta $30</option>
+              <option value={50}>Hasta $50</option>
+              <option value={80}>Hasta $80</option>
             </select>
           </div>
 
-          {/* Verified Schools */}
-          <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
-              Opciones
-            </label>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="verified"
-                checked={filters.verified}
-                onChange={(e) => handleFilterChange('verified', e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label htmlFor="verified" className="text-sm font-medium text-gray-900">
-                Solo escuelas verificadas
-              </label>
-            </div>
-          </div>
-
         </div>
 
-        {/* Quick Filters */}
+        {/* Filtros Rápidos */}
         <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 justify-between items-center">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleFilterChange('level', 'BEGINNER')}
+                className={`${filters.level === 'BEGINNER' ? 'bg-blue-50 border-blue-300' : ''} text-xs`}
+              >
+                ⭐ Principiantes
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleFilterChange('type', 'PRIVATE')}
+                className={`${filters.type === 'PRIVATE' ? 'bg-blue-50 border-blue-300' : ''} text-xs`}
+              >
+                👤 Privadas
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleFilterChange('verified', true)}
+                className={`${filters.verified ? 'bg-blue-50 border-blue-300' : ''} text-xs`}
+              >
+                ✅ Verificadas
+              </Button>
+            </div>
+            
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleFilterChange('level', 'BEGINNER')}
-              className={filters.level === 'BEGINNER' ? 'bg-blue-50 border-blue-300' : ''}
+              onClick={() => {
+                const resetFilters = {
+                  country: 'Peru',
+                  region: '',
+                  locality: '',
+                  level: '',
+                  type: '',
+                  priceRange: [0, 100],
+                  rating: 0,
+                  verified: false,
+                  date: ''
+                }
+                setFilters(resetFilters)
+                onFiltersChange(resetFilters)
+              }}
+              className="text-xs"
             >
-              Principiantes
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleFilterChange('type', 'PRIVATE')}
-              className={filters.type === 'PRIVATE' ? 'bg-blue-50 border-blue-300' : ''}
-            >
-              Clases Privadas
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleFilterChange('rating', 4.8)}
-              className={filters.rating === 4.8 ? 'bg-blue-50 border-blue-300' : ''}
-            >
-              Top Rated
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleFilterChange('verified', true)}
-              className={filters.verified ? 'bg-blue-50 border-blue-300' : ''}
-            >
-              Verificadas
+              🗑️ Limpiar
             </Button>
           </div>
-        </div>
-
-        {/* Clear Filters */}
-        <div className="mt-4 flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const resetFilters = {
-                location: '',
-                level: '',
-                type: '',
-                priceRange: [0, 100],
-                rating: 0,
-                verified: false,
-                date: ''
-              }
-              setFilters(resetFilters)
-              onFiltersChange(resetFilters)
-            }}
-          >
-            Limpiar Filtros
-          </Button>
         </div>
       </div>
     </div>

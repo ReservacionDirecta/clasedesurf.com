@@ -24,31 +24,38 @@
   --sand: #f7f3f0;
   --wave: #00a8e6;
   
-  /* Text contrast levels */
-  --text-primary: #000000;
-  --text-secondary: #1f2937;
-  --text-muted: #4b5563;
-  --text-light: #6b7280;
+  /* Text contrast levels - Force black text for light theme */
+  --text-primary: #ededed !important;
+  --text-secondary: #1f2937 !important;
+  --text-muted: #4b5563 !important;
+  --text-light: #6b7280 !important;
 }
 
+/* Dark theme disabled - force light theme always */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #000000;
-    --foreground: #ffffff;
-    --secondary: #1a1a1a;
-    --card: #111111;
-    --border: #333333;
-    --card-shadow: rgba(255, 255, 255, 0.1);
-    --text-primary: #ffffff;
-    --text-secondary: #e5e7eb;
-    --text-muted: #d1d5db;
+    /* Keep light theme colors even in dark mode preference */
+    --background: #ffffff !important;
+    --foreground: #000000 !important;
+    --secondary: #f8fafc !important;
+    --card: #ffffff !important;
+    --border: #e2e8f0 !important;
+    --card-shadow: rgba(0, 0, 0, 0.15) !important;
+    --text-primary: #000000 !important;
+    --text-secondary: #1f2937 !important;
+    --text-muted: #4b5563 !important;
+  }
+  
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
   }
 }
 
 body {
-  /* Prefer explicit text variables for better contrast control */
-  color: var(--text-primary);
-  background: var(--background);
+  /* Force light theme colors */
+  color: #000000 !important;
+  background: #ffffff !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -56,9 +63,32 @@ body {
   font-size: 16px; /* Base font size for better readability */
 }
 
+/* Force light theme for the entire app */
+html {
+  color-scheme: light !important;
+}
+
+/* Override any dark theme preferences */
+* {
+  color-scheme: light !important;
+}
+
 /* Make sure common text elements use the readable color by default */
 h1,h2,h3,h4,h5,h6,p,span,a,li,button,label,input,textarea,select {
-  color: var(--text-primary);
+  color: #000000 !important;
+}
+
+/* Specific overrides for card content */
+.marketplace-card h1,
+.marketplace-card h2,
+.marketplace-card h3,
+.marketplace-card h4,
+.marketplace-card h5,
+.marketplace-card h6,
+.marketplace-card p,
+.marketplace-card span:not(.bg-white):not(.bg-blue-100):not(.bg-green-100):not(.bg-yellow-100),
+.marketplace-card div {
+  color: #000000 !important;
 }
 
 /* Form controls: readable background and text, with clear borders */
@@ -107,17 +137,17 @@ input:focus, textarea:focus, select:focus, button:focus {
 
   /* Enhanced text contrast utilities */
   .text-high-contrast {
-    color: var(--text-primary);
+    color: #000000 !important;
     font-weight: 700;
   }
   
   .text-medium-contrast {
-    color: var(--text-secondary);
+    color: #1f2937 !important;
     font-weight: 600;
   }
   
   .text-readable {
-    color: var(--text-muted);
+    color: #4b5563 !important;
     font-weight: 500;
   }
 
@@ -140,6 +170,33 @@ input:focus, textarea:focus, select:focus, button:focus {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-color: #e5e7eb;
+    color: #000000 !important;
+  }
+  
+  /* Force black text in marketplace cards */
+  .marketplace-card * {
+    color: #000000 !important;
+  }
+  
+  /* Exceptions for specific colored elements */
+  .marketplace-card .text-yellow-600 {
+    color: #d97706 !important;
+  }
+  
+  .marketplace-card .text-green-600 {
+    color: #059669 !important;
+  }
+  
+  .marketplace-card .text-blue-600 {
+    color: #2563eb !important;
+  }
+  
+  .marketplace-card .text-gray-600 {
+    color: #4b5563 !important;
+  }
+  
+  .marketplace-card .text-gray-500 {
+    color: #6b7280 !important;
   }
   
   .marketplace-card:hover {
@@ -539,3 +596,50 @@ select:focus-visible {
   background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
   border: 1px solid #86efac;
 }
+/* Fo
+rce Tailwind text colors to display correctly */
+.text-gray-900 {
+  color: #111827 !important;
+}
+
+.text-gray-800 {
+  color: #1f2937 !important;
+}
+
+.text-gray-700 {
+  color: #374151 !important;
+}
+
+.text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.text-black {
+  color: #000000 !important;
+}
+
+/* Ensure marketplace cards always have proper text colors */
+.marketplace-card .text-gray-900,
+.marketplace-card h1,
+.marketplace-card h2,
+.marketplace-card h3,
+.marketplace-card h4,
+.marketplace-card h5,
+.marketplace-card h6 {
+  color: #111827 !important;
+}
+
+.marketplace-card .text-gray-700,
+.marketplace-card p {
+  color: #374151 !important;
+}
+
+.marketplace-card .text-gray-600,
+.marketplace-card span:not([class*="bg-"]):not([class*="text-yellow"]):not([class*="text-green"]):not([class*="text-blue"]):not([class*="text-red"]) {
+  color: #4b5563 !important;
+}/* Force C
+SS refresh - Updated at 2025-10-21 */

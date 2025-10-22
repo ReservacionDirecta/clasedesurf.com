@@ -151,6 +151,30 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&size=48&background=059669&color=ffffff&bold=true`
   }
 
+  // Calcular número de instructores basado en tipo de clase y capacidad
+  const getInstructorCount = (type: string, capacity: number) => {
+    switch (type) {
+      case 'PRIVATE':
+        return 1 // Clases privadas siempre 1 instructor
+      case 'SEMI_PRIVATE':
+        return 1 // Semi-privadas (2-3 estudiantes) 1 instructor
+      case 'GROUP':
+        // Clases grupales: cada 2 estudiantes van acompañados de 1 instructor
+        // Capacidad 3-4 estudiantes = 2-3 instructores
+        if (capacity <= 2) return 1
+        if (capacity <= 4) return Math.ceil(capacity / 2) // 3-4 estudiantes = 2-3 instructores
+        return Math.ceil(capacity / 2) // Máximo ratio 1:2
+      case 'INTENSIVE':
+        // Intensivos requieren más atención, ratio 1:1 o 1:2
+        return Math.ceil(capacity / 2)
+      case 'KIDS':
+        // Niños requieren más supervisión, ratio 1:1.5
+        return Math.ceil(capacity / 1.5)
+      default:
+        return Math.ceil(capacity / 2)
+    }
+  }
+
   return (
     <div className="marketplace-card overflow-hidden">
       {/* Image */}
@@ -208,11 +232,11 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
           </div>
         </div>
 
-        <h3 className="text-xl font-bold text-high-contrast mb-3">
+        <h3 className="text-xl font-bold text-gray-900 mb-3">
           {classData.title}
         </h3>
         
-        <p className="text-medium-contrast mb-4 line-clamp-2 text-readable">
+        <p className="text-gray-700 mb-4 line-clamp-2">
           {classData.description}
         </p>
 
@@ -242,14 +266,12 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
             </div>
           )}
 
-          {classData.instructorName && (
-            <div className="flex items-center text-sm text-gray-600">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>{classData.instructorName}</span>
-            </div>
-          )}
+          <div className="flex items-center text-sm text-gray-600">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>{getInstructorCount(classData.type, classData.capacity)} instructor{getInstructorCount(classData.type, classData.capacity) > 1 ? 'es' : ''}</span>
+          </div>
         </div>
 
         {/* Included Equipment */}

@@ -1,20 +1,39 @@
 import { Button } from '@/components/ui/Button'
-import { getHeroImage } from '@/lib/lima-beach-images'
-import { QuickBookingEngine } from '@/components/booking/QuickBookingEngine'
 
 export function Hero() {
+  // Función para hacer scroll a la sección de búsqueda
+  const scrollToSearch = () => {
+    const searchSection = document.getElementById('encuentra-tu-clase')
+    if (searchSection) {
+      searchSection.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
   return (
-    <section className="relative h-[calc(100vh-80px)] min-h-[500px] max-h-[800px] flex items-center justify-center overflow-hidden">
-      {/* Background Image - Clase grupal de surf en Lima al atardecer */}
+    <section className="relative min-h-screen py-20 flex items-center justify-center overflow-hidden">
+      {/* Background Image - Hero local personalizada */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url("${getHeroImage()}")`
+          backgroundImage: `url("/hero.png")`
         }}
       />
       
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black bg-opacity-50" />
+      {/* Simple Light Overlay */}
+      <div className="absolute inset-0 bg-white/20" />
+      
+      {/* Animated Wave Pattern Overlay */}
+      <div className="absolute inset-0 opacity-20">
+        <svg className="absolute bottom-0 left-0 w-full h-32" viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path d="M0,60 C300,120 600,0 900,60 C1050,90 1150,30 1200,60 L1200,120 L0,120 Z" fill="url(#waveGradient)" />
+          <defs>
+            <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="50%" stopColor="#f0f9ff" />
+              <stop offset="100%" stopColor="#ffffff" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
       
       {/* Content Container */}
       <div className="relative z-10 w-full h-full flex flex-col">
@@ -22,81 +41,54 @@ export function Hero() {
         <div className="flex-1 flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-7xl mx-auto">
             
-            {/* Mobile Layout (Centered) */}
-            <div className="lg:hidden text-center text-white">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight">
-                El Marketplace de
-                <span className="block text-blue-400">Surf en Perú</span>
+            {/* Layout Unificado - Centrado */}
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-black mb-6 lg:mb-8 leading-tight text-white drop-shadow-2xl">
+                <span className="block">El Marketplace de</span>
+                <span className="block">Surf N°1</span>
               </h1>
               
-              <p className="text-base sm:text-lg mb-6 text-gray-200 max-w-2xl mx-auto leading-relaxed">
-                Conecta con las mejores escuelas de surf, compara precios, lee reseñas y sigue tu progreso. 
-                La plataforma más completa para surfistas en Perú.
+              <p className="text-base sm:text-lg lg:text-xl xl:text-2xl mb-8 lg:mb-10 max-w-3xl mx-auto leading-relaxed font-medium text-white drop-shadow-lg">
+                <span>Encuentra tus clases.</span>
+                <span className="font-bold ml-2">Impulsa tu pasión.</span>
               </p>
               
-              {/* Quick Booking Engine - Mobile */}
-              <div className="mb-6">
-                <QuickBookingEngine className="max-w-md mx-auto" />
-              </div>
-              
-              {/* Alternative Action - Mobile */}
-              <div className="flex justify-center">
+              {/* Enhanced CTA Buttons - Responsive */}
+              <div className="flex flex-col sm:flex-row gap-4 lg:gap-6 justify-center mb-8 lg:mb-12">
                 <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="bg-black border-black text-white hover:bg-white hover:text-black hover:border-white px-4 py-2 text-sm transition-all duration-200"
+                  variant="primary"
+                  onClick={scrollToSearch}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 lg:px-10 lg:py-5 text-sm lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 hover:shadow-xl"
                 >
-                  Ver Todas las Clases
+                  EXPLORA SURF AHORA
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="bg-white/10 border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold px-6 py-3 lg:px-10 lg:py-5 text-sm lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 hover:shadow-xl"
+                >
+                  PARA ESCUELAS
                 </Button>
               </div>
-            </div>
 
-            {/* Desktop Layout (Two Columns) */}
-            <div className="hidden lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center lg:h-full">
-              
-              {/* Left Column - Text Content */}
-              <div className="text-white">
-                <h1 className="text-5xl xl:text-7xl font-bold mb-6 leading-tight">
-                  El Marketplace de
-                  <span className="block text-blue-400">Surf en Perú</span>
-                </h1>
-                
-                <p className="text-xl xl:text-2xl mb-8 text-gray-200 leading-relaxed">
-                  Conecta con las mejores escuelas de surf, compara precios, lee reseñas y sigue tu progreso. 
-                  La plataforma más completa para surfistas en Perú.
-                </p>
-                
-                {/* CTA Buttons - Desktop */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button 
-                    variant="primary" 
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
-                  >
-                    Explorar Clases
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="lg"
-                    className="bg-black border-black text-white hover:bg-white hover:text-black hover:border-white px-8 py-4 text-lg transition-all duration-200"
-                  >
-                    Ver Todas las Clases
-                  </Button>
+              {/* Enhanced Trust Indicators - Centrado */}
+              <div className="max-w-md mx-auto">
+                <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 lg:p-6 shadow-xl border border-white/30">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-xl lg:text-2xl">🚀</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm lg:text-lg font-bold text-white">
+                        ¿Tienes una escuela de surf?
+                      </p>
+                      <p className="text-xs lg:text-sm text-white">
+                        <a href="#" className="underline hover:text-blue-200 transition-colors font-medium">
+                          Únete gratis a nuestra plataforma
+                        </a>
+                      </p>
+                    </div>
+                  </div>
                 </div>
-
-                {/* Trust Indicators - Desktop */}
-                <div className="mt-8 bg-blue-600 bg-opacity-20 backdrop-blur-sm rounded-lg p-4">
-                  <p className="text-white text-sm">
-                    🚀 <strong>¿Tienes una escuela de surf?</strong> 
-                    <a href="#" className="underline hover:text-blue-300 ml-1">Únete gratis a nuestra plataforma</a>
-                  </p>
-                </div>
-              </div>
-
-              {/* Right Column - Booking Engine */}
-              <div className="flex justify-center lg:justify-end">
-                <QuickBookingEngine className="w-full max-w-md" />
               </div>
             </div>
           </div>
@@ -107,20 +99,20 @@ export function Hero() {
           <div className="max-w-7xl mx-auto px-4">
             <div className="grid grid-cols-4 gap-4 text-center text-white">
               <div>
-                <div className="text-2xl lg:text-3xl font-bold text-blue-400">25+</div>
-                <div className="text-gray-300 text-xs lg:text-sm">Escuelas Verificadas</div>
+                <div className="text-2xl lg:text-3xl font-bold">25+</div>
+                <div className="text-xs lg:text-sm opacity-90">Escuelas Verificadas</div>
               </div>
               <div>
-                <div className="text-2xl lg:text-3xl font-bold text-blue-400">150+</div>
-                <div className="text-gray-300 text-xs lg:text-sm">Instructores Certificados</div>
+                <div className="text-2xl lg:text-3xl font-bold">150+</div>
+                <div className="text-xs lg:text-sm opacity-90">Instructores Certificados</div>
               </div>
               <div>
-                <div className="text-2xl lg:text-3xl font-bold text-blue-400">2.5K+</div>
-                <div className="text-gray-300 text-xs lg:text-sm">Estudiantes Activos</div>
+                <div className="text-2xl lg:text-3xl font-bold">2.5K+</div>
+                <div className="text-xs lg:text-sm opacity-90">Estudiantes Activos</div>
               </div>
               <div>
-                <div className="text-2xl lg:text-3xl font-bold text-blue-400">4.8⭐</div>
-                <div className="text-gray-300 text-xs lg:text-sm">Rating Promedio</div>
+                <div className="text-2xl lg:text-3xl font-bold">4.8⭐</div>
+                <div className="text-xs lg:text-sm opacity-90">Rating Promedio</div>
               </div>
             </div>
           </div>
