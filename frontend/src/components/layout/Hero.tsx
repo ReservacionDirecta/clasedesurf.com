@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/Button'
+import { StarIcon, LightningIcon } from '@/components/ui/Icons'
 
 export function Hero() {
   // Función para hacer scroll a la sección de búsqueda
@@ -75,7 +76,7 @@ export function Hero() {
                 <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 lg:p-6 shadow-xl border border-white/30">
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-xl lg:text-2xl">🚀</span>
+                      <LightningIcon className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                     </div>
                     <div className="text-left">
                       <p className="text-sm lg:text-lg font-bold text-white">
@@ -111,7 +112,10 @@ export function Hero() {
                 <div className="text-xs lg:text-sm opacity-90">Estudiantes Activos</div>
               </div>
               <div>
-                <div className="text-2xl lg:text-3xl font-bold">4.8⭐</div>
+                <div className="flex items-center justify-center text-2xl lg:text-3xl font-bold">
+                  4.8
+                  <StarIcon className="w-5 h-5 lg:w-6 lg:h-6 ml-1" />
+                </div>
                 <div className="text-xs lg:text-sm opacity-90">Rating Promedio</div>
               </div>
             </div>

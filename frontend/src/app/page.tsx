@@ -8,6 +8,20 @@ import { Hero } from '@/components/layout/Hero'
 import { Footer } from '@/components/layout/Footer'
 import { FilterPanel } from '@/components/marketplace/FilterPanel'
 import { MarketplaceStats } from '@/components/marketplace/MarketplaceStats'
+import { 
+  SearchIcon, 
+  LocationIcon, 
+  SurferIcon, 
+  CalendarIcon, 
+  StarIcon, 
+  MoneyIcon, 
+  ShieldIcon, 
+  LightningIcon, 
+  TrophyIcon,
+  CheckIcon,
+  LockIcon,
+  EquipmentIcon
+} from '@/components/ui/Icons'
 import { apiService, transformApiClassToFrontend, type ClassFilters } from '@/services/api'
 
 // Datos de ejemplo como fallback
@@ -218,7 +232,8 @@ export default function Home() {
           <div className="text-center mb-16">
             {/* Badge Superior */}
             <div className="inline-flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-6 shadow-xl">
-              🔍 BÚSQUEDA AVANZADA
+              <SearchIcon className="w-4 h-4 mr-2" />
+              BÚSQUEDA AVANZADA
             </div>
             
             <h2 className="text-5xl lg:text-7xl font-black mb-6 leading-tight">
@@ -244,18 +259,24 @@ export default function Home() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {/* Ubicación */}
                     <div className="relative">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">📍 Ubicación</label>
+                      <label className="flex items-center text-sm font-bold text-gray-700 mb-2">
+                        <LocationIcon className="w-4 h-4 mr-2 text-cyan-600" />
+                        Ubicación
+                      </label>
                       <select className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium">
-                        <option>🏖️ Todas las localidades</option>
-                        <option>🏖️ Costa Verde</option>
-                        <option>🏖️ Punta Hermosa</option>
-                        <option>🏖️ San Bartolo</option>
+                        <option>Todas las localidades</option>
+                        <option>Costa Verde</option>
+                        <option>Punta Hermosa</option>
+                        <option>San Bartolo</option>
                       </select>
                     </div>
 
                     {/* Nivel */}
                     <div className="relative">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">🏄‍♂️ Nivel</label>
+                      <label className="flex items-center text-sm font-bold text-gray-700 mb-2">
+                        <SurferIcon className="w-4 h-4 mr-2 text-cyan-600" />
+                        Nivel
+                      </label>
                       <select className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium">
                         <option>Todos los niveles</option>
                         <option>Principiante</option>
@@ -266,7 +287,10 @@ export default function Home() {
 
                     {/* Fecha */}
                     <div className="relative">
-                      <label className="block text-sm font-bold text-gray-700 mb-2">📅 Fecha</label>
+                      <label className="flex items-center text-sm font-bold text-gray-700 mb-2">
+                        <CalendarIcon className="w-4 h-4 mr-2 text-cyan-600" />
+                        Fecha
+                      </label>
                       <input 
                         type="date" 
                         className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium"
@@ -278,9 +302,10 @@ export default function Home() {
                       <label className="block text-sm font-bold text-transparent mb-2">Buscar</label>
                       <Button 
                         variant="primary"
-                        className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black px-6 py-3 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                        className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black px-6 py-3 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl flex items-center justify-center"
                       >
-                        🔍 BUSCAR
+                        <SearchIcon className="w-4 h-4 mr-2" />
+                        BUSCAR
                       </Button>
                     </div>
                   </div>
@@ -288,17 +313,21 @@ export default function Home() {
                   {/* Filtros Rápidos */}
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <div className="flex flex-wrap gap-3 justify-center">
-                      <button className="px-4 py-2 bg-gradient-to-r from-cyan-100 to-teal-100 text-cyan-700 rounded-full text-sm font-bold hover:from-cyan-200 hover:to-teal-200 transition-all duration-300 transform hover:scale-105">
-                        ⭐ Mejor valoradas
+                      <button className="flex items-center px-4 py-2 bg-gradient-to-r from-cyan-100 to-teal-100 text-cyan-700 rounded-full text-sm font-bold hover:from-cyan-200 hover:to-teal-200 transition-all duration-300 transform hover:scale-105">
+                        <StarIcon className="w-4 h-4 mr-2" />
+                        Mejor valoradas
                       </button>
-                      <button className="px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-bold hover:from-green-200 hover:to-emerald-200 transition-all duration-300 transform hover:scale-105">
-                        💰 Mejor precio
+                      <button className="flex items-center px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-bold hover:from-green-200 hover:to-emerald-200 transition-all duration-300 transform hover:scale-105">
+                        <MoneyIcon className="w-4 h-4 mr-2" />
+                        Mejor precio
                       </button>
-                      <button className="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-full text-sm font-bold hover:from-blue-200 hover:to-indigo-200 transition-all duration-300 transform hover:scale-105">
-                        🏆 Escuelas verificadas
+                      <button className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-full text-sm font-bold hover:from-blue-200 hover:to-indigo-200 transition-all duration-300 transform hover:scale-105">
+                        <TrophyIcon className="w-4 h-4 mr-2" />
+                        Escuelas verificadas
                       </button>
-                      <button className="px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full text-sm font-bold hover:from-purple-200 hover:to-pink-200 transition-all duration-300 transform hover:scale-105">
-                        ⚡ Disponible hoy
+                      <button className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full text-sm font-bold hover:from-purple-200 hover:to-pink-200 transition-all duration-300 transform hover:scale-105">
+                        <LightningIcon className="w-4 h-4 mr-2" />
+                        Disponible hoy
                       </button>
                     </div>
                   </div>
@@ -321,7 +350,10 @@ export default function Home() {
                 <div className="text-gray-700 font-medium">Estudiantes</div>
               </div>
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-orange-100">
-                <div className="text-3xl font-black text-orange-600 mb-2">4.8⭐</div>
+                <div className="flex items-center justify-center text-3xl font-black text-orange-600 mb-2">
+                4.8
+                <StarIcon className="w-6 h-6 ml-1" />
+              </div>
                 <div className="text-gray-700 font-medium">Rating Promedio</div>
               </div>
             </div>
@@ -391,7 +423,9 @@ export default function Home() {
         {/* No Results */}
         {!loading && filteredClasses.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🏄‍♂️</div>
+            <div className="w-24 h-24 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <SurferIcon className="w-12 h-12 text-gray-400" />
+            </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               No encontramos clases con esos filtros
             </h3>
@@ -415,9 +449,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <CheckIcon className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Instructores Certificados</h3>
               <p className="text-gray-600">Todos nuestros instructores están certificados y tienen años de experiencia.</p>
@@ -425,9 +457,7 @@ export default function Home() {
             
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+                <ShieldIcon className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Seguridad Garantizada</h3>
               <p className="text-gray-600">Equipamiento de seguridad incluido y protocolos estrictos de seguridad.</p>
@@ -435,9 +465,7 @@ export default function Home() {
             
             <div className="text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+                <EquipmentIcon className="w-8 h-8 text-purple-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Equipamiento Incluido</h3>
               <p className="text-gray-600">Tabla, neopreno y todo el equipamiento necesario incluido en el precio.</p>
