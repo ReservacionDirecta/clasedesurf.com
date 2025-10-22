@@ -49,7 +49,7 @@ export function MarketplaceStats() {
   ]
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-lg mx-2 sm:mx-0">
+    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-2 sm:mb-4 shadow-lg mx-2 sm:mx-0 -mt-4 sm:-mt-8">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-10 left-10 w-20 h-20 bg-blue-500 rounded-full blur-xl"></div>
@@ -60,15 +60,15 @@ export function MarketplaceStats() {
 
       <div className="relative z-10">
         {/* Mobile-Optimized Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="inline-flex items-center justify-center mb-3 sm:mb-4">
+        <div className="text-center mb-4 sm:mb-6">
+          <div className="inline-flex items-center justify-center mb-2 sm:mb-3">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg flex items-center">
               <StarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               Plataforma Confiable
             </div>
           </div>
 
-          <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 mb-3 sm:mb-4 leading-tight px-2 sm:px-0">
+          <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 mb-2 sm:mb-3 leading-tight px-2 sm:px-0">
             Conectando Pasión con <span className="text-teal-700">Experiencia</span>
           </h2>
 
@@ -80,7 +80,7 @@ export function MarketplaceStats() {
         </div>
 
         {/* Mobile-Optimized Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6">
           {stats.map((stat, index) => (
             <div
               key={index}

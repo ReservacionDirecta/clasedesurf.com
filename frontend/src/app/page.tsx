@@ -215,7 +215,7 @@ export default function Home() {
       <MarketplaceStats />
       
       {/* Sección principal de clases - Mobile Optimized */}
-      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50 py-6 sm:py-12">
+      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50 py-4 sm:py-8">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -230,7 +230,7 @@ export default function Home() {
 
         <div className="relative container mx-auto px-3 sm:px-4">
           {/* Mobile-Optimized Header Section */}
-          <div className="text-center mb-6 sm:mb-10">
+          <div className="text-center mb-4 sm:mb-8">
             {/* Mobile Badge */}
             <div className="inline-flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-bold mb-4 sm:mb-6 shadow-xl">
               <SearchIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
@@ -244,13 +244,13 @@ export default function Home() {
               </span>
             </h2>
             
-            <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium mb-6 sm:mb-8 px-4 sm:px-0">
+            <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium mb-4 sm:mb-6 px-4 sm:px-0">
               <span className="text-cyan-700 font-bold">Compara escuelas, precios y horarios.</span>
               <span className="block mt-1">Encuentra la clase ideal para tu nivel y ubicación preferida.</span>
             </p>
 
             {/* Mobile-Optimized Search Engine */}
-            <div className="max-w-5xl mx-auto mb-6 sm:mb-8">
+            <div className="max-w-5xl mx-auto mb-4 sm:mb-6">
               <div className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-cyan-200/30 mx-2 sm:mx-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-3 items-end">
                   {/* Ubicación */}

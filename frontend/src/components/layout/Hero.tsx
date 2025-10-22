@@ -96,7 +96,7 @@ export function Hero() {
         </div>
 
         {/* Mobile-Optimized Bottom Stats */}
-        <div className="relative z-10 pb-8 sm:pb-16">
+        <div className="relative z-10 pb-4 sm:pb-8">
           <div className="max-w-7xl mx-auto px-3 sm:px-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-white">
               <div className="p-2 sm:p-0">
