@@ -25,9 +25,31 @@ app.set('trust proxy', 1);
 
 // Configure CORS to support credentials (cookies)
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Lista de orígenes permitidos
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://clasedesurfcom-production.up.railway.app',
+      'https://clasesde-pe-production.up.railway.app',
+      'https://clasesde-pe-frontend-production.up.railway.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean); // Filtrar valores undefined/null
+
+    // Permitir requests sin origin (como Postman, aplicaciones móviles, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 };
 
 app.use(cors(corsOptions));
