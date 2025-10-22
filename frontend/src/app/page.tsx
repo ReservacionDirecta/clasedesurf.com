@@ -214,8 +214,8 @@ export default function Home() {
       {/* Marketplace Stats */}
       <MarketplaceStats />
       
-      {/* Sección principal de clases - MEJORADA */}
-      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50 py-12">
+      {/* Sección principal de clases - Mobile Optimized */}
+      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50 py-6 sm:py-12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -228,38 +228,38 @@ export default function Home() {
           </svg>
         </div>
 
-        <div className="relative container mx-auto px-4">
-          {/* Header Section Mejorado */}
-          <div className="text-center mb-10">
-            {/* Badge Superior */}
-            <div className="inline-flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-6 shadow-xl">
-              <SearchIcon className="w-4 h-4 mr-2" />
+        <div className="relative container mx-auto px-3 sm:px-4">
+          {/* Mobile-Optimized Header Section */}
+          <div className="text-center mb-6 sm:mb-10">
+            {/* Mobile Badge */}
+            <div className="inline-flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-bold mb-4 sm:mb-6 shadow-xl">
+              <SearchIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               BÚSQUEDA AVANZADA
             </div>
             
-            <h2 className="text-4xl lg:text-5xl font-black mb-4 leading-tight">
+            <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 leading-tight px-2 sm:px-0">
               <span className="text-gray-900">Encuentra tu</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600">
                 Clase Perfecta
               </span>
             </h2>
             
-            <p className="text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium mb-8">
+            <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium mb-6 sm:mb-8 px-4 sm:px-0">
               <span className="text-cyan-700 font-bold">Compara escuelas, precios y horarios.</span>
               <span className="block mt-1">Encuentra la clase ideal para tu nivel y ubicación preferida.</span>
             </p>
 
-            {/* Buscador Compacto */}
-            <div className="max-w-5xl mx-auto mb-8">
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-cyan-200/30">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+            {/* Mobile-Optimized Search Engine */}
+            <div className="max-w-5xl mx-auto mb-6 sm:mb-8">
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-cyan-200/30 mx-2 sm:mx-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-3 items-end">
                   {/* Ubicación */}
-                  <div>
+                  <div className="sm:col-span-1 lg:col-span-1">
                     <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
                       <LocationIcon className="w-3 h-3 mr-1 text-cyan-600" />
                       Ubicación
                     </label>
-                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-2 rounded-lg text-sm font-medium">
+                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-3 sm:py-2 rounded-lg text-sm font-medium touch-target-md">
                       <option>Todas</option>
                       <option>Costa Verde</option>
                       <option>Punta Hermosa</option>
@@ -268,12 +268,12 @@ export default function Home() {
                   </div>
 
                   {/* Nivel */}
-                  <div>
+                  <div className="sm:col-span-1 lg:col-span-1">
                     <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
                       <SurferIcon className="w-3 h-3 mr-1 text-cyan-600" />
                       Nivel
                     </label>
-                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-2 rounded-lg text-sm font-medium">
+                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-3 sm:py-2 rounded-lg text-sm font-medium touch-target-md">
                       <option>Todos</option>
                       <option>Principiante</option>
                       <option>Intermedio</option>
@@ -282,7 +282,7 @@ export default function Home() {
                   </div>
 
                   {/* Fecha */}
-                  <div>
+                  <div className="sm:col-span-2 lg:col-span-1">
                     <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
                       <CalendarIcon className="w-3 h-3 mr-1 text-cyan-600" />
                       Fecha
@@ -290,16 +290,17 @@ export default function Home() {
                     <DatePicker 
                       placeholder="Cualquier fecha"
                       onChange={(date) => console.log('Fecha seleccionada:', date)}
+                      className="touch-target-md"
                     />
                   </div>
 
                   {/* Precio */}
-                  <div>
+                  <div className="sm:col-span-1 lg:col-span-1">
                     <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
                       <MoneyIcon className="w-3 h-3 mr-1 text-cyan-600" />
                       Precio
                     </label>
-                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-2 rounded-lg text-sm font-medium">
+                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-3 sm:py-2 rounded-lg text-sm font-medium touch-target-md">
                       <option>Cualquier precio</option>
                       <option>Hasta $30</option>
                       <option>Hasta $50</option>
@@ -308,10 +309,10 @@ export default function Home() {
                   </div>
 
                   {/* Botón de Búsqueda */}
-                  <div>
+                  <div className="sm:col-span-1 lg:col-span-1">
                     <Button 
                       variant="primary"
-                      className="search-element-transition w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center text-sm shadow-lg hover:shadow-xl"
+                      className="search-element-transition touch-target-lg w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-4 py-3 sm:py-2 rounded-lg transition-all duration-300 flex items-center justify-center text-sm shadow-lg hover:shadow-xl"
                     >
                       <SearchIcon className="w-4 h-4 mr-1" />
                       BUSCAR
@@ -326,8 +327,8 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Sección de Resultados */}
-      <section className="container mx-auto px-4 py-12">
+      {/* Mobile-Optimized Results Section */}
+      <section className="container mx-auto px-3 sm:px-4 py-6 sm:py-12">
 
         {/* Error Message */}
         {error && (
@@ -352,29 +353,29 @@ export default function Home() {
           </div>
         )}
 
-        {/* Results Summary */}
+        {/* Mobile-Optimized Results Summary */}
         {!loading && (
-          <div className="flex items-center justify-between mb-6">
-            <div className="text-gray-900 font-medium">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
+            <div className="text-gray-900 font-medium text-sm sm:text-base">
               Mostrando {filteredClasses.length} de {classes.length} clases disponibles
-              {error && <span className="text-yellow-600 text-sm ml-2">(datos de ejemplo)</span>}
+              {error && <span className="text-yellow-600 text-xs sm:text-sm ml-2">(datos de ejemplo)</span>}
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-900">Ordenar por:</span>
-              <select className="border-2 border-gray-400 rounded-lg px-4 py-2 text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm">
-                <option>Más relevantes</option>
-                <option>Precio: menor a mayor</option>
-                <option>Precio: mayor a menor</option>
-                <option>Mejor calificados</option>
-                <option>Más cercanos</option>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-xs sm:text-sm font-medium text-gray-900 mobile-hidden flex-shrink-0">Ordenar:</span>
+              <select className="border-2 border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm touch-target-md flex-1 sm:flex-none min-w-0 max-w-full">
+                <option value="relevance">Relevancia</option>
+                <option value="price-asc">Precio ↑</option>
+                <option value="price-desc">Precio ↓</option>
+                <option value="rating">Rating</option>
+                <option value="distance">Distancia</option>
               </select>
             </div>
           </div>
         )}
 
-        {/* Grid de clases */}
+        {/* Mobile-Optimized Grid de clases */}
         {!loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {filteredClasses.map((classData) => (
               <ClassCard
                 key={classData.id}

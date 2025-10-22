@@ -91,15 +91,15 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+    <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6 mx-2 sm:mx-0">
       {/* Mobile Filter Toggle */}
-      <div className="md:hidden mb-3">
+      <div className="sm:hidden mb-3">
         <Button
           variant="outline"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between py-2"
+          className="w-full flex items-center justify-between py-3 touch-target-md"
         >
-          <span className="text-sm">Filtros</span>
+          <span className="text-sm font-medium">Filtros</span>
           <svg 
             className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
             fill="none" 
@@ -112,9 +112,9 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
       </div>
 
       {/* Filter Content */}
-      <div className={`${isOpen ? 'block' : 'hidden'} md:block`}>
-        {/* Filtros Compactos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+      <div className={`${isOpen ? 'block' : 'hidden'} sm:block`}>
+        {/* Mobile-Optimized Filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
 
           {/* Ubicación */}
           <div>
@@ -125,7 +125,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
             <select
               value={filters.locality}
               onChange={(e) => handleFilterChange('locality', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 touch-target-md"
             >
               <option value="">Todas</option>
               <option value="Costa Verde">Costa Verde</option>
@@ -143,7 +143,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
             <select
               value={filters.level}
               onChange={(e) => handleFilterChange('level', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 touch-target-md"
             >
               <option value="">Todos</option>
               <option value="BEGINNER">Principiante</option>
@@ -161,7 +161,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
             <select
               value={filters.type}
               onChange={(e) => handleFilterChange('type', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 touch-target-md"
             >
               <option value="">Todos</option>
               <option value="GROUP">Grupal</option>
@@ -179,7 +179,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
             <select
               value={filters.priceRange[1]}
               onChange={(e) => handleFilterChange('priceRange', [0, parseInt(e.target.value)])}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 touch-target-md"
             >
               <option value={100}>Cualquier precio</option>
               <option value={30}>Hasta $30</option>
@@ -206,7 +206,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
                 setFilters(resetFilters)
                 onFiltersChange(resetFilters)
               }}
-              className="px-3 py-2 border border-gray-300 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center"
+              className="px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center touch-target-md"
               title="Limpiar filtros"
             >
               <BroomIcon className="w-4 h-4" />

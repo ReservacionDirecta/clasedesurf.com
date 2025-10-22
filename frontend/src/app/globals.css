@@ -68,9 +68,38 @@ button:focus {
   .text-mobile-lg { font-size: 18px; line-height: 1.7; }
   .text-mobile-xl { font-size: 20px; line-height: 1.7; }
 
+  /* Mobile spacing utilities */
   .spacing-mobile { padding: 1rem; }
   .spacing-tablet { padding: 1.5rem; }
   .spacing-desktop { padding: 2rem; }
+
+  /* Mobile-specific utilities */
+  .mobile-hidden { @apply hidden sm:block; }
+  .mobile-only { @apply block sm:hidden; }
+  .mobile-full-width { @apply w-full sm:w-auto; }
+  .mobile-text-center { @apply text-center sm:text-left; }
+  .mobile-flex-col { @apply flex-col sm:flex-row; }
+  .mobile-gap-2 { @apply gap-2 sm:gap-4; }
+  .mobile-gap-4 { @apply gap-4 sm:gap-6; }
+  .mobile-p-2 { @apply p-2 sm:p-4; }
+  .mobile-p-4 { @apply p-4 sm:p-6; }
+  .mobile-text-sm { @apply text-sm sm:text-base; }
+  .mobile-text-base { @apply text-base sm:text-lg; }
+  .mobile-text-lg { @apply text-lg sm:text-xl; }
+  .mobile-text-xl { @apply text-xl sm:text-2xl; }
+  .mobile-text-2xl { @apply text-2xl sm:text-3xl; }
+  .mobile-text-3xl { @apply text-3xl sm:text-4xl; }
+
+  /* Mobile select utilities */
+  .mobile-select-compact { 
+    @apply text-xs px-2 py-2 min-w-0 max-w-full;
+    font-size: 12px;
+  }
+
+  /* Touch-friendly utilities */
+  .touch-target-sm { min-height: 44px; min-width: 44px; }
+  .touch-target-md { min-height: 48px; min-width: 48px; }
+  .touch-target-lg { min-height: 56px; min-width: 56px; }
 }
 
 @layer components {
@@ -248,36 +277,98 @@ select:focus-visible {
 /* Mobile-first responsive design */
 @media (max-width: 640px) {
   body {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Mobile container optimization */
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Mobile marketplace cards */
+  .marketplace-card {
+    margin: 0.5rem;
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
+  /* Mobile buttons - larger touch targets */
+  .btn-primary-marketplace,
+  .btn-outline-marketplace {
+    padding: 16px 24px;
     font-size: 16px;
+    min-height: 56px;
+    font-weight: 700;
+    border-radius: 12px;
+  }
+
+  /* Mobile inputs - larger touch targets */
+  .input-marketplace {
+    padding: 16px;
+    font-size: 16px;
+    min-height: 56px;
+    border-radius: 12px;
+  }
+
+  /* Mobile typography */
+  .price-display {
+    font-size: 1.5rem;
+  }
+
+  /* Mobile search elements */
+  .search-input-enhanced {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+
+  /* Mobile date picker */
+  input[type="date"] {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+
+  /* Mobile select elements */
+  select.search-select-enhanced {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+}
+
+/* Extra small devices (phones in portrait) */
+@media (max-width: 480px) {
+  .container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 
   .marketplace-card {
-    margin: 0.75rem;
-    border-radius: 16px;
+    margin: 0.25rem;
+    padding: 0.75rem;
   }
 
-  .btn-primary-marketplace,
-  .btn-outline-marketplace {
-    padding: 14px 24px;
-    font-size: 16px;
-    min-height: 52px;
-    font-weight: 700;
-  }
+  /* Smaller text for very small screens */
+  .text-mobile-xs { font-size: 12px; line-height: 1.4; }
+  .text-mobile-sm { font-size: 14px; line-height: 1.4; }
+  .text-mobile-base { font-size: 15px; line-height: 1.5; }
 
-  .input-marketplace {
-    padding: 14px 16px;
-    font-size: 16px;
-    min-height: 52px;
-  }
+  /* Compact spacing for small screens */
+  .spacing-mobile-xs { padding: 0.5rem; }
+  .spacing-mobile-sm { padding: 0.75rem; }
 
-  .price-display {
-    font-size: 1.75rem;
-  }
-
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
+  /* Extra small breakpoint utilities */
+  .xs\:text-xs { font-size: 0.75rem; }
+  .xs\:text-sm { font-size: 0.875rem; }
+  .xs\:text-base { font-size: 1rem; }
+  .xs\:text-lg { font-size: 1.125rem; }
+  .xs\:text-xl { font-size: 1.25rem; }
+  .xs\:text-2xl { font-size: 1.5rem; }
+  .xs\:text-3xl { font-size: 1.875rem; }
+  .xs\:flex-row { flex-direction: row; }
+  .xs\:flex-col { flex-direction: column; }
 }
 
 /* Tablet optimizations */
@@ -504,6 +595,23 @@ select.search-select-enhanced {
   background-position: right 8px center;
   background-repeat: no-repeat;
   background-size: 16px 16px;
+}
+
+/* Mobile select optimization */
+@media (max-width: 640px) {
+  select {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Ensure select options don't overflow */
+  select option {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* Date input container */
