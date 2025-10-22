@@ -170,3 +170,28 @@ export const EquipmentIcon: React.FC<IconProps> = ({ className = "w-5 h-5", size
     <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19M17 7H7V9H17V7M17 11H7V13H17V11M14 15H7V17H14V15Z" />
   </svg>
 )
+
+export const GroupIcon: React.FC<IconProps> = ({ className = "w-5 h-5", size }) => (
+  <svg 
+    className={className} 
+    width={size} 
+    height={size} 
+    fill="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path d="M16 4C18.2 4 20 5.8 20 8S18.2 12 16 12 12 10.2 12 8 13.8 4 16 4M16 14C18.7 14 24 15.3 24 18V20H8V18C8 15.3 13.3 14 16 14M8 4C10.2 4 12 5.8 12 8S10.2 12 8 12 4 10.2 4 8 5.8 4 8 4M8 14C10.7 14 16 15.3 16 18V20H0V18C0 15.3 5.3 14 8 14Z" />
+  </svg>
+)
+
+export const TrashIcon: React.FC<IconProps> = ({ className = "w-5 h-5", size }) => (
+  <svg 
+    className={className} 
+    width={size} 
+    height={size} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+)

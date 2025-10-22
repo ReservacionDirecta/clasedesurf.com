@@ -2,6 +2,13 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { 
+  LocationIcon, 
+  SurferIcon, 
+  MoneyIcon,
+  GroupIcon,
+  TrashIcon
+} from '@/components/ui/Icons'
 
 interface FilterPanelProps {
   onFiltersChange: (filters: any) => void
@@ -109,32 +116,34 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
         {/* Filtros Simplificados */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
-          {/* Ubicación - Misma lista que QuickBookingEngine */}
+          {/* Ubicación */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
-              📍 Ubicación
+            <label className="flex items-center text-sm font-bold text-gray-900 mb-2">
+              <LocationIcon className="w-4 h-4 mr-2 text-blue-600" />
+              Ubicación
             </label>
             <select
               value={filters.locality}
               onChange={(e) => handleFilterChange('locality', e.target.value)}
-              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
+              className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
-              <option value="">🏖️ Todas las localidades</option>
-              <option value="Costa Verde">🏖️ Costa Verde</option>
-              <option value="Punta Hermosa">🏖️ Punta Hermosa</option>
-              <option value="San Bartolo">🏖️ San Bartolo</option>
+              <option value="">Todas las localidades</option>
+              <option value="Costa Verde">Costa Verde</option>
+              <option value="Punta Hermosa">Punta Hermosa</option>
+              <option value="San Bartolo">San Bartolo</option>
             </select>
           </div>
 
           {/* Nivel */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
-              🏄‍♂️ Nivel
+            <label className="flex items-center text-sm font-bold text-gray-900 mb-2">
+              <SurferIcon className="w-4 h-4 mr-2 text-blue-600" />
+              Nivel
             </label>
             <select
               value={filters.level}
               onChange={(e) => handleFilterChange('level', e.target.value)}
-              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
+              className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
               <option value="">Todos los niveles</option>
               <option value="BEGINNER">Principiante</option>
@@ -145,13 +154,14 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Tipo */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
-              👥 Tipo
+            <label className="flex items-center text-sm font-bold text-gray-900 mb-2">
+              <GroupIcon className="w-4 h-4 mr-2 text-blue-600" />
+              Tipo
             </label>
             <select
               value={filters.type}
               onChange={(e) => handleFilterChange('type', e.target.value)}
-              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
+              className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
               <option value="">Todos los tipos</option>
               <option value="GROUP">Grupal</option>
@@ -162,13 +172,14 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Precio */}
           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">
-              💰 Precio (USD)
+            <label className="flex items-center text-sm font-bold text-gray-900 mb-2">
+              <MoneyIcon className="w-4 h-4 mr-2 text-blue-600" />
+              Precio (USD)
             </label>
             <select
               value={filters.priceRange[1]}
               onChange={(e) => handleFilterChange('priceRange', [0, parseInt(e.target.value)])}
-              className="w-full p-3 border-2 border-gray-400 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
+              className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm"
             >
               <option value={100}>Cualquier precio</option>
               <option value={30}>Hasta $30</option>
@@ -179,36 +190,9 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
         </div>
 
-        {/* Filtros Rápidos */}
+        {/* Botón Limpiar */}
         <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="flex flex-wrap gap-2 justify-between items-center">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleFilterChange('level', 'BEGINNER')}
-                className={`${filters.level === 'BEGINNER' ? 'bg-blue-50 border-blue-300' : ''} text-xs`}
-              >
-                ⭐ Principiantes
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleFilterChange('type', 'PRIVATE')}
-                className={`${filters.type === 'PRIVATE' ? 'bg-blue-50 border-blue-300' : ''} text-xs`}
-              >
-                👤 Privadas
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleFilterChange('verified', true)}
-                className={`${filters.verified ? 'bg-blue-50 border-blue-300' : ''} text-xs`}
-              >
-                ✅ Verificadas
-              </Button>
-            </div>
-            
+          <div className="flex justify-end">
             <Button
               variant="outline"
               size="sm"
@@ -227,9 +211,10 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
                 setFilters(resetFilters)
                 onFiltersChange(resetFilters)
               }}
-              className="text-xs"
+              className="flex items-center text-sm"
             >
-              🗑️ Limpiar
+              <TrashIcon className="w-4 h-4 mr-2" />
+              Limpiar Filtros
             </Button>
           </div>
         </div>
