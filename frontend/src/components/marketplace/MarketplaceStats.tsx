@@ -4,43 +4,36 @@ import {
   CheckIcon, 
   LightningIcon,
   LocationIcon,
-  EquipmentIcon,
-  MoneyIcon,
-  ShieldIcon
+  EquipmentIcon
 } from '@/components/ui/Icons'
 
 export function MarketplaceStats() {
   const stats = [
     {
-      icon: <EquipmentIcon className="w-8 h-8" />,
       label: 'Escuelas Activas',
       value: '25+',
       description: 'Escuelas verificadas',
       color: 'from-blue-500 to-blue-600'
     },
     {
-      icon: <CheckIcon className="w-8 h-8" />,
       label: 'Clases Completadas',
       value: '12,500+',
       description: 'Este año',
       color: 'from-purple-500 to-purple-600'
     },
     {
-      icon: <StarIcon className="w-8 h-8" />,
       label: 'Satisfacción',
       value: '5/5',
       description: '100% Satisfacción',
       color: 'from-yellow-500 to-orange-500'
     },
     {
-      icon: <LocationIcon className="w-8 h-8" />,
       label: 'Playas',
       value: '15+',
       description: 'Ubicaciones en Lima',
       color: 'from-cyan-500 to-teal-500'
     },
     {
-      icon: <TrophyIcon className="w-8 h-8" />,
       label: 'Progreso Tracking',
       value: '100%',
       description: 'De los estudiantes',
@@ -90,11 +83,6 @@ export function MarketplaceStats() {
               <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300`}></div>
 
               <div className="relative z-10">
-                {/* Icon with Animation */}
-                <div className={`mb-1 transform group-hover:scale-110 transition-transform duration-300 text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>
-                  {stat.icon}
-                </div>
-
                 {/* Value with Gradient */}
                 <div className={`text-2xl font-black mb-1 text-transparent bg-clip-text bg-gradient-to-r ${stat.color} group-hover:scale-105 transition-transform duration-300`}>
                   {stat.value}
