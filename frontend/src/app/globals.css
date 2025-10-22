@@ -5,104 +5,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  /* High contrast color system optimized for accessibility */
-  --background: #ffffff;
-  --foreground: #000000;
+  /* Ocean-inspired color palette */
   --primary: #0066cc;
   --primary-dark: #004499;
-  --secondary: #f8fafc;
-  --accent: #1e40af;
-  --muted: #64748b;
-  --border: #e2e8f0;
-  --card: #ffffff;
-  --card-shadow: rgba(0, 0, 0, 0.15);
-  
-  /* Ocean-inspired palette with enhanced contrast */
   --ocean-blue: #0066cc;
   --ocean-dark: #003d7a;
   --ocean-light: #e6f3ff;
   --sand: #f7f3f0;
   --wave: #00a8e6;
-  
-  /* Text contrast levels - Force black text for light theme */
-  --text-primary: #ededed !important;
-  --text-secondary: #1f2937 !important;
-  --text-muted: #4b5563 !important;
-  --text-light: #6b7280 !important;
 }
 
-/* Dark theme disabled - force light theme always */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Keep light theme colors even in dark mode preference */
-    --background: #ffffff !important;
-    --foreground: #000000 !important;
-    --secondary: #f8fafc !important;
-    --card: #ffffff !important;
-    --border: #e2e8f0 !important;
-    --card-shadow: rgba(0, 0, 0, 0.15) !important;
-    --text-primary: #000000 !important;
-    --text-secondary: #1f2937 !important;
-    --text-muted: #4b5563 !important;
-  }
-  
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-}
+
 
 body {
-  /* Force light theme colors */
-  color: #000000 !important;
-  background: #ffffff !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 16px; /* Base font size for better readability */
-}
-
-/* Force light theme for the entire app */
-html {
-  color-scheme: light !important;
-}
-
-/* Override any dark theme preferences */
-* {
-  color-scheme: light !important;
-}
-
-/* Make sure common text elements use the readable color by default */
-h1,h2,h3,h4,h5,h6,p,span,a,li,button,label,input,textarea,select {
-  color: #000000 !important;
-}
-
-/* Specific overrides for card content */
-.marketplace-card h1,
-.marketplace-card h2,
-.marketplace-card h3,
-.marketplace-card h4,
-.marketplace-card h5,
-.marketplace-card h6,
-.marketplace-card p,
-.marketplace-card span:not(.bg-white):not(.bg-blue-100):not(.bg-green-100):not(.bg-yellow-100),
-.marketplace-card div {
-  color: #000000 !important;
-}
-
-/* Form controls: readable background and text, with clear borders */
-input, textarea, select, button {
-  color: var(--text-primary);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-
-/* Placeholder tone */
-::placeholder {
-  color: var(--text-muted);
-  opacity: 1;
+  font-size: 16px;
 }
 
 /* Focus states for accessibility */
@@ -135,20 +55,17 @@ input:focus, textarea:focus, select:focus, button:focus {
     overflow: hidden;
   }
 
-  /* Enhanced text contrast utilities */
+  /* Text contrast utilities */
   .text-high-contrast {
-    color: #000000 !important;
-    font-weight: 700;
+    @apply text-gray-900 font-bold;
   }
   
   .text-medium-contrast {
-    color: #1f2937 !important;
-    font-weight: 600;
+    @apply text-gray-800 font-semibold;
   }
   
   .text-readable {
-    color: #4b5563 !important;
-    font-weight: 500;
+    @apply text-gray-600 font-medium;
   }
 
   /* Mobile-optimized text sizes */
@@ -164,39 +81,11 @@ input:focus, textarea:focus, select:focus, button:focus {
 }
 
 @layer components {
-  /* Enhanced marketplace card with superior contrast */
+  /* Marketplace card styling */
   .marketplace-card {
-    @apply bg-white border-2 border-gray-200 rounded-2xl shadow-lg;
+    @apply bg-white border-2 border-gray-200 rounded-2xl shadow-lg text-gray-900;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-color: #e5e7eb;
-    color: #000000 !important;
-  }
-  
-  /* Force black text in marketplace cards */
-  .marketplace-card * {
-    color: #000000 !important;
-  }
-  
-  /* Exceptions for specific colored elements */
-  .marketplace-card .text-yellow-600 {
-    color: #d97706 !important;
-  }
-  
-  .marketplace-card .text-green-600 {
-    color: #059669 !important;
-  }
-  
-  .marketplace-card .text-blue-600 {
-    color: #2563eb !important;
-  }
-  
-  .marketplace-card .text-gray-600 {
-    color: #4b5563 !important;
-  }
-  
-  .marketplace-card .text-gray-500 {
-    color: #6b7280 !important;
   }
   
   .marketplace-card:hover {
@@ -205,7 +94,7 @@ input:focus, textarea:focus, select:focus, button:focus {
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   }
   
-  /* High contrast buttons optimized for all devices */
+  /* Button styles */
   .btn-primary-marketplace {
     @apply bg-blue-600 text-white font-bold px-8 py-4 rounded-xl;
     @apply hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-800;
@@ -232,48 +121,48 @@ input:focus, textarea:focus, select:focus, button:focus {
     font-size: 16px;
   }
   
-  /* Enhanced form inputs with better accessibility */
+  /* Form input styles */
   .input-marketplace {
-    @apply w-full px-4 py-4 border-2 border-gray-400 rounded-xl;
+    @apply w-full px-4 py-4 border-2 border-gray-300 rounded-xl;
     @apply focus:border-blue-600 focus:ring-4 focus:ring-blue-100;
     @apply transition-all duration-200 ease-in-out;
-    @apply text-gray-900 placeholder-gray-600;
+    @apply text-gray-900 placeholder-gray-500 bg-white;
     @apply shadow-sm focus:shadow-md;
     font-size: 16px;
     min-height: 48px;
     font-weight: 500;
   }
   
-  /* School rating badges with high contrast */
+  /* Badge styles */
   .rating-badge {
     @apply inline-flex items-center px-3 py-2 rounded-full text-sm font-bold;
-    @apply bg-yellow-100 text-yellow-900 border-2 border-yellow-300;
+    @apply bg-yellow-100 text-yellow-800 border border-yellow-300;
     min-height: 32px;
   }
   
   .verified-badge {
     @apply inline-flex items-center px-3 py-2 rounded-full text-sm font-bold;
-    @apply bg-blue-100 text-blue-900 border-2 border-blue-300;
+    @apply bg-blue-100 text-blue-800 border border-blue-300;
   }
   
-  /* Level badges with enhanced contrast */
+  /* Level badge styles */
   .level-beginner {
-    @apply bg-green-100 text-green-900 border-2 border-green-400 font-bold px-3 py-2 rounded-full text-sm;
+    @apply bg-green-100 text-green-800 border border-green-300 font-semibold px-3 py-2 rounded-full text-sm;
   }
   
   .level-intermediate {
-    @apply bg-yellow-100 text-yellow-900 border-2 border-yellow-400 font-bold px-3 py-2 rounded-full text-sm;
+    @apply bg-yellow-100 text-yellow-800 border border-yellow-300 font-semibold px-3 py-2 rounded-full text-sm;
   }
   
   .level-advanced {
-    @apply bg-red-100 text-red-900 border-2 border-red-400 font-bold px-3 py-2 rounded-full text-sm;
+    @apply bg-red-100 text-red-800 border border-red-300 font-semibold px-3 py-2 rounded-full text-sm;
   }
   
-  /* Enhanced navigation with better touch targets */
+  /* Navigation styles */
   .nav-link-marketplace {
-    @apply text-gray-800 hover:text-blue-700 font-semibold;
+    @apply text-gray-700 hover:text-blue-600 font-medium;
     @apply transition-colors duration-200 ease-in-out;
-    @apply focus:outline-none focus:ring-3 focus:ring-blue-500 focus:ring-offset-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
     @apply rounded-lg px-4 py-3;
     min-height: 44px;
     display: flex;
@@ -282,8 +171,7 @@ input:focus, textarea:focus, select:focus, button:focus {
   
   /* Filter panel styling */
   .filter-panel {
-    @apply bg-white border-2 border-gray-200 rounded-2xl shadow-lg p-6;
-    @apply backdrop-blur-sm;
+    @apply bg-white border border-gray-200 rounded-xl shadow-md p-6;
   }
   
   /* Mobile-optimized touch targets */
@@ -295,7 +183,7 @@ input:focus, textarea:focus, select:focus, button:focus {
     justify-content: center;
   }
   
-  /* Price display with enhanced readability */
+  /* Price display styles */
   .price-display {
     @apply font-bold text-2xl text-gray-900;
     letter-spacing: -0.025em;
@@ -323,42 +211,28 @@ html {
   }
 }
 
-/* Enhanced scrollbar with better contrast */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 14px;
+  width: 12px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 8px;
+  @apply bg-gray-100 rounded-lg;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #64748b;
-  border-radius: 8px;
-  border: 3px solid #f1f5f9;
+  @apply bg-gray-400 rounded-lg;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  @apply bg-gray-500;
 }
 
-/* Dark mode scrollbar */
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-track {
-    background: #1e293b;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: #64748b;
-    border-color: #1e293b;
-  }
-}
 
-/* Enhanced focus styles for maximum accessibility */
+
+/* Focus styles for accessibility */
 *:focus-visible {
-  outline: 3px solid #3b82f6;
-  outline-offset: 2px;
+  @apply outline-2 outline-blue-500 outline-offset-2;
 }
 
 button:focus-visible,
@@ -366,29 +240,27 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.4);
+  @apply ring-4 ring-blue-200;
 }
 
-/* High contrast selection */
+/* Text selection styling */
 ::selection {
-  background-color: #1e40af;
+  background-color: #3b82f6;
   color: white;
 }
 
-/* Enhanced loading animation */
+/* Loading animation */
 @keyframes marketplace-pulse {
   0%, 100% {
     opacity: 1;
-    transform: scale(1);
   }
   50% {
     opacity: 0.6;
-    transform: scale(0.98);
   }
 }
 
 .animate-marketplace-pulse {
-  animation: marketplace-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: marketplace-pulse 2s ease-in-out infinite;
 }
 
 /* Mobile-first responsive design */
@@ -400,7 +272,6 @@ select:focus-visible {
   .marketplace-card {
     margin: 0.75rem;
     border-radius: 16px;
-    border-width: 2px;
   }
   
   .btn-primary-marketplace,
@@ -415,7 +286,6 @@ select:focus-visible {
     padding: 14px 16px;
     font-size: 16px;
     min-height: 52px;
-    border-width: 2px;
   }
   
   .price-display {
@@ -477,35 +347,23 @@ select:focus-visible {
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
-  :root {
-    --foreground: #000000;
-    --background: #ffffff;
-    --primary: #0000ff;
-    --border: #000000;
-    --text-primary: #000000;
-  }
-  
   .marketplace-card {
-    border: 3px solid #000000;
+    @apply border-2 border-gray-900;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
   
   .btn-primary-marketplace {
-    background-color: #000000;
-    border: 3px solid #000000;
-    color: #ffffff;
+    @apply bg-gray-900 border-2 border-gray-900;
   }
   
   .btn-outline-marketplace {
-    border: 3px solid #000000;
-    color: #000000;
+    @apply border-2 border-gray-900 text-gray-900;
   }
   
   .level-beginner,
   .level-intermediate,
   .level-advanced {
-    border-width: 3px;
-    font-weight: 900;
+    @apply border-2 font-bold;
   }
 }
 
@@ -516,13 +374,12 @@ select:focus-visible {
   }
   
   body {
-    background: white !important;
-    color: black !important;
+    @apply bg-white text-black;
     font-size: 12pt;
   }
   
   .marketplace-card {
-    border: 2px solid #000000;
+    @apply border-2 border-gray-900;
     box-shadow: none;
     break-inside: avoid;
   }
@@ -541,15 +398,15 @@ select:focus-visible {
   }
 }
 
-/* Enhanced typography scale */
-.text-marketplace-xs { font-size: 0.75rem; line-height: 1rem; }
-.text-marketplace-sm { font-size: 0.875rem; line-height: 1.25rem; }
-.text-marketplace-base { font-size: 1rem; line-height: 1.5rem; }
-.text-marketplace-lg { font-size: 1.125rem; line-height: 1.75rem; }
-.text-marketplace-xl { font-size: 1.25rem; line-height: 1.75rem; }
-.text-marketplace-2xl { font-size: 1.5rem; line-height: 2rem; }
-.text-marketplace-3xl { font-size: 1.875rem; line-height: 2.25rem; }
-.text-marketplace-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+/* Typography scale */
+.text-marketplace-xs { @apply text-xs; }
+.text-marketplace-sm { @apply text-sm; }
+.text-marketplace-base { @apply text-base; }
+.text-marketplace-lg { @apply text-lg; }
+.text-marketplace-xl { @apply text-xl; }
+.text-marketplace-2xl { @apply text-2xl; }
+.text-marketplace-3xl { @apply text-3xl; }
+.text-marketplace-4xl { @apply text-4xl; }
 
 /* Animations for expandable sections */
 @keyframes slide-in-from-top {
@@ -575,71 +432,17 @@ select:focus-visible {
   animation-duration: 300ms;
 }
 
-/* Enhanced card details section */
+/* Card details section */
 .card-details {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-top: 1px solid #e2e8f0;
+  @apply bg-gradient-to-br from-gray-50 to-gray-100 border-t border-gray-200;
 }
 
-/* Profile images with enhanced styling */
+/* Profile images */
 .profile-image {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out;
-}
-
-.profile-image:hover {
-  transform: scale(1.05);
+  @apply shadow-md transition-transform duration-200 hover:scale-105;
 }
 
 /* Specialty tags */
 .specialty-tag {
-  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-  border: 1px solid #86efac;
+  @apply bg-gradient-to-r from-green-100 to-green-200 border border-green-300;
 }
-/* Fo
-rce Tailwind text colors to display correctly */
-.text-gray-900 {
-  color: #111827 !important;
-}
-
-.text-gray-800 {
-  color: #1f2937 !important;
-}
-
-.text-gray-700 {
-  color: #374151 !important;
-}
-
-.text-gray-600 {
-  color: #4b5563 !important;
-}
-
-.text-gray-500 {
-  color: #6b7280 !important;
-}
-
-.text-black {
-  color: #000000 !important;
-}
-
-/* Ensure marketplace cards always have proper text colors */
-.marketplace-card .text-gray-900,
-.marketplace-card h1,
-.marketplace-card h2,
-.marketplace-card h3,
-.marketplace-card h4,
-.marketplace-card h5,
-.marketplace-card h6 {
-  color: #111827 !important;
-}
-
-.marketplace-card .text-gray-700,
-.marketplace-card p {
-  color: #374151 !important;
-}
-
-.marketplace-card .text-gray-600,
-.marketplace-card span:not([class*="bg-"]):not([class*="text-yellow"]):not([class*="text-green"]):not([class*="text-blue"]):not([class*="text-red"]) {
-  color: #4b5563 !important;
-}/* Force C
-SS refresh - Updated at 2025-10-21 */
