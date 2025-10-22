@@ -45,8 +45,8 @@ export function PublicNavbar() {
                 <span className="text-white text-xl font-bold">🏄</span>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-gray-900">SurfSchool</h1>
-                <p className="text-xs text-gray-500">Reserva tu clase de surf</p>
+                <h1 className="text-xl font-bold text-gray-900">clasesde.pe</h1>
+                <p className="text-xs text-gray-500">Tu plataforma de clases</p>
               </div>
             </Link>
           </div>
