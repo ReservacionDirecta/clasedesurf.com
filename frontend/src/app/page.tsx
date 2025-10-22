@@ -320,28 +320,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Stats Rápidas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md border border-cyan-100">
-                <div className="text-2xl font-bold text-cyan-600 mb-1">25+</div>
-                <div className="text-gray-700 text-sm font-medium">Escuelas Activas</div>
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md border border-teal-100">
-                <div className="text-2xl font-bold text-teal-600 mb-1">150+</div>
-                <div className="text-gray-700 text-sm font-medium">Clases Semanales</div>
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md border border-emerald-100">
-                <div className="text-2xl font-bold text-emerald-600 mb-1">2.5K+</div>
-                <div className="text-gray-700 text-sm font-medium">Estudiantes</div>
-              </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md border border-orange-100">
-                <div className="flex items-center justify-center text-2xl font-bold text-orange-600 mb-1">
-                  4.8
-                  <StarIcon className="w-5 h-5 ml-1" />
-                </div>
-                <div className="text-gray-700 text-sm font-medium">Rating Promedio</div>
-              </div>
-            </div>
+
           </div>
         </div>
       </main>
