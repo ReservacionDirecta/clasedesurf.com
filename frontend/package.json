@@ -1,8 +1,10 @@
 {
-  "name": "surfschool-booking-platform",
-  "version": "1.2.0",
-  "description": "Marketplace de surf en Lima - Conecta surfistas con las mejores escuelas de surf en Perú",
+  "name": "clasesde-pe-platform",
+  "version": "2.0.0",
+  "description": "clasesde.pe - Plataforma que conecta estudiantes con instructores expertos en todo Perú",
   "keywords": [
+    "clases",
+    "educacion",
     "surf",
     "lima",
     "peru",

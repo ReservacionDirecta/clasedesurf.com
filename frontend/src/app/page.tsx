@@ -245,7 +245,7 @@ export default function Home() {
             </h2>
             
             <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium mb-4 sm:mb-6 px-4 sm:px-0">
-              <span className="text-cyan-700 font-bold">Compara escuelas, precios y horarios.</span>
+              <span className="text-cyan-700 font-bold">Compara academias, precios y horarios.</span>
               <span className="block mt-1">Encuentra la clase ideal para tu nivel y ubicación preferida.</span>
             </p>
 

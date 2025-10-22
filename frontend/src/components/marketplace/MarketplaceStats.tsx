@@ -8,27 +8,27 @@ import {
 export function MarketplaceStats() {
   const stats = [
     {
-      label: 'Escuelas Activas',
-      value: '25+',
-      description: 'Escuelas verificadas',
+      label: 'Academias Activas',
+      value: '50+',
+      description: 'Academias verificadas',
       color: 'from-blue-500 to-blue-600'
     },
     {
       label: 'Clases Completadas',
-      value: '12,500+',
+      value: '25,000+',
       description: 'Este año',
       color: 'from-purple-500 to-purple-600'
     },
     {
       label: 'Satisfacción',
-      value: '5/5',
-      description: '100% Satisfacción',
+      value: '4.9/5',
+      description: '98% Satisfacción',
       color: 'from-yellow-500 to-orange-500'
     },
     {
-      label: 'Playas',
-      value: '15+',
-      description: 'Ubicaciones en Lima',
+      label: 'Categorías',
+      value: '12+',
+      description: 'Tipos de clases',
       color: 'from-cyan-500 to-teal-500'
     },
     {
@@ -60,12 +60,12 @@ export function MarketplaceStats() {
           </div>
 
           <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 mb-2 sm:mb-3 leading-tight px-2 sm:px-0">
-            Conectando Pasión con <span className="text-teal-700">Experiencia</span>
+            Conectando Estudiantes con <span className="text-teal-700">Expertos</span>
           </h2>
 
           <div className="max-w-3xl mx-auto px-4 sm:px-0">
             <p className="text-sm xs:text-base sm:text-lg md:text-xl text-gray-700 font-medium leading-relaxed">
-              La plataforma que une a surfistas con instructores expertos en toda Lima
+              La plataforma que conecta estudiantes con instructores expertos en todo Perú
             </p>
           </div>
         </div>
@@ -116,10 +116,10 @@ export function MarketplaceStats() {
             
             {/* Content */}
             <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-2 leading-tight">
-              ¿Eres instructor o tienes una escuela?
+              ¿Eres instructor o tienes una academia?
             </h3>
             <p className="text-sm sm:text-base text-gray-600 mb-6 leading-relaxed max-w-md mx-auto">
-              Únete a nuestra plataforma y conecta con más estudiantes
+              Únete a clasesde.pe y conecta con más estudiantes
             </p>
             
             {/* Buttons - Mobile Optimized */}
