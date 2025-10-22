@@ -4,18 +4,17 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: clasedesurf-postgres
-    restart: unless-stopped
+    container_name: clasesde-pe-postgres
     environment:
+      POSTGRES_DB: clasesde_pe
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: clasedesurf.com
+      POSTGRES_PASSWORD: postgres
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - clasedesurf-network
+      - clasesde-pe-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -27,86 +26,49 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: ${DOCKER_USERNAME:-yerct}/clasedesurf-backend:${VERSION:-latest}
-    container_name: clasedesurf-backend
-    restart: unless-stopped
-    ports:
-      - "${BACKEND_PORT:-4000}:4000"
+    container_name: clasesde-pe-backend
     environment:
-      # Database
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/clasedesurf.com
-      
-      # Server
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/clasesde_pe"
+      JWT_SECRET: "dev-secret-change-in-production"
       PORT: 4000
-      NODE_ENV: production
-      
-      # JWT
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
-      
-      # CORS
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
-      
-      # WhatsApp (optional)
-      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-false}
-      WHATSAPP_SESSION_PATH: ${WHATSAPP_SESSION_PATH:-./whatsapp-session}
-      
+      NODE_ENV: development
+    ports:
+      - "4000:4000"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - clasedesurf-network
+      - clasesde-pe-network
     volumes:
-      - ./backend/whatsapp-session:/app/whatsapp-session
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
 
   # Frontend Next.js
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
-        NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL:-http://localhost:4000}
-    image: ${DOCKER_USERNAME:-yerct}/clasedesurf-frontend:${VERSION:-latest}
-    container_name: clasedesurf-frontend
-    restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+    container_name: clasesde-pe-frontend
     environment:
-      # Backend URLs
-      NEXT_PUBLIC_API_URL: http://backend:4000
-      NEXT_PUBLIC_BACKEND_URL: http://backend:4000
-      BACKEND_URL: http://backend:4000
-      
-      # NextAuth
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-nextauth-secret-change-in-production}
-      
-      # Node
-      NODE_ENV: production
-      
+      NEXT_PUBLIC_BACKEND_URL: "http://localhost:4000"
+      NEXTAUTH_SECRET: "dev-secret-change-in-production"
+      NEXTAUTH_URL: "http://localhost:3000"
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
-      - clasedesurf-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
+      - clasesde-pe-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
 
 volumes:
   postgres_data:
-    driver: local
 
 networks:
-  clasedesurf-network:
+  clasesde-pe-network:
     driver: bridge
