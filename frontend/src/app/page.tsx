@@ -22,6 +22,7 @@ import {
   LockIcon,
   EquipmentIcon
 } from '@/components/ui/Icons'
+import { DatePicker } from '@/components/ui/DatePicker'
 import { apiService, transformApiClassToFrontend, type ClassFilters } from '@/services/api'
 
 // Datos de ejemplo como fallback
@@ -258,7 +259,7 @@ export default function Home() {
                       <LocationIcon className="w-3 h-3 mr-1 text-cyan-600" />
                       Ubicación
                     </label>
-                    <select className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200 transition-all bg-white text-sm">
+                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-2 rounded-lg text-sm font-medium">
                       <option>Todas</option>
                       <option>Costa Verde</option>
                       <option>Punta Hermosa</option>
@@ -272,7 +273,7 @@ export default function Home() {
                       <SurferIcon className="w-3 h-3 mr-1 text-cyan-600" />
                       Nivel
                     </label>
-                    <select className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200 transition-all bg-white text-sm">
+                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-2 rounded-lg text-sm font-medium">
                       <option>Todos</option>
                       <option>Principiante</option>
                       <option>Intermedio</option>
@@ -286,9 +287,9 @@ export default function Home() {
                       <CalendarIcon className="w-3 h-3 mr-1 text-cyan-600" />
                       Fecha
                     </label>
-                    <input 
-                      type="date" 
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200 transition-all bg-white text-sm"
+                    <DatePicker 
+                      placeholder="Cualquier fecha"
+                      onChange={(date) => console.log('Fecha seleccionada:', date)}
                     />
                   </div>
 
@@ -298,7 +299,7 @@ export default function Home() {
                       <MoneyIcon className="w-3 h-3 mr-1 text-cyan-600" />
                       Precio
                     </label>
-                    <select className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200 transition-all bg-white text-sm">
+                    <select className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-2 rounded-lg text-sm font-medium">
                       <option>Cualquier precio</option>
                       <option>Hasta $30</option>
                       <option>Hasta $50</option>
@@ -310,7 +311,7 @@ export default function Home() {
                   <div>
                     <Button 
                       variant="primary"
-                      className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center text-sm"
+                      className="search-element-transition w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center text-sm shadow-lg hover:shadow-xl"
                     >
                       <SearchIcon className="w-4 h-4 mr-1" />
                       BUSCAR
