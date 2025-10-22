@@ -298,7 +298,8 @@ select:focus-visible {
 /* Mobile-first responsive design */
 @media (max-width: 640px) {
   body {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
   }
 
   .marketplace-card {
@@ -364,7 +365,8 @@ select:focus-visible {
   .input-marketplace,
   .btn-primary-marketplace,
   .btn-outline-marketplace {
-    font-size: 16px !important; /* Prevents zoom */
+    font-size: 16px !important;
+    /* Prevents zoom */
     -webkit-appearance: none;
   }
 
@@ -514,10 +516,6 @@ select:focus-visible {
 /* Style the date input calendar icon */
 input[type="date"]::-webkit-calendar-picker-indicator {
   @apply cursor-pointer opacity-70 hover:opacity-100 transition-opacity;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%230891b2'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e");
-  background-size: 18px 18px;
-  background-repeat: no-repeat;
-  background-position: center;
   width: 20px;
   height: 20px;
   margin-right: 4px;
@@ -582,35 +580,15 @@ input[type="date"]::-webkit-datetime-edit-year-field {
 
 /* Custom select arrow styling */
 select.search-select-enhanced {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230891b2' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  padding-right: 32px;
   background-position: right 8px center;
   background-repeat: no-repeat;
   background-size: 16px 16px;
-  padding-right: 32px;
 }
 
-/* Date input container with icon */
+/* Date input container */
 .date-input-container {
   @apply relative;
-}
-
-.date-input-container::before {
-  content: '';
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%230891b2'%3e%3cpath fill-rule='evenodd' d='M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z' clip-rule='evenodd'/%3e%3c/svg%3e");
-  background-size: contain;
-  background-repeat: no-repeat;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.date-input-with-icon {
-  @apply pl-10;
 }
 
 /* Smooth transitions for all search elements */
