@@ -1,9 +1,7 @@
 import { 
-  TrophyIcon, 
   StarIcon, 
   CheckIcon, 
   LightningIcon,
-  LocationIcon,
   EquipmentIcon
 } from '@/components/ui/Icons'
 
@@ -108,47 +106,50 @@ export function MarketplaceStats() {
 
       {/* Mobile-Optimized Call to Action for Schools */}
       <div className="relative">
-        <div className="bg-gradient-to-r from-white via-teal-50 to-white rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-md border border-teal-100">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
-            {/* Left Content */}
-            <div className="text-center sm:text-left flex-1">
-              <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start mb-3 gap-3 sm:gap-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full flex items-center justify-center shadow-md sm:mr-3 flex-shrink-0">
-                  <EquipmentIcon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                </div>
-                <div className="text-center sm:text-left">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 leading-tight">¿Eres instructor o tienes una escuela?</h3>
-                  <p className="text-xs sm:text-sm text-gray-600 leading-tight">Únete a nuestra plataforma y conecta con más estudiantes</p>
-                </div>
-              </div>
+        <div className="bg-gradient-to-r from-white via-teal-50 to-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-lg border border-teal-100">
+          {/* Mobile-First Layout */}
+          <div className="text-center mb-4">
+            {/* Icon */}
+            <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full flex items-center justify-center shadow-lg mx-auto mb-4">
+              <EquipmentIcon className="w-8 h-8 text-white" />
             </div>
-
-            {/* Right Buttons */}
-            <div className="flex flex-col xs:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-              <button className="touch-target-lg bg-gradient-to-r from-teal-600 to-emerald-600 text-white px-4 sm:px-6 py-3 rounded-lg font-bold text-sm hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 flex items-center justify-center">
-                <LightningIcon className="w-4 h-4 mr-2" />
+            
+            {/* Content */}
+            <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-2 leading-tight">
+              ¿Eres instructor o tienes una escuela?
+            </h3>
+            <p className="text-sm sm:text-base text-gray-600 mb-6 leading-relaxed max-w-md mx-auto">
+              Únete a nuestra plataforma y conecta con más estudiantes
+            </p>
+            
+            {/* Buttons - Mobile Optimized */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6">
+              <button className="w-full sm:w-auto bg-gradient-to-r from-teal-600 to-emerald-600 text-white px-8 py-4 rounded-xl font-bold text-base hover:from-teal-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <LightningIcon className="w-5 h-5 mr-2" />
                 Registrarse
               </button>
-              <button className="touch-target-lg border-2 border-teal-200 text-teal-700 px-4 sm:px-6 py-3 rounded-lg font-bold text-sm hover:bg-teal-50 hover:border-teal-300 transition-all duration-200 flex items-center justify-center">
-                <EquipmentIcon className="w-4 h-4 mr-2" />
+              <button className="w-full sm:w-auto border-2 border-teal-300 text-teal-700 px-8 py-4 rounded-xl font-bold text-base hover:bg-teal-50 hover:border-teal-400 transition-all duration-300 flex items-center justify-center hover:shadow-lg transform hover:-translate-y-1">
+                <EquipmentIcon className="w-5 h-5 mr-2" />
                 Más Info
               </button>
             </div>
           </div>
 
-          {/* Mobile-Optimized Trust Indicators */}
-          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-teal-100 flex flex-wrap justify-center sm:justify-start items-center gap-3 sm:gap-4 text-xs text-gray-500">
-            <div className="flex items-center">
-              <CheckIcon className="w-3 h-3 text-green-500 mr-1" />
-              Sin comisiones
-            </div>
-            <div className="flex items-center">
-              <CheckIcon className="w-3 h-3 text-green-500 mr-1" />
-              Setup gratuito
-            </div>
-            <div className="flex items-center">
-              <CheckIcon className="w-3 h-3 text-green-500 mr-1" />
-              Soporte 24/7
+          {/* Trust Indicators - Mobile Optimized */}
+          <div className="pt-4 border-t border-teal-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start">
+                <CheckIcon className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700">Sin comisiones</span>
+              </div>
+              <div className="flex items-center justify-center sm:justify-start">
+                <CheckIcon className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700">Setup gratuito</span>
+              </div>
+              <div className="flex items-center justify-center sm:justify-start">
+                <CheckIcon className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                <span className="text-sm font-medium text-gray-700">Soporte 24/7</span>
+              </div>
             </div>
           </div>
         </div>
