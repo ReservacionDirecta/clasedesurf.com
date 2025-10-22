@@ -49,7 +49,7 @@ export function MarketplaceStats() {
   ]
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 rounded-3xl p-8 mb-12 shadow-xl">
+    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl p-6 mb-8 shadow-lg">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-10 left-10 w-20 h-20 bg-blue-500 rounded-full blur-xl"></div>
@@ -59,61 +59,49 @@ export function MarketplaceStats() {
       </div>
 
       <div className="relative z-10">
-        {/* Enhanced Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center mb-6">
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg flex items-center">
-              <TrophyIcon className="w-4 h-4 mr-2" />
-              Líder del Mercado
+        {/* Compact Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center mb-4">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg flex items-center">
+              <StarIcon className="w-4 h-4 mr-2" />
+              Plataforma Confiable
             </div>
           </div>
 
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 mb-6 leading-tight">
-            El Marketplace de <span className="text-blue-700">Surf</span> N°1
+          <h2 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 mb-4 leading-tight">
+            Conectando Pasión con <span className="text-teal-700">Experiencia</span>
           </h2>
 
-          <div className="max-w-4xl mx-auto">
-            <p className="text-xl md:text-2xl text-gray-700 font-medium leading-relaxed mb-4">
-              Conectamos estudiantes con las mejores escuelas de surf
+          <div className="max-w-3xl mx-auto">
+            <p className="text-lg md:text-xl text-gray-700 font-medium leading-relaxed">
+              La plataforma que une a surfistas con instructores expertos en toda Lima
             </p>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              Ofreciendo <span className="font-semibold text-blue-600">transparencia</span>,
-              <span className="font-semibold text-cyan-600"> calidad</span> y
-              <span className="font-semibold text-teal-600"> seguimiento de progreso</span>
-            </p>
-          </div>
-
-          {/* Decorative Wave */}
-          <div className="flex justify-center mt-8">
-            <svg className="w-24 h-6 text-blue-300" viewBox="0 0 100 20" fill="currentColor">
-              <path d="M0,10 Q25,0 50,10 T100,10 V20 H0 Z" />
-            </svg>
           </div>
         </div>
 
-        {/* Enhanced Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-12">
+        {/* Compact Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="group relative bg-white/80 backdrop-blur-sm rounded-2xl p-6 text-center hover:bg-white hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-white/50"
+              className="group relative bg-white/80 backdrop-blur-sm rounded-xl p-4 text-center hover:bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-white/50"
             >
               {/* Gradient Background on Hover */}
               <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300`}></div>
 
               <div className="relative z-10">
                 {/* Icon with Animation */}
-                <div className={`mb-4 transform group-hover:scale-110 transition-transform duration-300 text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>
+                <div className={`mb-3 transform group-hover:scale-110 transition-transform duration-300 text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>
                   {stat.icon}
                 </div>
 
                 {/* Value with Gradient */}
-                <div className={`text-3xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r ${stat.color} group-hover:scale-105 transition-transform duration-300`}>
+                <div className={`text-2xl font-black mb-1 text-transparent bg-clip-text bg-gradient-to-r ${stat.color} group-hover:scale-105 transition-transform duration-300`}>
                   {stat.value}
                 </div>
 
                 {/* Label */}
-                <div className="text-sm font-bold text-gray-800 mb-2 group-hover:text-gray-900 transition-colors">
+                <div className="text-xs font-bold text-gray-800 mb-1 group-hover:text-gray-900 transition-colors">
                   {stat.label}
                 </div>
 
@@ -130,54 +118,49 @@ export function MarketplaceStats() {
         </div>
       </div>
 
-      {/* Enhanced Call to Action for Schools */}
+      {/* Compact Call to Action for Schools */}
       <div className="relative">
-        <div className="bg-gradient-to-r from-white via-blue-50 to-white rounded-2xl p-8 shadow-lg border border-blue-100">
-          <div className="text-center">
-            {/* Icon Header */}
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-6 shadow-lg">
-              <EquipmentIcon className="w-8 h-8 text-white" />
+        <div className="bg-gradient-to-r from-white via-teal-50 to-white rounded-xl p-6 shadow-md border border-teal-100">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Left Content */}
+            <div className="text-center md:text-left flex-1">
+              <div className="flex items-center justify-center md:justify-start mb-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full flex items-center justify-center shadow-md mr-3">
+                  <EquipmentIcon className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">¿Eres instructor o tienes una escuela?</h3>
+                  <p className="text-sm text-gray-600">Únete a nuestra plataforma y conecta con más estudiantes</p>
+                </div>
+              </div>
             </div>
 
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-              ¿Tienes una escuela de surf?
-            </h3>
-
-            <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Únete a nuestro marketplace y llega a <span className="font-semibold text-blue-600">miles de estudiantes potenciales</span>.
-              Gestiona tus clases, instructores y pagos en una sola plataforma.
-            </p>
-
-            {/* Enhanced Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="group relative bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl flex items-center">
-                <span className="relative z-10 flex items-center">
-                  <LightningIcon className="w-5 h-5 mr-2" />
-                  Registrar Escuela
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-cyan-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            {/* Right Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white px-6 py-3 rounded-lg font-bold text-sm hover:from-teal-700 hover:to-emerald-700 transition-all duration-200 flex items-center">
+                <LightningIcon className="w-4 h-4 mr-2" />
+                Registrarse
               </button>
-
-              <button className="group border-2 border-blue-200 text-blue-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1 flex items-center">
-                <EquipmentIcon className="w-5 h-5 mr-2" />
-                Más Información
+              <button className="border-2 border-teal-200 text-teal-700 px-6 py-3 rounded-lg font-bold text-sm hover:bg-teal-50 hover:border-teal-300 transition-all duration-200 flex items-center">
+                <EquipmentIcon className="w-4 h-4 mr-2" />
+                Más Info
               </button>
             </div>
+          </div>
 
-            {/* Trust Indicators */}
-            <div className="mt-8 flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500">
-              <div className="flex items-center">
-                <CheckIcon className="w-4 h-4 text-green-500 mr-2" />
-                Sin comisiones el primer mes
-              </div>
-              <div className="flex items-center">
-                <CheckIcon className="w-4 h-4 text-green-500 mr-2" />
-                Configuración gratuita
-              </div>
-              <div className="flex items-center">
-                <CheckIcon className="w-4 h-4 text-green-500 mr-2" />
-                Soporte 24/7
-              </div>
+          {/* Compact Trust Indicators */}
+          <div className="mt-4 pt-4 border-t border-teal-100 flex flex-wrap justify-center md:justify-start items-center gap-4 text-xs text-gray-500">
+            <div className="flex items-center">
+              <CheckIcon className="w-3 h-3 text-green-500 mr-1" />
+              Sin comisiones
+            </div>
+            <div className="flex items-center">
+              <CheckIcon className="w-3 h-3 text-green-500 mr-1" />
+              Setup gratuito
+            </div>
+            <div className="flex items-center">
+              <CheckIcon className="w-3 h-3 text-green-500 mr-1" />
+              Soporte 24/7
             </div>
           </div>
         </div>
