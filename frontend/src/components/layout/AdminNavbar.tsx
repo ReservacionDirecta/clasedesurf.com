@@ -75,7 +75,7 @@ export function AdminNavbar() {
                 <span className="text-white text-xl font-bold">🏄</span>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-gray-900">SurfSchool</h1>
+                <h1 className="text-xl font-bold text-gray-900">clasesde.pe</h1>
                 <p className="text-xs text-purple-600 font-medium">Admin Panel</p>
               </div>
             </Link>
