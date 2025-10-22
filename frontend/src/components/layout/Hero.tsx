@@ -45,13 +45,13 @@ export function Hero() {
             {/* Mobile-Optimized Layout */}
             <div className="text-center">
               <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-black mb-4 sm:mb-6 lg:mb-8 leading-tight text-white drop-shadow-2xl">
-                <span className="block">El Marketplace de</span>
-                <span className="block">Surf N°1</span>
+                <span className="block">clasesde.pe</span>
+                <span className="block text-blue-200">Tu plataforma de clases</span>
               </h1>
               
               <p className="text-sm xs:text-base sm:text-lg lg:text-xl xl:text-2xl mb-6 sm:mb-8 lg:mb-10 max-w-3xl mx-auto leading-relaxed font-medium text-white drop-shadow-lg px-2 sm:px-0">
-                <span>Encuentra tus clases.</span>
-                <span className="font-bold ml-1 sm:ml-2">Impulsa tu pasión.</span>
+                <span>Encuentra clases de surf, yoga, cocina y más.</span>
+                <span className="font-bold ml-1 sm:ml-2">Aprende algo nuevo hoy.</span>
               </p>
               
               {/* Mobile-Optimized CTA Buttons */}
@@ -61,13 +61,13 @@ export function Hero() {
                   onClick={scrollToSearch}
                   className="touch-target-lg bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-4 sm:px-8 sm:py-3 lg:px-10 lg:py-5 text-sm sm:text-base lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 hover:shadow-xl w-full sm:w-auto"
                 >
-                  EXPLORA SURF AHORA
+                  EXPLORAR CLASES
                 </Button>
                 <Button 
                   variant="outline"
                   className="touch-target-lg bg-white/10 border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold px-6 py-4 sm:px-8 sm:py-3 lg:px-10 lg:py-5 text-sm sm:text-base lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 hover:shadow-xl w-full sm:w-auto"
                 >
-                  PARA ESCUELAS
+                  PARA INSTRUCTORES
                 </Button>
               </div>
 
@@ -80,11 +80,11 @@ export function Hero() {
                     </div>
                     <div className="text-left min-w-0 flex-1">
                       <p className="text-xs sm:text-sm lg:text-lg font-bold text-white leading-tight">
-                        ¿Tienes una escuela de surf?
+                        ¿Eres instructor o tienes una academia?
                       </p>
                       <p className="text-xs sm:text-xs lg:text-sm text-white leading-tight">
                         <a href="#" className="underline hover:text-blue-200 transition-colors font-medium">
-                          Únete gratis a nuestra plataforma
+                          Únete gratis a clasesde.pe
                         </a>
                       </p>
                     </div>
@@ -100,20 +100,20 @@ export function Hero() {
           <div className="max-w-7xl mx-auto px-3 sm:px-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-white">
               <div className="p-2 sm:p-0">
-                <div className="text-lg sm:text-2xl lg:text-3xl font-bold">25+</div>
-                <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Escuelas Verificadas</div>
+                <div className="text-lg sm:text-2xl lg:text-3xl font-bold">50+</div>
+                <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Academias Verificadas</div>
               </div>
               <div className="p-2 sm:p-0">
-                <div className="text-lg sm:text-2xl lg:text-3xl font-bold">150+</div>
+                <div className="text-lg sm:text-2xl lg:text-3xl font-bold">300+</div>
                 <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Instructores Certificados</div>
               </div>
               <div className="p-2 sm:p-0">
-                <div className="text-lg sm:text-2xl lg:text-3xl font-bold">2.5K+</div>
+                <div className="text-lg sm:text-2xl lg:text-3xl font-bold">5K+</div>
                 <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Estudiantes Activos</div>
               </div>
               <div className="p-2 sm:p-0">
                 <div className="flex items-center justify-center text-lg sm:text-2xl lg:text-3xl font-bold">
-                  4.8
+                  4.9
                   <StarIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ml-1" />
                 </div>
                 <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Rating Promedio</div>
