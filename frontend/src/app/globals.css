@@ -26,9 +26,12 @@ body {
 }
 
 /* Focus states for accessibility */
-input:focus, textarea:focus, select:focus, button:focus {
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(59,130,246,0.15);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
   border-color: var(--primary);
 }
 
@@ -40,14 +43,14 @@ input:focus, textarea:focus, select:focus, button:focus {
   .text-balance {
     text-wrap: balance;
   }
-  
+
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  
+
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -59,41 +62,65 @@ input:focus, textarea:focus, select:focus, button:focus {
   .text-high-contrast {
     @apply text-gray-900 font-bold;
   }
-  
+
   .text-medium-contrast {
     @apply text-gray-800 font-semibold;
   }
-  
+
   .text-readable {
     @apply text-gray-600 font-medium;
   }
 
   /* Mobile-optimized text sizes */
-  .text-mobile-sm { font-size: 14px; line-height: 1.5; }
-  .text-mobile-base { font-size: 16px; line-height: 1.6; }
-  .text-mobile-lg { font-size: 18px; line-height: 1.7; }
-  .text-mobile-xl { font-size: 20px; line-height: 1.7; }
+  .text-mobile-sm {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .text-mobile-base {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .text-mobile-lg {
+    font-size: 18px;
+    line-height: 1.7;
+  }
+
+  .text-mobile-xl {
+    font-size: 20px;
+    line-height: 1.7;
+  }
 
   /* Enhanced spacing for mobile */
-  .spacing-mobile { padding: 1rem; }
-  .spacing-tablet { padding: 1.5rem; }
-  .spacing-desktop { padding: 2rem; }
+  .spacing-mobile {
+    padding: 1rem;
+  }
+
+  .spacing-tablet {
+    padding: 1.5rem;
+  }
+
+  .spacing-desktop {
+    padding: 2rem;
+  }
 }
 
 @layer components {
+
   /* Marketplace card styling */
   .marketplace-card {
     @apply bg-white border-2 border-gray-200 rounded-2xl shadow-lg text-gray-900;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
   .marketplace-card:hover {
     @apply shadow-2xl border-blue-300;
     transform: translateY(-6px);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   }
-  
+
   /* Button styles */
   .btn-primary-marketplace {
     @apply bg-blue-600 text-white font-bold px-8 py-4 rounded-xl;
@@ -105,11 +132,11 @@ input:focus, textarea:focus, select:focus, button:focus {
     font-size: 16px;
     letter-spacing: 0.025em;
   }
-  
+
   .btn-primary-marketplace:hover {
     transform: translateY(-2px);
   }
-  
+
   .btn-outline-marketplace {
     @apply bg-white text-gray-900 font-bold px-8 py-4 rounded-xl;
     @apply border-2 border-gray-400 hover:border-gray-600;
@@ -120,7 +147,7 @@ input:focus, textarea:focus, select:focus, button:focus {
     min-height: 48px;
     font-size: 16px;
   }
-  
+
   /* Form input styles */
   .input-marketplace {
     @apply w-full px-4 py-4 border-2 border-gray-300 rounded-xl;
@@ -132,32 +159,32 @@ input:focus, textarea:focus, select:focus, button:focus {
     min-height: 48px;
     font-weight: 500;
   }
-  
+
   /* Badge styles */
   .rating-badge {
     @apply inline-flex items-center px-3 py-2 rounded-full text-sm font-bold;
     @apply bg-yellow-100 text-yellow-800 border border-yellow-300;
     min-height: 32px;
   }
-  
+
   .verified-badge {
     @apply inline-flex items-center px-3 py-2 rounded-full text-sm font-bold;
     @apply bg-blue-100 text-blue-800 border border-blue-300;
   }
-  
+
   /* Level badge styles */
   .level-beginner {
     @apply bg-green-100 text-green-800 border border-green-300 font-semibold px-3 py-2 rounded-full text-sm;
   }
-  
+
   .level-intermediate {
     @apply bg-yellow-100 text-yellow-800 border border-yellow-300 font-semibold px-3 py-2 rounded-full text-sm;
   }
-  
+
   .level-advanced {
     @apply bg-red-100 text-red-800 border border-red-300 font-semibold px-3 py-2 rounded-full text-sm;
   }
-  
+
   /* Navigation styles */
   .nav-link-marketplace {
     @apply text-gray-700 hover:text-blue-600 font-medium;
@@ -168,12 +195,12 @@ input:focus, textarea:focus, select:focus, button:focus {
     display: flex;
     align-items: center;
   }
-  
+
   /* Filter panel styling */
   .filter-panel {
     @apply bg-white border border-gray-200 rounded-xl shadow-md p-6;
   }
-  
+
   /* Mobile-optimized touch targets */
   .touch-target {
     min-height: 48px;
@@ -182,13 +209,13 @@ input:focus, textarea:focus, select:focus, button:focus {
     align-items: center;
     justify-content: center;
   }
-  
+
   /* Price display styles */
   .price-display {
     @apply font-bold text-2xl text-gray-900;
     letter-spacing: -0.025em;
   }
-  
+
   .price-secondary {
     @apply font-medium text-lg text-gray-600;
   }
@@ -203,8 +230,10 @@ html {
   html {
     scroll-behavior: auto;
   }
-  
-  *, *::before, *::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -251,9 +280,12 @@ select:focus-visible {
 
 /* Loading animation */
 @keyframes marketplace-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.6;
   }
@@ -266,14 +298,15 @@ select:focus-visible {
 /* Mobile-first responsive design */
 @media (max-width: 640px) {
   body {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 16px;
+    /* Prevents zoom on iOS */
   }
-  
+
   .marketplace-card {
     margin: 0.75rem;
     border-radius: 16px;
   }
-  
+
   .btn-primary-marketplace,
   .btn-outline-marketplace {
     padding: 14px 24px;
@@ -281,17 +314,17 @@ select:focus-visible {
     min-height: 52px;
     font-weight: 700;
   }
-  
+
   .input-marketplace {
     padding: 14px 16px;
     font-size: 16px;
     min-height: 52px;
   }
-  
+
   .price-display {
     font-size: 1.75rem;
   }
-  
+
   /* Enhanced spacing for mobile */
   .container {
     padding-left: 1rem;
@@ -305,7 +338,7 @@ select:focus-visible {
     padding-left: 2rem;
     padding-right: 2rem;
   }
-  
+
   .marketplace-card {
     border-radius: 20px;
   }
@@ -316,11 +349,11 @@ select:focus-visible {
   .marketplace-card:hover {
     transform: translateY(-8px) scale(1.02);
   }
-  
+
   .btn-primary-marketplace:hover {
     transform: translateY(-3px);
   }
-  
+
   .nav-link-marketplace:hover {
     transform: translateY(-1px);
   }
@@ -328,18 +361,20 @@ select:focus-visible {
 
 /* iPhone specific optimizations */
 @supports (-webkit-touch-callout: none) {
+
   .input-marketplace,
   .btn-primary-marketplace,
   .btn-outline-marketplace {
-    font-size: 16px !important; /* Prevents zoom */
+    font-size: 16px !important;
+    /* Prevents zoom */
     -webkit-appearance: none;
   }
-  
+
   /* Safe area support for iPhone X and newer */
   .safe-area-top {
     padding-top: max(1rem, env(safe-area-inset-top));
   }
-  
+
   .safe-area-bottom {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
@@ -351,15 +386,15 @@ select:focus-visible {
     @apply border-2 border-gray-900;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
-  
+
   .btn-primary-marketplace {
     @apply bg-gray-900 border-2 border-gray-900;
   }
-  
+
   .btn-outline-marketplace {
     @apply border-2 border-gray-900 text-gray-900;
   }
-  
+
   .level-beginner,
   .level-intermediate,
   .level-advanced {
@@ -372,12 +407,12 @@ select:focus-visible {
   .no-print {
     display: none !important;
   }
-  
+
   body {
     @apply bg-white text-black;
     font-size: 12pt;
   }
-  
+
   .marketplace-card {
     @apply border-2 border-gray-900;
     box-shadow: none;
@@ -387,26 +422,50 @@ select:focus-visible {
 
 /* Reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
+
   .marketplace-card,
   .btn-primary-marketplace,
   .btn-outline-marketplace {
     transition: none;
   }
-  
+
   .marketplace-card:hover {
     transform: none;
   }
 }
 
 /* Typography scale */
-.text-marketplace-xs { @apply text-xs; }
-.text-marketplace-sm { @apply text-sm; }
-.text-marketplace-base { @apply text-base; }
-.text-marketplace-lg { @apply text-lg; }
-.text-marketplace-xl { @apply text-xl; }
-.text-marketplace-2xl { @apply text-2xl; }
-.text-marketplace-3xl { @apply text-3xl; }
-.text-marketplace-4xl { @apply text-4xl; }
+.text-marketplace-xs {
+  @apply text-xs;
+}
+
+.text-marketplace-sm {
+  @apply text-sm;
+}
+
+.text-marketplace-base {
+  @apply text-base;
+}
+
+.text-marketplace-lg {
+  @apply text-lg;
+}
+
+.text-marketplace-xl {
+  @apply text-xl;
+}
+
+.text-marketplace-2xl {
+  @apply text-2xl;
+}
+
+.text-marketplace-3xl {
+  @apply text-3xl;
+}
+
+.text-marketplace-4xl {
+  @apply text-4xl;
+}
 
 /* Animations for expandable sections */
 @keyframes slide-in-from-top {
@@ -414,6 +473,7 @@ select:focus-visible {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

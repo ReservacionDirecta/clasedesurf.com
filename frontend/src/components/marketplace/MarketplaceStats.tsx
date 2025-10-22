@@ -1,35 +1,46 @@
+import { 
+  TrophyIcon, 
+  StarIcon, 
+  CheckIcon, 
+  LightningIcon,
+  LocationIcon,
+  EquipmentIcon,
+  MoneyIcon,
+  ShieldIcon
+} from '@/components/ui/Icons'
+
 export function MarketplaceStats() {
   const stats = [
     {
-      icon: '🏫',
+      icon: <EquipmentIcon className="w-8 h-8" />,
       label: 'Escuelas Activas',
       value: '25+',
       description: 'Escuelas verificadas',
       color: 'from-blue-500 to-blue-600'
     },
     {
-      icon: '📚',
+      icon: <CheckIcon className="w-8 h-8" />,
       label: 'Clases Completadas',
       value: '12,500+',
       description: 'Este año',
       color: 'from-purple-500 to-purple-600'
     },
     {
-      icon: '⭐',
+      icon: <StarIcon className="w-8 h-8" />,
       label: 'Satisfacción',
       value: '5/5',
       description: '100% Satisfacción',
       color: 'from-yellow-500 to-orange-500'
     },
     {
-      icon: '🏖️',
+      icon: <LocationIcon className="w-8 h-8" />,
       label: 'Playas',
       value: '15+',
       description: 'Ubicaciones en Lima',
       color: 'from-cyan-500 to-teal-500'
     },
     {
-      icon: '�',
+      icon: <TrophyIcon className="w-8 h-8" />,
       label: 'Progreso Tracking',
       value: '100%',
       description: 'De los estudiantes',
@@ -51,8 +62,9 @@ export function MarketplaceStats() {
         {/* Enhanced Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center mb-6">
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg">
-              🏆 Líder del Mercado
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-2 rounded-full text-sm font-bold uppercase tracking-wider shadow-lg flex items-center">
+              <TrophyIcon className="w-4 h-4 mr-2" />
+              Líder del Mercado
             </div>
           </div>
 
@@ -91,7 +103,7 @@ export function MarketplaceStats() {
 
               <div className="relative z-10">
                 {/* Icon with Animation */}
-                <div className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-300">
+                <div className={`mb-4 transform group-hover:scale-110 transition-transform duration-300 text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>
                   {stat.icon}
                 </div>
 
@@ -124,9 +136,7 @@ export function MarketplaceStats() {
           <div className="text-center">
             {/* Icon Header */}
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-6 shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h2M7 7h10M7 11h10M7 15h10" />
-              </svg>
+              <EquipmentIcon className="w-8 h-8 text-white" />
             </div>
 
             <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
@@ -140,28 +150,32 @@ export function MarketplaceStats() {
 
             {/* Enhanced Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button className="group relative bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl">
-                <span className="relative z-10">🚀 Registrar Escuela</span>
+              <button className="group relative bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl flex items-center">
+                <span className="relative z-10 flex items-center">
+                  <LightningIcon className="w-5 h-5 mr-2" />
+                  Registrar Escuela
+                </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-cyan-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </button>
 
-              <button className="group border-2 border-blue-200 text-blue-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1">
-                📋 Más Información
+              <button className="group border-2 border-blue-200 text-blue-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1 flex items-center">
+                <EquipmentIcon className="w-5 h-5 mr-2" />
+                Más Información
               </button>
             </div>
 
             {/* Trust Indicators */}
             <div className="mt-8 flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500">
               <div className="flex items-center">
-                <span className="text-green-500 mr-1">✓</span>
+                <CheckIcon className="w-4 h-4 text-green-500 mr-2" />
                 Sin comisiones el primer mes
               </div>
               <div className="flex items-center">
-                <span className="text-green-500 mr-1">✓</span>
+                <CheckIcon className="w-4 h-4 text-green-500 mr-2" />
                 Configuración gratuita
               </div>
               <div className="flex items-center">
-                <span className="text-green-500 mr-1">✓</span>
+                <CheckIcon className="w-4 h-4 text-green-500 mr-2" />
                 Soporte 24/7
               </div>
             </div>
