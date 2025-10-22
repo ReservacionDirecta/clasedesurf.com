@@ -195,3 +195,15 @@ export const TrashIcon: React.FC<IconProps> = ({ className = "w-5 h-5", size }) 
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 )
+
+export const BroomIcon: React.FC<IconProps> = ({ className = "w-5 h-5", size }) => (
+  <svg 
+    className={className} 
+    width={size} 
+    height={size} 
+    fill="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path d="M19.36 2.72L20.78 4.14L15.06 9.85C16.13 11.39 16.28 13.24 15.38 14.44L9.06 8.12C10.26 7.22 12.11 7.37 13.65 8.44L19.36 2.72M5.93 17.57C3.92 15.56 2.69 13.16 2.35 10.92L7.23 8.83L14.67 16.27L12.58 21.15C10.34 20.81 7.94 19.58 5.93 17.57Z" />
+  </svg>
+)

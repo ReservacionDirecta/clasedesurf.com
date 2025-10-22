@@ -214,7 +214,7 @@ export default function Home() {
       <MarketplaceStats />
       
       {/* Sección principal de clases - MEJORADA */}
-      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50 py-20">
+      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50 py-12">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -229,132 +229,117 @@ export default function Home() {
 
         <div className="relative container mx-auto px-4">
           {/* Header Section Mejorado */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             {/* Badge Superior */}
             <div className="inline-flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-6 shadow-xl">
               <SearchIcon className="w-4 h-4 mr-2" />
               BÚSQUEDA AVANZADA
             </div>
             
-            <h2 className="text-5xl lg:text-7xl font-black mb-6 leading-tight">
+            <h2 className="text-4xl lg:text-5xl font-black mb-4 leading-tight">
               <span className="text-gray-900">Encuentra tu</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600">
                 Clase Perfecta
               </span>
             </h2>
             
-            <p className="text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-medium mb-12">
+            <p className="text-lg lg:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed font-medium mb-8">
               <span className="text-cyan-700 font-bold">Compara escuelas, precios y horarios.</span>
-              <span className="block mt-2">Encuentra la clase ideal para tu nivel y ubicación preferida.</span>
+              <span className="block mt-1">Encuentra la clase ideal para tu nivel y ubicación preferida.</span>
             </p>
 
-            {/* Buscador Mejorado - Inspirado en el Hero */}
-            <div className="max-w-4xl mx-auto mb-12">
-              <div className="relative">
-                {/* Glow Effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-3xl blur-xl opacity-20 animate-pulse"></div>
-                
-                {/* Buscador Principal */}
-                <div className="relative bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-cyan-200/50">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {/* Ubicación */}
-                    <div className="relative">
-                      <label className="flex items-center text-sm font-bold text-gray-700 mb-2">
-                        <LocationIcon className="w-4 h-4 mr-2 text-cyan-600" />
-                        Ubicación
-                      </label>
-                      <select className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium">
-                        <option>Todas las localidades</option>
-                        <option>Costa Verde</option>
-                        <option>Punta Hermosa</option>
-                        <option>San Bartolo</option>
-                      </select>
-                    </div>
-
-                    {/* Nivel */}
-                    <div className="relative">
-                      <label className="flex items-center text-sm font-bold text-gray-700 mb-2">
-                        <SurferIcon className="w-4 h-4 mr-2 text-cyan-600" />
-                        Nivel
-                      </label>
-                      <select className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium">
-                        <option>Todos los niveles</option>
-                        <option>Principiante</option>
-                        <option>Intermedio</option>
-                        <option>Avanzado</option>
-                      </select>
-                    </div>
-
-                    {/* Fecha */}
-                    <div className="relative">
-                      <label className="flex items-center text-sm font-bold text-gray-700 mb-2">
-                        <CalendarIcon className="w-4 h-4 mr-2 text-cyan-600" />
-                        Fecha
-                      </label>
-                      <input 
-                        type="date" 
-                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium"
-                      />
-                    </div>
-
-                    {/* Botón de Búsqueda */}
-                    <div className="relative">
-                      <label className="block text-sm font-bold text-transparent mb-2">Buscar</label>
-                      <Button 
-                        variant="primary"
-                        className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black px-6 py-3 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl flex items-center justify-center"
-                      >
-                        <SearchIcon className="w-4 h-4 mr-2" />
-                        BUSCAR
-                      </Button>
-                    </div>
+            {/* Buscador Compacto */}
+            <div className="max-w-5xl mx-auto mb-8">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-cyan-200/30">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
+                  {/* Ubicación */}
+                  <div>
+                    <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
+                      <LocationIcon className="w-3 h-3 mr-1 text-cyan-600" />
+                      Ubicación
+                    </label>
+                    <select className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200 transition-all bg-white text-sm">
+                      <option>Todas</option>
+                      <option>Costa Verde</option>
+                      <option>Punta Hermosa</option>
+                      <option>San Bartolo</option>
+                    </select>
                   </div>
 
-                  {/* Filtros Rápidos */}
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                    <div className="flex flex-wrap gap-3 justify-center">
-                      <button className="flex items-center px-4 py-2 bg-gradient-to-r from-cyan-100 to-teal-100 text-cyan-700 rounded-full text-sm font-bold hover:from-cyan-200 hover:to-teal-200 transition-all duration-300 transform hover:scale-105">
-                        <StarIcon className="w-4 h-4 mr-2" />
-                        Mejor valoradas
-                      </button>
-                      <button className="flex items-center px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-bold hover:from-green-200 hover:to-emerald-200 transition-all duration-300 transform hover:scale-105">
-                        <MoneyIcon className="w-4 h-4 mr-2" />
-                        Mejor precio
-                      </button>
-                      <button className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-full text-sm font-bold hover:from-blue-200 hover:to-indigo-200 transition-all duration-300 transform hover:scale-105">
-                        <TrophyIcon className="w-4 h-4 mr-2" />
-                        Escuelas verificadas
-                      </button>
-                      <button className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full text-sm font-bold hover:from-purple-200 hover:to-pink-200 transition-all duration-300 transform hover:scale-105">
-                        <LightningIcon className="w-4 h-4 mr-2" />
-                        Disponible hoy
-                      </button>
-                    </div>
+                  {/* Nivel */}
+                  <div>
+                    <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
+                      <SurferIcon className="w-3 h-3 mr-1 text-cyan-600" />
+                      Nivel
+                    </label>
+                    <select className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200 transition-all bg-white text-sm">
+                      <option>Todos</option>
+                      <option>Principiante</option>
+                      <option>Intermedio</option>
+                      <option>Avanzado</option>
+                    </select>
+                  </div>
+
+                  {/* Fecha */}
+                  <div>
+                    <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
+                      <CalendarIcon className="w-3 h-3 mr-1 text-cyan-600" />
+                      Fecha
+                    </label>
+                    <input 
+                      type="date" 
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200 transition-all bg-white text-sm"
+                    />
+                  </div>
+
+                  {/* Precio */}
+                  <div>
+                    <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
+                      <MoneyIcon className="w-3 h-3 mr-1 text-cyan-600" />
+                      Precio
+                    </label>
+                    <select className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-200 transition-all bg-white text-sm">
+                      <option>Cualquier precio</option>
+                      <option>Hasta $30</option>
+                      <option>Hasta $50</option>
+                      <option>Hasta $80</option>
+                    </select>
+                  </div>
+
+                  {/* Botón de Búsqueda */}
+                  <div>
+                    <Button 
+                      variant="primary"
+                      className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-4 py-2 rounded-lg transition-all duration-200 flex items-center justify-center text-sm"
+                    >
+                      <SearchIcon className="w-4 h-4 mr-1" />
+                      BUSCAR
+                    </Button>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Stats Rápidas */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-cyan-100">
-                <div className="text-3xl font-black text-cyan-600 mb-2">25+</div>
-                <div className="text-gray-700 font-medium">Escuelas Activas</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md border border-cyan-100">
+                <div className="text-2xl font-bold text-cyan-600 mb-1">25+</div>
+                <div className="text-gray-700 text-sm font-medium">Escuelas Activas</div>
               </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-teal-100">
-                <div className="text-3xl font-black text-teal-600 mb-2">150+</div>
-                <div className="text-gray-700 font-medium">Clases Semanales</div>
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md border border-teal-100">
+                <div className="text-2xl font-bold text-teal-600 mb-1">150+</div>
+                <div className="text-gray-700 text-sm font-medium">Clases Semanales</div>
               </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-emerald-100">
-                <div className="text-3xl font-black text-emerald-600 mb-2">2.5K+</div>
-                <div className="text-gray-700 font-medium">Estudiantes</div>
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md border border-emerald-100">
+                <div className="text-2xl font-bold text-emerald-600 mb-1">2.5K+</div>
+                <div className="text-gray-700 text-sm font-medium">Estudiantes</div>
               </div>
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-orange-100">
-                <div className="flex items-center justify-center text-3xl font-black text-orange-600 mb-2">
-                4.8
-                <StarIcon className="w-6 h-6 ml-1" />
-              </div>
-                <div className="text-gray-700 font-medium">Rating Promedio</div>
+              <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-md border border-orange-100">
+                <div className="flex items-center justify-center text-2xl font-bold text-orange-600 mb-1">
+                  4.8
+                  <StarIcon className="w-5 h-5 ml-1" />
+                </div>
+                <div className="text-gray-700 text-sm font-medium">Rating Promedio</div>
               </div>
             </div>
           </div>
