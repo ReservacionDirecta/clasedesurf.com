@@ -91,7 +91,7 @@ export function MarketplaceStats() {
 
               <div className="relative z-10">
                 {/* Icon with Animation */}
-                <div className={`mb-3 transform group-hover:scale-110 transition-transform duration-300 text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>
+                <div className={`mb-1 transform group-hover:scale-110 transition-transform duration-300 text-transparent bg-clip-text bg-gradient-to-r ${stat.color}`}>
                   {stat.icon}
                 </div>
 
