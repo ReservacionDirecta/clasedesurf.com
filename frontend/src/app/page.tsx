@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { ClassCard } from '@/components/classes/ClassCard'
 import { BookingModal } from '@/components/booking/BookingModal'
@@ -8,8 +8,9 @@ import { Hero } from '@/components/layout/Hero'
 import { Footer } from '@/components/layout/Footer'
 import { FilterPanel } from '@/components/marketplace/FilterPanel'
 import { MarketplaceStats } from '@/components/marketplace/MarketplaceStats'
+import { apiService, transformApiClassToFrontend, type ClassFilters } from '@/services/api'
 
-// Datos de ejemplo para el marketplace de escuelas de surf en Lima, Perú
+// Datos de ejemplo como fallback
 const mockClasses = [
   {
     id: '1',
@@ -20,7 +21,7 @@ const mockClasses = [
     endTime: new Date('2024-12-20T10:00:00'),
     duration: 120,
     capacity: 8,
-    price: 25, // USD
+    price: 25,
     currency: 'USD',
     level: 'BEGINNER' as const,
     type: 'GROUP' as const,
@@ -43,8 +44,8 @@ const mockClasses = [
       totalReviews: 234,
       verified: true,
       yearsExperience: 8,
-      description: 'Escuela pionera en Lima con más de 8 años formando surfistas. Especializada en clases de iniciación con metodología probada y equipamiento de primera calidad.',
-      shortReview: 'Excelente escuela, instructores muy pacientes y profesionales. Mi primera experiencia de surf fue increíble gracias a ellos.'
+      description: 'Escuela pionera en Lima con más de 8 años formando surfistas.',
+      shortReview: 'Excelente escuela, instructores muy pacientes y profesionales.'
     },
     instructor: {
       name: 'Carlos Mendoza',
@@ -53,317 +54,48 @@ const mockClasses = [
       specialties: ['Iniciación', 'Técnica básica', 'Seguridad acuática']
     },
     classImage: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=crop'
-  },
-  {
-    id: '2',
-    title: 'Intermedio en San Bartolo',
-    description: 'Perfecciona tu técnica en Playa Waikiki, San Bartolo. Olas más desafiantes para surfistas con experiencia básica. Aprende maniobras y lectura de olas.',
-    date: new Date('2024-12-20T16:00:00'),
-    startTime: new Date('2024-12-20T16:00:00'),
-    endTime: new Date('2024-12-20T18:00:00'),
-    duration: 120,
-    capacity: 6,
-    price: 35, // USD
-    currency: 'USD',
-    level: 'INTERMEDIATE' as const,
-    type: 'GROUP' as const,
-    location: 'Playa Waikiki, San Bartolo',
-    instructorName: 'Ana Rodriguez',
-    includesBoard: true,
-    includesWetsuit: true,
-    includesInsurance: true,
-    isActive: true,
-    isCanceled: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    schoolId: 'school-2',
-    availableSpots: 3,
-    school: {
-      id: 'school-2',
-      name: 'Waikiki Surf School',
-      city: 'Lima',
-      rating: 4.7,
-      totalReviews: 189,
-      verified: true,
-      yearsExperience: 5,
-      description: 'Escuela especializada en perfeccionamiento técnico ubicada en San Bartolo. Enfoque en maniobras avanzadas y lectura de olas para surfistas intermedios.',
-      shortReview: 'Increíble progreso en pocas clases. Ana es una instructora excepcional que realmente entiende cómo enseñar surf.'
-    },
-    instructor: {
-      name: 'Ana Rodriguez',
-      rating: 4.9,
-      experience: '8 años de experiencia, Ex-competidora nacional',
-      specialties: ['Maniobras avanzadas', 'Lectura de olas', 'Competición']
-    },
-    classImage: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?q=80&w=600&auto=format&fit=crop'
-  },
-  {
-    id: '3',
-    title: 'Privada en La Herradura',
-    description: 'Clase privada exclusiva en La Herradura, Chorrillos. Atención personalizada 1 a 1 con instructor experto. Progreso acelerado garantizado.',
-    date: new Date('2024-12-21T09:00:00'),
-    startTime: new Date('2024-12-21T09:00:00'),
-    endTime: new Date('2024-12-21T11:00:00'),
-    duration: 120,
-    capacity: 1,
-    price: 60, // USD
-    currency: 'USD',
-    level: 'BEGINNER' as const,
-    type: 'PRIVATE' as const,
-    location: 'Playa La Herradura, Chorrillos',
-    instructorName: 'Miguel Santos',
-    includesBoard: true,
-    includesWetsuit: true,
-    includesInsurance: true,
-    isActive: true,
-    isCanceled: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    schoolId: 'school-3',
-    availableSpots: 1,
-    school: {
-      id: 'school-3',
-      name: 'Elite Surf Coaching',
-      city: 'Lima',
-      rating: 5.0,
-      totalReviews: 67,
-      verified: true,
-      yearsExperience: 12,
-      description: 'Coaching de élite con atención personalizada 1 a 1. Metodología exclusiva para acelerar el aprendizaje con instructores de nivel internacional.',
-      shortReview: 'La mejor inversión que he hecho. Miguel es un instructor de clase mundial, mi nivel mejoró dramáticamente.'
-    },
-    instructor: {
-      name: 'Miguel Santos',
-      rating: 5.0,
-      experience: '12 años de experiencia, Instructor ISA Level 2',
-      specialties: ['Coaching personalizado', 'Técnica avanzada', 'Mentalidad competitiva']
-    },
-    classImage: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=600&auto=format&fit=crop'
-  },
-  {
-    id: '4',
-    title: 'Surf Kids en Callao',
-    description: 'Clases especiales para niños (8-14 años) en Playa Redondo, Callao. Ambiente seguro y divertido con instructores especializados en enseñanza infantil.',
-    date: new Date('2024-12-21T11:00:00'),
-    startTime: new Date('2024-12-21T11:00:00'),
-    endTime: new Date('2024-12-21T12:30:00'),
-    duration: 90,
-    capacity: 10,
-    price: 20, // USD
-    currency: 'USD',
-    level: 'BEGINNER' as const,
-    type: 'KIDS' as const,
-    location: 'Playa Redondo, Callao',
-    instructorName: 'Laura Fernandez',
-    includesBoard: true,
-    includesWetsuit: true,
-    includesInsurance: true,
-    isActive: true,
-    isCanceled: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    schoolId: 'school-4',
-    availableSpots: 7,
-    school: {
-      id: 'school-4',
-      name: 'Surf Kids Academy',
-      city: 'Lima',
-      rating: 4.8,
-      totalReviews: 156,
-      verified: true,
-      yearsExperience: 6,
-      description: 'Especialistas en enseñanza de surf para niños y adolescentes. Ambiente seguro, divertido y educativo con instructores especializados en pedagogía infantil.',
-      shortReview: 'Mi hijo de 10 años aprendió súper rápido y se divirtió mucho. Laura tiene una paciencia increíble con los niños.'
-    },
-    instructor: {
-      name: 'Laura Fernandez',
-      rating: 4.9,
-      experience: '7 años de experiencia, Especialista en pedagogía deportiva',
-      specialties: ['Enseñanza infantil', 'Seguridad acuática', 'Juegos didácticos']
-    },
-    classImage: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop'
-  },
-  {
-    id: '5',
-    title: 'Intensivo Punta Rocas',
-    description: 'Curso intensivo de fin de semana en la legendaria Punta Rocas, Punta Negra. 4 horas de surf intensivo con teoría avanzada y práctica en olas de calidad mundial.',
-    date: new Date('2024-12-22T08:00:00'),
-    startTime: new Date('2024-12-22T08:00:00'),
-    endTime: new Date('2024-12-22T12:00:00'),
-    duration: 240,
-    capacity: 12,
-    price: 80, // USD
-    currency: 'USD',
-    level: 'INTERMEDIATE' as const,
-    type: 'INTENSIVE' as const,
-    location: 'Punta Rocas, Punta Negra',
-    instructorName: 'David Lopez',
-    includesBoard: true,
-    includesWetsuit: true,
-    includesInsurance: true,
-    isActive: true,
-    isCanceled: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    schoolId: 'school-5',
-    availableSpots: 8,
-    school: {
-      id: 'school-5',
-      name: 'Punta Rocas Pro',
-      city: 'Lima',
-      rating: 4.9,
-      totalReviews: 98,
-      verified: true,
-      yearsExperience: 15,
-      description: 'Escuela de surf de alto rendimiento en la legendaria Punta Rocas. Cursos intensivos para surfistas serios que buscan llevar su nivel al máximo.',
-      shortReview: 'Punta Rocas es mágico y David conoce cada ola como la palma de su mano. Experiencia transformadora.'
-    },
-    instructor: {
-      name: 'David Lopez',
-      rating: 4.8,
-      experience: '15 años de experiencia, Ex-surfista profesional',
-      specialties: ['Olas grandes', 'Técnica avanzada', 'Preparación física']
-    },
-    classImage: 'https://images.unsplash.com/photo-1549419137-b93547285514?q=80&w=600&auto=format&fit=crop'
-  },
-  {
-    id: '6',
-    title: 'Avanzado en Señoritas',
-    description: 'Clase avanzada en Playa Señoritas, Punta Hermosa. Para surfistas experimentados que buscan perfeccionar maniobras complejas en una de las mejores olas de Lima.',
-    date: new Date('2024-12-22T15:00:00'),
-    startTime: new Date('2024-12-22T15:00:00'),
-    endTime: new Date('2024-12-22T17:00:00'),
-    duration: 120,
-    capacity: 4,
-    price: 45, // USD
-    currency: 'USD',
-    level: 'ADVANCED' as const,
-    type: 'GROUP' as const,
-    location: 'Playa Señoritas, Punta Hermosa',
-    instructorName: 'Roberto Sanchez',
-    includesBoard: true,
-    includesWetsuit: true,
-    includesInsurance: true,
-    isActive: true,
-    isCanceled: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    schoolId: 'school-6',
-    availableSpots: 2,
-    school: {
-      id: 'school-6',
-      name: 'Señoritas Surf Club',
-      city: 'Lima',
-      rating: 4.6,
-      totalReviews: 143,
-      verified: true,
-      yearsExperience: 10,
-      description: 'Club de surf enfocado en surfistas avanzados que buscan perfeccionar maniobras complejas en una de las mejores olas de Lima.',
-      shortReview: 'Roberto es un maestro del surf. Sus consejos técnicos me ayudaron a mejorar maniobras que llevaba años intentando.'
-    },
-    instructor: {
-      name: 'Roberto Sanchez',
-      rating: 4.7,
-      experience: '10 años de experiencia, Juez de competencias WSL',
-      specialties: ['Maniobras aéreas', 'Surf de performance', 'Análisis técnico']
-    },
-    classImage: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=600&auto=format&fit=crop'
-  },
-  {
-    id: '7',
-    title: 'Paddleboard en Barranco',
-    description: 'Aprende Stand Up Paddle (SUP) en las tranquilas aguas de Barranco. Perfecto para principiantes que buscan un deporte acuático relajante y divertido.',
-    date: new Date('2024-12-23T10:00:00'),
-    startTime: new Date('2024-12-23T10:00:00'),
-    endTime: new Date('2024-12-23T11:30:00'),
-    duration: 90,
-    capacity: 6,
-    price: 30, // USD
-    currency: 'USD',
-    level: 'BEGINNER' as const,
-    type: 'GROUP' as const,
-    location: 'Playa Barranco, Lima',
-    instructorName: 'Sofia Martinez',
-    includesBoard: true,
-    includesWetsuit: false,
-    includesInsurance: true,
-    isActive: true,
-    isCanceled: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    schoolId: 'school-7',
-    availableSpots: 4,
-    school: {
-      id: 'school-7',
-      name: 'Lima Water Sports',
-      city: 'Lima',
-      rating: 4.5,
-      totalReviews: 87,
-      verified: true,
-      yearsExperience: 4,
-      description: 'Escuela especializada en deportes acuáticos diversos. Ofrecemos SUP, kayak y natación en aguas abiertas con enfoque en seguridad y diversión.',
-      shortReview: 'Excelente introducción al SUP. Sofia es muy paciente y las vistas desde el agua son espectaculares.'
-    },
-    instructor: {
-      name: 'Sofia Martinez',
-      rating: 4.6,
-      experience: '5 años de experiencia, Instructora SUP certificada',
-      specialties: ['Stand Up Paddle', 'Equilibrio', 'Deportes acuáticos']
-    },
-    classImage: 'https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?q=80&w=600&auto=format&fit=crop'
-  },
-  {
-    id: '8',
-    title: 'Natación en Aguas Abiertas',
-    description: 'Mejora tu técnica de natación en el océano Pacífico. Clase especializada para surfistas que quieren fortalecer su nado y confianza en el mar.',
-    date: new Date('2024-12-23T07:00:00'),
-    startTime: new Date('2024-12-23T07:00:00'),
-    endTime: new Date('2024-12-23T08:00:00'),
-    duration: 60,
-    capacity: 8,
-    price: 22, // USD
-    currency: 'USD',
-    level: 'INTERMEDIATE' as const,
-    type: 'GROUP' as const,
-    location: 'Playa Costa Verde, Miraflores',
-    instructorName: 'Ricardo Vargas',
-    includesBoard: false,
-    includesWetsuit: true,
-    includesInsurance: true,
-    isActive: true,
-    isCanceled: false,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    schoolId: 'school-8',
-    availableSpots: 6,
-    school: {
-      id: 'school-8',
-      name: 'Ocean Swimming Lima',
-      city: 'Lima',
-      rating: 4.4,
-      totalReviews: 112,
-      verified: true,
-      yearsExperience: 7,
-      description: 'Especialistas en natación en aguas abiertas y preparación física para deportes acuáticos. Fortalece tu técnica de nado para ser mejor surfista.',
-      shortReview: 'Ricardo me ayudó a superar mi miedo al mar abierto. Ahora nado con mucha más confianza cuando surfeo.'
-    },
-    instructor: {
-      name: 'Ricardo Vargas',
-      rating: 4.5,
-      experience: '9 años de experiencia, Ex-nadador de aguas abiertas',
-      specialties: ['Natación oceánica', 'Técnica de nado', 'Seguridad acuática']
-    },
-    classImage: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80&w=600&auto=format&fit=crop'
   }
 ]
 
 export default function Home() {
-  const [selectedClass, setSelectedClass] = useState<typeof mockClasses[0] | null>(null)
+  const [selectedClass, setSelectedClass] = useState<any | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [filteredClasses, setFilteredClasses] = useState(mockClasses)
-  const [filters, setFilters] = useState<any>({})
+  const [classes, setClasses] = useState<any[]>([])
+  const [filteredClasses, setFilteredClasses] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filters, setFilters] = useState<ClassFilters>({})
 
-  const handleClassSelect = (classData: typeof mockClasses[0]) => {
+  // Load classes from API
+  useEffect(() => {
+    loadClasses()
+  }, [])
+
+  const loadClasses = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      // Try to fetch from API first
+      const apiClasses = await apiService.getClasses()
+      const transformedClasses = apiClasses.map(transformApiClassToFrontend)
+      
+      setClasses(transformedClasses)
+      setFilteredClasses(transformedClasses)
+      
+      console.log('✅ Loaded classes from API:', transformedClasses.length)
+    } catch (err) {
+      console.warn('⚠️ Failed to load from API, using mock data:', err)
+      // Fallback to mock data
+      setClasses(mockClasses)
+      setFilteredClasses(mockClasses)
+      setError('Usando datos de ejemplo. Verifica la conexión con el backend.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleClassSelect = (classData: any) => {
     setSelectedClass(classData)
     setIsModalOpen(true)
   }
@@ -375,49 +107,89 @@ export default function Home() {
 
   const handleBookingSubmit = (bookingData: any) => {
     console.log('Booking submitted:', bookingData)
-    // Aquí se implementará la lógica de reserva
     alert('¡Reserva enviada con éxito! Nos pondremos en contacto contigo pronto.')
     handleCloseModal()
   }
 
-  const handleFiltersChange = (newFilters: any) => {
+  const handleFiltersChange = async (newFilters: any) => {
     setFilters(newFilters)
     
-    let filtered = mockClasses.filter(classItem => {
-      // Filter by location
-      if (newFilters.location && !classItem.location?.includes(newFilters.location)) {
-        return false
+    try {
+      // Convert frontend filters to API filters
+      const apiFilters: ClassFilters = {}
+      
+      if (newFilters.level) {
+        apiFilters.level = newFilters.level
       }
       
-      // Filter by level
-      if (newFilters.level && classItem.level !== newFilters.level) {
-        return false
+      if (newFilters.priceRange) {
+        apiFilters.minPrice = newFilters.priceRange[0]
+        apiFilters.maxPrice = newFilters.priceRange[1]
       }
       
-      // Filter by type
-      if (newFilters.type && classItem.type !== newFilters.type) {
-        return false
-      }
+      // Fetch from API with filters
+      const apiClasses = await apiService.getClasses(apiFilters)
+      let transformedClasses = apiClasses.map(transformApiClassToFrontend)
       
-      // Filter by price range
-      if (classItem.price < newFilters.priceRange[0] || classItem.price > newFilters.priceRange[1]) {
-        return false
-      }
+      // Apply client-side filters
+      transformedClasses = transformedClasses.filter(classItem => {
+        // Filter by location (client-side)
+        if (newFilters.location && !classItem.location?.includes(newFilters.location)) {
+          return false
+        }
+        
+        // Filter by type (client-side)
+        if (newFilters.type && classItem.type !== newFilters.type) {
+          return false
+        }
+        
+        // Filter by rating (client-side)
+        if (newFilters.rating && classItem.school.rating < newFilters.rating) {
+          return false
+        }
+        
+        // Filter by verified schools (client-side)
+        if (newFilters.verified && !classItem.school.verified) {
+          return false
+        }
+        
+        return true
+      })
       
-      // Filter by rating
-      if (newFilters.rating && classItem.school.rating < newFilters.rating) {
-        return false
-      }
+      setFilteredClasses(transformedClasses)
+    } catch (err) {
+      console.error('Error applying filters:', err)
+      // Fallback to client-side filtering with current classes
+      const filtered = classes.filter(classItem => {
+        if (newFilters.location && !classItem.location?.includes(newFilters.location)) {
+          return false
+        }
+        
+        if (newFilters.level && classItem.level !== newFilters.level) {
+          return false
+        }
+        
+        if (newFilters.type && classItem.type !== newFilters.type) {
+          return false
+        }
+        
+        if (newFilters.priceRange && (classItem.price < newFilters.priceRange[0] || classItem.price > newFilters.priceRange[1])) {
+          return false
+        }
+        
+        if (newFilters.rating && classItem.school.rating < newFilters.rating) {
+          return false
+        }
+        
+        if (newFilters.verified && !classItem.school.verified) {
+          return false
+        }
+        
+        return true
+      })
       
-      // Filter by verified schools
-      if (newFilters.verified && !classItem.school.verified) {
-        return false
-      }
-      
-      return true
-    })
-    
-    setFilteredClasses(filtered)
+      setFilteredClasses(filtered)
+    }
   }
 
   return (
@@ -427,50 +199,197 @@ export default function Home() {
       {/* Marketplace Stats */}
       <MarketplaceStats />
       
-      {/* Sección principal de clases */}
-      <main className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Encuentra tu Clase Perfecta
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Compara escuelas, precios, horarios y reseñas. Encuentra la clase ideal para tu nivel y ubicación preferida.
-          </p>
+      {/* Sección principal de clases - MEJORADA */}
+      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-slate-50 via-cyan-50 to-teal-50 py-20">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="searchPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="10" cy="10" r="1" fill="currentColor" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#searchPattern)" />
+          </svg>
         </div>
+
+        <div className="relative container mx-auto px-4">
+          {/* Header Section Mejorado */}
+          <div className="text-center mb-16">
+            {/* Badge Superior */}
+            <div className="inline-flex items-center bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-6 shadow-xl">
+              🔍 BÚSQUEDA AVANZADA
+            </div>
+            
+            <h2 className="text-5xl lg:text-7xl font-black mb-6 leading-tight">
+              <span className="text-gray-900">Encuentra tu</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 via-teal-600 to-emerald-600">
+                Clase Perfecta
+              </span>
+            </h2>
+            
+            <p className="text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-medium mb-12">
+              <span className="text-cyan-700 font-bold">Compara escuelas, precios y horarios.</span>
+              <span className="block mt-2">Encuentra la clase ideal para tu nivel y ubicación preferida.</span>
+            </p>
+
+            {/* Buscador Mejorado - Inspirado en el Hero */}
+            <div className="max-w-4xl mx-auto mb-12">
+              <div className="relative">
+                {/* Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-3xl blur-xl opacity-20 animate-pulse"></div>
+                
+                {/* Buscador Principal */}
+                <div className="relative bg-white/90 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-cyan-200/50">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {/* Ubicación */}
+                    <div className="relative">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">📍 Ubicación</label>
+                      <select className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium">
+                        <option>🏖️ Todas las localidades</option>
+                        <option>🏖️ Costa Verde</option>
+                        <option>🏖️ Punta Hermosa</option>
+                        <option>🏖️ San Bartolo</option>
+                      </select>
+                    </div>
+
+                    {/* Nivel */}
+                    <div className="relative">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">🏄‍♂️ Nivel</label>
+                      <select className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium">
+                        <option>Todos los niveles</option>
+                        <option>Principiante</option>
+                        <option>Intermedio</option>
+                        <option>Avanzado</option>
+                      </select>
+                    </div>
+
+                    {/* Fecha */}
+                    <div className="relative">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">📅 Fecha</label>
+                      <input 
+                        type="date" 
+                        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-300 bg-white font-medium"
+                      />
+                    </div>
+
+                    {/* Botón de Búsqueda */}
+                    <div className="relative">
+                      <label className="block text-sm font-bold text-transparent mb-2">Buscar</label>
+                      <Button 
+                        variant="primary"
+                        className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black px-6 py-3 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl"
+                      >
+                        🔍 BUSCAR
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Filtros Rápidos */}
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      <button className="px-4 py-2 bg-gradient-to-r from-cyan-100 to-teal-100 text-cyan-700 rounded-full text-sm font-bold hover:from-cyan-200 hover:to-teal-200 transition-all duration-300 transform hover:scale-105">
+                        ⭐ Mejor valoradas
+                      </button>
+                      <button className="px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-bold hover:from-green-200 hover:to-emerald-200 transition-all duration-300 transform hover:scale-105">
+                        💰 Mejor precio
+                      </button>
+                      <button className="px-4 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 rounded-full text-sm font-bold hover:from-blue-200 hover:to-indigo-200 transition-all duration-300 transform hover:scale-105">
+                        🏆 Escuelas verificadas
+                      </button>
+                      <button className="px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-full text-sm font-bold hover:from-purple-200 hover:to-pink-200 transition-all duration-300 transform hover:scale-105">
+                        ⚡ Disponible hoy
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Rápidas */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-cyan-100">
+                <div className="text-3xl font-black text-cyan-600 mb-2">25+</div>
+                <div className="text-gray-700 font-medium">Escuelas Activas</div>
+              </div>
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-teal-100">
+                <div className="text-3xl font-black text-teal-600 mb-2">150+</div>
+                <div className="text-gray-700 font-medium">Clases Semanales</div>
+              </div>
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-emerald-100">
+                <div className="text-3xl font-black text-emerald-600 mb-2">2.5K+</div>
+                <div className="text-gray-700 font-medium">Estudiantes</div>
+              </div>
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-orange-100">
+                <div className="text-3xl font-black text-orange-600 mb-2">4.8⭐</div>
+                <div className="text-gray-700 font-medium">Rating Promedio</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Sección de Resultados */}
+      <section className="container mx-auto px-4 py-12">
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span className="text-yellow-800 text-sm">{error}</span>
+            </div>
+          </div>
+        )}
 
         {/* Advanced Filters */}
         <FilterPanel onFiltersChange={handleFiltersChange} />
 
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando clases disponibles...</p>
+          </div>
+        )}
+
         {/* Results Summary */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="text-gray-900 font-medium">
-            Mostrando {filteredClasses.length} de {mockClasses.length} clases disponibles
+        {!loading && (
+          <div className="flex items-center justify-between mb-6">
+            <div className="text-gray-900 font-medium">
+              Mostrando {filteredClasses.length} de {classes.length} clases disponibles
+              {error && <span className="text-yellow-600 text-sm ml-2">(datos de ejemplo)</span>}
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-900">Ordenar por:</span>
+              <select className="border-2 border-gray-400 rounded-lg px-4 py-2 text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm">
+                <option>Más relevantes</option>
+                <option>Precio: menor a mayor</option>
+                <option>Precio: mayor a menor</option>
+                <option>Mejor calificados</option>
+                <option>Más cercanos</option>
+              </select>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-900">Ordenar por:</span>
-            <select className="border-2 border-gray-400 rounded-lg px-4 py-2 text-sm font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-600 shadow-sm">
-              <option>Más relevantes</option>
-              <option>Precio: menor a mayor</option>
-              <option>Precio: mayor a menor</option>
-              <option>Mejor calificados</option>
-              <option>Más cercanos</option>
-            </select>
-          </div>
-        </div>
+        )}
 
         {/* Grid de clases */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredClasses.map((classData) => (
-            <ClassCard
-              key={classData.id}
-              classData={classData}
-              onSelect={() => handleClassSelect(classData)}
-            />
-          ))}
-        </div>
+        {!loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredClasses.map((classData) => (
+              <ClassCard
+                key={classData.id}
+                classData={classData}
+                onSelect={() => handleClassSelect(classData)}
+              />
+            ))}
+          </div>
+        )}
 
         {/* No Results */}
-        {filteredClasses.length === 0 && (
+        {!loading && filteredClasses.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🏄‍♂️</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
@@ -481,7 +400,10 @@ export default function Home() {
             </p>
             <Button 
               variant="outline" 
-              onClick={() => handleFiltersChange({})}
+              onClick={() => {
+                setFilters({})
+                loadClasses()
+              }}
             >
               Limpiar Filtros
             </Button>
@@ -522,7 +444,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </main>
+      </section>
 
       <Footer />
 
