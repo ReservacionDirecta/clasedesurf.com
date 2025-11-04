@@ -14,6 +14,7 @@ async function main() {
   await prisma.instructor.deleteMany();
   await prisma.refreshToken.deleteMany();
   await prisma.class.deleteMany();
+  await prisma.student.deleteMany();
   await prisma.school.deleteMany();
   await prisma.user.deleteMany();
 

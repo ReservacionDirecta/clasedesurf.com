@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DollarSign, TrendingUp, Calendar, Download, Eye, Filter } from 'lucide-react';
 
 interface Earning {
@@ -37,23 +37,7 @@ export default function InstructorEarnings() {
   const [selectedEarning, setSelectedEarning] = useState<Earning | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    if (session.user?.role !== 'INSTRUCTOR') {
-      router.push('/dashboard/student/profile');
-      return;
-    }
-
-    fetchEarnings();
-  }, [session, status, router, selectedMonth]);
-
-  const fetchEarnings = async () => {
+  const fetchEarnings = useCallback(async () => {
     try {
       const token = (session as any)?.backendToken;
       const headers: any = {};
@@ -209,10 +193,28 @@ export default function InstructorEarnings() {
       
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching earnings:', error);
+      console.error('Error fetching earnings data:', error);
       setLoading(false);
     }
-  };
+  }, [selectedMonth, session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'INSTRUCTOR') {
+      router.push('/dashboard/student/profile');
+      return;
+    }
+
+    fetchEarnings();
+  }, [fetchEarnings, router, session, status]);
 
   const filteredEarnings = earnings.filter(earning => {
     const matchesMonth = earning.date.startsWith(selectedMonth);

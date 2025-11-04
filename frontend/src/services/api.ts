@@ -11,6 +11,7 @@ export interface ApiClass {
   price: number;
   level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
   instructor: string | null;
+  images?: string[];  // Array de URLs de imágenes
   schoolId: number;
   createdAt: string;
   updatedAt: string;
@@ -246,6 +247,7 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
       experience: `${Math.floor(Math.random() * 8) + 3} años de experiencia, Instructor certificado`,
       specialties: specialties
     },
+    images: apiClass.images || [],
     classImage: `https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`
   };
 }

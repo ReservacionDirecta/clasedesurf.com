@@ -8,6 +8,20 @@ import SimpleInstructorForm from '@/components/forms/SimpleInstructorForm';
 import Image from 'next/image';
 import InstructorForm from '@/components/forms/InstructorForm';
 
+const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
+
+const buildBackendUrl = (path: string): string => {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  if (path.startsWith('/')) {
+    return `${backendBaseUrl}${path}`;
+  }
+
+  return `${backendBaseUrl}/${path}`;
+};
+
 interface Instructor {
   id: number;
   name: string;
@@ -44,7 +58,10 @@ export default function InstructorsPage() {
       const token = (session as any)?.backendToken;
       const headers: any = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
-      const response = await fetch('/api/instructors', { headers });
+      const response = await fetch(buildBackendUrl('/instructors'), {
+        headers,
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         const normalized = Array.isArray(data)
@@ -93,10 +110,15 @@ export default function InstructorsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/instructors', {
+      const endpoint = payload?.userData
+        ? '/instructors/create-with-user'
+        : '/instructors';
+
+      const res = await fetch(buildBackendUrl(endpoint), {
         method: 'POST',
         headers,
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        credentials: 'include'
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -122,10 +144,11 @@ export default function InstructorsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`/api/instructors/${selectedInstructor.id}`, {
+      const res = await fetch(buildBackendUrl(`/instructors/${selectedInstructor.id}`), {
         method: 'PUT',
         headers,
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        credentials: 'include'
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -151,9 +174,10 @@ export default function InstructorsPage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`/api/instructors/${deleteTarget.id}`, {
+      const res = await fetch(buildBackendUrl(`/instructors/${deleteTarget.id}`), {
         method: 'DELETE',
-        headers
+        headers,
+        credentials: 'include'
       });
       if (!res.ok && res.status !== 204) {
         const err = await res.json().catch(() => ({}));

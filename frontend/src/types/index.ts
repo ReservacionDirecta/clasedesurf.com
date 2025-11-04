@@ -11,6 +11,28 @@ export interface User {
   injuries?: string;
   phone?: string;
 }
+
+export interface BulkClassOccurrence {
+  date: string;
+  time: string;
+}
+
+export interface BulkClassBaseData {
+  title: string;
+  description?: string;
+  duration: number;
+  capacity: number;
+  price: number;
+  level: ClassLevel;
+  instructor?: string;
+  studentDetails?: string;
+}
+
+export interface BulkClassRequest {
+  baseData: BulkClassBaseData;
+  occurrences: BulkClassOccurrence[];
+  schoolId?: number;
+}
 export interface Class {
   id: number;
   title: string;
@@ -77,6 +99,9 @@ export interface School {
     instructors?: any[];
     createdAt?: string | Date;
     updatedAt?: string | Date;
+    rating?: number;
+    totalReviews?: number;
+    foundedYear?: number;
   }
   
   export interface Payment {
@@ -164,6 +189,7 @@ export interface School {
     rating: number;
     totalReviews: number;
     profileImage?: string;
+    instructorRole?: 'INSTRUCTOR' | 'HEAD_COACH';
     isActive: boolean;
     reviews?: InstructorReview[];
     createdAt?: string | Date;

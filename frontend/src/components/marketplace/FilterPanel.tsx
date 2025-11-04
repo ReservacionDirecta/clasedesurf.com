@@ -91,7 +91,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6 mx-2 sm:mx-0">
+    <div className="bg-[#F6F7F8] rounded-xl border border-[#E2E8F0] shadow-md p-3 sm:p-4 mb-4 sm:mb-6 mx-2 sm:mx-0">
       {/* Mobile Filter Toggle */}
       <div className="sm:hidden mb-3">
         <Button
@@ -99,7 +99,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
           onClick={() => setIsOpen(!isOpen)}
           className="w-full flex items-center justify-between py-3 touch-target-md"
         >
-          <span className="text-sm font-medium">Filtros</span>
+          <span className="text-sm font-medium text-[#011627]">Filtros</span>
           <svg 
             className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
             fill="none" 
@@ -118,14 +118,15 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Ubicación */}
           <div>
-            <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
-              <LocationIcon className="w-3 h-3 mr-1 text-blue-600" />
+            <label htmlFor="filter-locality" className="flex items-center text-xs font-semibold text-[#011627] mb-1">
+              <LocationIcon className="w-3 h-3 mr-1 text-[#2EC4B6]" />
               Ubicación
             </label>
             <select
+              id="filter-locality"
               value={filters.locality}
               onChange={(e) => handleFilterChange('locality', e.target.value)}
-              className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 touch-target-md"
+              className="w-full px-3 py-3 sm:py-2 border border-[#CBD5E1] rounded-md text-sm text-[#011627] bg-white focus:ring-1 focus:ring-[#9DE6DC] focus:border-[#2EC4B6] touch-target-md"
             >
               <option value="">Todas</option>
               <option value="Costa Verde">Costa Verde</option>
@@ -136,14 +137,15 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Nivel */}
           <div>
-            <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
-              <SurferIcon className="w-3 h-3 mr-1 text-blue-600" />
+            <label htmlFor="filter-level" className="flex items-center text-xs font-semibold text-[#011627] mb-1">
+              <SurferIcon className="w-3 h-3 mr-1 text-[#2EC4B6]" />
               Nivel
             </label>
             <select
+              id="filter-level"
               value={filters.level}
               onChange={(e) => handleFilterChange('level', e.target.value)}
-              className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 touch-target-md"
+              className="w-full px-3 py-3 sm:py-2 border border-[#CBD5E1] rounded-md text-sm text-[#011627] bg-white focus:ring-1 focus:ring-[#9DE6DC] focus:border-[#2EC4B6] touch-target-md"
             >
               <option value="">Todos</option>
               <option value="BEGINNER">Principiante</option>
@@ -154,14 +156,15 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Tipo */}
           <div>
-            <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
-              <GroupIcon className="w-3 h-3 mr-1 text-blue-600" />
+            <label htmlFor="filter-type" className="flex items-center text-xs font-semibold text-[#011627] mb-1">
+              <GroupIcon className="w-3 h-3 mr-1 text-[#2EC4B6]" />
               Tipo
             </label>
             <select
+              id="filter-type"
               value={filters.type}
               onChange={(e) => handleFilterChange('type', e.target.value)}
-              className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 touch-target-md"
+              className="w-full px-3 py-3 sm:py-2 border border-[#CBD5E1] rounded-md text-sm text-[#011627] bg-white focus:ring-1 focus:ring-[#9DE6DC] focus:border-[#2EC4B6] touch-target-md"
             >
               <option value="">Todos</option>
               <option value="GROUP">Grupal</option>
@@ -172,14 +175,15 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
 
           {/* Precio */}
           <div>
-            <label className="flex items-center text-xs font-semibold text-gray-700 mb-1">
-              <MoneyIcon className="w-3 h-3 mr-1 text-blue-600" />
+            <label htmlFor="filter-price" className="flex items-center text-xs font-semibold text-[#011627] mb-1">
+              <MoneyIcon className="w-3 h-3 mr-1 text-[#2EC4B6]" />
               Precio
             </label>
             <select
+              id="filter-price"
               value={filters.priceRange[1]}
               onChange={(e) => handleFilterChange('priceRange', [0, parseInt(e.target.value)])}
-              className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-sm text-gray-900 bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 touch-target-md"
+              className="w-full px-3 py-3 sm:py-2 border border-[#CBD5E1] rounded-md text-sm text-[#011627] bg-white focus:ring-1 focus:ring-[#9DE6DC] focus:border-[#2EC4B6] touch-target-md"
             >
               <option value={100}>Cualquier precio</option>
               <option value={30}>Hasta $30</option>
@@ -206,7 +210,7 @@ export function FilterPanel({ onFiltersChange }: FilterPanelProps) {
                 setFilters(resetFilters)
                 onFiltersChange(resetFilters)
               }}
-              className="px-3 py-3 sm:py-2 border border-gray-300 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center touch-target-md"
+              className="px-3 py-3 sm:py-2 border border-[#CBD5E1] rounded-md text-[#46515F] hover:text-[#011627] hover:bg-[#E9FBF7] transition-colors duration-200 flex items-center justify-center touch-target-md"
               title="Limpiar filtros"
             >
               <BroomIcon className="w-4 h-4" />

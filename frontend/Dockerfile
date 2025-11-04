@@ -16,9 +16,6 @@ RUN npm ci --no-audit --no-fund
 # Copy source code
 COPY . .
 
-# Copy production environment file
-COPY .env.production .env.production
-
 # Set environment variables
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

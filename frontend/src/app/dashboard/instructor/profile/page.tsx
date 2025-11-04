@@ -2,7 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
 import { User, Mail, Phone, Star, Award, BookOpen, Calendar, Camera, Upload, Edit, Save, X } from 'lucide-react';
 
 export default function InstructorProfile() {
@@ -14,23 +15,7 @@ export default function InstructorProfile() {
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    if (session.user?.role !== 'INSTRUCTOR') {
-      router.push('/dashboard/student/profile');
-      return;
-    }
-
-    fetchInstructorProfile();
-  }, [session, status, router]);
-
-  const fetchInstructorProfile = async () => {
+  const fetchInstructorProfile = useCallback(async () => {
     try {
       const token = (session as any)?.backendToken;
       const headers: any = {};
@@ -74,7 +59,25 @@ export default function InstructorProfile() {
       console.error('Error fetching instructor profile:', error);
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'INSTRUCTOR') {
+      router.push('/dashboard/student/profile');
+      return;
+    }
+
+    fetchInstructorProfile();
+  }, [fetchInstructorProfile, router, session, status]);
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -130,10 +133,12 @@ export default function InstructorProfile() {
                 <div className="relative inline-block mb-6">
                   <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mx-auto shadow-lg">
                     {profileImage || instructorData?.profileImage ? (
-                      <img 
-                        src={profileImage || instructorData?.profileImage} 
+                      <Image
+                        src={profileImage || instructorData?.profileImage}
                         alt="Foto de perfil"
-                        className="w-full h-full object-cover"
+                        width={128}
+                        height={128}
+                        className="h-32 w-32 object-cover"
                       />
                     ) : (
                       <User className="w-16 h-16 text-white" />

@@ -11,6 +11,7 @@ export function Hero() {
   }
   return (
     <section className="relative min-h-screen sm:min-h-screen py-12 sm:py-20 flex items-center justify-center overflow-hidden">
+
       {/* Background Image - Hero local personalizada */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -20,7 +21,7 @@ export function Hero() {
       />
       
       {/* Simple Light Overlay */}
-      <div className="absolute inset-0 bg-white/20" />
+      <div className="absolute inset-0 bg-[#011627]/70" />
       
       {/* Animated Wave Pattern Overlay */}
       <div className="absolute inset-0 opacity-20">
@@ -43,7 +44,7 @@ export function Hero() {
           <div className="w-full max-w-7xl mx-auto">
             
             {/* Mobile-Optimized Layout */}
-            <div className="text-center">
+            <div className="text-center text-white">
               <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-black mb-4 sm:mb-6 lg:mb-8 leading-tight text-white drop-shadow-2xl">
                 <span className="block">El Marketplace de</span>
                 <span className="block">Surf N°1</span>
@@ -59,31 +60,25 @@ export function Hero() {
                 <Button 
                   variant="primary"
                   onClick={scrollToSearch}
-                  className="touch-target-lg bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-4 sm:px-8 sm:py-3 lg:px-10 lg:py-5 text-sm sm:text-base lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 hover:shadow-xl w-full sm:w-auto"
+                  className="touch-target-lg text-sm sm:text-base lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 w-full sm:w-auto"
                 >
                   EXPLORAR CLASES
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="touch-target-lg bg-white/10 border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold px-6 py-4 sm:px-8 sm:py-3 lg:px-10 lg:py-5 text-sm sm:text-base lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 hover:shadow-xl w-full sm:w-auto"
-                >
-                  PARA INSTRUCTORES
                 </Button>
               </div>
 
               {/* Mobile-Optimized Trust Indicators */}
               <div className="max-w-sm sm:max-w-md mx-auto px-4 sm:px-0">
-                <div className="bg-white/20 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-xl border border-white/30">
+                <div className="bg-[#011627]/70 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-xl border border-white/20">
                   <div className="flex items-center space-x-3 sm:space-x-4">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
-                      <LightningIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-[#2EC4B6] rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
+                      <LightningIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#011627]" />
                     </div>
                     <div className="text-left min-w-0 flex-1">
                       <p className="text-xs sm:text-sm lg:text-lg font-bold text-white leading-tight">
                         ¿Eres instructor o tienes una academia?
                       </p>
                       <p className="text-xs sm:text-xs lg:text-sm text-white leading-tight">
-                        <a href="#" className="underline hover:text-blue-200 transition-colors font-medium">
+                        <a href="/register" className="underline hover:text-[#2EC4B6] transition-colors font-medium">
                           Únete gratis a clasesde.pe
                         </a>
                       </p>

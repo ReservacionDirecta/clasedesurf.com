@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { User } from "@/types";
@@ -37,89 +38,88 @@ export default function ProfilePage() {
   const [bestDay, setBestDay] = useState<string | null>(null);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null); // data url preview
 
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = (session as any)?.backendToken;
+      const res = await fetch(`/api/users/profile`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch profile");
+      }
+      const data = await res.json();
+      setUserProfile({
+        name: data.name || "",
+        email: data.email || "",
+        age: data.age || undefined,
+        weight: data.weight || undefined,
+        height: data.height || undefined,
+        canSwim: data.canSwim || false,
+        injuries: data.injuries || "",
+        phone: data.phone || "",
+      });
+
+      try {
+        const res2 = await fetch(`/api/reservations`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (res2.ok) {
+          const reservations = await res2.json();
+          const byClass: Record<string, ClassAttendance> = {};
+          const dayCount: Record<string, number> = {};
+          reservations.forEach((r: any) => {
+            const cls = r.class;
+            const title = cls?.title || "Clase";
+            const id = cls?.id || 0;
+            const date = cls?.date ? new Date(cls.date) : null;
+            const weekday = date ? date.toLocaleDateString(undefined, { weekday: "long" }) : "Desconocido";
+            dayCount[weekday] = (dayCount[weekday] || 0) + 1;
+            const key = String(id);
+            if (!byClass[key]) {
+              byClass[key] = { classId: id, title, count: 0, lastAttended: date ? date.toISOString() : undefined };
+            }
+            byClass[key].count += 1;
+            if (date && (!byClass[key].lastAttended || new Date(byClass[key].lastAttended!) < date)) {
+              byClass[key].lastAttended = date.toISOString();
+            }
+          });
+          const attendanceList = Object.values(byClass).sort((a, b) => b.count - a.count);
+          setAttendances(attendanceList);
+          const total = reservations.length;
+          setTotalClasses(total);
+          let best: string | null = null;
+          let bestNum = 0;
+          for (const d in dayCount) {
+            if (dayCount[d] > bestNum) {
+              bestNum = dayCount[d];
+              best = d;
+            }
+          }
+          setBestDay(best);
+        }
+      } catch (_e) {
+        // ignore stats errors
+      }
+    } catch (err: any) {
+      setError(err.message || "Error loading profile");
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
   useEffect(() => {
-    if (status === "loading") return;
+    if (status === "loading") {
+      return;
+    }
 
     if (!session) {
       router.push("/login");
       return;
     }
 
-    // Fetch user profile data from API
-    const fetchProfile = async () => {
-      try {
-        const token = (session as any)?.backendToken;
-        const res = await fetch(`/api/users/profile`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!res.ok) {
-          throw new Error("Failed to fetch profile");
-        }
-        const data = await res.json();
-        setUserProfile({
-          name: data.name || "",
-          email: data.email || "",
-          age: data.age || undefined,
-          weight: data.weight || undefined,
-          height: data.height || undefined,
-          canSwim: data.canSwim || false,
-          injuries: data.injuries || "",
-          phone: data.phone || "",
-        });
-
-        // also fetch reservations to compute stats
-        try {
-          const res2 = await fetch(`/api/reservations`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          });
-          if (res2.ok) {
-            const reservations = await res2.json();
-            // compute per-class attendance and best day
-            const byClass: Record<string, ClassAttendance> = {};
-            const dayCount: Record<string, number> = {};
-            reservations.forEach((r: any) => {
-              const cls = r.class;
-              const title = cls?.title || "Clase";
-              const id = cls?.id || 0;
-              const date = cls?.date ? new Date(cls.date) : null;
-              const weekday = date ? date.toLocaleDateString(undefined, { weekday: "long" }) : "Desconocido";
-              dayCount[weekday] = (dayCount[weekday] || 0) + 1;
-              const key = String(id);
-              if (!byClass[key]) {
-                byClass[key] = { classId: id, title, count: 0, lastAttended: date ? date.toISOString() : undefined };
-              }
-              byClass[key].count += 1;
-              if (date && (!byClass[key].lastAttended || new Date(byClass[key].lastAttended!) < date)) {
-                byClass[key].lastAttended = date.toISOString();
-              }
-            });
-            const attendanceList = Object.values(byClass).sort((a, b) => b.count - a.count);
-            setAttendances(attendanceList);
-            const total = reservations.length;
-            setTotalClasses(total);
-            // best day
-            let best = null;
-            let bestNum = 0;
-            for (const d in dayCount) {
-              if (dayCount[d] > bestNum) {
-                bestNum = dayCount[d];
-                best = d;
-              }
-            }
-            setBestDay(best);
-          }
-        } catch (_e) {
-          // ignore stats errors
-        }
-      } catch (err: any) {
-        setError(err.message || "Error loading profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
-  }, [session, status, router]);
+  }, [fetchProfile, router, session, status]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value, type, checked } = e.target as HTMLInputElement;
@@ -240,8 +240,14 @@ export default function ProfilePage() {
                 <div className="relative inline-block">
                   <div className="w-32 h-32 bg-white rounded-full overflow-hidden flex items-center justify-center shadow-lg mx-auto">
                     {profilePhoto ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                      <Image
+                        src={profilePhoto}
+                        alt="Profile preview"
+                        width={128}
+                        height={128}
+                        className="h-32 w-32 object-cover"
+                        unoptimized
+                      />
                     ) : userProfile.name ? (
                       <span className="text-4xl font-bold text-blue-600">
                         {(userProfile.name || '').split(' ').map(n=>n[0]).join('').toUpperCase()}

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import Link from 'next/link'
 import { 
   StarIcon, 
   CheckIcon, 
@@ -6,6 +8,16 @@ import {
 } from '@/components/ui/Icons'
 
 export function MarketplaceStats() {
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false)
+
+  const handleOpenInfoModal = () => {
+    setIsInfoModalOpen(true)
+  }
+
+  const handleCloseInfoModal = () => {
+    setIsInfoModalOpen(false)
+  }
+
   const stats = [
     {
       label: 'Academias Activas',
@@ -40,7 +52,8 @@ export function MarketplaceStats() {
   ]
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-2 sm:mb-4 shadow-lg mx-2 sm:mx-0 -mt-4 sm:-mt-8">
+    <>
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-2 sm:mb-4 shadow-lg mx-2 sm:mx-0 -mt-4 sm:-mt-8 bg-gradient-to-br from-[#011627] via-[#032d47] to-[#0f4c5c]">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-10 left-10 w-20 h-20 bg-blue-500 rounded-full blur-xl"></div>
@@ -64,7 +77,7 @@ export function MarketplaceStats() {
           </h2>
 
           <div className="max-w-3xl mx-auto px-4 sm:px-0">
-            <p className="text-sm xs:text-base sm:text-lg md:text-xl text-gray-700 font-medium leading-relaxed">
+            <p className="text-sm xs:text-base sm:text-lg md:text-xl text-white font-medium leading-relaxed">
               La plataforma que conecta estudiantes con instructores expertos en todo Perú
             </p>
           </div>
@@ -106,29 +119,36 @@ export function MarketplaceStats() {
 
       {/* Mobile-Optimized Call to Action for Schools */}
       <div className="relative">
-        <div className="bg-gradient-to-r from-white via-teal-50 to-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-lg border border-teal-100">
+        <div className="bg-[#F6F7F8] rounded-3xl p-5 sm:p-6 shadow-2xl border border-white/40">
           {/* Mobile-First Layout */}
           <div className="text-center mb-4">
             {/* Icon */}
-            <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full flex items-center justify-center shadow-lg mx-auto mb-4">
-              <EquipmentIcon className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg mx-auto mb-4 bg-gradient-to-br from-[#2EC4B6] to-[#FF3366]">
+              <EquipmentIcon className="w-8 h-8 text-white drop-shadow" />
             </div>
             
             {/* Content */}
-            <h3 className="text-xl sm:text-2xl font-black text-gray-900 mb-2 leading-tight">
+            <h3 className="text-xl sm:text-2xl font-black text-[#011627] mb-2 leading-tight">
               ¿Eres instructor o tienes una academia?
             </h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-6 leading-relaxed max-w-md mx-auto">
-              Únete a clasesde.pe y conecta con más estudiantes
+            <p className="text-sm sm:text-base text-[#46515F] mb-6 leading-relaxed max-w-md mx-auto">
+              Únete a clasesde.pe y conecta con estudiantes de todo el país con una experiencia de onboarding guiada
             </p>
             
             {/* Buttons - Mobile Optimized */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6">
-              <button className="w-full sm:w-auto bg-gradient-to-r from-teal-600 to-emerald-600 text-white px-8 py-4 rounded-xl font-bold text-base hover:from-teal-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              <Link
+                href="/register"
+                className="w-full sm:w-auto bg-gradient-to-r from-[#FF3366] to-[#D12352] text-white px-8 py-4 rounded-xl font-bold text-base hover:from-[#D12352] hover:to-[#FF3366] transition-all duration-300 flex items-center justify-center shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+              >
                 <LightningIcon className="w-5 h-5 mr-2" />
-                Registrarse
-              </button>
-              <button className="w-full sm:w-auto border-2 border-teal-300 text-teal-700 px-8 py-4 rounded-xl font-bold text-base hover:bg-teal-50 hover:border-teal-400 transition-all duration-300 flex items-center justify-center hover:shadow-lg transform hover:-translate-y-1">
+                Registrarse ahora
+              </Link>
+              <button
+                type="button"
+                onClick={handleOpenInfoModal}
+                className="w-full sm:w-auto border-2 border-[#2EC4B6] text-[#011627] px-8 py-4 rounded-xl font-bold text-base hover:bg-[#E9FBF7] hover:border-[#1BAA9C] transition-all duration-300 flex items-center justify-center hover:shadow-lg transform hover:-translate-y-1"
+              >
                 <EquipmentIcon className="w-5 h-5 mr-2" />
                 Más Info
               </button>
@@ -136,24 +156,97 @@ export function MarketplaceStats() {
           </div>
 
           {/* Trust Indicators - Mobile Optimized */}
-          <div className="pt-4 border-t border-teal-200">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center sm:text-left">
-              <div className="flex items-center justify-center sm:justify-start">
-                <CheckIcon className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-700">Sin comisiones</span>
+          <div className="pt-5 border-t border-[#E2E8F0]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center">
+              <div className="flex items-center justify-center bg-white/70 rounded-xl px-4 py-3 shadow-sm">
+                <CheckIcon className="w-4 h-4 text-[#2EC4B6] mr-2 flex-shrink-0" />
+                <span className="text-sm font-semibold text-[#011627]">Sin comisiones</span>
               </div>
-              <div className="flex items-center justify-center sm:justify-start">
-                <CheckIcon className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-700">Setup gratuito</span>
+              <div className="flex items-center justify-center bg-white/70 rounded-xl px-4 py-3 shadow-sm">
+                <CheckIcon className="w-4 h-4 text-[#2EC4B6] mr-2 flex-shrink-0" />
+                <span className="text-sm font-semibold text-[#011627]">Setup gratuito</span>
               </div>
-              <div className="flex items-center justify-center sm:justify-start">
-                <CheckIcon className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-700">Soporte 24/7</span>
+              <div className="flex items-center justify-center bg-white/70 rounded-xl px-4 py-3 shadow-sm">
+                <CheckIcon className="w-4 h-4 text-[#2EC4B6] mr-2 flex-shrink-0" />
+                <span className="text-sm font-semibold text-[#011627]">Soporte 24/7</span>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    {isInfoModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+        <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+          <div className="max-h-[80vh] overflow-y-auto p-6 sm:p-8">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h4 className="text-2xl font-bold text-[#011627] mb-1">Programa para Escuelas e Instructores</h4>
+                <p className="text-sm text-gray-600">Conoce cómo potenciar tu academia dentro de clasesde.pe</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseInfoModal}
+                className="text-gray-500 hover:text-[#011627] focus:outline-none focus:ring-2 focus:ring-[#FF3366] focus:ring-offset-2 rounded-full"
+                aria-label="Cerrar información"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-6 text-sm sm:text-base text-gray-700 leading-relaxed">
+              <section>
+                <h5 className="text-lg font-semibold text-[#011627] mb-2">Beneficios clave</h5>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Visibilidad inmediata frente a miles de estudiantes de todo el país.</li>
+                  <li>Gestión centralizada de clases, instructores y equipamiento.</li>
+                  <li>Pagos seguros y seguimiento en tiempo real del desempeño de tu academia.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h5 className="text-lg font-semibold text-[#011627] mb-2">Requisitos</h5>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Certificaciones vigentes para cada instructor registrado.</li>
+                  <li>Protocolos de seguridad y equipamiento en buen estado.</li>
+                  <li>Información clara sobre niveles, horarios y precios de las clases.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h5 className="text-lg font-semibold text-[#011627] mb-2">Tips para destacar</h5>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Agrega fotografías profesionales de tus clases y tu escuela.</li>
+                  <li>Responde rápidamente a solicitudes y mantén tu calendario actualizado.</li>
+                  <li>Solicita reseñas a tus alumnos para mejorar tu reputación.</li>
+                </ul>
+              </section>
+
+              <section>
+                <h5 className="text-lg font-semibold text-[#011627] mb-2">¿Listo para comenzar?</h5>
+                <p className="mb-3">Regístrate y un asesor especializado te ayudará a configurar tu escuela en pocos minutos.</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/register"
+                    className="flex-1 bg-gradient-to-r from-[#FF3366] to-[#D12352] text-white font-bold py-3 px-4 rounded-xl text-center hover:from-[#D12352] hover:to-[#FF3366] transition-all duration-300"
+                  >
+                    Comenzar registro
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleCloseInfoModal}
+                    className="flex-1 border-2 border-[#2EC4B6] text-[#011627] font-bold py-3 px-4 rounded-xl hover:bg-[#E9FBF7] transition-all duration-300"
+                  >
+                    Seguir explorando
+                  </button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }

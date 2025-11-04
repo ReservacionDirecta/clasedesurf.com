@@ -3,6 +3,9 @@ import { z } from 'zod';
 // Enum validation for class levels
 const ClassLevelEnum = z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']);
 
+const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 // Schema for creating a new class
 export const createClassSchema = z.object({
   title: z.string()
@@ -36,6 +39,10 @@ export const createClassSchema = z.object({
     .max(100, 'Instructor name must be less than 100 characters')
     .nullable()
     .optional(),
+  images: z.array(z.string().url('Each image must be a valid URL'))
+    .min(1, 'At least one image is required')
+    .max(5, 'Maximum 5 images allowed')
+    .optional(),
   schoolId: z.number()
     .int('School ID must be a whole number')
     .min(1, 'Invalid school ID')
@@ -44,6 +51,35 @@ export const createClassSchema = z.object({
     .max(2000, 'Student details must be less than 2000 characters')
     .nullable()
     .optional()
+});
+
+const bulkClassBaseDataSchema = createClassSchema.pick({
+  title: true,
+  description: true,
+  duration: true,
+  capacity: true,
+  price: true,
+  level: true,
+  instructor: true,
+  images: true,
+  studentDetails: true
+});
+
+const bulkClassOccurrenceSchema = z.object({
+  date: z.string()
+    .regex(dateOnlyRegex, 'Date must be in YYYY-MM-DD format'),
+  time: z.string()
+    .regex(timeRegex, 'Time must be in HH:MM format')
+});
+
+export const createBulkClassesSchema = z.object({
+  baseData: bulkClassBaseDataSchema,
+  schoolId: z.number()
+    .int('School ID must be a whole number')
+    .min(1, 'Invalid school ID')
+    .optional(),
+  occurrences: z.array(bulkClassOccurrenceSchema)
+    .min(1, 'At least one occurrence is required')
 });
 
 // Schema for updating a class
@@ -83,6 +119,10 @@ export const updateClassSchema = z.object({
     .max(100, 'Instructor name must be less than 100 characters')
     .nullable()
     .optional(),
+  images: z.array(z.string().url('Each image must be a valid URL'))
+    .min(1, 'At least one image is required')
+    .max(5, 'Maximum 5 images allowed')
+    .optional(),
   schoolId: z.number()
     .int('School ID must be a whole number')
     .min(1, 'Invalid school ID')
@@ -105,3 +145,4 @@ export const classIdSchema = z.object({
 export type CreateClassInput = z.infer<typeof createClassSchema>;
 export type UpdateClassInput = z.infer<typeof updateClassSchema>;
 export type ClassIdParam = z.infer<typeof classIdSchema>;
+export type CreateBulkClassesInput = z.infer<typeof createBulkClassesSchema>;

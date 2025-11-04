@@ -2,7 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
 import { Calendar, Clock, Users, MapPin, Plus, Eye, Edit, Trash2, Filter, User, CheckCircle, XCircle, AlertCircle, Phone, Mail } from 'lucide-react';
 
 interface Class {
@@ -46,23 +47,7 @@ export default function InstructorClasses() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    if (session.user?.role !== 'INSTRUCTOR') {
-      router.push('/dashboard/student/profile');
-      return;
-    }
-
-    fetchClasses();
-  }, [session, status, router]);
-
-  const fetchClasses = async () => {
+  const fetchClasses = useCallback(async () => {
     try {
       const token = (session as any)?.backendToken;
       const headers: any = {};
@@ -357,7 +342,25 @@ export default function InstructorClasses() {
       console.error('Error fetching classes:', error);
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'INSTRUCTOR') {
+      router.push('/dashboard/student/profile');
+      return;
+    }
+
+    fetchClasses();
+  }, [fetchClasses, router, session, status]);
 
   const filteredClasses = classes.filter(cls => 
     filter === 'all' || cls.status === filter

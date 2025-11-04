@@ -20,6 +20,7 @@ export default function InstructorForm({ instructor, onSubmit, onCancel, isLoadi
     yearsExperience: instructor?.yearsExperience || 0,
     specialties: instructor?.specialties?.join(', ') || '',
     certifications: instructor?.certifications?.join(', ') || '',
+    instructorRole: instructor?.instructorRole || 'INSTRUCTOR',
     isActive: instructor?.isActive ?? true
   });
 
@@ -30,6 +31,19 @@ export default function InstructorForm({ instructor, onSubmit, onCancel, isLoadi
   useEffect(() => {
     fetchAvailableUsers();
   }, []);
+
+  useEffect(() => {
+    if (!instructor) return;
+    setFormData({
+      userId: instructor.userId || '',
+      bio: instructor.bio || '',
+      yearsExperience: instructor.yearsExperience || 0,
+      specialties: instructor.specialties?.join(', ') || '',
+      certifications: instructor.certifications?.join(', ') || '',
+      instructorRole: instructor.instructorRole || 'INSTRUCTOR',
+      isActive: instructor.isActive ?? true
+    });
+  }, [instructor]);
 
   const fetchAvailableUsers = async () => {
     try {
@@ -66,6 +80,7 @@ export default function InstructorForm({ instructor, onSubmit, onCancel, isLoadi
       yearsExperience: Number(formData.yearsExperience),
       specialties: formData.specialties ? formData.specialties.split(',').map(s => s.trim()).filter(s => s) : [],
       certifications: formData.certifications ? formData.certifications.split(',').map(s => s.trim()).filter(s => s) : [],
+      instructorRole: formData.instructorRole,
       isActive: formData.isActive
     };
 
@@ -146,6 +161,26 @@ export default function InstructorForm({ instructor, onSubmit, onCancel, isLoadi
             El instructor será asignado automáticamente a tu escuela
           </p>
         )}
+      </div>
+
+      {/* Rol del Instructor */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Rol del Instructor *
+        </label>
+        <select
+          name="instructorRole"
+          value={formData.instructorRole}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          disabled={isLoading}
+        >
+          <option value="INSTRUCTOR">Instructor</option>
+          <option value="HEAD_COACH">Head Coach (Coordinador)</option>
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          El Head Coach puede gestionar instructores y calendarios adicionales.
+        </p>
       </div>
 
       {/* Biografía */}

@@ -2,13 +2,15 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 interface School {
   id: number;
   name: string;
 }
+
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
 interface ClassFormData {
   title: string;
@@ -20,6 +22,13 @@ interface ClassFormData {
   price: number;
   level: string;
   instructor: string;
+  images: string[];
+  // Schedule options
+  scheduleType: 'single' | 'recurring'; // 'single' para una sola clase, 'recurring' para recurrente
+  selectedDays: DayOfWeek[];
+  times: string[]; // Array de horarios
+  startDate: string; // Fecha de inicio para clases recurrentes
+  weeksCount: number; // Número de semanas
 }
 
 export default function NewClassPage() {
@@ -36,34 +45,25 @@ export default function NewClassPage() {
     capacity: 8,
     price: 25,
     level: 'BEGINNER',
-    instructor: ''
+    instructor: '',
+    images: [''],
+    scheduleType: 'single',
+    selectedDays: [],
+    times: [''],
+    startDate: '',
+    weeksCount: 4
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    if (session.user?.role !== 'SCHOOL_ADMIN') {
-      router.push('/denied');
-      return;
-    }
-
-    fetchSchool();
-  }, [session, status, router]);
-
-  const fetchSchool = async () => {
+  const fetchSchool = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       const token = (session as any)?.backendToken;
+
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -82,10 +82,128 @@ export default function NewClassPage() {
     } finally {
       setLoading(false);
     }
+  }, [session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'SCHOOL_ADMIN') {
+      router.push('/denied');
+      return;
+    }
+
+    fetchSchool();
+  }, [fetchSchool, router, session, status]);
+
+  const handleInputChange = (field: keyof ClassFormData, value: string | number | string[]) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleInputChange = (field: keyof ClassFormData, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleImageChange = (index: number, value: string) => {
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      newImages[index] = value;
+      return { ...prev, images: newImages };
+    });
+  };
+
+  const addImageField = () => {
+    if (formData.images.length < 5) {
+      setFormData(prev => ({ ...prev, images: [...prev.images, ''] }));
+    }
+  };
+
+  const removeImageField = (index: number) => {
+    if (formData.images.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  const handleDayToggle = (day: DayOfWeek) => {
+    setFormData(prev => {
+      const isSelected = prev.selectedDays.includes(day);
+      return {
+        ...prev,
+        selectedDays: isSelected
+          ? prev.selectedDays.filter(d => d !== day)
+          : [...prev.selectedDays, day]
+      };
+    });
+  };
+
+  const handleTimeChange = (index: number, value: string) => {
+    setFormData(prev => {
+      const newTimes = [...prev.times];
+      newTimes[index] = value;
+      return { ...prev, times: newTimes };
+    });
+  };
+
+  const addTimeField = () => {
+    if (formData.times.length < 5) {
+      setFormData(prev => ({ ...prev, times: [...prev.times, ''] }));
+    }
+  };
+
+  const removeTimeField = (index: number) => {
+    if (formData.times.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        times: prev.times.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  // Función para generar ocurrencias basadas en días y horarios
+  const generateOccurrences = (): Array<{ date: string; time: string }> => {
+    const occurrences: Array<{ date: string; time: string }> = [];
+    const validTimes = formData.times.filter(t => t.trim() !== '');
+    
+    if (validTimes.length === 0 || formData.selectedDays.length === 0 || !formData.startDate) {
+      return occurrences;
+    }
+
+    const startDate = new Date(formData.startDate);
+    const dayMap: Record<DayOfWeek, number> = {
+      'sunday': 0,
+      'monday': 1,
+      'tuesday': 2,
+      'wednesday': 3,
+      'thursday': 4,
+      'friday': 5,
+      'saturday': 6
+    };
+
+    // Generar ocurrencias para cada semana
+    for (let week = 0; week < formData.weeksCount; week++) {
+      formData.selectedDays.forEach(day => {
+        const dayOfWeek = dayMap[day];
+        const currentDate = new Date(startDate);
+        
+        // Encontrar el próximo día de la semana
+        const daysToAdd = (dayOfWeek - currentDate.getDay() + 7) % 7;
+        currentDate.setDate(currentDate.getDate() + daysToAdd + (week * 7));
+        
+        validTimes.forEach(time => {
+          occurrences.push({
+            date: currentDate.toISOString().split('T')[0],
+            time: time
+          });
+        });
+      });
+    }
+
+    return occurrences;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,6 +223,14 @@ export default function NewClassPage() {
 
       // Using API proxy routes instead of direct backend calls
       
+      // Filtrar imágenes vacías y validar que haya al menos 1
+      const validImages = formData.images.filter(img => img.trim() !== '');
+      if (validImages.length === 0) {
+        setError('Debes agregar al menos una imagen');
+        setSaving(false);
+        return;
+      }
+
       const classData = {
         title: formData.title,
         description: formData.description,
@@ -114,6 +240,7 @@ export default function NewClassPage() {
         price: Number(formData.price),
         level: formData.level,
         instructor: formData.instructor,
+        images: validImages,
         schoolId: school.id
       };
 
@@ -375,6 +502,72 @@ export default function NewClassPage() {
                 required
               />
               <p className="text-sm text-gray-500 mt-1">Precio por persona</p>
+            </div>
+
+            {/* Images Section */}
+            <div className="md:col-span-2 mt-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Imágenes de la Clase</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Agrega entre 1 y 5 imágenes para tu clase. Ingresa la URL de cada imagen.
+              </p>
+              
+              <div className="space-y-3">
+                {formData.images.map((image, index) => (
+                  <div key={index} className="flex gap-3 items-start">
+                    <div className="flex-1">
+                      <label htmlFor={`image-${index}`} className="block text-sm font-medium text-gray-700 mb-2">
+                        Imagen {index + 1} {index === 0 && '*'}
+                      </label>
+                      <input
+                        type="url"
+                        id={`image-${index}`}
+                        value={image}
+                        onChange={(e) => handleImageChange(index, e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="https://ejemplo.com/imagen.jpg"
+                        required={index === 0}
+                      />
+                      {image && (
+                        <div className="mt-2">
+                          <img
+                            src={image}
+                            alt={`Vista previa ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    {formData.images.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeImageField(index)}
+                        className="mt-8 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        aria-label="Eliminar imagen"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
+                
+                {formData.images.length < 5 && (
+                  <button
+                    type="button"
+                    onClick={addImageField}
+                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors flex items-center justify-center"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Agregar otra imagen (máximo 5)
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

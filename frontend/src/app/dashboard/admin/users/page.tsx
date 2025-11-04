@@ -2,7 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
 import { Plus } from 'lucide-react';
 import { useCrudOperations } from '@/hooks/useCrudOperations';
 import { useApiCall } from '@/hooks/useApiCall';
@@ -35,6 +36,7 @@ export default function UsersManagementPage() {
     endpoint: '/api/users',
     onSuccess: (action) => {
       fetchUsers();
+
       if (action === 'create') {
         alert('Usuario creado exitosamente');
       } else if (action === 'update') {
@@ -53,9 +55,22 @@ export default function UsersManagementPage() {
     await handleSubmit(data);
   };
 
+  const fetchUsers = useCallback(async () => {
+    try {
+      const result = await makeRequest('/api/users', { method: 'GET' });
+      if (result.data) {
+        setUsers(result.data);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  }, [makeRequest]);
+
   useEffect(() => {
-    if (status === 'loading') return;
-    
+    if (status === 'loading') {
+      return;
+    }
+
     if (!session) {
       router.push('/login');
       return;
@@ -67,18 +82,7 @@ export default function UsersManagementPage() {
     }
 
     fetchUsers();
-  }, [session, status, router]);
-
-  const fetchUsers = async () => {
-    try {
-      const result = await makeRequest('/api/users', { method: 'GET' });
-      if (result.data) {
-        setUsers(result.data);
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
+  }, [fetchUsers, router, session, status]);
 
   const columns: Column<User>[] = [
     {

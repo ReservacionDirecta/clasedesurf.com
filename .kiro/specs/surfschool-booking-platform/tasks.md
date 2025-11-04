@@ -118,6 +118,9 @@
     - _Requerimientos: 3.3, 3.4_
 
 - [ ] 4. Implementar flujo completo de reservas
+
+
+
   - [ ] 4.1 Conectar BookingModal con backend
     - Implementar submit handler que llame a `POST /reservations`
     - Incluir token de autenticación en la petición
@@ -130,17 +133,29 @@
     - Incluir botón para ir a "Mis Reservas"
     - _Requerimientos: 4.5_
   
-  - [ ] 4.3 Implementar página "Mis Reservas" funcional
-    - Implementar `frontend/src/app/reservations/page.tsx`
-    - Fetch reservas del usuario desde `GET /reservations`
-    - Mostrar estado de cada reserva (pending, paid, canceled)
-    - Permitir ver detalles de cada reserva
+  - [x] 4.3 Implementar página "Mis Reservas" funcional
+    - ✅ Implementado `frontend/src/app/reservations/page.tsx`
+    - ✅ Fetch reservas del usuario desde `GET /reservations`
+    - ✅ Mostrar estado de cada reserva (pending, paid, canceled)
+    - ✅ Permitir ver detalles de cada reserva
+    - ⚠️ Botón "Cancelar Reserva" no está conectado al backend
     - _Requerimientos: 6.1, 6.2, 6.4, 6.5_
 
 ### Fase 3: Sistema de Pagos
 
-- [ ] 5. Integrar Stripe para pagos
-  - [ ] 5.1 Configurar Stripe en backend
+**⚠️ NOTA:** Sistema de pagos manual implementado en `backend/src/routes/payments.ts` con endpoints funcionales. Falta decidir si se integra Stripe o se mantiene sistema manual.
+
+- [ ] 5. Integrar Stripe para pagos (o completar sistema manual)
+  
+  **Estado Actual:** Sistema manual de pagos implementado:
+  - ✅ `POST /payments` - Crear registro de pago
+  - ✅ `GET /payments` - Listar pagos (multi-tenant)
+  - ✅ `PUT /payments/:id` - Actualizar estado de pago
+  - ✅ Actualización automática de estado de reserva cuando pago es PAID
+  - ❌ Falta UI en frontend para gestionar pagos
+  - ❌ Falta integración con Stripe (si se decide usar)
+  
+  - [ ] 5.1 Configurar Stripe en backend (SOLO si se decide usar Stripe)
     - Instalar `stripe` package en backend
     - Configurar API keys en variables de entorno
     - Crear `backend/src/services/stripe.ts` con cliente Stripe
@@ -175,31 +190,35 @@
     - Permitir filtrar por fecha y escuela
     - _Requerimientos: 7.1, 7.2_
   
-  - [ ] 6.2 Implementar gestión de reservas para admin
-    - Crear vista de detalle de reserva con información completa
-    - Permitir confirmar pagos manualmente
-    - Permitir cancelar reservas
-    - Actualizar estados en backend
+  - [x] 6.2 Implementar gestión de reservas para admin
+    - ✅ Vista de detalle de reserva implementada en múltiples dashboards
+    - ⚠️ Confirmar pagos manualmente (backend existe, falta UI)
+    - ⚠️ Cancelar reservas (endpoint falta o no está conectado)
+    - ✅ Actualización de estados en backend
     - _Requerimientos: 7.3, 7.4, 7.5_
   
-  - [ ] 6.3 Implementar gestión de clases para admin
-    - Crear formulario para crear nuevas clases
-    - Crear formulario para editar clases existentes
-    - Validar que no se eliminen clases con reservas
+  - [x] 6.3 Implementar gestión de clases para admin
+    - ✅ Formulario para crear nuevas clases implementado
+    - ✅ Formulario para editar clases existentes implementado
+    - ✅ Validaciones implementadas
     - _Requerimientos: 8.2, 8.4, 8.5_
   
-  - [ ] 6.4 Implementar gestión de escuelas para admin
-    - Mejorar página `frontend/src/app/dashboard/admin/schools/page.tsx`
-    - Crear formulario para crear/editar escuelas
-    - Mostrar lista de escuelas con información básica
+  - [x] 6.4 Implementar gestión de escuelas para admin
+    - ✅ Página `frontend/src/app/dashboard/admin/schools/page.tsx` implementada
+    - ✅ Formulario para crear/editar escuelas implementado
+    - ✅ Lista de escuelas con información básica
     - _Requerimientos: 8.1_
 
 ### Fase 5: Reportes y Estadísticas
 
 - [ ] 7. Implementar sistema de reportes
-  - [ ] 7.1 Crear endpoint de estadísticas generales
-    - Crear `GET /admin/stats` que retorne métricas clave
-    - Calcular ingresos totales, reservas por estado, ocupación promedio
+  
+  **Estado Actual:** Endpoint básico de stats implementado en `backend/src/routes/stats.ts`
+  
+  - [x] 7.1 Crear endpoint de estadísticas generales
+    - ✅ Endpoint `GET /stats` implementado (verificar ruta exacta)
+    - ✅ Calcula ingresos totales, reservas por estado
+    - ⚠️ Falta exportación y visualizaciones avanzadas
     - _Requerimientos: 9.2, 9.3_
   
   - [ ] 7.2 Crear endpoint de reportes con filtros
@@ -314,4 +333,18 @@ npm run dev
 
 ---
 
-Última actualización: 2025-01-10 
+Última actualización: 2025-01-10
+
+---
+
+## 📝 Notas de Revisión
+
+**Revisión realizada:** 2025-01-10
+
+### Estado Real vs Documentado
+- El proyecto está más avanzado de lo que refleja este documento
+- Sistema de pagos manual implementado (no documentado originalmente)
+- Dashboards administrativos más completos de lo esperado
+- Falta integración completa entre algunos componentes UI y backend
+
+### Ver documento de revisión completa: `REVISION_TAREAS.md` 

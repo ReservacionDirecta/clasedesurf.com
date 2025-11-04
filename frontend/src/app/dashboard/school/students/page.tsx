@@ -142,11 +142,15 @@ export default function SchoolStudents() {
   const handleCreateStudent = async (studentData: any) => {
     setIsCreatingStudent(true);
     try {
+      const token = (session as any)?.backendToken;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/api/students', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify(studentData),
       });

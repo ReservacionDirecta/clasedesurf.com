@@ -71,7 +71,27 @@ export function PublicNavbar() {
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
-              Clases Disponibles
+              Clases
+            </Link>
+            <Link
+              href="/schools"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/schools')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              Escuelas
+            </Link>
+            <Link
+              href="/contact"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/contact')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              Contacto
             </Link>
 
             {session ? (
@@ -178,7 +198,29 @@ export function PublicNavbar() {
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
-              Clases Disponibles
+              Clases
+            </Link>
+            <Link
+              href="/schools"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg text-base font-medium ${
+                isActive('/schools')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              Escuelas
+            </Link>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-lg text-base font-medium ${
+                isActive('/contact')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              Contacto
             </Link>
 
             {session ? (

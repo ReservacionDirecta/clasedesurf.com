@@ -16,7 +16,21 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
     const { classId, specialRequest, participants } = req.body;
     if (!userId) return res.status(401).json({ message: 'User not authenticated' });
 
-    const requested = participants;
+    // Determinar el número de participantes según el tipo de datos recibidos
+    let requested: number;
+    let participantsData: any = null;
+
+    if (Array.isArray(participants)) {
+      // Si es un array, guardar los datos completos y contar participantes
+      requested = participants.length;
+      participantsData = participants;
+    } else if (typeof participants === 'number') {
+      // Si es un número, usar backward compatibility
+      requested = participants;
+      participantsData = null;
+    } else {
+      requested = 1;
+    }
 
     // Use transaction: re-check capacity and create reservation atomically
     const result = await prisma.$transaction(async (tx) => {
@@ -33,6 +47,7 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
           user: { connect: { id: Number(userId) } },
           class: { connect: { id: Number(classId) } },
           specialRequest: specialRequest || null,
+          participants: participantsData,  // Guardar datos de participantes como JSON
           status: 'PENDING'
         }
       });

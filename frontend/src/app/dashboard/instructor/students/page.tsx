@@ -2,7 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
 import { Users, Star, Calendar, Phone, Mail, MessageCircle, Award, TrendingUp } from 'lucide-react';
 
 interface Student {
@@ -32,23 +33,7 @@ export default function InstructorStudents() {
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    if (session.user?.role !== 'INSTRUCTOR') {
-      router.push('/dashboard/student/profile');
-      return;
-    }
-
-    fetchStudents();
-  }, [session, status, router]);
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       const token = (session as any)?.backendToken;
       const headers: any = {};
@@ -206,7 +191,25 @@ export default function InstructorStudents() {
       console.error('Error fetching students:', error);
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'INSTRUCTOR') {
+      router.push('/dashboard/student/profile');
+      return;
+    }
+
+    fetchStudents();
+  }, [fetchStudents, router, session, status]);
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

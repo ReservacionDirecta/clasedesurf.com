@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign } from 'lucide-react';
 import { SchoolContextBanner } from '@/components/school/SchoolContextBanner';
 
@@ -49,23 +49,25 @@ export default function ClassesManagementPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session) {
-      router.push('/login');
-      return;
+  const fetchClasses = useCallback(async () => {
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/api/classes', { headers });
+      if (response.ok) {
+        const data = await response.json();
+        setClasses(data);
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error);
     }
+  }, [session]);
 
-    if (session.user?.role !== 'SCHOOL_ADMIN') {
-      router.push('/dashboard/student/profile');
-      return;
-    }
-
-    fetchSchoolAndClasses();
-  }, [session, status, router]);
-
-  const fetchSchoolAndClasses = async () => {
+  const fetchSchoolAndClasses = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -89,26 +91,25 @@ export default function ClassesManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchClasses, session]);
 
-  const fetchClasses = async () => {
-    try {
-      const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch('/api/classes', { headers });
-      if (response.ok) {
-        const data = await response.json();
-        // Filtrar clases de la escuela actual si es necesario
-        setClasses(data);
-      }
-    } catch (error) {
-      console.error('Error fetching classes:', error);
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
     }
-  };
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'SCHOOL_ADMIN') {
+      router.push('/dashboard/student/profile');
+      return;
+    }
+
+    fetchSchoolAndClasses();
+  }, [fetchSchoolAndClasses, router, session, status]);
 
   const handleCreateClass = async (classData: Partial<Class>) => {
     try {
@@ -279,7 +280,7 @@ export default function ClassesManagementPage() {
               <p className="text-gray-600 mt-2">Administra las clases de {school?.name || 'tu escuela'}</p>
             </div>
             <button 
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => router.push('/dashboard/school/classes/new')}
               className="mt-4 sm:mt-0 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-5 h-5 mr-2" />
@@ -425,10 +426,7 @@ export default function ClassesManagementPage() {
                     </div>
                     <div className="flex gap-2">
                       <button 
-                        onClick={() => {
-                          setSelectedClass(cls);
-                          setShowViewModal(true);
-                        }}
+                        onClick={() => router.push(`/dashboard/school/classes/${cls.id}`)}
                         className="flex items-center px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       >
                         <Eye className="w-4 h-4 mr-1" />
@@ -441,7 +439,7 @@ export default function ClassesManagementPage() {
                         <Eye className="w-4 h-4 mr-1" />
                         Vista Pública
                       </button>
-                      {cls.status === 'upcoming' && (
+                      {cls.status === 'upcoming' && (cls.reservations?.length ?? 0) === 0 && (
                         <button 
                           onClick={() => {
                             setSelectedClass(cls);
@@ -480,11 +478,10 @@ export default function ClassesManagementPage() {
             <p className="text-gray-600 mb-4">
               {filter === 'all' 
                 ? 'Aún no tienes clases programadas'
-                : `No tienes clases ${filter === 'upcoming' ? 'próximas' : filter === 'completed' ? 'completadas' : 'canceladas'}`
-              }
+                : `No tienes clases ${filter === 'upcoming' ? 'próximas' : filter === 'completed' ? 'completadas' : 'canceladas'}`}
             </p>
             <button 
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => router.push('/dashboard/school/classes/new')}
               className="flex items-center mx-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-5 h-5 mr-2" />
@@ -494,22 +491,7 @@ export default function ClassesManagementPage() {
         )}
 
         {/* Modales - Simplificados por ahora */}
-        {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-bold mb-4">Crear Nueva Clase</h3>
-              <p className="text-gray-600 mb-4">Funcionalidad de creación en desarrollo...</p>
-              <div className="flex gap-3">
-                <button 
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {showCreateModal && null}
 
         {showEditModal && selectedClass && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
