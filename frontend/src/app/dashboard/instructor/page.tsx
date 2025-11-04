@@ -2,7 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+
 import { Calendar, Users, Star, BookOpen, Clock, TrendingUp } from 'lucide-react';
 import { ClassCalendar } from '@/components/instructor/ClassCalendar';
 
@@ -12,24 +13,7 @@ export default function InstructorDashboard() {
   const [instructorData, setInstructorData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    // Check if user is INSTRUCTOR
-    if (session.user?.role !== 'INSTRUCTOR') {
-      router.push('/dashboard/student/profile');
-      return;
-    }
-
-    fetchInstructorData();
-  }, [session, status, router]);
-
-  const fetchInstructorData = async () => {
+  const fetchInstructorData = useCallback(async () => {
     try {
       const token = (session as any)?.backendToken;
       const headers: any = {};
@@ -88,55 +72,55 @@ export default function InstructorDashboard() {
           upcomingClasses: 0,
           monthlyEarnings: 0,
           classes: [
-          {
-            id: 1,
-            title: 'Surf para Principiantes',
-            date: new Date().toISOString(),
-            startTime: '10:00:00',
-            endTime: '12:00:00',
-            students: 6,
-            capacity: 8,
-            location: 'Playa Makaha',
-            status: 'CONFIRMED' as const,
-            level: 'Principiante'
-          },
-          {
-            id: 2,
-            title: 'Técnicas Avanzadas',
-            date: new Date(Date.now() + 86400000).toISOString(),
-            startTime: '14:00:00',
-            endTime: '16:00:00',
-            students: 4,
-            capacity: 6,
-            location: 'Playa Waikiki',
-            status: 'CONFIRMED' as const,
-            level: 'Avanzado'
-          },
-          {
-            id: 3,
-            title: 'Longboard Session',
-            date: new Date(Date.now() + 172800000).toISOString(),
-            startTime: '16:00:00',
-            endTime: '18:00:00',
-            students: 8,
-            capacity: 10,
-            location: 'La Herradura',
-            status: 'PENDING' as const,
-            level: 'Intermedio'
-          },
-          {
-            id: 4,
-            title: 'Surf Kids',
-            date: new Date(Date.now() + 259200000).toISOString(),
-            startTime: '11:00:00',
-            endTime: '12:30:00',
-            students: 7,
-            capacity: 10,
-            location: 'Playa Redondo',
-            status: 'CONFIRMED' as const,
-            level: 'Principiante'
-          }
-        ]
+            {
+              id: 1,
+              title: 'Surf para Principiantes',
+              date: new Date().toISOString(),
+              startTime: '10:00:00',
+              endTime: '12:00:00',
+              students: 6,
+              capacity: 8,
+              location: 'Playa Makaha',
+              status: 'CONFIRMED' as const,
+              level: 'Principiante'
+            },
+            {
+              id: 2,
+              title: 'Técnicas Avanzadas',
+              date: new Date(Date.now() + 86400000).toISOString(),
+              startTime: '14:00:00',
+              endTime: '16:00:00',
+              students: 4,
+              capacity: 6,
+              location: 'Playa Waikiki',
+              status: 'CONFIRMED' as const,
+              level: 'Avanzado'
+            },
+            {
+              id: 3,
+              title: 'Longboard Session',
+              date: new Date(Date.now() + 172800000).toISOString(),
+              startTime: '16:00:00',
+              endTime: '18:00:00',
+              students: 8,
+              capacity: 10,
+              location: 'La Herradura',
+              status: 'PENDING' as const,
+              level: 'Intermedio'
+            },
+            {
+              id: 4,
+              title: 'Surf Kids',
+              date: new Date(Date.now() + 259200000).toISOString(),
+              startTime: '11:00:00',
+              endTime: '12:30:00',
+              students: 7,
+              capacity: 10,
+              location: 'Playa Redondo',
+              status: 'CONFIRMED' as const,
+              level: 'Principiante'
+            }
+          ]
         });
       }
       setLoading(false);
@@ -144,7 +128,26 @@ export default function InstructorDashboard() {
       console.error('Error fetching instructor data:', error);
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    // Check if user is INSTRUCTOR
+    if (session.user?.role !== 'INSTRUCTOR') {
+      router.push('/dashboard/student/profile');
+      return;
+    }
+
+    fetchInstructorData();
+  }, [fetchInstructorData, router, session, status]);
 
   if (status === 'loading' || loading) {
     return (

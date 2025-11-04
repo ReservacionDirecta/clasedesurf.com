@@ -1,6 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
+
 import { Button } from '@/components/ui/Button'
 import { PriceDisplay } from '@/components/ui/PriceDisplay'
 import { getBeachImage, getClassTypeImage, getSurfImageByLevel } from '@/lib/lima-beach-images'
@@ -44,6 +46,7 @@ interface ClassData {
     specialties: string[]
   }
   classImage?: string
+  images?: string[]  // Array de URLs de imágenes
 }
 
 interface ClassCardProps {
@@ -119,6 +122,11 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
 
   // Generar imagen específica de surf en Lima basada en ubicación y nivel
   const getClassImage = (type: string, level: string) => {
+    // Si hay imágenes personalizadas, usar la primera
+    if (classData.images && classData.images.length > 0) {
+      return classData.images[0]
+    }
+    
     // Si hay imagen personalizada, usarla solo si es de surf
     if (classData.classImage && classData.classImage.includes('surf')) {
       return classData.classImage
@@ -177,13 +185,31 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-gray-200">
-      {/* Image */}
+      {/* Image Gallery */}
       <div className="relative h-52 overflow-hidden">
-        <img
-          src={getClassImage(classData.type, classData.level)}
-          alt={`Clase de ${classData.title}`}
-          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-        />
+        {classData.images && classData.images.length > 1 ? (
+          <div className="relative w-full h-full">
+            {/* Main image */}
+            <Image
+              src={classData.images[0]}
+              alt={`Clase de ${classData.title}`}
+              fill
+              className="object-cover transition-transform duration-300 hover:scale-105"
+            />
+            {/* Image counter badge */}
+            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+              {classData.images.length} imágenes
+            </div>
+          </div>
+        ) : (
+          <Image
+            src={getClassImage(classData.type, classData.level)}
+            alt={`Clase de ${classData.title}`}
+            fill
+            className="object-cover transition-transform duration-300 hover:scale-105"
+          />
+        )}
+
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
         
         {/* Top badges */}
@@ -223,11 +249,14 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
         {/* School header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
-            <img
+            <Image
               src={getSchoolLogo(classData.school.name)}
               alt={`Logo de ${classData.school.name}`}
-              className="w-6 h-6 rounded-full border border-gray-200"
+              width={24}
+              height={24}
+              className="h-6 w-6 rounded-full border border-gray-200"
             />
+
             <div className="flex items-center space-x-2">
               <h4 className="text-sm font-semibold text-gray-900">{classData.school.name}</h4>
               {classData.school.verified && (
@@ -356,11 +385,14 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
           {/* School Information */}
           <div className="mb-6">
             <div className="flex items-start space-x-4 mb-4">
-              <img
+              <Image
                 src={getSchoolLogo(classData.school.name)}
                 alt={`Logo de ${classData.school.name}`}
-                className="w-16 h-16 rounded-full border-2 border-gray-200 shadow-sm"
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-full border-2 border-gray-200 shadow-sm"
               />
+
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <h4 className="text-lg font-bold text-gray-900">{classData.school.name}</h4>
@@ -405,11 +437,14 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
             <div className="border-t border-gray-200 pt-4">
               <h5 className="text-md font-bold text-gray-900 mb-3">Tu Instructor</h5>
               <div className="flex items-start space-x-4">
-                <img
+                <Image
                   src={getInstructorPhoto(classData.instructor.name)}
                   alt={`Foto de ${classData.instructor.name}`}
-                  className="w-12 h-12 rounded-full border-2 border-gray-200 shadow-sm"
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 rounded-full border-2 border-gray-200 shadow-sm"
                 />
+
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
                     <h6 className="font-semibold text-gray-900">{classData.instructor.name}</h6>

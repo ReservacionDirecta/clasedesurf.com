@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Calendar, 
   ChevronLeft, 
@@ -37,6 +38,17 @@ interface ClassesCalendarWidgetProps {
 }
 
 export default function ClassesCalendarWidget({ classes, onClassClick }: ClassesCalendarWidgetProps) {
+  const getInstructorFirstName = (name?: string): string => {
+    if (!name) {
+      return 'Sin instructor';
+    }
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return 'Sin instructor';
+    }
+    return trimmedName.split(/\s+/)[0];
+  };
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [selectedLevel, setSelectedLevel] = useState<string>('all');
@@ -163,6 +175,7 @@ export default function ClassesCalendarWidget({ classes, onClassClick }: Classes
               <button
                 onClick={() => navigateWeek('prev')}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Semana anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -172,6 +185,7 @@ export default function ClassesCalendarWidget({ classes, onClassClick }: Classes
               <button
                 onClick={() => navigateWeek('next')}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Siguiente semana"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -185,6 +199,7 @@ export default function ClassesCalendarWidget({ classes, onClassClick }: Classes
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
               className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-0"
+              aria-label="Filtrar por nivel"
             >
               {levels.map(level => (
                 <option key={level} value={level}>
@@ -234,15 +249,19 @@ export default function ClassesCalendarWidget({ classes, onClassClick }: Classes
                     {cls.instructor && (
                       <div className="flex items-center mt-1 sm:mt-2 text-xs text-gray-600">
                         {cls.instructor.profileImage ? (
-                          <img 
-                            src={cls.instructor.profileImage} 
-                            alt={cls.instructor.name}
-                            className="w-3 h-3 sm:w-4 sm:h-4 rounded-full mr-1 flex-shrink-0"
-                          />
+                          <div className="relative w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0">
+                            <Image 
+                              src={cls.instructor.profileImage} 
+                              alt={cls.instructor.name}
+                              fill
+                              className="rounded-full object-cover"
+                              sizes="16px"
+                            />
+                          </div>
                         ) : (
                           <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-300 rounded-full mr-1 flex-shrink-0"></div>
                         )}
-                        <span className="truncate text-xs">{cls.instructor.name.split(' ')[0]}</span>
+                        <span className="truncate text-xs">{getInstructorFirstName(cls.instructor.name)}</span>
                       </div>
                     )}
                   </div>

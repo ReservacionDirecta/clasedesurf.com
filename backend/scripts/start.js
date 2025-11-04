@@ -76,21 +76,32 @@ async function startServer() {
     console.log('🗄️  Setting up database...');
     await runCommand('npx', ['prisma', 'migrate', 'deploy']);
     
-    // Seed database (don't fail if it doesn't work) - skip in production
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🌱 Seeding database...');
+    // Seed database only when explicitly enabled
+    // By default, seeding is DISABLED to avoid wiping production data
+    const shouldSeed = String(process.env.SEED_ON_START || '').toLowerCase() === 'true';
+    if (shouldSeed) {
+      console.log('🌱 Seeding database (SEED_ON_START=true)...');
       await runCommand('npx', ['prisma', 'db', 'seed']);
     } else {
-      console.log('🌱 Skipping database seed in production mode');
+      console.log('🌱 Skipping database seed (set SEED_ON_START=true to enable)');
     }
     
     // Start the server
     console.log('🎯 Starting Node.js server...');
     console.log(`🌐 Server will be available at http://localhost:${process.env.PORT || 4000}`);
     console.log('');
-    
+
+    let command = 'node';
+    let args = [serverFile];
+
+    if (process.env.NODE_ENV !== 'production') {
+      command = 'npx';
+      args = ['ts-node', 'src/server.ts'];
+      process.env.NODE_ENV = 'development';
+    }
+
     // Start server (this will not return)
-    const serverProcess = spawn('node', [serverFile], {
+    const serverProcess = spawn(command, args, {
       stdio: 'inherit',
       shell: true
     });

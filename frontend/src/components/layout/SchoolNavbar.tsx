@@ -35,7 +35,7 @@ export function SchoolNavbar() {
   return (
     <nav className="bg-white shadow-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-3">
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link href="/dashboard/school" className="flex items-center space-x-3">
@@ -50,25 +50,28 @@ export function SchoolNavbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-1">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive(item.href)
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <span className="mr-2">{item.icon}</span>
-                {item.name}
-              </Link>
-            ))}
+          <div className="hidden md:flex flex-1 min-w-0">
+            <div className="flex items-center gap-1 w-full overflow-x-auto no-scrollbar whitespace-nowrap">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive(item.href)
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  <span className="mr-2">{item.icon}</span>
+                  <span className="hidden lg:inline">{item.name}</span>
+                  <span className="lg:hidden">{item.name.slice(0, 10)}{item.name.length > 10 ? '…' : ''}</span>
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3 flex-shrink-0">
             {/* User Info */}
             <div className="hidden sm:flex sm:items-center sm:space-x-3">
               <div className="text-right">

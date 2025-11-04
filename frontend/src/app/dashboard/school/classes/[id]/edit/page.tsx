@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 interface School {
@@ -20,6 +20,7 @@ interface ClassFormData {
   price: number;
   level: string;
   instructor: string;
+  images: string[];
 }
 
 interface ClassData {
@@ -32,6 +33,7 @@ interface ClassData {
   price: number;
   level: string;
   instructor?: string;
+  images?: string[];
   schoolId: number;
 }
 
@@ -52,7 +54,8 @@ export default function EditClassPage() {
     capacity: 8,
     price: 25,
     level: 'BEGINNER',
-    instructor: ''
+    instructor: '',
+    images: ['']
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -60,25 +63,7 @@ export default function EditClassPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    if (session.user?.role !== 'SCHOOL_ADMIN') {
-      router.push('/denied');
-      return;
-    }
-
-    if (classId) {
-      fetchClassAndSchool();
-    }
-  }, [session, status, router, classId]);
-
-  const fetchClassAndSchool = async () => {
+  const fetchClassAndSchool = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -98,20 +83,20 @@ export default function EditClassPage() {
         setSchool(schools[0]);
       }
 
-      // Fetch classes
-      const classRes = await fetch('/api/classes', { headers });
-      if (!classRes.ok) throw new Error('Failed to fetch classes');
-      
-      const allClasses = await classRes.json();
-      const currentClass = allClasses.find((cls: any) => cls.id === parseInt(classId));
-      
-      if (!currentClass) {
-        throw new Error('Class not found');
+      // Fetch class by ID
+      const classRes = await fetch(`/api/classes/${classId}`, { headers });
+      if (!classRes.ok) {
+        if (classRes.status === 404) {
+          throw new Error('Clase no encontrada');
+        }
+        throw new Error('Error al cargar la clase');
       }
+      
+      const currentClass = await classRes.json();
 
       // Check if this class belongs to the school admin's school
       if (schools.length > 0 && currentClass.schoolId !== schools[0].id) {
-        throw new Error('You do not have permission to edit this class');
+        throw new Error('No tienes permiso para editar esta clase');
       }
       
       setOriginalClass(currentClass);
@@ -130,7 +115,8 @@ export default function EditClassPage() {
         capacity: currentClass.capacity,
         price: currentClass.price,
         level: currentClass.level,
-        instructor: currentClass.instructor || ''
+        instructor: currentClass.instructor || '',
+        images: currentClass.images && currentClass.images.length > 0 ? currentClass.images : ['']
       });
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -138,10 +124,53 @@ export default function EditClassPage() {
     } finally {
       setLoading(false);
     }
+  }, [classId, session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'SCHOOL_ADMIN') {
+      router.push('/denied');
+      return;
+    }
+
+    if (classId) {
+      fetchClassAndSchool();
+    }
+  }, [classId, fetchClassAndSchool, router, session, status]);
+
+  const handleInputChange = (field: keyof ClassFormData, value: string | number | string[]) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleInputChange = (field: keyof ClassFormData, value: string | number) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleImageChange = (index: number, value: string) => {
+    setFormData(prev => {
+      const newImages = [...prev.images];
+      newImages[index] = value;
+      return { ...prev, images: newImages };
+    });
+  };
+
+  const addImageField = () => {
+    if (formData.images.length < 5) {
+      setFormData(prev => ({ ...prev, images: [...prev.images, ''] }));
+    }
+  };
+
+  const removeImageField = (index: number) => {
+    if (formData.images.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index)
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -162,6 +191,14 @@ export default function EditClassPage() {
 
       // Using API proxy routes instead of direct backend calls
       
+      // Filter out empty image URLs
+      const validImages = formData.images.filter(img => img.trim() !== '');
+      if (validImages.length === 0) {
+        setError('Se requiere al menos una imagen');
+        setSaving(false);
+        return;
+      }
+
       const classData = {
         title: formData.title,
         description: formData.description,
@@ -170,10 +207,11 @@ export default function EditClassPage() {
         capacity: Number(formData.capacity),
         price: Number(formData.price),
         level: formData.level,
-        instructor: formData.instructor
+        instructor: formData.instructor,
+        images: validImages
       };
 
-      const res = await fetch('/api/classes/${classId}', {
+      const res = await fetch(`/api/classes/${classId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(classData)
@@ -507,6 +545,72 @@ export default function EditClassPage() {
                 required
               />
               <p className="text-sm text-gray-500 mt-1">Precio por persona</p>
+            </div>
+          </div>
+
+          {/* Images Section */}
+          <div className="md:col-span-2 mt-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Imágenes de la Clase</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Agrega entre 1 y 5 imágenes para tu clase. Ingresa la URL de cada imagen.
+            </p>
+            
+            <div className="space-y-3">
+              {formData.images.map((image, index) => (
+                <div key={index} className="flex gap-3 items-start">
+                  <div className="flex-1">
+                    <label htmlFor={`image-${index}`} className="block text-sm font-medium text-gray-700 mb-2">
+                      Imagen {index + 1} {index === 0 && '*'}
+                    </label>
+                    <input
+                      type="url"
+                      id={`image-${index}`}
+                      value={image}
+                      onChange={(e) => handleImageChange(index, e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                      required={index === 0}
+                    />
+                    {image && (
+                      <div className="mt-2">
+                        <img
+                          src={image}
+                          alt={`Vista previa ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {formData.images.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeImageField(index)}
+                      className="mt-8 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      aria-label="Eliminar imagen"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+              
+              {formData.images.length < 5 && (
+                <button
+                  type="button"
+                  onClick={addImageField}
+                  className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Agregar otra imagen (máximo 5)
+                </button>
+              )}
             </div>
           </div>
 

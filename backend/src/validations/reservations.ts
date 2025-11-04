@@ -1,5 +1,30 @@
 import { z } from 'zod';
 
+// Schema for participant details
+const participantSchema = z.object({
+  name: z.string().min(1, 'Participant name is required'),
+  age: z.union([z.string(), z.number()]).transform(val => {
+    const num = typeof val === 'string' ? parseInt(val, 10) : val;
+    if (isNaN(num) || num < 8) throw new Error('Age must be at least 8');
+    return num;
+  }),
+  height: z.union([z.string(), z.number()]).transform(val => {
+    const num = typeof val === 'string' ? parseInt(val, 10) : val;
+    if (isNaN(num) || num < 100) throw new Error('Height must be at least 100cm');
+    return num;
+  }),
+  weight: z.union([z.string(), z.number()]).transform(val => {
+    const num = typeof val === 'string' ? parseInt(val, 10) : val;
+    if (isNaN(num) || num < 20) throw new Error('Weight must be at least 20kg');
+    return num;
+  }),
+  canSwim: z.boolean(),
+  swimmingLevel: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
+  hasSurfedBefore: z.boolean(),
+  injuries: z.string().optional(),
+  comments: z.string().optional()
+});
+
 // Schema for creating a new reservation
 export const createReservationSchema = z.object({
   classId: z.number()
@@ -9,10 +34,17 @@ export const createReservationSchema = z.object({
     .max(500, 'Special request must be less than 500 characters')
     .nullable()
     .optional(),
-  participants: z.number()
-    .int('Participants must be a whole number')
-    .min(1, 'At least 1 participant required')
-    .max(10, 'Maximum 10 participants allowed')
+  participants: z.union([
+    // Acepta un número (backward compatibility)
+    z.number()
+      .int('Participants must be a whole number')
+      .min(1, 'At least 1 participant required')
+      .max(10, 'Maximum 10 participants allowed'),
+    // O acepta un array de objetos con datos detallados
+    z.array(participantSchema)
+      .min(1, 'At least 1 participant required')
+      .max(10, 'Maximum 10 participants allowed')
+  ])
     .optional()
     .default(1)
 });

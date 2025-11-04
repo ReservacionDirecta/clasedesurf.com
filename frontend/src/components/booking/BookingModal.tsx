@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { formatDualCurrency } from '@/lib/currency'
@@ -20,6 +21,7 @@ interface ClassData {
   instructorName?: string
   capacity: number
   availableSpots?: number
+  images?: string[]  // Array de URLs de imágenes
 }
 
 interface BookingModalProps {
@@ -30,6 +32,7 @@ interface BookingModalProps {
 }
 
 export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingModalProps) {
+  const { data: session } = useSession()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -47,6 +50,17 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Pre-llenar datos del usuario logueado
+  useEffect(() => {
+    if (session?.user && isOpen) {
+      setFormData(prev => ({
+        ...prev,
+        name: session.user.name || '',
+        email: session.user.email || ''
+      }))
+    }
+  }, [session, isOpen])
 
   if (!isOpen) return null
 
@@ -138,6 +152,27 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
               </svg>
             </button>
           </div>
+
+          {/* Class Images Gallery */}
+          {classData.images && classData.images.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Imágenes de la Clase</h3>
+              <div className={`grid gap-2 ${classData.images.length === 1 ? 'grid-cols-1' : classData.images.length === 2 ? 'grid-cols-2' : classData.images.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                {classData.images.map((imageUrl, index) => (
+                  <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
+                    <img
+                      src={imageUrl}
+                      alt={`${classData.title} - Imagen ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Class Info Summary */}
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">

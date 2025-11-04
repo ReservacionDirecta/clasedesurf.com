@@ -46,16 +46,12 @@ RUN apk add --no-cache \
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Copy node_modules from builder (includes Prisma client already generated)
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-# Copy prisma schema for migrations
-COPY prisma/schema.prisma ./prisma/
 
 # Copy scripts directory
 COPY scripts ./scripts
@@ -67,8 +63,8 @@ COPY start-simple.sh ./start-simple.sh
 # Make startup scripts executable
 RUN chmod +x start.sh start-simple.sh scripts/start.js
 
-# Generate Prisma client for production
-RUN npx prisma generate
+# Prune dev dependencies (optional, reduces image size)
+RUN npm prune --production
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

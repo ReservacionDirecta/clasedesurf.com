@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MapPin, Phone, Mail, Globe, Instagram, Facebook, MessageCircle, Camera, Edit, Save, X } from 'lucide-react';
 
@@ -32,23 +32,7 @@ export default function SchoolProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    if (session.user?.role !== 'SCHOOL_ADMIN') {
-      router.push('/denied');
-      return;
-    }
-
-    fetchSchool();
-  }, [session, status, router]);
-
-  const fetchSchool = async () => {
+  const fetchSchool = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -93,7 +77,25 @@ export default function SchoolProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'SCHOOL_ADMIN') {
+      router.push('/denied');
+      return;
+    }
+
+    fetchSchool();
+  }, [fetchSchool, router, session, status]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

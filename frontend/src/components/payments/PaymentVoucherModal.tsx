@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 
@@ -180,14 +181,16 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
             {formData.voucherImage && (
               <div className="mt-3">
                 <p className="text-sm font-medium text-gray-700 mb-2">Vista Previa:</p>
-                <img 
-                  src={formData.voucherImage} 
-                  alt="Voucher preview" 
-                  className="max-w-full h-auto rounded-lg border border-gray-300"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
+                <div className="relative w-full overflow-hidden rounded-lg border border-gray-300">
+                  <Image
+                    src={formData.voucherImage}
+                    alt="Voucher preview"
+                    width={600}
+                    height={400}
+                    className="h-auto w-full object-contain"
+                    onError={() => setFormData(prev => ({ ...prev, voucherImage: '' }))}
+                  />
+                </div>
               </div>
             )}
           </div>

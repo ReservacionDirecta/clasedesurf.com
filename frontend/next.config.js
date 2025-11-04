@@ -1,22 +1,41 @@
 /** @type {import('next').NextConfig} */
 // Backend URL configuration for different environments
-const BACKEND = process.env.NODE_ENV === 'production' 
-  ? process.env.NEXT_PUBLIC_BACKEND_URL || 'https://surfschool-backend-production.up.railway.app'
-  : process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+// Force localhost when running in development, regardless of NEXT_PUBLIC_BACKEND_URL
+const BACKEND = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:4000'
+  : (process.env.NEXT_PUBLIC_BACKEND_URL || 'https://surfschool-backend-production.up.railway.app');
 
 console.log('Next.js config - NODE_ENV:', process.env.NODE_ENV);
 console.log('Next.js config - BACKEND URL:', BACKEND);
 
 const nextConfig = {
 	// Enable standalone output for Docker
-	output: 'standalone',
+	output: 'standalone',	
 	
 	// Optimize for production
 	swcMinify: true,
 	
 	// Image optimization
 	images: {
-		domains: ['localhost'],
+		remotePatterns: [
+			{
+				protocol: 'https',
+				hostname: 'images.unsplash.com',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
+				hostname: 'plus.unsplash.com',
+				pathname: '/**',
+			},
+			{
+				protocol: 'https',
+				hostname: 'ui-avatars.com',
+				pathname: '/**',
+			},
+		],
+		// Disable optimization in development for faster builds
+		// In production, optimization is enabled for better performance
 		unoptimized: process.env.NODE_ENV === 'development',
 	},
 	
@@ -43,6 +62,8 @@ const nextConfig = {
 	// Environment variables
 	env: {
 		NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+		// Default backend URL for the browser (public) – resolves to localhost:4000 in dev
+		NEXT_PUBLIC_BACKEND_URL: BACKEND,
 	},
 };
 

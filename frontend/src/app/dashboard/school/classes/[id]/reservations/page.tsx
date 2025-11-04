@@ -1,8 +1,9 @@
 "use client";
 
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PaymentVoucherModal } from '@/components/payments/PaymentVoucherModal';
 
@@ -65,25 +66,7 @@ export default function ClassReservationsPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
-  useEffect(() => {
-    if (status === 'loading') return;
-    
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    if (session.user?.role !== 'SCHOOL_ADMIN') {
-      router.push('/denied');
-      return;
-    }
-
-    if (classId) {
-      fetchClassAndReservations();
-    }
-  }, [session, status, router, classId]);
-
-  const fetchClassAndReservations = async () => {
+  const fetchClassAndReservations = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -120,7 +103,27 @@ export default function ClassReservationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [classId, session]);
+
+  useEffect(() => {
+    if (status === 'loading') {
+      return;
+    }
+
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    if (session.user?.role !== 'SCHOOL_ADMIN') {
+      router.push('/denied');
+      return;
+    }
+
+    if (classId) {
+      fetchClassAndReservations();
+    }
+  }, [classId, fetchClassAndReservations, router, session, status]);
 
   const updateReservationStatus = async (reservationId: number, newStatus: string) => {
     try {
@@ -132,7 +135,7 @@ export default function ClassReservationsPage() {
 
       // Using API proxy routes instead of direct backend calls
       
-      const res = await fetch('/api/reservations/${reservationId}', {
+      const res = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ status: newStatus })
@@ -165,7 +168,7 @@ export default function ClassReservationsPage() {
         throw new Error('No payment found for this reservation');
       }
       
-      const res = await fetch('/api/payments/${reservation.payment.id}', {
+      const res = await fetch(`/api/payments/${reservation.payment.id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ 
@@ -356,19 +359,10 @@ export default function ClassReservationsPage() {
             <div className="divide-y divide-gray-200">
               {reservations.map((reservation) => (
                 <div key={reservation.id} className="p-6 hover:bg-gray-50 transition-colors">
-                  {/* Header Row */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start space-x-4">
-                      {/* Avatar */}
-                      <div className="flex-shrink-0">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                          {reservation.user.name.charAt(0).toUpperCase()}
-                        </div>
-                      </div>
-                      
-                      {/* User Info */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-semibold text-gray-900">{reservation.user.name}</h3>
+                  {/* Main Info Row */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{reservation.user.name}</h3>
                         <div className="flex flex-wrap items-center gap-3 mt-1">
                           <div className="flex items-center text-sm text-gray-600">
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -394,7 +388,6 @@ export default function ClassReservationsPage() {
                           )}
                         </div>
                       </div>
-                    </div>
 
                     {/* Status Badges */}
                     <div className="flex flex-col items-end space-y-2">
