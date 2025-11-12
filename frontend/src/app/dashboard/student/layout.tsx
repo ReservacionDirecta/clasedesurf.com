@@ -4,7 +4,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { StudentNavbar } from '@/components/layout/StudentNavbar';
-import { MobileBottomNav } from '@/components/navigation/MobileBottomNav';
 
 export default function StudentLayout({
   children,
@@ -45,9 +44,13 @@ export default function StudentLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
-      <StudentNavbar />
+      {/* StudentNavbar solo visible en desktop (≥1024px) */}
+      {/* En móvil solo se muestra el Header (PublicNavbar) del NavigationWrapper */}
+      <div className="hidden lg:block">
+        <StudentNavbar />
+      </div>
       <main className="pb-20 md:pb-0">{children}</main>
-      <MobileBottomNav />
+      {/* MobileBottomNav se maneja desde NavigationWrapper */}
     </div>
   );
 }

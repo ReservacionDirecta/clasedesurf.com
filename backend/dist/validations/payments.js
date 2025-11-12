@@ -17,6 +17,16 @@ exports.createPaymentSchema = zod_1.z.object({
     transactionId: zod_1.z.string()
         .max(100, 'Transaction ID must be less than 100 characters')
         .nullable()
+        .optional(),
+    voucherImage: zod_1.z.string()
+        .max(10000000, 'Voucher image is too large') // Accept base64 strings
+        .nullable()
+        .optional(),
+    voucherNotes: zod_1.z.string()
+        .max(500, 'Voucher notes must be less than 500 characters')
+        .nullable()
+        .optional(),
+    status: zod_1.z.enum(['UNPAID', 'PENDING', 'PAID', 'REFUNDED'])
         .optional()
 });
 // Schema for updating a payment
@@ -25,7 +35,7 @@ exports.updatePaymentSchema = zod_1.z.object({
         .min(0, 'Amount must be non-negative')
         .max(10000, 'Amount must be less than 10000')
         .optional(),
-    status: zod_1.z.enum(['UNPAID', 'PAID', 'REFUNDED'])
+    status: zod_1.z.enum(['UNPAID', 'PENDING', 'PAID', 'REFUNDED'])
         .optional(),
     paymentMethod: zod_1.z.string()
         .min(1, 'Payment method is required')
@@ -36,8 +46,7 @@ exports.updatePaymentSchema = zod_1.z.object({
         .nullable()
         .optional(),
     voucherImage: zod_1.z.string()
-        .url('Voucher image must be a valid URL')
-        .max(500, 'Voucher image URL must be less than 500 characters')
+        .max(10000000, 'Voucher image is too large') // Accept base64 strings or URLs
         .nullable()
         .optional(),
     voucherNotes: zod_1.z.string()

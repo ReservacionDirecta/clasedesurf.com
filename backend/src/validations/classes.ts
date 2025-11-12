@@ -47,6 +47,10 @@ export const createClassSchema = z.object({
     .int('School ID must be a whole number')
     .min(1, 'Invalid school ID')
     .optional(),
+  beachId: z.number()
+    .int('Beach ID must be a whole number')
+    .min(1, 'Invalid beach ID')
+    .optional(),
   studentDetails: z.string()
     .max(2000, 'Student details must be less than 2000 characters')
     .nullable()
@@ -126,6 +130,10 @@ export const updateClassSchema = z.object({
   schoolId: z.number()
     .int('School ID must be a whole number')
     .min(1, 'Invalid school ID')
+    .optional(),
+  beachId: z.number()
+    .int('Beach ID must be a whole number')
+    .min(1, 'Invalid beach ID')
     .optional(),
   studentDetails: z.string()
     .max(2000, 'Student details must be less than 2000 characters')

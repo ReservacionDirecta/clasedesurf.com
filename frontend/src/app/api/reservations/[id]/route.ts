@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 
-const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+// Use same logic as next.config.js - force localhost:4000 in development
+const BACKEND = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:4000'
+  : (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000');
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {

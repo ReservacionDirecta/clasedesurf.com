@@ -113,8 +113,14 @@ main() {
     # Run migrations
     run_migrations
     
-    # Seed database
+    # Seed database - DISABLED by default to preserve data
+    # Only seed if SEED_ON_START environment variable is set to 'true'
+    if [ "${SEED_ON_START}" = "true" ]; then
+        echo "🌱 SEED_ON_START=true, seeding database..."
     seed_database
+    else
+        echo "🌱 Skipping database seed (set SEED_ON_START=true to enable)"
+    fi
     
     # Start server
     start_server

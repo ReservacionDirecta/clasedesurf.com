@@ -1,9 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { 
+  Home, 
+  Waves, 
+  School, 
+  Mail, 
+  User, 
+  LogOut,
+  Menu,
+  X,
+  ChevronRight
+} from "lucide-react";
 
 type RoleOption = "STUDENT" | "INSTRUCTOR" | "SCHOOL_ADMIN" | "ADMIN" | undefined;
 
@@ -62,22 +74,56 @@ const roleLinkMap: Record<Exclude<RoleOption, undefined>, { href: string; icon: 
 };
 
 const baseLinks = [
-  { href: "/", label: "Inicio" },
-  { href: "/classes", label: "Clases" },
-  { href: "/schools", label: "Escuelas" },
-  { href: "/contact", label: "Contacto" }
+  { href: "/", label: "Inicio", icon: Home },
+  { href: "/classes", label: "Clases", icon: Waves },
+  { href: "/schools", label: "Escuelas", icon: School },
+  { href: "/contact", label: "Contacto", icon: Mail }
 ];
 
 export const Header = (): JSX.Element => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { data: session } = useSession();
+  const pathname = usePathname();
   const role = (session as any)?.user?.role as RoleOption;
   const roleLinks = useMemo(() => {
     if (!role || !roleLinkMap[role as Exclude<RoleOption, undefined>]) return [];
     return roleLinkMap[role as Exclude<RoleOption, undefined>];
   }, [role]);
+  
   const handleToggleMenu = () => setIsMenuOpen((prev) => !prev);
-  const handleSignOut = () => signOut({ callbackUrl: "/" });
+  
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut({ callbackUrl: "/", redirect: true });
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      setIsSigningOut(false);
+    }
+  };
+  
+  // Cerrar menú al cambiar de ruta
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+  
+  // Prevenir scroll cuando el menú está abierto
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+  
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === href;
+    return pathname?.startsWith(href);
+  };
   return (
     <header className={containerClass}>
       <div className="container mx-auto px-4 py-4">
@@ -107,8 +153,8 @@ export const Header = (): JSX.Element => {
             {session ? (
               <>
                 <span className="text-sm text-[#F6F7F8]/80">{(session as any).user?.name}</span>
-                <Button variant="outline" size="sm" className={headerOutlineButtonClass} onClick={handleSignOut}>
-                  Cerrar sesión
+                <Button variant="outline" size="sm" className={headerOutlineButtonClass} onClick={handleSignOut} disabled={isSigningOut}>
+                  {isSigningOut ? 'Cerrando...' : 'Cerrar sesión'}
                 </Button>
               </>
             ) : (
@@ -126,50 +172,143 @@ export const Header = (): JSX.Element => {
               </>
             )}
           </div>
-          <button aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"} className="md:hidden p-2 rounded-md text-[#F6F7F8] hover:text-[#FF3366] hover:bg-white/10" onClick={handleToggleMenu}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-            </svg>
+          <button 
+            aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"} 
+            className="md:hidden p-2 rounded-lg text-[#F6F7F8] hover:text-[#FF3366] hover:bg-white/10 transition-all duration-200 active:scale-95" 
+            onClick={handleToggleMenu}
+          >
+            {isMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
-        {isMenuOpen && (
-          <div className={`md:hidden mt-4 pb-4 ${mobileSectionBorderClass}`}>
-            <nav className="flex flex-col space-y-4 mt-4">
-              {baseLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={navLinkClass}>
-                  {link.label}
+        {/* Mobile Menu - Slide Down Animation */}
+        <div 
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+            isMenuOpen ? 'max-h-[800px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
+          }`}
+        >
+          <div className={`pb-4 ${mobileSectionBorderClass}`}>
+            <nav className="flex flex-col space-y-1 mt-4">
+              {/* Base Navigation Links */}
+              {baseLinks.map((link) => {
+                const IconComponent = link.icon;
+                const active = isActive(link.href);
+                
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
+                      active
+                        ? 'bg-white/10 text-[#FF3366] shadow-sm'
+                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg transition-all duration-200 ${
+                        active 
+                          ? 'bg-[#FF3366]/20 text-[#FF3366]' 
+                          : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
+                      }`}>
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <span className="font-medium">{link.label}</span>
+                    </div>
+                    <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
+                      active ? 'text-[#FF3366]' : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
+                    }`} />
                 </Link>
-              ))}
-              {roleLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={`flex.items-center space-x-2 ${navLinkClass}`}>
+                );
+              })}
+              
+              {/* Role-specific Dashboard Link */}
+              {roleLinks.map((link) => {
+                const active = isActive(link.href);
+                
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
+                      active
+                        ? 'bg-white/10 text-[#FF3366] shadow-sm'
+                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg transition-all duration-200 ${
+                        active 
+                          ? 'bg-[#FF3366]/20 text-[#FF3366]' 
+                          : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
+                      }`}>
                   {link.icon}
-                  <span>{link.label}</span>
+                      </div>
+                      <span className="font-medium">{link.label}</span>
+                    </div>
+                    <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
+                      active ? 'text-[#FF3366]' : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
+                    }`} />
                 </Link>
-              ))}
+                );
+              })}
+              
+              {/* User Section */}
               {session ? (
-                <div className={`flex flex-col space-y-2 pt-4 ${mobileSectionBorderClass.replace("border-white/10", "border-gray-200")}`}>
-                  <span className="text-sm text-[#F6F7F8]/80 px-2">{(session as any).user?.name}</span>
-                  <Button variant="outline" size="sm" className={`${headerOutlineButtonClass} w-full`} onClick={handleSignOut}>
-                    Cerrar sesión
-                  </Button>
+                <div className={`flex flex-col space-y-3 pt-4 mt-4 ${mobileSectionBorderClass}`}>
+                  {/* User Info Card */}
+                  <div className="flex items-center space-x-3 px-4 py-3 bg-white/5 rounded-xl backdrop-blur-sm">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF3366] to-[#D12352] flex items-center justify-center shadow-lg">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {(session as any).user?.name}
+                      </p>
+                      <p className="text-xs text-[#F6F7F8]/60 truncate">
+                        {(session as any).user?.email}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Logout Button */}
+                  <button
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 border border-white/20"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    <span className="font-medium">
+                      {isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+                    </span>
+                  </button>
                 </div>
               ) : (
-                <div className={`flex flex-col space-y-2 pt-4 ${mobileSectionBorderClass.replace("border-white/10", "border-gray-200")}`}>
-                  <Link href="/login">
-                    <Button variant="outline" size="sm" className={`${headerOutlineButtonClass} w-full`}>
-                      Iniciar Sesión
-                    </Button>
+                <div className={`flex flex-col space-y-3 pt-4 mt-4 ${mobileSectionBorderClass}`}>
+                  <Link 
+                    href="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all duration-200 active:scale-95 border border-white/20"
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="font-medium">Iniciar Sesión</span>
                   </Link>
-                  <Link href="/register">
-                    <Button variant="primary" size="sm" className={`${primaryButtonClass} w-full`}>
-                      Registrarse
-                    </Button>
+                  <Link 
+                    href="/register"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-gradient-to-r from-[#FF3366] to-[#D12352] hover:from-[#D12352] hover:to-[#FF3366] text-white rounded-xl transition-all duration-200 active:scale-95 shadow-lg"
+                  >
+                    <span className="font-medium">Registrarse</span>
                   </Link>
                 </div>
               )}
             </nav>
           </div>
-        )}
+        </div>
       </div>
     </header>
   );

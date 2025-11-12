@@ -162,9 +162,9 @@ router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: Auth
 // POST /classes - create class (ADMIN or SCHOOL_ADMIN)
 router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createClassSchema), async (req: AuthRequest, res) => {
   try {
-    const { title, description, date, duration, capacity, price, level, instructor, images, schoolId, studentDetails } = req.body;
+    const { title, description, date, duration, capacity, price, level, instructor, images, schoolId, studentDetails, beachId } = req.body;
     
-    console.log('📝 Creando clase con datos:', { title, description, date, duration, capacity, price, level, instructor, studentDetails });
+    console.log('📝 Creando clase con datos:', { title, description, date, duration, capacity, price, level, instructor, studentDetails, beachId });
     
     const classDate = new Date(date);
 
@@ -189,7 +189,8 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
         level,
         instructor,
         images: images || [],
-        school: { connect: { id: Number(finalSchoolId) } }
+        school: { connect: { id: Number(finalSchoolId) } },
+        ...(beachId && { beach: { connect: { id: Number(beachId) } } })
       }
     });
 

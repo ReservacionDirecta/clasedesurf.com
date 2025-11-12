@@ -106,7 +106,8 @@ async function main() {
       instagram: '@limasurfacademy',
       facebook: 'LimaSurfAcademy',
       whatsapp: '+5112345678',
-      address: 'Av. Malecón de la Reserva 610, Miraflores, Lima'
+      address: 'Av. Malecón de la Reserva 610, Miraflores, Lima',
+      ownerId: schoolAdmin.id // Associate school with SCHOOL_ADMIN user
     }
   });
 

@@ -15,6 +15,7 @@ import instructorsRouter from './routes/instructors';
 import instructorClassesRouter from './routes/instructor-classes';
 import studentsRouter from './routes/students';
 import statsRouter from './routes/stats';
+import beachesRouter from './routes/beaches';
 import { whatsappService } from './services/whatsapp.service';
 import prisma from './prisma';
 const app = express();
@@ -33,7 +34,10 @@ const corsOptions = {
       'https://clasedesurfcom-production.up.railway.app',
       'https://clasesde-pe-production.up.railway.app',
       'https://clasesde-pe-frontend-production.up.railway.app',
-      process.env.FRONTEND_URL
+      process.env.FRONTEND_URL,
+      // Railway URLs dinámicas
+      process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
+      process.env.RAILWAY_STATIC_URL ? `https://${process.env.RAILWAY_STATIC_URL}` : null
     ].filter(Boolean); // Filtrar valores undefined/null
 
     // Permitir requests sin origin (como Postman, aplicaciones móviles, etc.)
@@ -53,7 +57,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(bodyParser.json());
+// Increase body parser limit to 10MB to handle base64 images
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 app.use('/classes', classesRouter);
@@ -66,6 +72,7 @@ app.use('/instructors', instructorsRouter);
 app.use('/instructor', instructorClassesRouter);
 app.use('/students', studentsRouter);
 app.use('/stats', statsRouter);
+app.use('/beaches', beachesRouter);
 
 app.get('/', (_req, res) => res.json({ 
   message: 'Backend API running', 

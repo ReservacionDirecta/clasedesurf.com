@@ -4,11 +4,15 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+// Load environment variables from .env file
+require('dotenv').config();
+
 console.log('🚀 Starting Surf School Backend...');
 console.log('====================================');
 console.log('NODE_ENV:', process.env.NODE_ENV || 'development');
 console.log('PORT:', process.env.PORT || 4000);
 console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'configured' : 'not set');
+console.log('SEED_ON_START:', process.env.SEED_ON_START || 'false');
 console.log('');
 
 // Function to run a command with promise

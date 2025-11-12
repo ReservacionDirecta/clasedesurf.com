@@ -2,6 +2,8 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { ReactNode } from 'react';
+import { ToastProvider } from '@/contexts/ToastContext';
+import ToastWrapper from '@/components/notifications/ToastWrapper';
 
 interface Props {
   children: ReactNode;
@@ -10,7 +12,10 @@ interface Props {
 export default function Providers({ children }: Props) {
   return (
     <SessionProvider>
-      {children}
+      <ToastProvider>
+        {children}
+        <ToastWrapper />
+      </ToastProvider>
     </SessionProvider>
   );
 }

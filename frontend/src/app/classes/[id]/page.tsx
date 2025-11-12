@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { formatDualCurrency } from '@/lib/currency';
 import { 
   Calendar, 
   Clock, 
@@ -21,7 +22,10 @@ import {
   CreditCard,
   Waves,
   Shield,
-  Award
+  Award,
+  Lightbulb,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 interface ClassDetails {
@@ -83,6 +87,7 @@ export default function ClassDetailsPage() {
   const [showStudentProfileModal, setShowStudentProfileModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [reservationLoading, setReservationLoading] = useState(false);
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
   const classId = params.id as string;
 
@@ -105,14 +110,44 @@ export default function ClassDetailsPage() {
 
       const classData = await response.json();
 
+      // Calculate start and end times from date and duration
+      // The date from backend is a DateTime, so we extract the time from it
+      const classDate = new Date(classData.date);
+      
+      // Check if date is valid
+      if (isNaN(classDate.getTime())) {
+        console.error('Invalid date received:', classData.date);
+      }
+      
+      const startTime = classDate.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false 
+      });
+      
+      const duration = classData.duration || 120; // Default 120 minutes if not provided
+      const endDate = new Date(classDate.getTime() + duration * 60000);
+      const endTime = endDate.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        hour12: false 
+      });
+      
+      console.log('Class times calculated:', { 
+        date: classData.date, 
+        startTime, 
+        endTime, 
+        duration 
+      });
+
       // Process class data to match expected format
       const processedClass: ClassDetails = {
         id: classData.id,
         title: classData.title,
         description: classData.description || 'Clase de surf',
         date: classData.date,
-        startTime: new Date(classData.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
-        endTime: new Date(new Date(classData.date).getTime() + (classData.duration || 120) * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+        startTime: startTime,
+        endTime: endTime,
         duration: classData.duration || 120,
         capacity: classData.capacity,
         enrolled: classData.reservations?.filter((r: any) => r.status !== 'CANCELED').length || 0,
@@ -290,6 +325,130 @@ export default function ClassDetailsPage() {
         return { text: 'Todos los niveles', color: 'bg-blue-100 text-blue-800', description: 'Adaptado a tu nivel' };
     }
   };
+
+  // Tips según el nivel de la clase
+  const getTipsForLevel = (level: string) => {
+    const tips = {
+      BEGINNER: [
+        {
+          title: 'Llega 15 minutos antes',
+          description: 'Llegar temprano te permitirá conocer al instructor, familiarizarte con el equipo y calentar adecuadamente antes de entrar al agua.',
+          icon: '⏰'
+        },
+        {
+          title: 'Usa protector solar resistente al agua',
+          description: 'Aplica protector solar SPF 50+ al menos 30 minutos antes de la clase. El reflejo del sol en el agua intensifica los rayos UV.',
+          icon: '☀️'
+        },
+        {
+          title: 'Hidrátate bien',
+          description: 'Bebe suficiente agua antes, durante y después de la clase. El surf es un deporte exigente y la hidratación es clave.',
+          icon: '💧'
+        },
+        {
+          title: 'Confía en tu instructor',
+          description: 'Sigue las indicaciones de tu instructor. Ellos están capacitados para enseñarte de forma segura y progresiva.',
+          icon: '👨‍🏫'
+        },
+        {
+          title: 'No tengas miedo de caer',
+          description: 'Caerse es parte del aprendizaje. El agua es tu amiga y el instructor te enseñará cómo caer de forma segura.',
+          icon: '🌊'
+        },
+        {
+          title: 'Disfruta el proceso',
+          description: 'No te presiones por pararte en la tabla el primer día. Disfruta cada momento y celebra los pequeños avances.',
+          icon: '😊'
+        }
+      ],
+      INTERMEDIATE: [
+        {
+          title: 'Revisa las condiciones del mar',
+          description: 'Antes de la clase, verifica las condiciones del mar. Esto te ayudará a entender mejor lo que encontrarás y a prepararte mentalmente.',
+          icon: '🌊'
+        },
+        {
+          title: 'Calienta antes de entrar',
+          description: 'Realiza estiramientos dinámicos y calentamiento específico para surf. Esto previene lesiones y mejora tu rendimiento.',
+          icon: '🤸'
+        },
+        {
+          title: 'Practica la técnica en seco',
+          description: 'Repasa mentalmente los movimientos antes de entrar al agua. Visualizar la técnica mejora tu ejecución.',
+          icon: '🧠'
+        },
+        {
+          title: 'Mantén la posición correcta',
+          description: 'Presta atención a tu postura en la tabla. Una buena posición es fundamental para el equilibrio y la propulsión.',
+          icon: '🏄'
+        },
+        {
+          title: 'Observa a otros surfistas',
+          description: 'Aprende observando a surfistas más experimentados. Nota su técnica, timing y cómo leen las olas.',
+          icon: '👀'
+        },
+        {
+          title: 'Respeta las reglas de prioridad',
+          description: 'Conoce y respeta las reglas de prioridad en el agua. Esto mantiene a todos seguros y evita conflictos.',
+          icon: '🤝'
+        }
+      ],
+      ADVANCED: [
+        {
+          title: 'Analiza las condiciones',
+          description: 'Evalúa el tamaño de las olas, dirección del viento, marea y corrientes. Esta información es crucial para tu seguridad.',
+          icon: '📊'
+        },
+        {
+          title: 'Mantén tu condición física',
+          description: 'El surf avanzado requiere resistencia y fuerza. Mantén una rutina de entrenamiento fuera del agua.',
+          icon: '💪'
+        },
+        {
+          title: 'Perfecciona tu lectura de olas',
+          description: 'Desarrolla tu capacidad para identificar las mejores olas. La lectura correcta mejora significativamente tu sesión.',
+          icon: '👁️'
+        },
+        {
+          title: 'Trabaja en maniobras específicas',
+          description: 'Enfócate en perfeccionar maniobras técnicas como bottom turns, cutbacks y aerials según tu nivel.',
+          icon: '🎯'
+        },
+        {
+          title: 'Grabate y analiza',
+          description: 'Si es posible, graba tus sesiones para analizar tu técnica. El feedback visual es invaluable para mejorar.',
+          icon: '📹'
+        },
+        {
+          title: 'Respeta el océano',
+          description: 'Nunca subestimes el poder del océano. Mantén el respeto y la humildad, sin importar tu nivel de experiencia.',
+          icon: '🌊'
+        }
+      ]
+    };
+
+    return tips[level as keyof typeof tips] || tips.BEGINNER;
+  };
+
+  const tips = classDetails ? getTipsForLevel(classDetails.level) : [];
+  
+  const nextTip = () => {
+    setCurrentTipIndex((prev) => (prev + 1) % tips.length);
+  };
+
+  const prevTip = () => {
+    setCurrentTipIndex((prev) => (prev - 1 + tips.length) % tips.length);
+  };
+
+  // Auto-rotate tips every 5 seconds
+  useEffect(() => {
+    if (tips.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentTipIndex((prev) => (prev + 1) % tips.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [tips.length]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -469,8 +628,16 @@ export default function ClassDetailsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold">S/. {classDetails.price}</div>
-                    <div className="text-blue-200 text-sm">por persona</div>
+                    {(() => {
+                      const prices = formatDualCurrency(classDetails.price);
+                      return (
+                        <>
+                          <div className="text-3xl font-bold text-white">{prices.pen}</div>
+                          <div className="text-blue-200 text-sm">{prices.usd}</div>
+                          <div className="text-blue-200 text-xs mt-1">por persona</div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -613,6 +780,54 @@ export default function ClassDetailsPage() {
                     )}
                   </div>
                   
+                  {/* School Information */}
+                  {classDetails.school && (
+                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                        <MapPin className="w-4 h-4 mr-2 text-blue-600" />
+                        Información de la Escuela
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <p className="font-medium text-gray-900">{classDetails.school.name}</p>
+                        </div>
+                        {classDetails.school.location && (
+                          <div className="flex items-start text-gray-600">
+                            <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
+                            <span>{classDetails.school.location}</span>
+                          </div>
+                        )}
+                        {classDetails.school.phone && (
+                          <div className="flex items-center text-gray-600">
+                            <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                            <a href={`tel:${classDetails.school.phone}`} className="hover:text-blue-600">
+                              {classDetails.school.phone}
+                            </a>
+                          </div>
+                        )}
+                        {classDetails.school.email && (
+                          <div className="flex items-center text-gray-600">
+                            <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+                            <a href={`mailto:${classDetails.school.email}`} className="hover:text-blue-600 break-all">
+                              {classDetails.school.email}
+                            </a>
+                          </div>
+                        )}
+                        {classDetails.school.rating > 0 && (
+                          <div className="flex items-center text-gray-600 pt-1">
+                            <Star className="w-4 h-4 mr-2 text-yellow-400 fill-current" />
+                            <span className="font-medium">{classDetails.school.rating}</span>
+                            {classDetails.school.totalReviews > 0 && (
+                              <span className="ml-1 text-gray-500">
+                                ({classDetails.school.totalReviews} {classDetails.school.totalReviews === 1 ? 'reseña' : 'reseñas'})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
                   {userReservation.status === 'PENDING' && (
                     <button 
                       onClick={handleCancelReservation}
@@ -626,8 +841,16 @@ export default function ClassDetailsPage() {
               ) : (
                 <div className="space-y-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-900 mb-1">S/. {classDetails.price}</div>
-                    <div className="text-gray-600 text-sm">por persona</div>
+                    {(() => {
+                      const prices = formatDualCurrency(classDetails.price);
+                      return (
+                        <>
+                          <div className="text-3xl font-bold text-gray-900 mb-1">{prices.pen}</div>
+                          <div className="text-lg text-gray-600 mb-1">{prices.usd}</div>
+                          <div className="text-gray-600 text-sm">por persona</div>
+                        </>
+                      );
+                    })()}
                   </div>
                   
                   <div className="space-y-2 text-sm">
@@ -718,6 +941,77 @@ export default function ClassDetailsPage() {
           </div>
         </div>
 
+        {/* Tips Section - Al final de la página */}
+        {classDetails && tips.length > 0 && (
+          <div className="mt-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg border border-blue-100 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Lightbulb className="w-6 h-6 text-yellow-500" />
+              <h2 className="text-xl font-bold text-gray-900">Tips para Prepararte</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Consejos útiles para aprovechar al máximo tu clase de nivel {levelInfo?.text.toLowerCase() || 'principiante'}
+            </p>
+            
+            <div className="bg-white rounded-lg shadow-md p-6 relative">
+              {/* Tip Content */}
+              <div className="min-h-[120px]">
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl flex-shrink-0">{tips[currentTipIndex]?.icon}</div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {tips[currentTipIndex]?.title}
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed">
+                      {tips[currentTipIndex]?.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation */}
+              {tips.length > 1 && (
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={prevTip}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Tip anterior"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                  </button>
+                  
+                  <div className="flex gap-2">
+                    {tips.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setCurrentTipIndex(index)}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentTipIndex
+                            ? 'bg-blue-600 w-6'
+                            : 'bg-gray-300 hover:bg-gray-400'
+                        }`}
+                        aria-label={`Ir al tip ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={nextTip}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    aria-label="Siguiente tip"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+              )}
+
+              {/* Tip counter */}
+              <div className="text-center mt-4 text-sm text-gray-500">
+                Tip {currentTipIndex + 1} de {tips.length}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Reservations List (Only for instructors) */}
         {session?.user?.role === 'INSTRUCTOR' && (
           <div className="mt-8 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
@@ -789,7 +1083,12 @@ export default function ClassDetailsPage() {
                     <p>📅 {classDetails && formatDate(classDetails.date)}</p>
                     <p>⏰ {classDetails && formatTime(classDetails.startTime)} - {classDetails && formatTime(classDetails.endTime)}</p>
                     <p>📍 {classDetails?.location}</p>
-                    <p className="font-semibold">💰 S/. {classDetails?.price}</p>
+                    {classDetails && (() => {
+                      const prices = formatDualCurrency(classDetails.price);
+                      return (
+                        <p className="font-semibold">💰 {prices.pen} ({prices.usd})</p>
+                      );
+                    })()}
                   </div>
                 </div>
 

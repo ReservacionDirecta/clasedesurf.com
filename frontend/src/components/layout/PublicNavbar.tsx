@@ -9,13 +9,23 @@ export function PublicNavbar() {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const isActive = (href: string) => {
     return pathname === href;
   };
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/login' });
+    try {
+      setIsSigningOut(true);
+      await signOut({ 
+        callbackUrl: '/login',
+        redirect: true 
+      });
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      setIsSigningOut(false);
+    }
   };
 
   const getDashboardLink = () => {
@@ -132,9 +142,10 @@ export function PublicNavbar() {
                 {/* Logout Button */}
                 <button
                   onClick={handleSignOut}
-                  className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  disabled={isSigningOut}
+                  className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Salir
+                  {isSigningOut ? 'Cerrando...' : 'Salir'}
                 </button>
               </>
             ) : (
@@ -260,9 +271,10 @@ export function PublicNavbar() {
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                  disabled={isSigningOut}
+                  className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cerrar Sesión
+                  {isSigningOut ? 'Cerrando...' : 'Cerrar Sesión'}
                 </button>
               </>
             ) : (

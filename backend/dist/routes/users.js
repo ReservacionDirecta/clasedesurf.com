@@ -68,12 +68,29 @@ router.put('/profile', auth_1.default, (0, validation_1.validateBody)(users_1.up
             return res.status(401).json({ message: 'Unauthorized' });
         // The data is already validated and transformed by the middleware
         const data = req.body;
+        // Log profilePhoto status for debugging
+        if (data.profilePhoto) {
+            console.log('[PUT /users/profile] Updating profilePhoto, length:', data.profilePhoto.length, 'starts with:', data.profilePhoto.substring(0, 50));
+        }
+        else {
+            console.log('[PUT /users/profile] No profilePhoto in update data');
+        }
+        // Ensure profilePhoto is properly handled (null if empty string)
+        if (data.profilePhoto === '') {
+            data.profilePhoto = null;
+        }
+        console.log('[PUT /users/profile] Data to update:', {
+            ...data,
+            profilePhoto: data.profilePhoto ? `[base64, ${data.profilePhoto.length} chars]` : null
+        });
         const updated = await prisma_1.default.user.update({ where: { id: Number(userId) }, data });
         const { password, ...safe } = updated;
+        // Log what was saved
+        console.log('[PUT /users/profile] Profile updated successfully, profilePhoto saved:', !!safe.profilePhoto, safe.profilePhoto ? `(${safe.profilePhoto.length} chars)` : '(null)');
         res.json(safe);
     }
     catch (err) {
-        console.error(err);
+        console.error('[PUT /users/profile] Error:', err);
         res.status(500).json({ message: 'Internal server error' });
     }
 });

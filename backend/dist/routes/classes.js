@@ -143,11 +143,48 @@ router.get('/', optionalAuth, async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+// GET /classes/:id - get single class
+router.get('/:id', optionalAuth, (0, validation_1.validateParams)(classes_1.classIdSchema), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const classData = await prisma_1.default.class.findUnique({
+            where: { id: Number(id) },
+            include: {
+                school: true,
+                reservations: {
+                    include: {
+                        payment: true,
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        if (!classData) {
+            return res.status(404).json({ message: 'Class not found' });
+        }
+        // Filter active reservations
+        const activeReservations = classData.reservations.filter(r => r.status !== 'CANCELED');
+        res.json({
+            ...classData,
+            reservations: activeReservations
+        });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 // POST /classes - create class (ADMIN or SCHOOL_ADMIN)
 router.post('/', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateBody)(classes_1.createClassSchema), async (req, res) => {
     try {
-        const { title, description, date, duration, capacity, price, level, instructor, schoolId, studentDetails } = req.body;
-        console.log('📝 Creando clase con datos:', { title, description, date, duration, capacity, price, level, instructor, studentDetails });
+        const { title, description, date, duration, capacity, price, level, instructor, images, schoolId, studentDetails, beachId } = req.body;
+        console.log('📝 Creando clase con datos:', { title, description, date, duration, capacity, price, level, instructor, studentDetails, beachId });
         const classDate = new Date(date);
         // Determine final schoolId
         let finalSchoolId = schoolId ? Number(schoolId) : undefined;
@@ -169,7 +206,9 @@ router.post('/', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN
                 price: Number(price),
                 level,
                 instructor,
-                school: { connect: { id: Number(finalSchoolId) } }
+                images: images || [],
+                school: { connect: { id: Number(finalSchoolId) } },
+                ...(beachId && { beach: { connect: { id: Number(beachId) } } })
             }
         });
         console.log('✅ Clase creada exitosamente:', newClass.id);
@@ -177,6 +216,77 @@ router.post('/', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN
     }
     catch (err) {
         console.error('❌ Error al crear clase:', err);
+        res.status(500).json({ message: 'Internal server error', error: String(err) });
+    }
+});
+// POST /classes/bulk - create multiple classes at once
+router.post('/bulk', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateBody)(classes_1.createBulkClassesSchema), async (req, res) => {
+    try {
+        const { baseData, schoolId, occurrences } = req.body;
+        if (!occurrences || occurrences.length === 0) {
+            return res.status(400).json({ message: 'No occurrences provided' });
+        }
+        let finalSchoolId = schoolId ? Number(schoolId) : undefined;
+        if (req.role === 'SCHOOL_ADMIN') {
+            if (!req.schoolId) {
+                return res.status(404).json({ message: 'No school found for this user' });
+            }
+            finalSchoolId = req.schoolId;
+        }
+        if (!finalSchoolId) {
+            return res.status(400).json({ message: 'School ID is required' });
+        }
+        const now = new Date();
+        const uniqueOccurrences = [];
+        const seenKeys = new Set();
+        for (const occurrence of occurrences) {
+            const { date, time } = occurrence;
+            const dateTime = new Date(`${date}T${time}`);
+            if (Number.isNaN(dateTime.getTime())) {
+                return res.status(400).json({ message: `Invalid occurrence date or time: ${date} ${time}` });
+            }
+            if (dateTime.getTime() < now.getTime()) {
+                return res.status(400).json({ message: `Occurrence ${date} ${time} must be in the future` });
+            }
+            const isoKey = dateTime.toISOString();
+            if (seenKeys.has(isoKey)) {
+                continue;
+            }
+            seenKeys.add(isoKey);
+            uniqueOccurrences.push({ date: dateTime, isoKey });
+        }
+        if (uniqueOccurrences.length === 0) {
+            return res.status(400).json({ message: 'No valid occurrences were provided' });
+        }
+        const createdClasses = await prisma_1.default.$transaction(async (tx) => {
+            const results = [];
+            for (const occurrence of uniqueOccurrences) {
+                const created = await tx.class.create({
+                    data: {
+                        title: baseData.title,
+                        description: baseData.description ?? null,
+                        date: occurrence.date,
+                        duration: Number(baseData.duration),
+                        capacity: Number(baseData.capacity),
+                        price: Number(baseData.price),
+                        level: baseData.level,
+                        instructor: baseData.instructor ?? null,
+                        images: baseData.images || [],
+                        school: { connect: { id: Number(finalSchoolId) } }
+                    }
+                });
+                results.push(created);
+            }
+            return results;
+        });
+        res.status(201).json({
+            message: 'Classes created successfully',
+            createdCount: createdClasses.length,
+            classes: createdClasses
+        });
+    }
+    catch (err) {
+        console.error('❌ Error al crear clases en lote:', err);
         res.status(500).json({ message: 'Internal server error', error: String(err) });
     }
 });
@@ -196,7 +306,13 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
                 return res.status(403).json({ message: 'You can only update classes from your school' });
             }
         }
-        const updated = await prisma_1.default.class.update({ where: { id: Number(id) }, data });
+        // Handle images separately if provided
+        const { images, ...restData } = data;
+        const updateData = { ...restData };
+        if (images !== undefined) {
+            updateData.images = images;
+        }
+        const updated = await prisma_1.default.class.update({ where: { id: Number(id) }, data: updateData });
         res.json(updated);
     }
     catch (err) {

@@ -1,9 +1,13 @@
 /** @type {import('next').NextConfig} */
 // Backend URL configuration for different environments
 // Force localhost when running in development, regardless of NEXT_PUBLIC_BACKEND_URL
+// Backend URL configuration
+// Priority: NEXT_PUBLIC_BACKEND_URL > Railway env var > default Railway URL
 const BACKEND = process.env.NODE_ENV === 'development'
   ? 'http://localhost:4000'
-  : (process.env.NEXT_PUBLIC_BACKEND_URL || 'https://surfschool-backend-production.up.railway.app');
+  : (process.env.NEXT_PUBLIC_BACKEND_URL || 
+     process.env.RAILWAY_BACKEND_URL || 
+     'https://surfschool-backend-production.up.railway.app');
 
 console.log('Next.js config - NODE_ENV:', process.env.NODE_ENV);
 console.log('Next.js config - BACKEND URL:', BACKEND);

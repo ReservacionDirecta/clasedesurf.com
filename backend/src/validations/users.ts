@@ -35,7 +35,12 @@ export const updateProfileSchema = z.object({
   phone: z.string()
     .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, 'Invalid phone number format')
     .nullable()
-    .optional()
+    .optional(),
+  profilePhoto: z.union([
+    z.string().max(10000000, 'Profile photo must be less than 10MB when base64 encoded'),
+    z.literal('').transform(() => null),
+    z.null()
+  ]).optional()
 });
 
 // Types derived from schemas

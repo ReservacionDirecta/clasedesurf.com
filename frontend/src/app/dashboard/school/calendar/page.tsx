@@ -34,102 +34,95 @@ export default function SchoolCalendar() {
 
   const fetchEvents = useCallback(async () => {
     try {
-      // Datos mock de eventos del calendario
-      const mockEvents: CalendarEvent[] = [
-        {
-          id: 1,
-          title: 'Iniciación en Miraflores',
-          date: '2025-01-15',
-          startTime: '10:00',
-          endTime: '12:00',
-          type: 'class',
-          instructor: 'Carlos Mendoza',
-          capacity: 8,
-          enrolled: 6,
-          location: 'Playa Makaha',
-          status: 'scheduled'
-        },
-        {
-          id: 2,
-          title: 'Intermedio en San Bartolo',
-          date: '2025-01-16',
-          startTime: '14:00',
-          endTime: '16:00',
-          type: 'class',
-          instructor: 'Maria Rodriguez',
-          capacity: 6,
-          enrolled: 4,
-          location: 'Playa Waikiki',
-          status: 'scheduled'
-        },
-        {
-          id: 3,
-          title: 'Avanzado en La Herradura',
-          date: '2025-01-17',
-          startTime: '16:00',
-          endTime: '18:00',
-          type: 'class',
-          instructor: 'Juan Perez',
-          capacity: 4,
-          enrolled: 3,
-          location: 'La Herradura',
-          status: 'scheduled'
-        },
-        {
-          id: 4,
-          title: 'Clase de Prueba Corregida',
-          date: '2025-01-18',
-          startTime: '09:00',
-          endTime: '11:00',
-          type: 'class',
-          instructor: 'Gabriel Barrera',
-          capacity: 8,
-          enrolled: 1,
-          location: 'Playa de Prueba',
-          status: 'scheduled'
-        },
-        {
-          id: 5,
-          title: 'Reunión de Instructores',
-          date: '2025-01-20',
-          startTime: '18:00',
-          endTime: '19:30',
-          type: 'meeting',
-          location: 'Escuela',
-          status: 'scheduled'
-        },
-        {
-          id: 6,
-          title: 'Mantenimiento de Equipos',
-          date: '2025-01-22',
-          startTime: '08:00',
-          endTime: '12:00',
-          type: 'maintenance',
-          location: 'Almacén',
-          status: 'scheduled'
-        },
-        {
-          id: 7,
-          title: 'Surf Matutino',
-          date: '2025-01-10',
-          startTime: '07:00',
-          endTime: '09:00',
-          type: 'class',
-          instructor: 'Carlos Mendoza',
-          capacity: 8,
-          enrolled: 8,
-          location: 'Playa San Bartolo',
-          status: 'completed'
-        }
-      ];
+      setLoading(true);
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
 
-      setEvents(mockEvents);
+      // Obtener la escuela del usuario
+      const schoolResponse = await fetch('/api/schools/my-school', { headers });
+      if (!schoolResponse.ok) {
+        console.error('No se pudo obtener la escuela');
+        setEvents([]);
+        setLoading(false);
+        return;
+      }
+
+      const school = await schoolResponse.json();
+
+      // Obtener clases y reservas en paralelo
+      const [classesResponse, reservationsResponse] = await Promise.all([
+        fetch(`/api/schools/${school.id}/classes`, { headers }),
+        fetch('/api/reservations', { headers })
+      ]);
+
+      const classes = classesResponse.ok ? await classesResponse.json() : [];
+      const reservations = reservationsResponse.ok ? await reservationsResponse.json() : [];
+
+      // Contar participantes por clase (considerando participantes en cada reserva)
+      const reservationsByClass: { [key: number]: number } = {};
+      reservations.forEach((res: any) => {
+        if (res.classId && res.status !== 'CANCELED') {
+          // Si hay participantes en la reserva, contar cada uno
+          if (res.participants && Array.isArray(res.participants)) {
+            reservationsByClass[res.classId] = (reservationsByClass[res.classId] || 0) + res.participants.length;
+          } else {
+            // Si no hay participantes, contar la reserva como 1 participante
+            reservationsByClass[res.classId] = (reservationsByClass[res.classId] || 0) + 1;
+          }
+        }
+      });
+
+      // Convertir clases a eventos del calendario
+      const calendarEvents: CalendarEvent[] = classes.map((cls: any) => {
+        const classDate = new Date(cls.date);
+        const startTime = classDate.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+        const duration = cls.duration || 120;
+        const endDate = new Date(classDate.getTime() + duration * 60000);
+        const endTime = endDate.toLocaleTimeString('es-ES', { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          hour12: false 
+        });
+        const dateString = classDate.toISOString().split('T')[0];
+        const enrolled = reservationsByClass[cls.id] || 0;
+        
+        // Determinar el estado basado en la fecha
+        const now = new Date();
+        let status: 'scheduled' | 'completed' | 'cancelled' = 'scheduled';
+        if (classDate < now) {
+          status = 'completed';
+        }
+
+        return {
+          id: cls.id,
+          title: cls.title,
+          date: dateString,
+          startTime,
+          endTime,
+          type: 'class' as const,
+          instructor: cls.instructor || 'Por asignar',
+          capacity: cls.capacity,
+          enrolled,
+          location: school.location || 'Por definir',
+          status
+        };
+      });
+
+      setEvents(calendarEvents);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching events:', error);
+      setEvents([]);
       setLoading(false);
     }
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -144,7 +137,9 @@ export default function SchoolCalendar() {
       return;
     }
 
-    fetchEvents();
+    if (session) {
+      fetchEvents();
+    }
   }, [session, status, router, fetchEvents]);
 
   const handleCreateClass = async (data: Partial<Class>) => {
@@ -588,7 +583,12 @@ export default function SchoolCalendar() {
                       </div>
                       {event.type === 'class' && (
                         <div className="mt-3">
-                          <button className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                          <button 
+                            onClick={() => {
+                              router.push(`/dashboard/school/classes/${event.id}/reservations`);
+                            }}
+                            className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                          >
                             Ver Detalles de la Clase
                           </button>
                         </div>

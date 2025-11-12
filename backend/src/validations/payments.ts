@@ -15,6 +15,16 @@ export const createPaymentSchema = z.object({
   transactionId: z.string()
     .max(100, 'Transaction ID must be less than 100 characters')
     .nullable()
+    .optional(),
+  voucherImage: z.string()
+    .max(10000000, 'Voucher image is too large') // Accept base64 strings
+    .nullable()
+    .optional(),
+  voucherNotes: z.string()
+    .max(500, 'Voucher notes must be less than 500 characters')
+    .nullable()
+    .optional(),
+  status: z.enum(['UNPAID', 'PENDING', 'PAID', 'REFUNDED'])
     .optional()
 });
 
@@ -24,7 +34,7 @@ export const updatePaymentSchema = z.object({
     .min(0, 'Amount must be non-negative')
     .max(10000, 'Amount must be less than 10000')
     .optional(),
-  status: z.enum(['UNPAID', 'PAID', 'REFUNDED'])
+  status: z.enum(['UNPAID', 'PENDING', 'PAID', 'REFUNDED'])
     .optional(),
   paymentMethod: z.string()
     .min(1, 'Payment method is required')
@@ -35,8 +45,7 @@ export const updatePaymentSchema = z.object({
     .nullable()
     .optional(),
   voucherImage: z.string()
-    .url('Voucher image must be a valid URL')
-    .max(500, 'Voucher image URL must be less than 500 characters')
+    .max(10000000, 'Voucher image is too large') // Accept base64 strings or URLs
     .nullable()
     .optional(),
   voucherNotes: z.string()

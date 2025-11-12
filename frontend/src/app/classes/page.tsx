@@ -185,14 +185,18 @@ const renderHero = () => (
 
         <rect width="1440" height="960" fill="url(#classesWaveGlow)" opacity="0.6" />
 
+        {/* Main wave with animation */}
         <g filter="url(#waveBlur)" opacity="0.45">
           <path
+            className="wave-animated-1"
             d="M0 360C160 300 340 320 520 280C700 240 920 260 1090 220C1210 190 1325 150 1440 120L1440 960L0 960Z"
             fill="url(#classesWaveGradient)"
           />
         </g>
 
+        {/* Animated wave lines */}
         <path
+          className="wave-animated-2"
           d="M0 340C200 300 420 420 640 340C860 260 1080 380 1300 310C1360 290 1405 270 1440 250"
           stroke="url(#classesWaveHighlight)"
           strokeWidth="3"
@@ -201,6 +205,7 @@ const renderHero = () => (
         />
 
         <path
+          className="wave-animated-3"
           d="M0 540C220 500 420 580 640 520C860 460 1060 560 1240 500C1340 470 1400 440 1440 420"
           stroke="url(#classesWaveGradient)"
           strokeWidth="4"
@@ -209,6 +214,7 @@ const renderHero = () => (
         />
 
         <path
+          className="wave-animated-4"
           d="M0 220C200 180 360 260 560 200C760 140 980 240 1180 200C1300 170 1380 150 1440 140"
           stroke="url(#classesWaveGradient)"
           strokeWidth="2"
@@ -218,12 +224,14 @@ const renderHero = () => (
 
         <g opacity="0.4">
           <path
+            className="wave-animated-5"
             d="M0 760C240 720 400 800 620 760C840 720 1020 780 1230 740C1330 720 1390 700 1440 680"
             stroke="url(#classesWaveHighlight)"
             strokeWidth="2"
             fill="none"
           />
           <path
+            className="wave-animated-6"
             d="M0 640C260 600 440 660 700 640C960 620 1160 680 1340 620C1400 600 1425 580 1440 560"
             stroke="url(#classesWaveGradient)"
             strokeWidth="1.5"
@@ -240,10 +248,10 @@ const renderHero = () => (
           Marketplace de clases de surf
         </span>
         <h1 className="mt-6 text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
-          Descubre experiencias guiadas para dominar cada ola
+        Domina cada ola con clases guiadas.
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-[#E1EDF5]/90 sm:text-base lg:text-lg">
-          Filtra por nivel, tipo de clase, equipamiento y fecha. Reserva directamente con escuelas verificadas y prepárate para entrar al mar con total seguridad.
+        <p className="mt-4 text-sm leading-relaxed text-[#E1EDF5]/90 sm:text-base lg:text-lg text-center md:text-left md:text-justify px-2 sm:px-0">
+        Tu clase ideal, a solo un clic.
         </p>
       </div>
     </div>
@@ -265,9 +273,60 @@ export default function ClassesPage() {
     return `${classes.length} ${classes.length === 1 ? 'clase disponible' : 'clases disponibles'}`
   }, [classes, loading])
 
-  const handleBookingSubmit = async (payload: unknown) => {
-    console.log('Reserva enviada:', payload)
-    handleClose()
+  const handleBookingSubmit = async (payload: any) => {
+    try {
+      console.log('Reserva enviada:', payload);
+      console.log('Selected class:', selectedClass);
+      
+      // Prepare reservation data
+      const reservationData = {
+        classId: payload.classId?.toString() || selectedClass?.id?.toString() || '',
+        classData: selectedClass || {
+          id: payload.classId,
+          title: payload.title || 'Clase de Surf',
+          price: payload.totalAmount / (payload.participants || 1),
+          date: new Date(),
+          startTime: new Date(),
+          endTime: new Date(),
+          level: 'BEGINNER',
+          capacity: 10,
+          availableSpots: 10
+        },
+        bookingData: {
+          name: payload.name,
+          email: payload.email,
+          age: payload.age,
+          height: payload.height,
+          weight: payload.weight,
+          canSwim: payload.canSwim || false,
+          swimmingLevel: payload.swimmingLevel || 'BEGINNER',
+          hasSurfedBefore: payload.hasSurfedBefore || false,
+          injuries: payload.injuries || '',
+          emergencyContact: payload.emergencyContact,
+          emergencyPhone: payload.emergencyPhone,
+          participants: payload.participants || 1,
+          specialRequest: payload.specialRequest || '',
+          totalAmount: payload.totalAmount || (selectedClass?.price || 0) * (payload.participants || 1)
+        },
+        status: 'pending' as const
+      }
+
+      // Save reservation data to sessionStorage
+      sessionStorage.setItem('pendingReservation', JSON.stringify(reservationData))
+      console.log('Datos guardados en sessionStorage:', reservationData);
+
+      // Close modal first
+      handleClose()
+
+      // Wait a bit for modal to close, then redirect
+      setTimeout(() => {
+        console.log('Redirigiendo a /reservations/confirmation');
+        window.location.href = '/reservations/confirmation'
+      }, 150)
+    } catch (err) {
+      console.error('Error preparing reservation:', err)
+      alert('Error al procesar la reserva. Por favor, inténtalo de nuevo.')
+    }
   }
 
   return (

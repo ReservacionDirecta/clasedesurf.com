@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.classIdSchema = exports.updateClassSchema = exports.createClassSchema = void 0;
+exports.classIdSchema = exports.updateClassSchema = exports.createBulkClassesSchema = exports.createClassSchema = void 0;
 const zod_1 = require("zod");
 // Enum validation for class levels
 const ClassLevelEnum = zod_1.z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']);
+const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 // Schema for creating a new class
 exports.createClassSchema = zod_1.z.object({
     title: zod_1.z.string()
@@ -37,14 +39,48 @@ exports.createClassSchema = zod_1.z.object({
         .max(100, 'Instructor name must be less than 100 characters')
         .nullable()
         .optional(),
+    images: zod_1.z.array(zod_1.z.string().url('Each image must be a valid URL'))
+        .min(1, 'At least one image is required')
+        .max(5, 'Maximum 5 images allowed')
+        .optional(),
     schoolId: zod_1.z.number()
         .int('School ID must be a whole number')
         .min(1, 'Invalid school ID')
+        .optional(),
+    beachId: zod_1.z.number()
+        .int('Beach ID must be a whole number')
+        .min(1, 'Invalid beach ID')
         .optional(),
     studentDetails: zod_1.z.string()
         .max(2000, 'Student details must be less than 2000 characters')
         .nullable()
         .optional()
+});
+const bulkClassBaseDataSchema = exports.createClassSchema.pick({
+    title: true,
+    description: true,
+    duration: true,
+    capacity: true,
+    price: true,
+    level: true,
+    instructor: true,
+    images: true,
+    studentDetails: true
+});
+const bulkClassOccurrenceSchema = zod_1.z.object({
+    date: zod_1.z.string()
+        .regex(dateOnlyRegex, 'Date must be in YYYY-MM-DD format'),
+    time: zod_1.z.string()
+        .regex(timeRegex, 'Time must be in HH:MM format')
+});
+exports.createBulkClassesSchema = zod_1.z.object({
+    baseData: bulkClassBaseDataSchema,
+    schoolId: zod_1.z.number()
+        .int('School ID must be a whole number')
+        .min(1, 'Invalid school ID')
+        .optional(),
+    occurrences: zod_1.z.array(bulkClassOccurrenceSchema)
+        .min(1, 'At least one occurrence is required')
 });
 // Schema for updating a class
 exports.updateClassSchema = zod_1.z.object({
@@ -83,9 +119,17 @@ exports.updateClassSchema = zod_1.z.object({
         .max(100, 'Instructor name must be less than 100 characters')
         .nullable()
         .optional(),
+    images: zod_1.z.array(zod_1.z.string().url('Each image must be a valid URL'))
+        .min(1, 'At least one image is required')
+        .max(5, 'Maximum 5 images allowed')
+        .optional(),
     schoolId: zod_1.z.number()
         .int('School ID must be a whole number')
         .min(1, 'Invalid school ID')
+        .optional(),
+    beachId: zod_1.z.number()
+        .int('Beach ID must be a whole number')
+        .min(1, 'Invalid beach ID')
         .optional(),
     studentDetails: zod_1.z.string()
         .max(2000, 'Student details must be less than 2000 characters')

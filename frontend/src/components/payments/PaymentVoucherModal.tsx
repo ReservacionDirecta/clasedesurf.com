@@ -49,7 +49,7 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
 
       // Using API proxy routes instead of direct backend calls
       
-      const res = await fetch('/api/payments/${payment.id}', {
+      const res = await fetch(`/api/payments/${payment.id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(formData)

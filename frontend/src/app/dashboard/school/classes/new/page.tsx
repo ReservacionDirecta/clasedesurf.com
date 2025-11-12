@@ -12,6 +12,13 @@ interface School {
 
 type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
+interface Beach {
+  id: number;
+  name: string;
+  location?: string;
+  description?: string;
+}
+
 interface ClassFormData {
   title: string;
   description: string;
@@ -23,6 +30,7 @@ interface ClassFormData {
   level: string;
   instructor: string;
   images: string[];
+  beachId?: number;
   // Schedule options
   scheduleType: 'single' | 'recurring'; // 'single' para una sola clase, 'recurring' para recurrente
   selectedDays: DayOfWeek[];
@@ -56,6 +64,31 @@ export default function NewClassPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [beaches, setBeaches] = useState<Beach[]>([]);
+  const [showAddBeachModal, setShowAddBeachModal] = useState(false);
+  const [newBeachName, setNewBeachName] = useState('');
+  const [newBeachLocation, setNewBeachLocation] = useState('');
+  const [newBeachDescription, setNewBeachDescription] = useState('');
+  const [addingBeach, setAddingBeach] = useState(false);
+
+  const fetchBeaches = useCallback(async () => {
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/beaches', { headers });
+      if (res.ok) {
+        const beachesData = await res.json();
+        console.log('🏖️ Playas cargadas:', beachesData);
+        setBeaches(beachesData);
+      } else {
+        console.error('Error fetching beaches - status:', res.status);
+      }
+    } catch (err) {
+      console.error('Error fetching beaches:', err);
+    }
+  }, [session]);
 
   const fetchSchool = useCallback(async () => {
     try {
@@ -100,9 +133,10 @@ export default function NewClassPage() {
     }
 
     fetchSchool();
-  }, [fetchSchool, router, session, status]);
+    fetchBeaches();
+  }, [fetchSchool, fetchBeaches, router, session, status]);
 
-  const handleInputChange = (field: keyof ClassFormData, value: string | number | string[]) => {
+  const handleInputChange = (field: keyof ClassFormData, value: string | number | string[] | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -206,6 +240,50 @@ export default function NewClassPage() {
     return occurrences;
   };
 
+  const handleAddBeach = async () => {
+    if (!newBeachName.trim()) {
+      setError('El nombre de la playa es requerido');
+      return;
+    }
+
+    try {
+      setAddingBeach(true);
+      setError(null);
+
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/beaches', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          name: newBeachName.trim(),
+          location: newBeachLocation.trim() || undefined,
+          description: newBeachDescription.trim() || undefined
+        })
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al crear la playa');
+      }
+
+      const newBeach = await res.json();
+      setBeaches(prev => [...prev, newBeach].sort((a, b) => a.name.localeCompare(b.name)));
+      setFormData(prev => ({ ...prev, beachId: newBeach.id }));
+      setShowAddBeachModal(false);
+      setNewBeachName('');
+      setNewBeachLocation('');
+      setNewBeachDescription('');
+    } catch (err) {
+      console.error('Error creating beach:', err);
+      setError(err instanceof Error ? err.message : 'Error al crear la playa');
+    } finally {
+      setAddingBeach(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!school) return;
@@ -241,7 +319,8 @@ export default function NewClassPage() {
         level: formData.level,
         instructor: formData.instructor,
         images: validImages,
-        schoolId: school.id
+        schoolId: school.id,
+        ...(formData.beachId && { beachId: formData.beachId })
       };
 
       const res = await fetch('/api/classes', {
@@ -470,6 +549,37 @@ export default function NewClassPage() {
               />
             </div>
 
+            <div className="md:col-span-2">
+              <label htmlFor="beach" className="block text-sm font-medium text-gray-700 mb-2">
+                Playa
+              </label>
+              <div className="flex gap-2">
+                <select
+                  id="beach"
+                  value={formData.beachId || ''}
+                  onChange={(e) => handleInputChange('beachId', e.target.value ? Number(e.target.value) : undefined)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Seleccionar playa (opcional)</option>
+                  {beaches.map((beach) => (
+                    <option key={beach.id} value={beach.id}>
+                      {beach.name}{beach.location ? ` - ${beach.location}` : ''}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowAddBeachModal(true)}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center whitespace-nowrap"
+                >
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Agregar Playa
+                </button>
+              </div>
+            </div>
+
             <div>
               <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-2">
                 Capacidad Máxima *
@@ -594,6 +704,96 @@ export default function NewClassPage() {
             </button>
           </div>
         </form>
+
+        {/* Modal para agregar nueva playa */}
+        {showAddBeachModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold mb-4">Agregar Nueva Playa</h3>
+              
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <p className="text-red-800 text-sm">{error}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="newBeachName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre de la Playa *
+                  </label>
+                  <input
+                    type="text"
+                    id="newBeachName"
+                    value={newBeachName}
+                    onChange={(e) => setNewBeachName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ej: Playa Makaha"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="newBeachLocation" className="block text-sm font-medium text-gray-700 mb-2">
+                    Ubicación
+                  </label>
+                  <input
+                    type="text"
+                    id="newBeachLocation"
+                    value={newBeachLocation}
+                    onChange={(e) => setNewBeachLocation(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ej: Miraflores, Lima"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="newBeachDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                    Descripción
+                  </label>
+                  <textarea
+                    id="newBeachDescription"
+                    value={newBeachDescription}
+                    onChange={(e) => setNewBeachDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Descripción opcional de la playa"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddBeachModal(false);
+                    setNewBeachName('');
+                    setNewBeachLocation('');
+                    setNewBeachDescription('');
+                    setError(null);
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddBeach}
+                  disabled={addingBeach || !newBeachName.trim()}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg transition-colors flex items-center"
+                >
+                  {addingBeach && (
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  )}
+                  {addingBeach ? 'Agregando...' : 'Agregar Playa'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
