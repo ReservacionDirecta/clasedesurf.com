@@ -19,6 +19,7 @@ const instructors_1 = __importDefault(require("./routes/instructors"));
 const instructor_classes_1 = __importDefault(require("./routes/instructor-classes"));
 const students_1 = __importDefault(require("./routes/students"));
 const stats_1 = __importDefault(require("./routes/stats"));
+const beaches_1 = __importDefault(require("./routes/beaches"));
 const whatsapp_service_1 = require("./services/whatsapp.service");
 const prisma_1 = __importDefault(require("./prisma"));
 const app = (0, express_1.default)();
@@ -27,12 +28,39 @@ const port = process.env.PORT || 4000;
 app.set('trust proxy', 1);
 // Configure CORS to support credentials (cookies)
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: function (origin, callback) {
+        // Lista de orígenes permitidos
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'https://clasedesurfcom-production.up.railway.app',
+            'https://clasesde-pe-production.up.railway.app',
+            'https://clasesde-pe-frontend-production.up.railway.app',
+            process.env.FRONTEND_URL,
+            // Railway URLs dinámicas
+            process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
+            process.env.RAILWAY_STATIC_URL ? `https://${process.env.RAILWAY_STATIC_URL}` : null
+        ].filter(Boolean); // Filtrar valores undefined/null
+        // Permitir requests sin origin (como Postman, aplicaciones móviles, etc.)
+        if (!origin)
+            return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        }
+        else {
+            console.warn(`CORS blocked origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'), false);
+        }
+    },
     credentials: true,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 };
 app.use((0, cors_1.default)(corsOptions));
-app.use(body_parser_1.default.json());
+// Increase body parser limit to 10MB to handle base64 images
+app.use(body_parser_1.default.json({ limit: '10mb' }));
+app.use(body_parser_1.default.urlencoded({ extended: true, limit: '10mb' }));
 app.use((0, cookie_parser_1.default)());
 app.use('/classes', classes_1.default);
 app.use('/users', users_1.default);
@@ -44,6 +72,7 @@ app.use('/instructors', instructors_1.default);
 app.use('/instructor', instructor_classes_1.default);
 app.use('/students', students_1.default);
 app.use('/stats', stats_1.default);
+app.use('/beaches', beaches_1.default);
 app.get('/', (_req, res) => res.json({
     message: 'Backend API running',
     timestamp: new Date().toISOString(),

@@ -20,8 +20,10 @@ export const resolveSchool = async (req: AuthRequest, res: Response, next: NextF
 
       const school = await prisma.school.findFirst({ where: { ownerId: Number(req.userId) } });
       if (!school) {
-        res.status(404).json({ message: 'No school found for this user' });
-        return;
+        // Don't fail for SCHOOL_ADMIN if they don't have a school - let the route handle it
+        // Some routes may allow SCHOOL_ADMIN without a school
+        req.schoolId = undefined;
+        return next();
       }
 
       req.schoolId = school.id;

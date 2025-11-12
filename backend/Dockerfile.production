@@ -1,72 +1,87 @@
-# Dockerfile de producción para backend que ignora errores de TypeScript
+# Production Dockerfile for Backend - Railway & Docker Hub
+FROM node:18-alpine AS builder
 
-FROM node:18-slim AS base
+# Install system dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    openssl \
+    openssl-dev \
+    libc6-compat
+
+# Set working directory
 WORKDIR /app
 
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
-    openssl \
-    ca-certificates \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copiar package files
+# Copy package files
 COPY package*.json ./
-COPY prisma ./prisma/
+COPY tsconfig.json ./
 
-# Instalar todas las dependencias (incluyendo dev para build)
-RUN npm ci
+# Install dependencies
+RUN npm ci --no-audit --no-fund
 
-# Copiar código fuente
+# Copy source code and prisma schema
 COPY . .
 
-# Generar Prisma client
+# Generate Prisma client
 RUN npx prisma generate
 
-# Crear tsconfig.json que ignora errores
-RUN echo '{' > tsconfig.temp.json && \
-    echo '  "compilerOptions": {' >> tsconfig.temp.json && \
-    echo '    "target": "ES2020",' >> tsconfig.temp.json && \
-    echo '    "module": "commonjs",' >> tsconfig.temp.json && \
-    echo '    "lib": ["ES2020"],' >> tsconfig.temp.json && \
-    echo '    "outDir": "./dist",' >> tsconfig.temp.json && \
-    echo '    "rootDir": "./src",' >> tsconfig.temp.json && \
-    echo '    "strict": false,' >> tsconfig.temp.json && \
-    echo '    "noImplicitAny": false,' >> tsconfig.temp.json && \
-    echo '    "skipLibCheck": true,' >> tsconfig.temp.json && \
-    echo '    "forceConsistentCasingInFileNames": false,' >> tsconfig.temp.json && \
-    echo '    "esModuleInterop": true,' >> tsconfig.temp.json && \
-    echo '    "allowSyntheticDefaultImports": true,' >> tsconfig.temp.json && \
-    echo '    "experimentalDecorators": true,' >> tsconfig.temp.json && \
-    echo '    "emitDecoratorMetadata": true,' >> tsconfig.temp.json && \
-    echo '    "resolveJsonModule": true' >> tsconfig.temp.json && \
-    echo '  },' >> tsconfig.temp.json && \
-    echo '  "include": ["src/**/*"],' >> tsconfig.temp.json && \
-    echo '  "exclude": ["node_modules", "dist"]' >> tsconfig.temp.json && \
-    echo '}' >> tsconfig.temp.json && \
-    mv tsconfig.temp.json tsconfig.json
+# Build TypeScript
+RUN npm run build
 
-# Build de la aplicación (ignorando errores)
-RUN npx tsc --noEmitOnError false || echo "Build completed with warnings"
+# Production stage
+FROM node:18-alpine AS production
 
-# Crear usuario no-root
-RUN groupadd --system --gid 1001 nodejs && \
-    useradd --system --uid 1001 --gid nodejs backend
+# Install runtime dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    openssl \
+    openssl-dev \
+    libc6-compat \
+    curl
 
-# Instalar solo dependencias de producción
-RUN npm ci --only=production && npm cache clean --force
+# Set working directory
+WORKDIR /app
 
-# Cambiar ownership
+# Copy package files
+COPY package*.json ./
+
+# Copy node_modules from builder
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+
+# Copy scripts
+COPY scripts ./scripts
+COPY start.sh ./start.sh
+COPY start-simple.sh ./start-simple.sh
+
+# Make scripts executable
+RUN chmod +x start.sh start-simple.sh scripts/start.js
+
+# Prune dev dependencies
+RUN npm prune --production
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S backend -u 1001 -G nodejs
+
+# Change ownership
 RUN chown -R backend:nodejs /app
 
+# Switch to non-root user
 USER backend
 
-# Exponer puerto
-EXPOSE 4000
+# Expose port (Railway will set PORT env var)
+EXPOSE ${PORT:-4000}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:4000/health || exit 1
+  CMD curl -f http://localhost:${PORT:-4000}/health || exit 1
 
-# Comando para ejecutar la aplicación
-CMD ["npm", "run", "start:prod"]
+# Start the application
+CMD ["npm", "start"]

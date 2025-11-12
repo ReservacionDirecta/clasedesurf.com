@@ -60,8 +60,19 @@ export function AdminNavbar() {
     return pathname?.startsWith(href);
   };
 
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/login' });
+    try {
+      setIsSigningOut(true);
+      await signOut({ 
+        callbackUrl: '/login',
+        redirect: true 
+      });
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -208,13 +219,14 @@ export function AdminNavbar() {
                         setProfileDropdownOpen(false);
                         handleSignOut();
                       }}
-                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                      disabled={isSigningOut}
+                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                       <div className="text-left">
-                        <p className="font-medium">Sign Out</p>
+                        <p className="font-medium">{isSigningOut ? 'Cerrando...' : 'Sign Out'}</p>
                         <p className="text-xs text-red-500 mt-0.5">End your current session</p>
                       </div>
                     </button>
@@ -345,12 +357,13 @@ export function AdminNavbar() {
                   setMobileMenuOpen(false);
                   handleSignOut();
                 }}
-                className="w-full flex items-center justify-center px-4 py-3 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200"
+                disabled={isSigningOut}
+                className="w-full flex items-center justify-center px-4 py-3 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                Sign Out
+                {isSigningOut ? 'Cerrando...' : 'Sign Out'}
               </button>
             </div>
           </div>

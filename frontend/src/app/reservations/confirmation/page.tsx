@@ -61,7 +61,7 @@ function ReservationConfirmationContent() {
   
   // Estado para detalles de participantes
   const [participants, setParticipants] = useState<ParticipantDetails[]>([]);
-  const [showParticipantsForm, setShowParticipantsForm] = useState(false);
+  const [showParticipantsForm, setShowParticipantsForm] = useState(true); // Mostrar por defecto
   const [participantsError, setParticipantsError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,6 +97,13 @@ function ReservationConfirmationContent() {
         }
         
         setParticipants(initialParticipants);
+        
+        // Mostrar automáticamente el formulario de participantes si el usuario está autenticado
+        // y hay participantes pendientes de completar
+        if (sessionStatus === 'authenticated' && initialParticipants.length > 0) {
+          setShowParticipantsForm(true);
+        }
+        
         setLoading(false);
       } catch (err) {
         console.error('Error parsing reservation data:', err);
@@ -107,7 +114,7 @@ function ReservationConfirmationContent() {
       setError('No se encontraron datos de reserva');
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [searchParams, sessionStatus]);
 
   // Auto-create reservation when user becomes authenticated and has pending reservation
   useEffect(() => {
@@ -128,6 +135,13 @@ function ReservationConfirmationContent() {
       }
     }
   }, [sessionStatus, session, reservationData, creating, registering]);
+
+  // Mostrar automáticamente el formulario de participantes cuando el usuario se autentica
+  useEffect(() => {
+    if (sessionStatus === 'authenticated' && reservationData && participants.length > 0) {
+      setShowParticipantsForm(true);
+    }
+  }, [sessionStatus, reservationData, participants.length]);
 
   const fetchReservation = async (id: string) => {
     try {
@@ -640,7 +654,12 @@ function ReservationConfirmationContent() {
             {isAuthenticated && reservationData.status === 'pending' && (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold text-gray-900">Datos de Participantes</h2>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Datos de Participantes</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Completa la información de cada participante para continuar con tu reserva
+                    </p>
+                  </div>
                   <button
                     onClick={() => setShowParticipantsForm(!showParticipantsForm)}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
@@ -649,9 +668,13 @@ function ReservationConfirmationContent() {
                   </button>
                 </div>
                 
-                <p className="text-sm text-gray-600 mb-6">
-                  Por favor completa la información de cada participante. Estos datos son necesarios para el coach y la escuela.
-                </p>
+                {!showParticipantsForm && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>Importante:</strong> Debes completar los datos de todos los participantes antes de confirmar la reserva.
+                    </p>
+                  </div>
+                )}
 
                 {participantsError && (
                   <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">

@@ -9,6 +9,7 @@ export function SchoolNavbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/school', icon: '🏠' },
@@ -29,7 +30,16 @@ export function SchoolNavbar() {
   };
 
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: '/login' });
+    try {
+      setIsSigningOut(true);
+      await signOut({ 
+        callbackUrl: '/login',
+        redirect: true 
+      });
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -88,12 +98,13 @@ export function SchoolNavbar() {
             {/* Logout Button */}
             <button
               onClick={handleSignOut}
-              className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              disabled={isSigningOut}
+              className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              Salir
+              {isSigningOut ? 'Cerrando...' : 'Salir'}
             </button>
 
             {/* Mobile menu button */}
@@ -152,12 +163,13 @@ export function SchoolNavbar() {
             </div>
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+              disabled={isSigningOut}
+              className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              Cerrar Sesión
+              {isSigningOut ? 'Cerrando...' : 'Cerrar Sesión'}
             </button>
           </div>
         </div>

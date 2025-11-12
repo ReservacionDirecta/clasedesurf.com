@@ -51,7 +51,22 @@ router.post('/', auth_1.default, (0, validation_1.validateBody)(reservations_1.c
         const { classId, specialRequest, participants } = req.body;
         if (!userId)
             return res.status(401).json({ message: 'User not authenticated' });
-        const requested = participants;
+        // Determinar el número de participantes según el tipo de datos recibidos
+        let requested;
+        let participantsData = null;
+        if (Array.isArray(participants)) {
+            // Si es un array, guardar los datos completos y contar participantes
+            requested = participants.length;
+            participantsData = participants;
+        }
+        else if (typeof participants === 'number') {
+            // Si es un número, usar backward compatibility
+            requested = participants;
+            participantsData = null;
+        }
+        else {
+            requested = 1;
+        }
         // Use transaction: re-check capacity and create reservation atomically
         const result = await prisma_1.default.$transaction(async (tx) => {
             const cls = await tx.class.findUnique({ where: { id: Number(classId) } });
@@ -66,7 +81,30 @@ router.post('/', auth_1.default, (0, validation_1.validateBody)(reservations_1.c
                     user: { connect: { id: Number(userId) } },
                     class: { connect: { id: Number(classId) } },
                     specialRequest: specialRequest || null,
+                    participants: participantsData, // Guardar datos de participantes como JSON
                     status: 'PENDING'
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            phone: true
+                        }
+                    },
+                    class: {
+                        include: {
+                            school: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    location: true
+                                }
+                            }
+                        }
+                    },
+                    payment: true
                 }
             });
             return { ok: true, reservation };
@@ -121,6 +159,79 @@ router.get('/', auth_1.default, resolve_school_1.default, async (req, res) => {
     }
     catch (err) {
         console.error('[GET /reservations] Error:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+// PUT /reservations/:id - update reservation (admin and school_admin only)
+router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateParams)(reservations_1.reservationIdSchema), (0, validation_1.validateBody)(reservations_1.updateReservationSchema), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+        // Find reservation
+        const reservation = await prisma_1.default.reservation.findUnique({
+            where: { id: Number(id) },
+            include: {
+                class: {
+                    include: {
+                        school: {
+                            select: {
+                                id: true,
+                                name: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        if (!reservation) {
+            return res.status(404).json({ message: 'Reservation not found' });
+        }
+        // Multi-tenant check: SCHOOL_ADMIN can only update reservations from their school
+        if (req.role === 'SCHOOL_ADMIN') {
+            if (!req.schoolId) {
+                return res.status(404).json({ message: 'No school found for this user' });
+            }
+            if (reservation.class.schoolId !== req.schoolId) {
+                return res.status(403).json({ message: 'You can only update reservations from your school' });
+            }
+        }
+        // Update reservation
+        const updatedReservation = await prisma_1.default.reservation.update({
+            where: { id: Number(id) },
+            data: updateData,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true
+                    }
+                },
+                class: {
+                    include: {
+                        school: {
+                            select: {
+                                id: true,
+                                name: true,
+                                location: true
+                            }
+                        }
+                    }
+                },
+                payment: true
+            }
+        });
+        console.log('[PUT /reservations/:id] Reservation updated:', {
+            id: updatedReservation.id,
+            status: updatedReservation.status,
+            userId: updatedReservation.userId,
+            classId: updatedReservation.classId
+        });
+        res.json(updatedReservation);
+    }
+    catch (err) {
+        console.error('[PUT /reservations/:id] Error:', err);
         res.status(500).json({ message: 'Internal server error' });
     }
 });

@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Calendar, 
   Clock, 
@@ -18,6 +19,18 @@ import {
   Trophy,
   MapPin
 } from 'lucide-react';
+import { formatDualCurrency } from '@/lib/currency';
+
+interface StudentProfile {
+  name: string;
+  email: string;
+  profilePhoto: string | null;
+  age?: number;
+  weight?: number;
+  height?: number;
+  canSwim: boolean;
+  phone?: string;
+}
 
 interface StudentStats {
   totalClasses: number;
@@ -32,6 +45,8 @@ interface StudentStats {
 
 interface UpcomingClass {
   id: number;
+  reservationId?: number;
+  classId: number;
   title: string;
   date: string;
   startTime: string;
@@ -41,6 +56,7 @@ interface UpcomingClass {
   level: string;
   price: number;
   status: 'CONFIRMED' | 'PENDING';
+  schoolName?: string;
 }
 
 interface RecentActivity {
@@ -56,6 +72,7 @@ interface RecentActivity {
 export default function StudentDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [stats, setStats] = useState<StudentStats | null>(null);
   const [upcomingClasses, setUpcomingClasses] = useState<UpcomingClass[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -119,16 +136,44 @@ export default function StudentDashboard() {
 
       const reservations = reservationsRes.ok ? await reservationsRes.json() : [];
       const payments = paymentsRes.ok ? await paymentsRes.json() : [];
-      const profile = profileRes.ok ? await profileRes.json() : {};
+      const profileData = profileRes.ok ? await profileRes.json() : {};
+      
+      // Set profile with photo
+      setProfile({
+        name: profileData.name || session?.user?.name || 'Surfista',
+        email: profileData.email || session?.user?.email || '',
+        profilePhoto: profileData.profilePhoto || null,
+        age: profileData.age,
+        weight: profileData.weight,
+        height: profileData.height,
+        canSwim: profileData.canSwim || false,
+        phone: profileData.phone
+      });
 
       // Calculate stats from real data
       const now = new Date();
-      const completedReservations = reservations.filter((r: any) => 
-        r.status === 'CONFIRMED' && new Date(r.class?.date) < now
-      );
-      const upcomingReservations = reservations.filter((r: any) => 
-        r.status !== 'CANCELED' && new Date(r.class?.date) >= now
-      );
+      now.setHours(0, 0, 0, 0); // Reset to start of day for comparison
+      
+      const completedReservations = reservations.filter((r: any) => {
+        if (!r.class || !r.class.date) return false;
+        const classDate = new Date(r.class.date);
+        classDate.setHours(0, 0, 0, 0);
+        return r.status === 'CONFIRMED' && classDate < now;
+      });
+      
+      const upcomingReservations = reservations.filter((r: any) => {
+        if (!r.class || !r.class.date) return false;
+        const classDate = new Date(r.class.date);
+        classDate.setHours(0, 0, 0, 0);
+        // Show all non-canceled reservations that are either:
+        // 1. Future dates, OR
+        // 2. PENDING/CONFIRMED status (regardless of date - user might have just created it)
+        return r.status !== 'CANCELED' && (classDate >= now || r.status === 'PENDING' || r.status === 'CONFIRMED');
+      });
+      
+      console.log('[Dashboard] Total reservations:', reservations.length);
+      console.log('[Dashboard] Upcoming reservations:', upcomingReservations.length);
+      console.log('[Dashboard] Completed reservations:', completedReservations.length);
 
       // Calculate total spent from paid payments
       const totalSpent = payments
@@ -159,25 +204,41 @@ export default function StudentDashboard() {
         totalSpent: totalSpent,
         averageRating: 4.7, // TODO: Calculate from reviews
         achievements: achievements,
-        joinDate: profile.createdAt || new Date().toISOString()
+        joinDate: profileData.createdAt || new Date().toISOString()
       };
 
       // Process upcoming classes
       const realUpcomingClasses: UpcomingClass[] = upcomingReservations
-        .sort((a: any, b: any) => new Date(a.class?.date).getTime() - new Date(b.class?.date).getTime())
+        .filter((r: any) => r.class) // Filter out reservations without class data
+        .sort((a: any, b: any) => {
+          const dateA = a.class?.date ? new Date(a.class.date).getTime() : 0;
+          const dateB = b.class?.date ? new Date(b.class.date).getTime() : 0;
+          return dateA - dateB;
+        })
         .slice(0, 5)
-        .map((r: any) => ({
-          id: r.class?.id || 0,
-          title: r.class?.title || 'Clase de Surf',
-          date: r.class?.date || new Date().toISOString(),
-          startTime: new Date(r.class?.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          endTime: new Date(new Date(r.class?.date).getTime() + (r.class?.duration || 120) * 60000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          instructor: r.class?.instructor || 'Instructor',
-          location: r.class?.location || 'Por definir',
-          level: r.class?.level || 'BEGINNER',
-          price: Number(r.class?.price) || 0,
-          status: r.status as 'CONFIRMED' | 'PENDING'
-        }));
+        .map((r: any) => {
+          const classDate = r.class?.date ? new Date(r.class.date) : new Date();
+          const duration = r.class?.duration || 120;
+          const endTime = new Date(classDate.getTime() + duration * 60000);
+          
+          return {
+            id: r.class?.id || 0, // Use class ID for linking to class page
+            reservationId: r.id, // Keep reservation ID for reference
+            classId: r.class?.id || 0, // Explicit class ID
+            title: r.class?.title || 'Clase de Surf',
+            date: r.class?.date || new Date().toISOString(),
+            startTime: classDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+            endTime: endTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+            instructor: r.class?.instructor?.name || r.class?.instructor || 'Instructor',
+            location: r.class?.school?.location || r.class?.location || 'Por definir',
+            level: r.class?.level || 'BEGINNER',
+            price: Number(r.class?.price) || 0,
+            status: r.status as 'CONFIRMED' | 'PENDING',
+            schoolName: r.class?.school?.name || 'Escuela'
+          };
+        });
+      
+      console.log('[Dashboard] Processed upcoming classes:', realUpcomingClasses);
 
       setStats(realStats);
       setUpcomingClasses(realUpcomingClasses);
@@ -241,7 +302,7 @@ export default function StudentDashboard() {
           totalSpent: 0,
           averageRating: 0,
           achievements: [],
-          joinDate: profile.createdAt || new Date().toISOString()
+          joinDate: profileData.createdAt || new Date().toISOString()
         };
 
         setStats(mockStats);
@@ -324,21 +385,128 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Header */}
+        {/* Welcome Header with Profile */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow p-6 text-white">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div className="mb-4 md:mb-0">
-                <h1 className="text-3xl font-bold mb-2">¡Hola, {session?.user?.name}! 🏄‍♂️</h1>
-                <p className="text-blue-100 mb-3">Bienvenido a tu dashboard de surf</p>
-                <div className="flex items-center text-blue-100">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  <span>Miembro desde {formatDate(stats.joinDate)}</span>
-                </div>
+          <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-600 rounded-2xl shadow-xl overflow-hidden">
+            <div className="relative">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M0,50 Q25,40 50,50 T100,50 L100,100 L0,100 Z" fill="white" />
+                </svg>
               </div>
-              <div className="text-center">
-                <div className="text-4xl font-bold mb-1">{stats.completedClasses}</div>
-                <div className="text-blue-200 text-sm">Clases Completadas</div>
+              
+              {/* Content */}
+              <div className="relative p-6 md:p-8">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+                  {/* Profile Photo */}
+                  <div className="relative">
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/20 backdrop-blur-sm p-1 shadow-xl">
+                      <div className="w-full h-full rounded-full bg-white overflow-hidden">
+                        {profile?.profilePhoto ? (
+                          <Image
+                            src={profile.profilePhoto}
+                            alt={profile.name}
+                            width={128}
+                            height={128}
+                            className="w-full h-full object-cover"
+                            unoptimized
+                          />
+                        ) : profile?.name ? (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-cyan-400">
+                            <span className="text-3xl md:text-4xl font-bold text-white">
+                              {profile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-cyan-400">
+                            <User className="w-12 h-12 md:w-16 md:h-16 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* Status Badge */}
+                    <div className="absolute -bottom-2 -right-2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      Activo
+                    </div>
+                  </div>
+                  
+                  {/* Profile Info */}
+                  <div className="flex-1 text-center md:text-left">
+                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+                      ¡Hola, {profile?.name?.split(' ')[0] || session?.user?.name}! 🏄‍♂️
+                    </h1>
+                    <p className="text-blue-100 text-lg mb-4">Bienvenido a tu centro de surf</p>
+                    
+                    {/* Quick Stats */}
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-blue-100">
+                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                        <Calendar className="w-4 h-4" />
+                        <span>Desde {new Date(stats.joinDate).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })}</span>
+                      </div>
+                      
+                      {profile?.age && (
+                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                          <User className="w-4 h-4" />
+                          <span>{profile.age} años</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                        <Waves className="w-4 h-4" />
+                        <span>{profile?.canSwim ? 'Sabe nadar' : 'Aprendiendo'}</span>
+                      </div>
+                      
+                      {profile?.weight && profile?.height && (
+                        <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                          <Target className="w-4 h-4" />
+                          <span>{profile.weight}kg / {profile.height}cm</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Stats Highlight */}
+                  <div className="flex md:flex-col gap-4 md:gap-6">
+                    <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
+                      <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                        {stats.completedClasses}
+                      </div>
+                      <div className="text-blue-100 text-sm">Clases Completadas</div>
+                    </div>
+                    
+                    <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl px-6 py-4 min-w-[120px]">
+                      <div className="text-3xl md:text-4xl font-bold text-white mb-1">
+                        {stats.upcomingClasses}
+                      </div>
+                      <div className="text-blue-100 text-sm">Próximas Clases</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Level Badge */}
+                <div className="mt-6 flex flex-wrap items-center justify-center md:justify-start gap-3">
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold shadow-lg ${
+                    stats.currentLevel === 'BEGINNER' ? 'bg-yellow-400 text-yellow-900' :
+                    stats.currentLevel === 'INTERMEDIATE' ? 'bg-orange-400 text-orange-900' :
+                    'bg-red-400 text-red-900'
+                  }`}>
+                    <Award className="w-5 h-5" />
+                    <span>
+                      {stats.currentLevel === 'BEGINNER' ? 'Principiante' :
+                       stats.currentLevel === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                    </span>
+                  </div>
+                  
+                  <Link
+                    href="/dashboard/student/profile"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full text-white font-medium transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Ver perfil completo</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -477,24 +645,52 @@ export default function StudentDashboard() {
                               <Clock className="w-4 h-4 mr-2" />
                               {formatTime(cls.startTime)} - {formatTime(cls.endTime)}
                             </div>
-                            <div className="flex items-center">
-                              <User className="w-4 h-4 mr-2" />
-                              Instructor: {cls.instructor}
-                            </div>
-                            <div className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-2" />
-                              {cls.location}
-                            </div>
+                            {cls.schoolName && (
+                              <div className="flex items-center">
+                                <MapPin className="w-4 h-4 mr-2" />
+                                {cls.schoolName}
+                              </div>
+                            )}
+                            {cls.instructor && (
+                              <div className="flex items-center">
+                                <User className="w-4 h-4 mr-2" />
+                                Instructor: {cls.instructor}
+                              </div>
+                            )}
+                            {cls.location && (
+                              <div className="flex items-center">
+                                <MapPin className="w-4 h-4 mr-2" />
+                                {cls.location}
+                              </div>
+                            )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600">{formatCurrency(cls.price)}</div>
-                          <Link
-                            href={`/classes/${cls.id}`}
-                            className="text-blue-600 hover:text-blue-800 text-sm"
-                          >
-                            Ver detalles →
-                          </Link>
+                        <div className="text-right ml-4">
+                          {(() => {
+                            const prices = formatDualCurrency(cls.price);
+                            return (
+                              <div>
+                                <div className="text-lg font-bold text-green-600">{prices.pen}</div>
+                                <div className="text-xs text-gray-500">{prices.usd}</div>
+                              </div>
+                            );
+                          })()}
+                          <div className="flex flex-col gap-2 mt-2">
+                            {cls.classId > 0 && (
+                              <Link
+                                href={`/classes/${cls.classId}`}
+                                className="text-blue-600 hover:text-blue-800 text-sm"
+                              >
+                                Ver clase →
+                              </Link>
+                            )}
+                            <Link
+                              href={`/reservations`}
+                              className="text-purple-600 hover:text-purple-800 text-sm"
+                            >
+                              Ver reserva →
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     </div>

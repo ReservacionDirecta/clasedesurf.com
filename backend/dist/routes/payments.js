@@ -47,7 +47,16 @@ const router = express_1.default.Router();
 router.post('/', auth_1.default, (0, validation_1.validateBody)(payments_1.createPaymentSchema), async (req, res) => {
     try {
         const userId = req.userId;
-        const { reservationId, amount, paymentMethod, transactionId } = req.body;
+        const { reservationId, amount, paymentMethod, transactionId, voucherImage, voucherNotes, status } = req.body;
+        console.log('[POST /payments] Request body:', {
+            reservationId,
+            amount,
+            paymentMethod,
+            status,
+            hasVoucherImage: !!voucherImage,
+            voucherImageLength: voucherImage ? voucherImage.length : 0,
+            hasVoucherNotes: !!voucherNotes
+        });
         // Verify the reservation exists and belongs to user (or user is admin)
         const reservation = await prisma_1.default.reservation.findUnique({
             where: { id: reservationId },
@@ -59,7 +68,7 @@ router.post('/', auth_1.default, (0, validation_1.validateBody)(payments_1.creat
         const user = await prisma_1.default.user.findUnique({ where: { id: Number(userId) } });
         if (!user)
             return res.status(401).json({ message: 'User not found' });
-        if (reservation.userId !== Number(userId) && user.role !== 'ADMIN') {
+        if (reservation.userId !== Number(userId) && user.role !== 'ADMIN' && user.role !== 'SCHOOL_ADMIN') {
             return res.status(403).json({ message: 'Forbidden' });
         }
         // Check if payment already exists for this reservation
@@ -67,14 +76,28 @@ router.post('/', auth_1.default, (0, validation_1.validateBody)(payments_1.creat
         if (existingPayment) {
             return res.status(400).json({ message: 'Payment already exists for this reservation' });
         }
+        // Determine payment status - if cash, keep as PENDING, otherwise PENDING until verified
+        // Ensure status is a valid PaymentStatus enum value
+        const paymentStatus = (status && ['UNPAID', 'PENDING', 'PAID', 'REFUNDED'].includes(status))
+            ? status
+            : 'PENDING';
+        // Truncate voucherImage if it's too long (PostgreSQL TEXT has a limit)
+        // Base64 images can be very large, so we'll limit to 1MB of base64 data
+        const MAX_VOUCHER_SIZE = 1000000; // 1MB in characters
+        const truncatedVoucherImage = voucherImage && voucherImage.length > MAX_VOUCHER_SIZE
+            ? voucherImage.substring(0, MAX_VOUCHER_SIZE)
+            : voucherImage;
+        console.log('[POST /payments] Creating payment with status:', paymentStatus);
         const payment = await prisma_1.default.payment.create({
             data: {
                 reservation: { connect: { id: reservationId } },
                 amount,
-                status: 'PAID',
+                status: paymentStatus, // Type assertion for enum
                 paymentMethod: paymentMethod || 'manual',
-                transactionId,
-                paidAt: new Date()
+                transactionId: transactionId || null,
+                voucherImage: truncatedVoucherImage || null,
+                voucherNotes: voucherNotes || null,
+                paidAt: paymentStatus === 'PAID' ? new Date() : null
             },
             include: {
                 reservation: {
@@ -85,16 +108,26 @@ router.post('/', auth_1.default, (0, validation_1.validateBody)(payments_1.creat
                 }
             }
         });
-        // Update reservation status to PAID
-        await prisma_1.default.reservation.update({
-            where: { id: reservationId },
-            data: { status: 'PAID' }
-        });
+        // Update reservation status only if payment is PAID
+        if (paymentStatus === 'PAID') {
+            await prisma_1.default.reservation.update({
+                where: { id: reservationId },
+                data: { status: 'PAID' }
+            });
+        }
         res.status(201).json(payment);
     }
     catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('[POST /payments] Error:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.error('[POST /payments] Error details:', {
+            message: errorMessage,
+            stack: err instanceof Error ? err.stack : undefined
+        });
+        res.status(500).json({
+            message: 'Internal server error',
+            error: errorMessage
+        });
     }
 });
 // GET /payments - get payments (user gets their own, admin gets all)
@@ -199,8 +232,8 @@ router.get('/:id', auth_1.default, resolve_school_1.default, (0, validation_1.va
         res.status(500).json({ message: 'Internal server error' });
     }
 });
-// PUT /payments/:id - update payment (admin and school_admin)
-router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateParams)(payments_1.paymentIdSchema), (0, validation_1.validateBody)(payments_1.updatePaymentSchema), async (req, res) => {
+// PUT /payments/:id - update payment (user can update their own, admin and school_admin can update any)
+router.put('/:id', auth_1.default, resolve_school_1.default, (0, validation_1.validateParams)(payments_1.paymentIdSchema), (0, validation_1.validateBody)(payments_1.updatePaymentSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
@@ -210,12 +243,39 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
         });
         if (!payment)
             return res.status(404).json({ message: 'Payment not found' });
-        if (req.role === 'SCHOOL_ADMIN') {
-            if (!req.schoolId)
-                return res.status(404).json({ message: 'No school found for this user' });
-            if (payment.reservation.class.schoolId !== req.schoolId) {
+        // Check permissions: user can update their own payment, admin/school_admin can update any
+        const user = await prisma_1.default.user.findUnique({ where: { id: Number(req.userId) } });
+        if (!user)
+            return res.status(401).json({ message: 'User not found' });
+        if (user.role === 'STUDENT') {
+            // Students can only update their own payments
+            if (payment.reservation.userId !== Number(req.userId)) {
+                return res.status(403).json({ message: 'You can only update your own payments' });
+            }
+        }
+        else if (user.role === 'SCHOOL_ADMIN') {
+            // School admins can only update payments from their school
+            // resolveSchool middleware should have set req.schoolId, but if not, try to resolve it
+            let schoolId = req.schoolId;
+            if (!schoolId) {
+                const school = await prisma_1.default.school.findFirst({ where: { ownerId: Number(req.userId) } });
+                if (!school) {
+                    console.error(`[PUT /payments/:id] SCHOOL_ADMIN ${req.userId} has no associated school`);
+                    return res.status(404).json({
+                        message: 'No school found for this user. Please ensure your account is properly configured.'
+                    });
+                }
+                schoolId = school.id;
+                req.schoolId = schoolId; // Cache it for future use
+            }
+            // Verify the payment belongs to the school
+            if (payment.reservation.class.schoolId !== schoolId) {
+                console.error(`[PUT /payments/:id] Payment ${id} belongs to school ${payment.reservation.class.schoolId}, but user's school is ${schoolId}`);
                 return res.status(403).json({ message: 'You can only update payments from your school' });
             }
+        }
+        else if (user.role !== 'ADMIN') {
+            return res.status(403).json({ message: 'Forbidden' });
         }
         // If status is being changed to PAID, set paidAt
         if (updateData.status === 'PAID' && payment.status !== 'PAID') {

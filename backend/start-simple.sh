@@ -36,9 +36,14 @@ setup_database() {
     echo "   Attempting migrations..."
     npx prisma migrate deploy 2>/dev/null && echo "   ✅ Migrations completed" || echo "   ⚠️  Migrations skipped"
     
-    # Try to seed database (don't fail if it doesn't work)
-    echo "   Attempting database seed..."
+    # Seed database - DISABLED by default to preserve data
+    # Only seed if SEED_ON_START environment variable is set to 'true'
+    if [ "${SEED_ON_START}" = "true" ]; then
+        echo "   Attempting database seed (SEED_ON_START=true)..."
     npx prisma db seed 2>/dev/null && echo "   ✅ Database seeded" || echo "   ⚠️  Seeding skipped"
+    else
+        echo "   ⏭️  Skipping database seed (set SEED_ON_START=true to enable)"
+    fi
 }
 
 # Function to start the server

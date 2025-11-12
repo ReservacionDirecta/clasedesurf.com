@@ -5,23 +5,37 @@ exports.validateQuery = exports.validateParams = exports.validateBody = void 0;
 const validateBody = (schema) => {
     return (req, res, next) => {
         try {
+            // Log incoming body for debugging (truncate large fields like profilePhoto)
+            const logBody = { ...req.body };
+            if (logBody.profilePhoto && typeof logBody.profilePhoto === 'string') {
+                logBody.profilePhoto = `[base64 string, ${logBody.profilePhoto.length} chars]`;
+            }
+            console.log('[Validation] Validating body:', JSON.stringify(logBody, null, 2));
             const result = schema.safeParse(req.body);
             if (!result.success) {
                 const errors = result.error.issues.map((err) => ({
                     field: err.path.join('.'),
                     message: err.message
                 }));
+                console.error('[Validation] Validation failed:', errors);
                 return res.status(400).json({
                     message: 'Validation error',
                     errors
                 });
             }
+            // Log validated data (truncate large fields)
+            const validatedData = result.data;
+            const logValidated = { ...validatedData };
+            if (logValidated.profilePhoto && typeof logValidated.profilePhoto === 'string') {
+                logValidated.profilePhoto = `[base64 string, ${logValidated.profilePhoto.length} chars]`;
+            }
+            console.log('[Validation] Validation passed:', JSON.stringify(logValidated, null, 2));
             // Replace req.body with validated and transformed data
             req.body = result.data;
             next();
         }
         catch (error) {
-            console.error('Validation middleware error:', error);
+            console.error('[Validation] Validation middleware error:', error);
             res.status(500).json({ message: 'Internal server error' });
         }
     };

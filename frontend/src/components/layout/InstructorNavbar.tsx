@@ -8,6 +8,7 @@ import { Menu, X, User, Calendar, BookOpen, Star, TrendingUp, LogOut } from 'luc
 
 export default function InstructorNavbar() {
   const { data: session } = useSession();
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -74,11 +75,20 @@ export default function InstructorNavbar() {
             </div>
 
             <button
-              onClick={() => signOut({ callbackUrl: '/' })}
-              className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 transition-colors"
+              onClick={async () => {
+                try {
+                  setIsSigningOut(true);
+                  await signOut({ callbackUrl: '/', redirect: true });
+                } catch (error) {
+                  console.error('Error al cerrar sesión:', error);
+                  setIsSigningOut(false);
+                }
+              }}
+              disabled={isSigningOut}
+              className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Cerrar Sesión</span>
+              <span className="hidden sm:inline">{isSigningOut ? 'Cerrando...' : 'Cerrar Sesión'}</span>
             </button>
 
             {/* Mobile menu button */}

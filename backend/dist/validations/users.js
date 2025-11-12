@@ -37,5 +37,10 @@ exports.updateProfileSchema = zod_1.z.object({
     phone: zod_1.z.string()
         .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, 'Invalid phone number format')
         .nullable()
-        .optional()
+        .optional(),
+    profilePhoto: zod_1.z.union([
+        zod_1.z.string().max(10000000, 'Profile photo must be less than 10MB when base64 encoded'),
+        zod_1.z.literal('').transform(() => null),
+        zod_1.z.null()
+    ]).optional()
 });

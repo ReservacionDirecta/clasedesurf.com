@@ -60,7 +60,7 @@ export default function ClassesManagementPage() {
       const response = await fetch('/api/classes', { headers });
       if (response.ok) {
         const data = await response.json();
-        setClasses(data);
+        setClasses(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Error fetching classes:', error);
@@ -238,14 +238,27 @@ export default function ClassesManagementPage() {
     });
   };
 
-  const filteredClasses = classes.filter(cls => 
-    filter === 'all' || cls.status === filter
-  );
+  const filteredClasses: Class[] = Array.isArray(classes) 
+    ? classes.filter((cls: Class) => {
+        if (filter === 'all') return true;
+        // Calculate status based on date if status is not set
+        if (!cls.status) {
+          const classDate = new Date(cls.date);
+          const now = new Date();
+          if (classDate < now) {
+            return filter === 'completed';
+          } else {
+            return filter === 'upcoming';
+          }
+        }
+        return cls.status === filter;
+      })
+    : [];
 
-  const totalRevenue = classes.reduce((sum, cls) => sum + (cls.paymentInfo?.totalRevenue || 0), 0);
-  const totalStudents = classes.reduce((sum, cls) => sum + (cls.enrolled || 0), 0);
-  const averageOccupancy = classes.length > 0 
-    ? classes.reduce((sum, cls) => sum + (cls.paymentInfo?.occupancyRate || 0), 0) / classes.length 
+  const totalRevenue = (classes || []).reduce((sum, cls) => sum + (cls.paymentInfo?.totalRevenue || 0), 0);
+  const totalStudents = (classes || []).reduce((sum, cls) => sum + (cls.enrolled || 0), 0);
+  const averageOccupancy = (classes || []).length > 0 
+    ? (classes || []).reduce((sum, cls) => sum + (cls.paymentInfo?.occupancyRate || 0), 0) / (classes || []).length 
     : 0;
 
   if (status === 'loading' || loading) {
@@ -343,7 +356,7 @@ export default function ClassesManagementPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Todas ({classes.length})
+              Todas ({(classes || []).length})
             </button>
             <button
               onClick={() => setFilter('upcoming')}
@@ -353,7 +366,7 @@ export default function ClassesManagementPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Próximas ({classes.filter(c => c.status === 'upcoming').length})
+              Próximas ({(classes || []).filter(c => c.status === 'upcoming').length})
             </button>
             <button
               onClick={() => setFilter('completed')}
@@ -363,7 +376,7 @@ export default function ClassesManagementPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Completadas ({classes.filter(c => c.status === 'completed').length})
+              Completadas ({(classes || []).filter(c => c.status === 'completed').length})
             </button>
             <button
               onClick={() => setFilter('cancelled')}
@@ -373,7 +386,7 @@ export default function ClassesManagementPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Canceladas ({classes.filter(c => c.status === 'cancelled').length})
+              Canceladas ({(classes || []).filter(c => c.status === 'cancelled').length})
             </button>
           </div>
         </div>

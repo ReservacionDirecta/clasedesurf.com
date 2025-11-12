@@ -35,6 +35,11 @@ interface StatsData {
   revenueGrowth?: number;
   studentGrowth?: number;
   classGrowth?: number;
+  levelDistribution?: {
+    BEGINNER: number;
+    INTERMEDIATE: number;
+    ADVANCED: number;
+  };
 }
 
 interface AdvancedStatsProps {
@@ -112,10 +117,10 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
         <StatCard
           title="Clases Activas"
           value={animatedStats.totalClasses}
-          change={stats.classGrowth || 12}
+          change={stats.classGrowth}
           icon={BookOpen}
           color="from-blue-500 to-blue-600"
-          trend="up"
+          trend={stats.classGrowth && stats.classGrowth > 0 ? "up" : stats.classGrowth && stats.classGrowth < 0 ? "down" : "neutral"}
         />
         
         <StatCard
@@ -128,20 +133,20 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
         <StatCard
           title="Estudiantes"
           value={animatedStats.totalStudents}
-          change={stats.studentGrowth || 18}
+          change={stats.studentGrowth}
           icon={Users}
           color="from-green-500 to-green-600"
-          trend="up"
+          trend={stats.studentGrowth && stats.studentGrowth > 0 ? "up" : stats.studentGrowth && stats.studentGrowth < 0 ? "down" : "neutral"}
         />
         
         <StatCard
           title={`Ingresos (${timeframe === 'week' ? 'Semana' : timeframe === 'month' ? 'Mes' : 'Año'})`}
           value={animatedStats.monthlyRevenue}
-          change={stats.revenueGrowth || 15}
+          change={stats.revenueGrowth}
           icon={DollarSign}
           color="from-yellow-500 to-orange-500"
           prefix="S/. "
-          trend="up"
+          trend={stats.revenueGrowth && stats.revenueGrowth > 0 ? "up" : stats.revenueGrowth && stats.revenueGrowth < 0 ? "down" : "neutral"}
         />
       </div>
 
@@ -166,7 +171,7 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
               ></div>
             </div>
             <p className="text-xs sm:text-sm text-gray-600">
-              Horario pico: {stats.peakHours || '10:00 - 12:00'}
+              Horario pico: {stats.peakHours || '-'}
             </p>
           </div>
         </div>
@@ -196,9 +201,6 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
             </div>
             <p className="text-xs sm:text-sm text-gray-600">
               Basado en {stats.completedClasses} clases
-            </p>
-            <p className="text-xs sm:text-sm text-green-600 font-medium">
-              +0.3 vs mes anterior
             </p>
           </div>
         </div>
@@ -245,7 +247,7 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
                 <span className="text-xs sm:text-sm font-medium text-green-800 truncate">Top Instructor</span>
               </div>
               <span className="text-xs sm:text-sm text-green-700 font-semibold ml-2 flex-shrink-0">
-                {stats.topInstructor || 'Gabriel B.'}
+                {stats.topInstructor || '-'}
               </span>
             </div>
             
@@ -255,7 +257,7 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
                 <span className="text-xs sm:text-sm font-medium text-blue-800 truncate">Nivel Popular</span>
               </div>
               <span className="text-xs sm:text-sm text-blue-700 font-semibold ml-2 flex-shrink-0">
-                {stats.popularLevel || 'Principiante'}
+                {stats.popularLevel || '-'}
               </span>
             </div>
             
@@ -280,30 +282,45 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
             <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-gray-600">Principiante</span>
-                <span className="text-xs sm:text-sm font-semibold">45%</span>
+                <span className="text-xs sm:text-sm font-semibold">
+                  {stats.levelDistribution?.BEGINNER || 0}%
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full transition-all duration-1000" style={{ width: '45%' }}></div>
+                <div 
+                  className="bg-green-500 h-2 rounded-full transition-all duration-1000" 
+                  style={{ width: `${stats.levelDistribution?.BEGINNER || 0}%` }}
+                ></div>
               </div>
             </div>
             
             <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-gray-600">Intermedio</span>
-                <span className="text-xs sm:text-sm font-semibold">35%</span>
+                <span className="text-xs sm:text-sm font-semibold">
+                  {stats.levelDistribution?.INTERMEDIATE || 0}%
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full transition-all duration-1000" style={{ width: '35%' }}></div>
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-1000" 
+                  style={{ width: `${stats.levelDistribution?.INTERMEDIATE || 0}%` }}
+                ></div>
               </div>
             </div>
             
             <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-gray-600">Avanzado</span>
-                <span className="text-xs sm:text-sm font-semibold">20%</span>
+                <span className="text-xs sm:text-sm font-semibold">
+                  {stats.levelDistribution?.ADVANCED || 0}%
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-purple-500 h-2 rounded-full transition-all duration-1000" style={{ width: '20%' }}></div>
+                <div 
+                  className="bg-purple-500 h-2 rounded-full transition-all duration-1000" 
+                  style={{ width: `${stats.levelDistribution?.ADVANCED || 0}%` }}
+                ></div>
               </div>
             </div>
           </div>

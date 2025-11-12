@@ -1,63 +1,63 @@
-# Dockerfile optimizado para producción que ignora errores de TypeScript
-
+# Production Dockerfile for Frontend - Railway & Docker Hub
 FROM node:18-alpine AS base
-WORKDIR /app
 
-# Instalar dependencias del sistema
+# Install dependencies
 RUN apk add --no-cache libc6-compat
 
-# Copiar package files
+WORKDIR /app
+
+# Install dependencies
 COPY package*.json ./
+RUN npm ci --no-audit --no-fund
 
-# Instalar dependencias
-RUN npm ci --ignore-scripts
+# Build stage
+FROM base AS builder
+WORKDIR /app
 
-# Copiar código fuente
 COPY . .
 
-# Generar Prisma client si existe
-RUN npx prisma generate 2>/dev/null || echo "No Prisma schema found"
-
-# Configurar Next.js para ignorar errores de TypeScript y ESLint en build
+# Set build-time environment variables
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Crear next.config.js temporal que ignora errores
-RUN echo "/** @type {import('next').NextConfig} */" > next.config.temp.js && \
-    echo "const nextConfig = {" >> next.config.temp.js && \
-    echo "  output: 'standalone'," >> next.config.temp.js && \
-    echo "  swcMinify: true," >> next.config.temp.js && \
-    echo "  typescript: { ignoreBuildErrors: true }," >> next.config.temp.js && \
-    echo "  eslint: { ignoreDuringBuilds: true }," >> next.config.temp.js && \
-    echo "  images: { domains: ['localhost'], unoptimized: true }," >> next.config.temp.js && \
-    echo "  async rewrites() {" >> next.config.temp.js && \
-    echo "    return [" >> next.config.temp.js && \
-    echo "      { source: '/api/auth/:path*', destination: '/api/auth/:path*' }," >> next.config.temp.js && \
-    echo "      { source: '/api/:path*', destination: 'http://localhost:4000/:path*' }," >> next.config.temp.js && \
-    echo "    ];" >> next.config.temp.js && \
-    echo "  }," >> next.config.temp.js && \
-    echo "};" >> next.config.temp.js && \
-    echo "module.exports = nextConfig;" >> next.config.temp.js && \
-    mv next.config.temp.js next.config.js
+# Build arguments for Railway
+ARG NEXT_PUBLIC_BACKEND_URL
+ARG NEXT_PUBLIC_API_URL
+ARG NEXTAUTH_URL
+ARG NEXTAUTH_SECRET
 
-# Build de la aplicación (ignorando errores)
+# Set environment variables for build
+ENV NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL}
+ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+
+# Build the application
 RUN npm run build
 
-# Crear usuario no-root
+# Production stage
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create system user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Copiar archivos de build
-RUN chown -R nextjs:nodejs .next
+# Copy built application
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Cambiar a usuario no-root
 USER nextjs
 
-# Exponer puerto
+# Railway will set PORT environment variable
 EXPOSE 3000
 
-ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+ENV PORT=3000
 
-# Comando de inicio
-CMD ["npm", "start"]
+# Start the application
+CMD ["node", "server.js"]

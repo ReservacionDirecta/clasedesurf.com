@@ -128,12 +128,13 @@ export default function ClassReservationsPage() {
   const updateReservationStatus = async (reservationId: number, newStatus: string) => {
     try {
       setUpdating(reservationId);
+      setError(null);
       
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // Using API proxy routes instead of direct backend calls
+      console.log('[School] Updating reservation status:', { reservationId, newStatus });
       
       const res = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PUT',
@@ -141,34 +142,39 @@ export default function ClassReservationsPage() {
         body: JSON.stringify({ status: newStatus })
       });
 
-      if (!res.ok) throw new Error('Failed to update reservation');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Failed to update reservation' }));
+        console.error('[School] Update reservation error:', errorData);
+        throw new Error(errorData.message || 'Failed to update reservation');
+      }
       
-      // Refresh reservations
+      const updatedReservation = await res.json();
+      console.log('[School] Reservation updated successfully:', updatedReservation);
+      
+      // Refresh reservations to get latest data
       await fetchClassAndReservations();
+      
+      // Show success message
+      alert(`Reserva ${newStatus === 'CONFIRMED' ? 'confirmada' : newStatus === 'CANCELED' ? 'cancelada' : 'actualizada'} exitosamente`);
     } catch (err) {
-      console.error('Error updating reservation:', err);
-      setError(err instanceof Error ? err.message : 'Error updating reservation');
+      console.error('[School] Error updating reservation:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar la reserva';
+      setError(errorMessage);
+      alert(`Error: ${errorMessage}`);
     } finally {
       setUpdating(null);
     }
   };
 
-  const updatePaymentStatus = async (reservationId: number, paymentStatus: string) => {
+  const updatePaymentStatus = async (paymentId: number, paymentStatus: string) => {
     try {
-      setUpdating(reservationId);
+      setUpdating(paymentId);
       
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // Using API proxy routes instead of direct backend calls
-      
-      const reservation = reservations.find(r => r.id === reservationId);
-      if (!reservation?.payment) {
-        throw new Error('No payment found for this reservation');
-      }
-      
-      const res = await fetch(`/api/payments/${reservation.payment.id}`, {
+      const res = await fetch(`/api/payments/${paymentId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ 
@@ -177,10 +183,14 @@ export default function ClassReservationsPage() {
         })
       });
 
-      if (!res.ok) throw new Error('Failed to update payment');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to update payment');
+      }
       
       // Refresh reservations
       await fetchClassAndReservations();
+      setError(null);
     } catch (err) {
       console.error('Error updating payment:', err);
       setError(err instanceof Error ? err.message : 'Error updating payment');
@@ -421,7 +431,27 @@ export default function ClassReservationsPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                         </svg>
                         <span className="font-medium">Método:</span>
-                        <span className="ml-1 capitalize">{reservation.payment.paymentMethod.replace('_', ' ')}</span>
+                        <span className="ml-1 capitalize">
+                          {(() => {
+                            const method = reservation.payment.paymentMethod;
+                            const methodMap: { [key: string]: string } = {
+                              'transfer': 'Transferencia',
+                              'deposit': 'Depósito',
+                              'yape': 'Yape',
+                              'payment_link': 'Link de Pago',
+                              'cash': 'Efectivo'
+                            };
+                            return methodMap[method] || method.replace('_', ' ');
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                    {reservation.payment && reservation.payment.voucherImage && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <svg className="w-4 h-4 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="font-medium text-green-600">Comprobante disponible</span>
                       </div>
                     )}
                   </div>
@@ -617,69 +647,178 @@ export default function ClassReservationsPage() {
                 </div>
               </div>
 
-              {/* Payment Information */}
+              {/* Payment Information - Always show this section */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Información de Pago</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900">Información de Pago</h3>
+                  {selectedReservation.payment && selectedReservation.payment.status === 'PENDING' && (
+                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                      Requiere Verificación
+                    </span>
+                  )}
+                </div>
                 {selectedReservation.payment ? (
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-500">Estado del Pago</p>
-                        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(selectedReservation.payment.status)}`}>
-                          {getStatusLabel(selectedReservation.payment.status)}
+                        <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(selectedReservation.payment?.status || 'UNPAID')}`}>
+                          {getStatusLabel(selectedReservation.payment?.status || 'UNPAID')}
                         </span>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Monto</p>
-                        <p className="text-lg font-bold text-gray-900">${selectedReservation.payment.amount}</p>
-                      </div>
-                      {selectedReservation.payment.paymentMethod && (
+                      {selectedReservation.payment?.amount && (
+                        <div>
+                          <p className="text-sm text-gray-500">Monto</p>
+                          <p className="text-lg font-bold text-gray-900">${selectedReservation.payment.amount}</p>
+                        </div>
+                      )}
+                      {selectedReservation.payment?.paymentMethod && (
                         <div>
                           <p className="text-sm text-gray-500">Método de Pago</p>
                           <p className="text-sm font-medium text-gray-900 capitalize">
-                            {selectedReservation.payment.paymentMethod.replace('_', ' ')}
+                            {(() => {
+                              const method = selectedReservation.payment?.paymentMethod;
+                              const methodMap: { [key: string]: string } = {
+                                'transfer': 'Transferencia Bancaria',
+                                'deposit': 'Depósito Bancario',
+                                'yape': 'Yape',
+                                'payment_link': 'Link de Pago',
+                                'cash': 'Efectivo'
+                              };
+                              return methodMap[method] || method.replace('_', ' ');
+                            })()}
                           </p>
                         </div>
                       )}
-                      {selectedReservation.payment.transactionId && (
+                      {selectedReservation.payment?.transactionId && (
                         <div>
                           <p className="text-sm text-gray-500">ID de Transacción</p>
                           <p className="text-sm font-mono text-gray-900">{selectedReservation.payment.transactionId}</p>
                         </div>
                       )}
-                      <div>
-                        <p className="text-sm text-gray-500">Fecha de Creación</p>
-                        <p className="text-sm font-medium text-gray-900">{formatDate(selectedReservation.payment.createdAt)}</p>
-                      </div>
-                      {selectedReservation.payment.paidAt && (
+                      {selectedReservation.payment?.createdAt && (
+                        <div>
+                          <p className="text-sm text-gray-500">Fecha de Creación</p>
+                          <p className="text-sm font-medium text-gray-900">{formatDate(selectedReservation.payment.createdAt)}</p>
+                        </div>
+                      )}
+                      {selectedReservation.payment?.paidAt && (
                         <div>
                           <p className="text-sm text-gray-500">Fecha de Pago</p>
                           <p className="text-sm font-medium text-gray-900">{formatDate(selectedReservation.payment.paidAt)}</p>
                         </div>
                       )}
-                      {selectedReservation.payment.voucherImage && (
+                      {selectedReservation.payment?.voucherImage && (
                         <div className="md:col-span-2">
-                          <p className="text-sm text-gray-500 mb-2">Voucher</p>
-                          <img 
-                            src={selectedReservation.payment.voucherImage} 
-                            alt="Voucher" 
-                            className="max-w-full h-auto rounded-lg border border-gray-300"
-                          />
+                          <p className="text-sm text-gray-500 mb-2 font-medium">Comprobante de Pago</p>
+                          <div className="bg-white p-4 rounded-lg border border-gray-300">
+                            <img 
+                              src={selectedReservation.payment?.voucherImage || ''} 
+                              alt="Comprobante de pago" 
+                              className="max-w-full h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => {
+                                const voucherUrl = selectedReservation.payment?.voucherImage;
+                                if (voucherUrl) {
+                                  window.open(voucherUrl, '_blank');
+                                }
+                              }}
+                            />
+                          </div>
                         </div>
                       )}
-                      {selectedReservation.payment.voucherNotes && (
+                      {selectedReservation.payment?.voucherNotes && (
                         <div className="md:col-span-2">
-                          <p className="text-sm text-gray-500 mb-1">Notas del Pago</p>
+                          <p className="text-sm text-gray-500 mb-1 font-medium">Notas del Pago</p>
                           <p className="text-sm text-gray-900 bg-blue-50 p-3 rounded border border-blue-200">
-                            {selectedReservation.payment.voucherNotes}
+                            {selectedReservation.payment?.voucherNotes}
                           </p>
                         </div>
                       )}
+                      {/* Payment Actions for School Admin */}
+                      <div className="md:col-span-2 mt-6 pt-4 border-t border-gray-200">
+                        {selectedReservation.payment?.status === 'PENDING' && (
+                          <div className="space-y-3">
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                              <p className="text-sm text-yellow-800 font-medium mb-1">
+                                {selectedReservation.payment?.paymentMethod === 'cash' 
+                                  ? '💰 Pago en Efectivo Pendiente'
+                                  : '📄 Comprobante Pendiente de Verificación'}
+                              </p>
+                              <p className="text-xs text-yellow-700">
+                                {selectedReservation.payment?.paymentMethod === 'cash'
+                                  ? 'Confirma el pago cuando el estudiante haya pagado al inicio de la clase.'
+                                  : 'Revisa el comprobante de pago y verifica que sea válido antes de confirmar.'}
+                              </p>
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                onClick={() => {
+                                  if (selectedReservation.payment?.id) {
+                                    updatePaymentStatus(selectedReservation.payment.id, 'PAID');
+                                  }
+                                }}
+                                disabled={!selectedReservation.payment?.id || updating === selectedReservation.payment.id}
+                                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                {updating === selectedReservation.payment?.id ? (
+                                  <span className="flex items-center justify-center">
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Procesando...
+                                  </span>
+                                ) : (
+                                  selectedReservation.payment?.paymentMethod === 'cash'
+                                    ? '✓ Confirmar Pago Recibido'
+                                    : '✓ Verificar y Confirmar Pago'
+                                )}
+                              </button>
+                              {selectedReservation.payment?.paymentMethod !== 'cash' && (
+                                <button
+                                  onClick={() => {
+                                    if (selectedReservation.payment?.id) {
+                                      updatePaymentStatus(selectedReservation.payment.id, 'UNPAID');
+                                    }
+                                  }}
+                                  disabled={!selectedReservation.payment?.id || updating === selectedReservation.payment.id}
+                                  className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  Rechazar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {selectedReservation.payment?.status === 'PAID' && (
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <div className="flex items-center">
+                              <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <p className="text-sm text-green-800 font-medium">
+                                Pago confirmado y procesado
+                              </p>
+                            </div>
+                            {selectedReservation.payment?.paidAt && (
+                              <p className="text-xs text-green-700 mt-1">
+                                Confirmado el {formatDate(selectedReservation.payment.paidAt)}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                    <p className="text-yellow-800">No hay información de pago disponible</p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div className="text-center">
+                      <svg className="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      <p className="text-gray-800 font-medium mb-1">No hay información de pago disponible</p>
+                      <p className="text-sm text-gray-600">El estudiante aún no ha registrado un método de pago para esta reserva.</p>
+                    </div>
                   </div>
                 )}
               </div>

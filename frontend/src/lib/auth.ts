@@ -3,7 +3,11 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import type { UserRole } from '@/types';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '/api';
+// Use same logic as next.config.js - force localhost:4000 in development
+// In server-side code (NextAuth), we need the full URL, not the proxy path
+const BACKEND_URL = process.env.NODE_ENV === 'development'
+  ? 'http://localhost:4000'
+  : (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '/api');
 
 export const authOptions = {
   providers: [

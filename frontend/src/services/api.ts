@@ -233,6 +233,9 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
     school: {
       id: apiClass.school.id.toString(),
       name: apiClass.school.name,
+      location: apiClass.school.location || 'Lima, Perú',
+      phone: apiClass.school.phone || undefined,
+      email: apiClass.school.email || undefined,
       city: 'Lima',
       rating: Number(schoolRating.toFixed(1)),
       totalReviews: totalReviews,

@@ -178,6 +178,8 @@ export default function Home() {
 
   const handleBookingSubmit = async (bookingData: any) => {
     try {
+      console.log('Reserva enviada:', bookingData);
+      
       // Prepare reservation data
       const reservationData = {
         classId: selectedClass?.id?.toString() || bookingData.classId,
@@ -203,12 +205,17 @@ export default function Home() {
 
       // Save reservation data to sessionStorage
       sessionStorage.setItem('pendingReservation', JSON.stringify(reservationData))
+      console.log('Datos guardados en sessionStorage:', reservationData);
 
-      // Close modal
+      // Close modal first
       handleCloseModal()
 
-      // Redirect to confirmation page
-      router.push('/reservations/confirmation')
+      // Wait a bit for modal to close, then redirect
+      // Using window.location.href for more reliable navigation
+      setTimeout(() => {
+        console.log('Redirigiendo a /reservations/confirmation');
+        window.location.href = '/reservations/confirmation'
+      }, 150)
     } catch (err) {
       console.error('Error preparing reservation:', err)
       alert('Error al procesar la reserva. Por favor, inténtalo de nuevo.')

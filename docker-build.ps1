@@ -1,100 +1,138 @@
-# Script para construir y subir imágenes Docker a Docker Hub
+# PowerShell script para construir y subir imágenes Docker a Docker Hub
+# Uso: .\docker-build.ps1 [backend|frontend|all] [push]
 
-Write-Host "Docker Build and Push Script" -ForegroundColor Cyan
-Write-Host "=============================" -ForegroundColor Cyan
+param(
+    [Parameter(Position=0)]
+    [ValidateSet("backend", "frontend", "all")]
+    [string]$BuildType = "all",
+    
+    [Parameter(Position=1)]
+    [switch]$Push
+)
+
+$ErrorActionPreference = "Stop"
+
+$DockerUsername = if ($env:DOCKER_USERNAME) { $env:DOCKER_USERNAME } else { "chambadigital" }
+$BackendImage = "$DockerUsername/clasedesurf-backend"
+$FrontendImage = "$DockerUsername/clasedesurf-frontend"
+$Version = if ($env:VERSION) { $env:VERSION } else { "latest" }
+
+Write-Host "🐳 Docker Build Script" -ForegroundColor Cyan
+Write-Host "======================" -ForegroundColor Cyan
+Write-Host "Docker Hub Username: $DockerUsername"
+Write-Host "Backend Image: ${BackendImage}:$Version"
+Write-Host "Frontend Image: ${FrontendImage}:$Version"
+Write-Host "Build Type: $BuildType"
+Write-Host "Push: $Push"
 Write-Host ""
 
-$DOCKER_USERNAME = "chambadigital"
-$BACKEND_IMAGE = "$DOCKER_USERNAME/surfschool-backend"
-$FRONTEND_IMAGE = "$DOCKER_USERNAME/surfschool-frontend"
+function Build-Backend {
+    Write-Host "🔨 Building Backend..." -ForegroundColor Yellow
+    $originalLocation = Get-Location
+    try {
+        Set-Location backend
+        docker build -f Dockerfile.production -t "${BackendImage}:$Version" .
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Docker build failed with exit code $LASTEXITCODE"
+        }
+        
+        docker tag "${BackendImage}:$Version" "${BackendImage}:latest"
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Docker tag failed with exit code $LASTEXITCODE"
+        }
+        
+        Write-Host "✅ Backend built successfully" -ForegroundColor Green
+    }
+    finally {
+        Set-Location $originalLocation
+    }
+}
 
-# Verificar Docker
-Write-Host "Verificando Docker..." -ForegroundColor Yellow
+function Build-Frontend {
+    Write-Host "🔨 Building Frontend..." -ForegroundColor Yellow
+    $originalLocation = Get-Location
+    try {
+        Set-Location frontend
+        
+        $BackendUrl = if ($env:NEXT_PUBLIC_BACKEND_URL) { $env:NEXT_PUBLIC_BACKEND_URL } else { "https://surfschool-backend-production.up.railway.app" }
+        $ApiUrl = if ($env:NEXT_PUBLIC_API_URL) { $env:NEXT_PUBLIC_API_URL } else { "" }
+        $NextAuthUrl = if ($env:NEXTAUTH_URL) { $env:NEXTAUTH_URL } else { "https://clasedesurfcom-production.up.railway.app" }
+        $NextAuthSecret = if ($env:NEXTAUTH_SECRET) { $env:NEXTAUTH_SECRET } else { "" }
+        
+        docker build `
+            -f Dockerfile.production `
+            --build-arg NEXT_PUBLIC_BACKEND_URL="$BackendUrl" `
+            --build-arg NEXT_PUBLIC_API_URL="$ApiUrl" `
+            --build-arg NEXTAUTH_URL="$NextAuthUrl" `
+            --build-arg NEXTAUTH_SECRET="$NextAuthSecret" `
+            -t "${FrontendImage}:$Version" .
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Docker build failed with exit code $LASTEXITCODE"
+        }
+        
+        docker tag "${FrontendImage}:$Version" "${FrontendImage}:latest"
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Docker tag failed with exit code $LASTEXITCODE"
+        }
+        
+        Write-Host "✅ Frontend built successfully" -ForegroundColor Green
+    }
+    finally {
+        Set-Location $originalLocation
+    }
+}
+
+function Push-Backend {
+    Write-Host "📤 Pushing Backend to Docker Hub..." -ForegroundColor Yellow
+    docker push "${BackendImage}:$Version"
+    docker push "${BackendImage}:latest"
+    Write-Host "✅ Backend pushed successfully" -ForegroundColor Green
+}
+
+function Push-Frontend {
+    Write-Host "📤 Pushing Frontend to Docker Hub..." -ForegroundColor Yellow
+    docker push "${FrontendImage}:$Version"
+    docker push "${FrontendImage}:latest"
+    Write-Host "✅ Frontend pushed successfully" -ForegroundColor Green
+}
+
+# Build
 try {
-    docker version | Out-Null
-    Write-Host "Docker OK" -ForegroundColor Green
-} catch {
-    Write-Host "Docker no esta corriendo" -ForegroundColor Red
+    switch ($BuildType) {
+        "backend" {
+            Build-Backend
+            if ($Push) {
+                Push-Backend
+            }
+        }
+        "frontend" {
+            Build-Frontend
+            if ($Push) {
+                Push-Frontend
+            }
+        }
+        "all" {
+            Build-Backend
+            Build-Frontend
+            if ($Push) {
+                Push-Backend
+                Push-Frontend
+            }
+        }
+    }
+    
+    Write-Host ""
+    Write-Host "🎉 Build completed successfully!" -ForegroundColor Green
+    if (-not $Push) {
+        Write-Host "💡 To push images, run: .\docker-build.ps1 $BuildType -Push" -ForegroundColor Cyan
+    }
+}
+catch {
+    Write-Host ""
+    Write-Host "❌ Build failed: $_" -ForegroundColor Red
     exit 1
 }
-
-# Login
-Write-Host ""
-Write-Host "Login a Docker Hub..." -ForegroundColor Yellow
-docker login
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error en login" -ForegroundColor Red
-    exit 1
-}
-
-# Build Backend
-Write-Host ""
-Write-Host "Construyendo Backend..." -ForegroundColor Yellow
-Set-Location backend
-docker build -t ${BACKEND_IMAGE}:latest -t ${BACKEND_IMAGE}:v1.0 .
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error construyendo backend" -ForegroundColor Red
-    Set-Location ..
-    exit 1
-}
-
-Write-Host "Backend OK" -ForegroundColor Green
-Set-Location ..
-
-# Build Frontend
-Write-Host ""
-Write-Host "Construyendo Frontend..." -ForegroundColor Yellow
-Set-Location frontend
-docker build -t ${FRONTEND_IMAGE}:latest -t ${FRONTEND_IMAGE}:v1.0 .
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error construyendo frontend" -ForegroundColor Red
-    Set-Location ..
-    exit 1
-}
-
-Write-Host "Frontend OK" -ForegroundColor Green
-Set-Location ..
-
-# Push Backend
-Write-Host ""
-Write-Host "Subiendo Backend..." -ForegroundColor Yellow
-docker push ${BACKEND_IMAGE}:latest
-docker push ${BACKEND_IMAGE}:v1.0
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error subiendo backend" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "Backend subido OK" -ForegroundColor Green
-
-# Push Frontend
-Write-Host ""
-Write-Host "Subiendo Frontend..." -ForegroundColor Yellow
-docker push ${FRONTEND_IMAGE}:latest
-docker push ${FRONTEND_IMAGE}:v1.0
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error subiendo frontend" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "Frontend subido OK" -ForegroundColor Green
-
-# Resumen
-Write-Host ""
-Write-Host "Proceso completado!" -ForegroundColor Green
-Write-Host "==================" -ForegroundColor Green
-Write-Host ""
-Write-Host "Imagenes creadas:" -ForegroundColor Cyan
-Write-Host "  $BACKEND_IMAGE:latest" -ForegroundColor White
-Write-Host "  $BACKEND_IMAGE:v1.0" -ForegroundColor White
-Write-Host "  $FRONTEND_IMAGE:latest" -ForegroundColor White
-Write-Host "  $FRONTEND_IMAGE:v1.0" -ForegroundColor White
-Write-Host ""
-Write-Host "Para desplegar:" -ForegroundColor Cyan
-Write-Host "  docker-compose up -d" -ForegroundColor Yellow
-Write-Host ""

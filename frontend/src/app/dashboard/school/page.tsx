@@ -89,6 +89,11 @@ interface DashboardStats {
   revenueGrowth?: number;
   studentGrowth?: number;
   classGrowth?: number;
+  levelDistribution?: {
+    BEGINNER: number;
+    INTERMEDIATE: number;
+    ADVANCED: number;
+  };
 }
 
 interface RecentActivity {
@@ -169,7 +174,16 @@ export default function SchoolDashboardPage() {
       }
       
       if (!response.ok) {
-        throw new Error('Failed to fetch school data');
+        // Try to get error message from backend
+        let errorMessage = 'Failed to fetch school data';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
       const schoolData = await response.json();
@@ -184,7 +198,7 @@ export default function SchoolDashboardPage() {
         setClasses([]);
       }
 
-      // Generate mock stats and activity data (in real app, these would come from API)
+      // Generate real stats and activity data from API
       generateMockStats(schoolData);
       generateMockActivity();
       
@@ -206,22 +220,138 @@ export default function SchoolDashboardPage() {
       }
       
       // Fetch real stats from backend
-      const response = await fetch('/api/stats/dashboard', { headers });
+      const [statsResponse, reservationsResponse, classesResponse] = await Promise.all([
+        fetch('/api/stats/dashboard', { headers }),
+        fetch('/api/reservations', { headers }),
+        fetch(`/api/schools/${schoolData.id}/classes`, { headers })
+      ]);
       
-      if (response.ok) {
-        const realStats = await response.json();
+      if (statsResponse.ok) {
+        const realStats = await statsResponse.json();
+        const reservations = reservationsResponse.ok ? await reservationsResponse.json() : [];
+        const allClasses = classesResponse.ok ? await classesResponse.json() : classes;
+        
+        // Calculate top instructor from reservations
+        const instructorCounts: { [key: string]: number } = {};
+        reservations.forEach((res: any) => {
+          if (res.class?.instructor?.name) {
+            const instructorName = res.class.instructor.name;
+            instructorCounts[instructorName] = (instructorCounts[instructorName] || 0) + 1;
+          }
+        });
+        const topInstructor = Object.keys(instructorCounts).length > 0
+          ? Object.entries(instructorCounts).sort((a, b) => b[1] - a[1])[0][0]
+          : '-';
+        
+        // Calculate popular level from reservations
+        const levelCounts: { [key: string]: number } = {};
+        reservations.forEach((res: any) => {
+          if (res.class?.level) {
+            const level = res.class.level;
+            levelCounts[level] = (levelCounts[level] || 0) + 1;
+          }
+        });
+        const popularLevelKey = Object.keys(levelCounts).length > 0
+          ? Object.entries(levelCounts).sort((a, b) => b[1] - a[1])[0][0]
+          : null;
+        const levelMap: { [key: string]: string } = {
+          'BEGINNER': 'Principiante',
+          'INTERMEDIATE': 'Intermedio',
+          'ADVANCED': 'Avanzado'
+        };
+        const popularLevel = popularLevelKey ? (levelMap[popularLevelKey] || popularLevelKey) : '-';
+        
+        // Calculate peak hours from class dates
+        const hourCounts: { [key: number]: number } = {};
+        allClasses.forEach((cls: any) => {
+          if (cls.date) {
+            const classDate = new Date(cls.date);
+            const hour = classDate.getHours();
+            hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+          }
+        });
+        const peakHourEntry = Object.keys(hourCounts).length > 0
+          ? Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0]
+          : null;
+        const peakHour = peakHourEntry ? parseInt(peakHourEntry[0]) : null;
+        const peakHours = peakHour !== null
+          ? `${String(peakHour).padStart(2, '0')}:00 - ${String((peakHour + 2) % 24).padStart(2, '0')}:00`
+          : '-';
+        
+        // Calculate growth percentages (comparing current month with previous month)
+        const now = new Date();
+        const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        
+        // Revenue growth
+        const currentMonthRevenue = realStats.monthlyRevenue || 0;
+        const previousMonthPayments = reservations
+          .filter((r: any) => {
+            if (!r.payment?.createdAt) return false;
+            const paymentDate = new Date(r.payment.createdAt);
+            return paymentDate >= previousMonthStart && paymentDate <= previousMonthEnd;
+          })
+          .reduce((sum: number, r: any) => sum + (Number(r.payment?.amount) || 0), 0);
+        const revenueGrowth = previousMonthPayments > 0
+          ? Math.round(((currentMonthRevenue - previousMonthPayments) / previousMonthPayments) * 100)
+          : 0;
+        
+        // Student growth
+        const currentMonthStudents = realStats.newStudentsThisMonth || 0;
+        const previousMonthStudents = reservations
+          .filter((r: any) => {
+            if (!r.user?.createdAt) return false;
+            const userDate = new Date(r.user.createdAt);
+            return userDate >= previousMonthStart && userDate <= previousMonthEnd;
+          })
+          .length;
+        const studentGrowth = previousMonthStudents > 0
+          ? Math.round(((currentMonthStudents - previousMonthStudents) / previousMonthStudents) * 100)
+          : 0;
+        
+        // Class growth
+        const currentMonthClasses = allClasses.filter((cls: any) => {
+          if (!cls.createdAt) return false;
+          const classDate = new Date(cls.createdAt);
+          return classDate >= currentMonthStart;
+        }).length;
+        const previousMonthClasses = allClasses.filter((cls: any) => {
+          if (!cls.createdAt) return false;
+          const classDate = new Date(cls.createdAt);
+          return classDate >= previousMonthStart && classDate <= previousMonthEnd;
+        }).length;
+        const classGrowth = previousMonthClasses > 0
+          ? Math.round(((currentMonthClasses - previousMonthClasses) / previousMonthClasses) * 100)
+          : 0;
+        
+        // Calculate level distribution from reservations
+        const totalReservationsByLevel = Object.values(levelCounts).reduce((sum, count) => sum + count, 0);
+        const levelDistribution = {
+          BEGINNER: totalReservationsByLevel > 0 
+            ? Math.round((levelCounts['BEGINNER'] || 0) / totalReservationsByLevel * 100) 
+            : 0,
+          INTERMEDIATE: totalReservationsByLevel > 0 
+            ? Math.round((levelCounts['INTERMEDIATE'] || 0) / totalReservationsByLevel * 100) 
+            : 0,
+          ADVANCED: totalReservationsByLevel > 0 
+            ? Math.round((levelCounts['ADVANCED'] || 0) / totalReservationsByLevel * 100) 
+            : 0
+        };
+        
         setStats({
           ...realStats,
-          topInstructor: 'Gabriel Barrera', // TODO: Get from backend
-          popularLevel: 'Principiante', // TODO: Get from backend
-          peakHours: '10:00 - 12:00', // TODO: Get from backend
-          revenueGrowth: 15, // TODO: Calculate from backend
-          studentGrowth: 18, // TODO: Calculate from backend
-          classGrowth: 12 // TODO: Calculate from backend
+          topInstructor,
+          popularLevel,
+          peakHours,
+          revenueGrowth,
+          studentGrowth,
+          classGrowth,
+          levelDistribution
         });
       } else {
-        // Fallback to mock data if API fails
-        const mockStats: DashboardStats = {
+        // If API fails, set minimal stats from available data
+        setStats({
           totalClasses: classes.length || 0,
           totalInstructors: 0,
           totalStudents: 0,
@@ -239,12 +369,11 @@ export default function SchoolDashboardPage() {
           revenueGrowth: 0,
           studentGrowth: 0,
           classGrowth: 0
-        };
-        setStats(mockStats);
+        });
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Set empty stats on error
+      // Set minimal stats on error
       setStats({
         totalClasses: classes.length || 0,
         totalInstructors: 0,
@@ -267,23 +396,84 @@ export default function SchoolDashboardPage() {
     }
   };
 
-  const generateMockActivity = () => {
-    const mockActivity: RecentActivity[] = [
-      {
-        id: 1,
-        type: 'reservation',
-        title: 'Nueva Reserva',
-        description: 'María González reservó Surf para Principiantes',
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        status: 'success',
-        user: 'María González',
-        metadata: {
-          className: 'Surf Principiantes',
-          instructorName: 'Gabriel Barrera'
-        }
+  const generateMockActivity = async () => {
+    try {
+      // Get authentication token
+      const token = (session as any)?.backendToken;
+      const headers: any = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-    ];
-    setRecentActivity(mockActivity);
+      
+      // Fetch real reservations from backend
+      const reservationsResponse = await fetch('/api/reservations', { headers });
+      
+      if (!reservationsResponse.ok) {
+        setRecentActivity([]);
+        return;
+      }
+      
+      const reservations = await reservationsResponse.json();
+      
+      // Convert reservations to activity items
+      const activities: RecentActivity[] = reservations
+        .slice(0, 20) // Get last 20 reservations
+        .map((reservation: any, index: number) => {
+          const className = reservation.class?.title || 'Clase de Surf';
+          const studentName = reservation.user?.name || 'Estudiante';
+          const instructorName = reservation.class?.instructor?.name || 'Instructor';
+          const participants = reservation.participants?.length || 1;
+          const amount = reservation.payment?.amount ? Number(reservation.payment.amount) : undefined;
+          
+          // Determine activity type and status
+          let type: 'reservation' | 'payment' | 'class' | 'instructor' | 'student' = 'reservation';
+          let status: 'success' | 'warning' | 'error' | 'info' = 'success';
+          let title = 'Nueva Reserva';
+          let description = `${studentName} reservó ${className}`;
+          
+          if (reservation.status === 'CANCELED') {
+            type = 'reservation';
+            status = 'error';
+            title = 'Reserva Cancelada';
+            description = `${studentName} canceló la reserva de ${className}`;
+          } else if (reservation.payment?.status === 'PAID') {
+            type = 'payment';
+            status = 'success';
+            title = 'Pago Recibido';
+            description = `Pago de ${studentName} por ${className}`;
+          } else if (reservation.payment?.status === 'PENDING') {
+            type = 'payment';
+            status = 'warning';
+            title = 'Pago Pendiente';
+            description = `Pago pendiente de ${studentName} por ${className}`;
+          }
+          
+          return {
+            id: reservation.id || index + 1,
+            type,
+            title,
+            description,
+            timestamp: reservation.createdAt || reservation.updatedAt || new Date().toISOString(),
+            status,
+            user: studentName,
+            amount,
+            metadata: {
+              className,
+              instructorName,
+              studentCount: participants
+            }
+          };
+        })
+        .sort((a: RecentActivity, b: RecentActivity) => {
+          // Sort by timestamp, most recent first
+          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        });
+      
+      setRecentActivity(activities);
+    } catch (error) {
+      console.error('Error fetching activity:', error);
+      setRecentActivity([]);
+    }
   };
 
   const handleSchoolCreated = (newSchool: School) => {
