@@ -452,18 +452,17 @@ export default function ClassesManagementPage() {
                         <Eye className="w-4 h-4 mr-1" />
                         Vista Pública
                       </button>
-                      {cls.status === 'upcoming' && (cls.reservations?.length ?? 0) === 0 && (
-                        <button 
-                          onClick={() => {
-                            setSelectedClass(cls);
-                            setShowEditModal(true);
-                          }}
-                          className="flex items-center px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Editar
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => {
+                          setSelectedClass(cls);
+                          setShowEditModal(true);
+                        }}
+                        className="flex items-center px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        title={(cls.reservations?.length ?? 0) > 0 ? 'Editar detalles limitados (hay reservas activas)' : 'Editar clase'}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Editar
+                      </button>
                       {cls.status === 'upcoming' && (
                         <button 
                           onClick={() => {
@@ -511,6 +510,16 @@ export default function ClassesManagementPage() {
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <h3 className="text-lg font-bold mb-4">Editar Clase</h3>
               <p className="text-gray-600 mb-4">Editando: {selectedClass.title}</p>
+              {(selectedClass.reservations?.length ?? 0) > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>⚠️ Esta clase tiene {selectedClass.reservations?.length ?? 0} reserva(s) activa(s).</strong>
+                  </p>
+                  <p className="text-xs text-yellow-700 mt-1">
+                    Solo podrás editar: nombre, descripción, foto y otros detalles que no afecten la fecha, precio u horario.
+                  </p>
+                </div>
+              )}
               <div className="flex gap-3">
                 <button 
                   onClick={() => {
@@ -519,7 +528,15 @@ export default function ClassesManagementPage() {
                   }}
                   className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                 >
-                  Cerrar
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => {
+                    router.push(`/dashboard/school/classes/${selectedClass.id}/edit`);
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Continuar
                 </button>
               </div>
             </div>

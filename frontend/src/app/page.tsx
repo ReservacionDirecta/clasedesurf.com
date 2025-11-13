@@ -10,16 +10,11 @@ import { ClassCard } from '@/components/classes/ClassCard'
 import { BookingModal } from '@/components/booking/BookingModal'
 import { Hero } from '@/components/layout/Hero'
 import { Footer } from '@/components/layout/Footer'
-import { FilterPanel } from '@/components/marketplace/FilterPanel'
 import { MarketplaceStats } from '@/components/marketplace/MarketplaceStats'
-import { DatePicker } from '@/components/ui/DatePicker'
 import { 
   SearchIcon, 
-  LocationIcon, 
   SurferIcon, 
-  CalendarIcon, 
   StarIcon, 
-  MoneyIcon, 
   ShieldIcon, 
   LightningIcon, 
   TrophyIcon,
@@ -28,6 +23,7 @@ import {
   EquipmentIcon
 } from '@/components/ui/Icons'
 import { apiService, transformApiClassToFrontend, type ClassFilters } from '@/services/api'
+import { AirbnbSearchBar, type FilterValues as AirbnbFilterValues } from '@/components/classes/AirbnbSearchBar'
 
 // Datos de ejemplo como fallback
 const mockClasses = [
@@ -130,11 +126,19 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<ClassFilters>({})
-  const [selectedDate, setSelectedDate] = useState<string>('')
 
-  const handleDateChange = (newDate: string) => {
-    setSelectedDate(newDate)
-    handleFiltersChange({ ...filters, date: newDate })
+  const handleAirbnbFilterChange = (airbnbFilters: AirbnbFilterValues) => {
+    const newFilters: ClassFilters = {}
+    if (airbnbFilters.date) newFilters.date = airbnbFilters.date
+    if (airbnbFilters.level) newFilters.level = airbnbFilters.level
+    if (airbnbFilters.type) newFilters.type = airbnbFilters.type
+    if (airbnbFilters.locality) newFilters.locality = airbnbFilters.locality
+    handleFiltersChange(newFilters)
+  }
+
+  const handleAirbnbReset = () => {
+    setFilters({})
+    loadClasses()
   }
 
   // Load classes from API
@@ -264,6 +268,15 @@ export default function Home() {
         apiFilters.date = newFilters.date
       }
 
+      if (newFilters.type) {
+        apiFilters.type = newFilters.type
+      }
+
+      // Handle locality filter (maps to location in API)
+      if (newFilters.location || newFilters.locality) {
+        apiFilters.locality = newFilters.location || newFilters.locality
+      }
+
       // Fetch from API with filters
       const apiClasses = await apiService.getClasses(apiFilters)
       let transformedClasses = apiClasses.map(transformApiClassToFrontend)
@@ -274,8 +287,9 @@ export default function Home() {
           return false
         }
 
-        // Filter by location (client-side)
-        if (newFilters.location && !classItem.location?.includes(newFilters.location)) {
+        // Filter by location (client-side) - support both location and locality
+        const locationFilter = newFilters.location || newFilters.locality
+        if (locationFilter && !classItem.location?.includes(locationFilter)) {
           return false
         }
         
@@ -306,7 +320,9 @@ export default function Home() {
           return false
         }
 
-        if (newFilters.location && !classItem.location?.includes(newFilters.location)) {
+        // Filter by location (support both location and locality)
+        const locationFilter = newFilters.location || newFilters.locality
+        if (locationFilter && !classItem.location?.includes(locationFilter)) {
           return false
         }
         
@@ -398,7 +414,7 @@ export default function Home() {
       </section>
       
       {/* Sección principal de clases - Mobile Optimized */}
-      <main id="encuentra-tu-clase" className="relative overflow-hidden bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] py-6 sm:py-10">
+      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] py-6 sm:py-10">
         {/* Background Wave Pattern */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 opacity-30">
@@ -416,7 +432,7 @@ export default function Home() {
             </svg>
           </div>
           <div className="absolute -top-32 -left-16 h-72 w-72 rounded-full bg-[#FF3366]/25 blur-3xl" />
-          <div className="absolute -bottom-24 -right-10 h-64 w-64 rounded-full bg-[#2EC4B6]/25 blur-3xl" />
+          <div className="absolute -bottom-24 -right-0 h-64 w-64 rounded-full bg-[#2EC4B6]/25 blur-3xl" />
           <div className="absolute top-1/3 right-1/4 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         </div>
 
@@ -442,86 +458,11 @@ export default function Home() {
             </p>
 
             {/* Mobile-Optimized Search Engine */}
-            <div className="max-w-5xl mx-auto mb-4 sm:mb-6">
-              <div className="relative bg-white/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl ring-1 ring-[#2EC4B6]/15 border border-white/60 mx-2 sm:mx-0 overflow-visible">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-end">
-                  {/* Ubicación */}
-                  <div className="sm:col-span-1 lg:col-span-1">
-                    <label htmlFor="search-location" className="flex items-center text-xs font-semibold text-[#011627] mb-1">
-                      <LocationIcon className="w-3 h-3 mr-1 text-[#2EC4B6]" />
-                      Ubicación
-                    </label>
-                    <select
-                      id="search-location"
-                      className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-3 sm:py-2 rounded-lg text-sm font-medium touch-target-md border-[#CBD5E1] text-[#011627] focus:border-[#2EC4B6] focus:ring-[#9DE6DC]"
-                    >
-                      <option>Todas</option>
-                      <option>Costa Verde</option>
-                      <option>Punta Hermosa</option>
-                      <option>San Bartolo</option>
-                    </select>
-                  </div>
-
-                  {/* Nivel */}
-                  <div className="sm:col-span-1 lg:col-span-1">
-                    <label htmlFor="search-level" className="flex items-center text-xs font-semibold text-[#011627] mb-1">
-                      <SurferIcon className="w-3 h-3 mr-1 text-[#2EC4B6]" />
-                      Nivel
-                    </label>
-                    <select
-                      id="search-level"
-                      className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-3 sm:py-2 rounded-lg text-sm font-medium touch-target-md border-[#CBD5E1] text-[#011627] focus:border-[#2EC4B6] focus:ring-[#9DE6DC]"
-                    >
-                      <option>Todos</option>
-                      <option>Principiante</option>
-                      <option>Intermedio</option>
-                      <option>Avanzado</option>
-                    </select>
-                  </div>
-
-                  {/* Fecha */}
-                  <div className="sm:col-span-2 lg:col-span-1">
-                    <label htmlFor="search-date" className="flex items-center text-xs font-semibold text-[#011627] mb-1">
-                      <CalendarIcon className="w-3 h-3 mr-1 text-[#2EC4B6]" />
-                      Fecha
-                    </label>
-                    <DatePicker
-                      value={selectedDate}
-                      onChange={handleDateChange}
-                      placeholder="Cualquier fecha"
-                      className="w-full touch-target-md"
-                    />
-                  </div>
-
-                  {/* Precio */}
-                  <div className="sm:col-span-1 lg:col-span-1">
-                    <label htmlFor="search-price" className="flex items-center text-xs font-semibold text-[#011627] mb-1">
-                      <MoneyIcon className="w-3 h-3 mr-1 text-[#2EC4B6]" />
-                      Precio
-                    </label>
-                    <select
-                      id="search-price"
-                      className="search-input-enhanced search-select-enhanced search-element-transition w-full px-3 py-3 sm:py-2 rounded-lg text-sm font-medium touch-target-md border-[#CBD5E1] text-[#011627] focus:border-[#2EC4B6] focus:ring-[#9DE6DC]"
-                    >
-                      <option>Cualquier precio</option>
-                      <option>Hasta $30</option>
-                      <option>Hasta $50</option>
-                      <option>Hasta $80</option>
-                    </select>
-                  </div>
-
-                  {/* Botón de Búsqueda */}
-                  <div className="sm:col-span-1 lg:col-span-1">
-                    <Button 
-                      variant="primary"
-                      className="search-element-transition touch-target-lg w-full bg-gradient-to-r from-[#FF3366] to-[#D12352] text-white font-bold px-4 py-3 sm:py-2 rounded-lg transition-all duration-300 flex items-center justify-center text-sm shadow-lg hover:shadow-xl"
-                    >
-                      <SearchIcon className="w-4 h-4 mr-1" />
-                      BUSCAR
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            <div className="max-w-5xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 relative z-30">
+              <AirbnbSearchBar 
+                onFilterChange={handleAirbnbFilterChange}
+                onReset={handleAirbnbReset}
+              />
             </div>
 
           </div>
@@ -542,9 +483,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        {/* Advanced Filters */}
-        <FilterPanel onFiltersChange={handleFiltersChange} />
 
         {/* Loading State */}
         {loading && (

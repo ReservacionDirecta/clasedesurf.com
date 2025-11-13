@@ -2,8 +2,9 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { StudentNavbar } from '@/components/layout/StudentNavbar';
+import { useEffect, useState } from 'react';
+import { StudentSidebar } from '@/components/layout/StudentSidebar';
+import { MobileBottomNav } from '@/components/navigation/MobileBottomNav';
 
 export default function StudentLayout({
   children,
@@ -12,6 +13,7 @@ export default function StudentLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [sidebarWidth, setSidebarWidth] = useState(256);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -26,6 +28,30 @@ export default function StudentLayout({
       return;
     }
   }, [session, status, router]);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      const sidebar = document.getElementById('student-sidebar') as HTMLElement;
+      if (sidebar) {
+        const isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
+        setSidebarWidth(isCollapsed ? 80 : 256);
+      }
+    };
+
+    updateWidth();
+    const interval = setInterval(updateWidth, 100);
+    const observer = new MutationObserver(updateWidth);
+    
+    const sidebar = document.getElementById('student-sidebar');
+    if (sidebar) {
+      observer.observe(sidebar, { attributes: true, attributeFilter: ['data-collapsed'] });
+    }
+
+    return () => {
+      clearInterval(interval);
+      observer.disconnect();
+    };
+  }, []);
 
   if (status === 'loading') {
     return (
@@ -44,13 +70,14 @@ export default function StudentLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
-      {/* StudentNavbar solo visible en desktop (≥1024px) */}
-      {/* En móvil solo se muestra el Header (PublicNavbar) del NavigationWrapper */}
-      <div className="hidden lg:block">
-        <StudentNavbar />
+      <StudentSidebar />
+      <div 
+        className="transition-all duration-300"
+        style={{ marginLeft: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${sidebarWidth}px` : '0' }}
+      >
+        <main className="pb-20 lg:pb-0">{children}</main>
+        <MobileBottomNav />
       </div>
-      <main className="pb-20 md:pb-0">{children}</main>
-      {/* MobileBottomNav se maneja desde NavigationWrapper */}
     </div>
   );
 }

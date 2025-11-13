@@ -95,7 +95,7 @@ export default function SchoolProfilePage() {
     }
 
     fetchSchool();
-  }, [fetchSchool, router, session, status]);
+  }, [session, status, router, fetchSchool]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

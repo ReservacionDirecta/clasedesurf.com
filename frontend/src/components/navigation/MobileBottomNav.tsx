@@ -140,10 +140,10 @@ export function MobileBottomNav() {
     return (
         <>
             {/* Spacer to prevent content from being hidden behind fixed navbar */}
-            <div className="h-20 md:hidden"></div>
+            <div className="h-20 lg:hidden"></div>
 
-            {/* Mobile Bottom Navigation */}
-            <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-100 z-50 shadow-2xl backdrop-blur-xl">
+            {/* Mobile Bottom Navigation - solo en pantallas < 1024px */}
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-100 z-50 shadow-2xl backdrop-blur-xl">
                 {/* Background gradient based on role */}
                 <div className={`absolute inset-0 opacity-5 bg-gradient-to-r ${getRoleActiveGradient(userRole)}`}></div>
 

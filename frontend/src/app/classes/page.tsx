@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ClassCard } from '@/components/classes/ClassCard'
 import { BookingModal } from '@/components/booking/BookingModal'
-import { ClassFilters, type FilterValues } from '@/components/classes/ClassFilters'
+import { AirbnbSearchBar, type FilterValues } from '@/components/classes/AirbnbSearchBar'
+import { PublicSidebar } from '@/components/layout/PublicSidebar'
+import { MobileBottomNav } from '@/components/navigation/MobileBottomNav'
 import { apiService, transformApiClassToFrontend } from '@/services/api'
 
 type ApiClassResponse = Awaited<ReturnType<typeof apiService.getClasses>>
@@ -32,8 +34,7 @@ const buildQueryParams = (filters: FilterValues) => {
   if (filters.date) params.append('date', filters.date)
   if (filters.level) params.append('level', filters.level)
   if (filters.type) params.append('type', filters.type)
-  if (filters.minPrice !== undefined) params.append('minPrice', `${filters.minPrice}`)
-  if (filters.maxPrice !== undefined) params.append('maxPrice', `${filters.maxPrice}`)
+  if (filters.locality) params.append('locality', filters.locality)
   return params.toString()
 }
 
@@ -329,18 +330,49 @@ export default function ClassesPage() {
     }
   }
 
+  const [sidebarWidth, setSidebarWidth] = useState(256);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      const sidebar = document.getElementById('public-sidebar') as HTMLElement;
+      if (sidebar) {
+        const isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
+        setSidebarWidth(isCollapsed ? 80 : 256);
+      }
+    };
+
+    updateWidth();
+    const interval = setInterval(updateWidth, 100);
+    const observer = new MutationObserver(updateWidth);
+    
+    const sidebar = document.getElementById('public-sidebar');
+    if (sidebar) {
+      observer.observe(sidebar, { attributes: true, attributeFilter: ['data-collapsed'] });
+    }
+
+    return () => {
+      clearInterval(interval);
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#F6F7F8]">
-      {renderHero()}
+      <PublicSidebar />
+      <div 
+        className="transition-all duration-300"
+        style={{ marginLeft: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${sidebarWidth}px` : '0' }}
+      >
+        {renderHero()}
 
-      <main className="relative -mt-12 pb-20">
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="relative -mt-12 pb-20">
+          <section className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-gray-100 lg:p-8">
             <header className="flex flex-col gap-4 border-b border-gray-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-[#011627] sm:text-3xl">Encuentra tu próxima clase</h2>
                 <p className="mt-1 text-sm text-[#46515F]">
-                  Filtra por fecha, nivel, tipo de sesión o rango de precios y visualiza disponibilidad en tiempo real.
+                  Busca clases de surf por ubicación, fecha, nivel y tipo. Visualiza disponibilidad en tiempo real.
                 </p>
               </div>
               <span className="inline-flex rounded-full bg-[#E9FBF7] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#2EC4B6]">
@@ -349,7 +381,7 @@ export default function ClassesPage() {
             </header>
 
             <div className="mt-6">
-              <ClassFilters onFilterChange={handleFilterChange} onReset={handleReset} />
+              <AirbnbSearchBar onFilterChange={handleFilterChange} onReset={handleReset} />
             </div>
 
             <div className="mt-8">
@@ -380,6 +412,8 @@ export default function ClassesPage() {
           onSubmit={handleBookingSubmit}
         />
       )}
+      </div>
+      <MobileBottomNav />
     </div>
   )
 }

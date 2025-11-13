@@ -91,6 +91,7 @@ export interface ClassFilters {
   maxPrice?: number;
   schoolId?: number;
   location?: string;
+  locality?: string;
 }
 
 class ApiService {
