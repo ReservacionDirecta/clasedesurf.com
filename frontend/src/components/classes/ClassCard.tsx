@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { PriceDisplay } from '@/components/ui/PriceDisplay'
 import { getBeachImage, getClassTypeImage, getSurfImageByLevel } from '@/lib/lima-beach-images'
+import { formatDualCurrency } from '@/lib/currency'
 
 interface ClassData {
   id: string
@@ -225,8 +226,16 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
         {/* Price overlay */}
         <div className="absolute bottom-3 left-3">
           <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
-            <div className="text-lg font-black text-gray-900">${classData.price}</div>
-            <div className="text-xs text-gray-600 -mt-1">por persona</div>
+            {(() => {
+              const prices = formatDualCurrency(classData.price)
+              return (
+                <>
+                  <div className="text-lg font-black text-gray-900">{prices.pen}</div>
+                  <div className="text-xs text-gray-500 -mt-1">{prices.usd}</div>
+                  <div className="text-xs text-gray-600 -mt-0.5">por persona</div>
+                </>
+              )
+            })()}
           </div>
         </div>
 

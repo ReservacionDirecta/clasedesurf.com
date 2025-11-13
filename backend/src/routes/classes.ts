@@ -28,7 +28,7 @@ const optionalAuth = (req: AuthRequest, res: any, next: any) => {
 // GET /classes - list classes with filters (supports multi-tenant filtering)
 router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   try {
-    const { date, level, type, minPrice, maxPrice, schoolId } = req.query;
+    const { date, level, type, minPrice, maxPrice, schoolId, locality } = req.query;
     
     // Build filter object
     const where: any = {};
@@ -42,6 +42,24 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
     // Filter by schoolId if provided (and not already filtered by multi-tenant)
     if (schoolId && !where.schoolId) {
       where.schoolId = Number(schoolId);
+    }
+    
+    // Filter by locality (school location)
+    if (locality && typeof locality === 'string') {
+      // If we already have a school filter, merge it
+      if (where.school) {
+        where.school.location = {
+          contains: locality,
+          mode: 'insensitive'
+        };
+      } else {
+        where.school = {
+          location: {
+            contains: locality,
+            mode: 'insensitive'
+          }
+        };
+      }
     }
     
     // Filter by date (exact date match)

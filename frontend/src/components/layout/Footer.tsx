@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function Footer() {
   return (
@@ -7,13 +8,17 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo and Description */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                <Image 
+                  src="/logoclasedesusrf.png" 
+                  alt="clasesde.pe" 
+                  width={40} 
+                  height={40} 
+                  className="w-full h-full object-contain"
+                  unoptimized
+                />
               </div>
-              <span className="text-2xl font-bold">Clase de Surf</span>
             </div>
             <p className="text-gray-400 mb-6 max-w-md">
               La plataforma líder de clases de surf en Lima, Perú. 

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 type UserRole = 'STUDENT' | 'INSTRUCTOR' | 'SCHOOL_ADMIN';
 
@@ -87,10 +88,15 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full mb-4">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 overflow-hidden">
+            <Image 
+              src="/logoclasedesusrf.png" 
+              alt="clasesde.pe" 
+              width={64} 
+              height={64} 
+              className="w-full h-full object-contain"
+              unoptimized
+            />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Únete a ClaseDeSurf</h1>
           <p className="text-gray-600">Crea tu cuenta y comienza tu aventura</p>

@@ -460,7 +460,7 @@ export default function ReservationsPage() {
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        {reservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Pagar Reserva'}
+                        {reservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Reservar'}
                       </button>
                     )}
                     
@@ -679,14 +679,14 @@ export default function ReservationsPage() {
         </div>
       )}
 
-      {/* Modal de Pago */}
+      {/* Modal de Pago - Se muestra automáticamente después de hacer click en Reservar */}
       {showPaymentModal && selectedReservation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0 z-10">
               <h2 className="text-2xl font-bold">
-                {selectedReservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Pagar Reserva'}
+                {selectedReservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Métodos de Pago'}
               </h2>
               <button
                 onClick={() => {
@@ -713,7 +713,6 @@ export default function ReservationsPage() {
                     return (
                       <>
                         <span className="font-bold">{prices.pen}</span>
-                        <span className="text-xs ml-1">({prices.usd})</span>
                       </>
                     );
                   })()}

@@ -509,6 +509,9 @@ Abre una interfaz visual en `http://localhost:5555`
 
 ### Documentación del Proyecto
 
+#### Base de Datos y Despliegue
+- **[Verificación de Schema Railway](./docs/RAILWAY_SCHEMA_VERIFICATION.md)** - Guía completa para verificar y sincronizar el schema de Railway con el local
+
 - **[Requirements](/.kiro/specs/surfschool-booking-platform/requirements.md)** - Requerimientos detallados del sistema
 - **[Design](/.kiro/specs/surfschool-booking-platform/design.md)** - Arquitectura y diseño técnico
 - **[Tasks](/.kiro/specs/surfschool-booking-platform/tasks.md)** - Plan de implementación

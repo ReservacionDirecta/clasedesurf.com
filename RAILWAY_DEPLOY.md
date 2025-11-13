@@ -150,3 +150,6 @@ Después del despliegue, Railway te proporcionará URLs como:
 - Verifica que `JWT_SECRET` esté configurado en el backend
 
 
+
+
+

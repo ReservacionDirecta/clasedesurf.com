@@ -491,6 +491,37 @@ function ReservationConfirmationContent() {
               )}
             </div>
 
+            {/* School Information */}
+            {reservationData.classData?.school && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Información de la Escuela</h2>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Nombre:</span>
+                    <p className="text-gray-900 font-semibold">{reservationData.classData.school.name || 'Escuela de Surf'}</p>
+                  </div>
+                  {reservationData.classData.school.location && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Ubicación:</span>
+                      <p className="text-gray-900">{reservationData.classData.school.location}</p>
+                    </div>
+                  )}
+                  {reservationData.classData.school.phone && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Teléfono:</span>
+                      <p className="text-gray-900">{reservationData.classData.school.phone}</p>
+                    </div>
+                  )}
+                  {reservationData.classData.school.email && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Email:</span>
+                      <p className="text-gray-900">{reservationData.classData.school.email}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Booking Information */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Información de Reserva</h2>
@@ -836,7 +867,10 @@ function ReservationConfirmationContent() {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Precio unitario:</span>
                   <span className="text-gray-900 font-medium">
-                    ${reservationData.classData?.price || 0} USD
+                    {(() => {
+                      const unitPrice = formatDualCurrency(reservationData.classData?.price || 0);
+                      return unitPrice.pen;
+                    })()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -850,9 +884,6 @@ function ReservationConfirmationContent() {
                   <div className="text-right">
                     <div className="text-xl font-bold text-blue-600">
                       {totalPrices.pen}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {totalPrices.usd}
                     </div>
                   </div>
                 </div>

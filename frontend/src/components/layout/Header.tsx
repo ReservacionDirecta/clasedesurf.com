@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { 
@@ -34,7 +35,7 @@ const roleLinkMap: Record<Exclude<RoleOption, undefined>, { href: string; icon: 
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       ),
-      label: "Mi Dashboard"
+      label: "Dashboard"
     }
   ],
   INSTRUCTOR: [
@@ -83,6 +84,8 @@ const baseLinks = [
 export const Header = (): JSX.Element => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(0);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { data: session } = useSession();
   const pathname = usePathname();
   const role = (session as any)?.user?.role as RoleOption;
@@ -90,6 +93,75 @@ export const Header = (): JSX.Element => {
     if (!role || !roleLinkMap[role as Exclude<RoleOption, undefined>]) return [];
     return roleLinkMap[role as Exclude<RoleOption, undefined>];
   }, [role]);
+  
+  // Detectar si estamos en una página de dashboard o páginas públicas con sidebar
+  const isDashboardPage = pathname?.startsWith('/dashboard/');
+  const isPublicPageWithSidebar = pathname === '/classes' || pathname === '/schools';
+  const hasSidebar = isDashboardPage || isPublicPageWithSidebar;
+  
+  // Detectar el estado del sidebar
+  useEffect(() => {
+    if (!hasSidebar) {
+      setSidebarWidth(0);
+      setIsSidebarCollapsed(false);
+      return;
+    }
+
+    const updateSidebarState = () => {
+      // Intentar encontrar el sidebar según la página
+      let sidebarId = '';
+      if (pathname === '/classes' || pathname === '/schools') {
+        sidebarId = 'public-sidebar';
+      } else if (pathname?.startsWith('/dashboard/student')) {
+        sidebarId = 'student-sidebar';
+      } else if (pathname?.startsWith('/dashboard/school')) {
+        sidebarId = 'school-sidebar';
+      } else if (pathname?.startsWith('/dashboard/instructor')) {
+        sidebarId = 'instructor-sidebar';
+      } else if (pathname?.startsWith('/dashboard/admin')) {
+        sidebarId = 'admin-sidebar';
+      }
+
+      if (sidebarId) {
+        const sidebar = document.getElementById(sidebarId) as HTMLElement;
+        if (sidebar) {
+          const isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
+          const width = isCollapsed ? 80 : 256;
+          setSidebarWidth(width);
+          setIsSidebarCollapsed(isCollapsed);
+        }
+      }
+    };
+
+    updateSidebarState();
+    const interval = setInterval(updateSidebarState, 100);
+    const observer = new MutationObserver(updateSidebarState);
+    
+    let sidebarId = '';
+    if (pathname === '/classes' || pathname === '/schools') {
+      sidebarId = 'public-sidebar';
+    } else if (pathname?.startsWith('/dashboard/student')) {
+      sidebarId = 'student-sidebar';
+    } else if (pathname?.startsWith('/dashboard/school')) {
+      sidebarId = 'school-sidebar';
+    } else if (pathname?.startsWith('/dashboard/instructor')) {
+      sidebarId = 'instructor-sidebar';
+    } else if (pathname?.startsWith('/dashboard/admin')) {
+      sidebarId = 'admin-sidebar';
+    }
+    
+    if (sidebarId) {
+      const sidebar = document.getElementById(sidebarId);
+      if (sidebar) {
+        observer.observe(sidebar, { attributes: true, attributeFilter: ['data-collapsed'] });
+      }
+    }
+
+    return () => {
+      clearInterval(interval);
+      observer.disconnect();
+    };
+  }, [pathname, hasSidebar]);
   
   const handleToggleMenu = () => setIsMenuOpen((prev) => !prev);
   
@@ -124,19 +196,41 @@ export const Header = (): JSX.Element => {
     if (href === '/') return pathname === href;
     return pathname?.startsWith(href);
   };
+  
+  // Calcular el margen izquierdo solo en desktop y cuando hay sidebar
+  const headerMarginLeft = hasSidebar && typeof window !== 'undefined' && window.innerWidth >= 1024 
+    ? `${sidebarWidth}px` 
+    : '0';
+  
+  // Calcular el ancho del contenedor para que se ajuste al sidebar
+  const containerWidth = hasSidebar && typeof window !== 'undefined' && window.innerWidth >= 1024
+    ? `calc(100% - ${sidebarWidth}px)`
+    : '100%';
+  
   return (
-    <header className={containerClass}>
+    <header 
+      className={containerClass}
+      style={{ 
+        marginLeft: headerMarginLeft,
+        width: containerWidth,
+        transition: 'margin-left 0.3s ease-in-out, width 0.3s ease-in-out'
+      }}
+    >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF3366] to-[#D12352] shadow-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+          <Link href="/" className="flex items-center">
+            <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+              <Image 
+                src="/logoclasedesusrf.png" 
+                alt="clasesde.pe" 
+                width={40} 
+                height={40} 
+                className="w-full h-full object-contain"
+                unoptimized
+              />
             </div>
-            <span className="text-2xl font-bold text-white">clasesde.pe</span>
           </Link>
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-8">
             {baseLinks.map((link) => (
               <Link key={link.href} href={link.href} className={navLinkClass}>
                 {link.label}
@@ -149,7 +243,7 @@ export const Header = (): JSX.Element => {
               </Link>
             ))}
           </nav>
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             {session ? (
               <>
                 <span className="text-sm text-[#F6F7F8]/80">{(session as any).user?.name}</span>
@@ -172,9 +266,10 @@ export const Header = (): JSX.Element => {
               </>
             )}
           </div>
+          {/* Botón hamburguesa - solo para menú móvil (pantallas < 1024px) */}
           <button 
             aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"} 
-            className="md:hidden p-2 rounded-lg text-[#F6F7F8] hover:text-[#FF3366] hover:bg-white/10 transition-all duration-200 active:scale-95" 
+            className="lg:hidden p-2 rounded-lg text-[#F6F7F8] hover:text-[#FF3366] hover:bg-white/10 transition-all duration-200 active:scale-95" 
             onClick={handleToggleMenu}
           >
             {isMenuOpen ? (
@@ -184,9 +279,9 @@ export const Header = (): JSX.Element => {
             )}
           </button>
         </div>
-        {/* Mobile Menu - Slide Down Animation */}
+        {/* Mobile Menu - Slide Down Animation (solo en pantallas < 1024px) */}
         <div 
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+          className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
             isMenuOpen ? 'max-h-[800px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
           }`}
         >
@@ -262,8 +357,15 @@ export const Header = (): JSX.Element => {
                 <div className={`flex flex-col space-y-3 pt-4 mt-4 ${mobileSectionBorderClass}`}>
                   {/* User Info Card */}
                   <div className="flex items-center space-x-3 px-4 py-3 bg-white/5 rounded-xl backdrop-blur-sm">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF3366] to-[#D12352] flex items-center justify-center shadow-lg">
-                      <User className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                      <Image 
+                        src="/logoclasedesusrf.png" 
+                        alt="clasesde.pe" 
+                        width={40} 
+                        height={40} 
+                        className="w-full h-full object-contain"
+                        unoptimized
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">

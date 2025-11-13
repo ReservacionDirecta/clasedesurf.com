@@ -752,10 +752,15 @@ export default function StudentProfile() {
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
                         <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
-                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                          <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                            <Image 
+                              src="/logoclasedesusrf.png" 
+                              alt="Clase" 
+                              width={48} 
+                              height={48} 
+                              className="w-full h-full object-contain"
+                              unoptimized
+                            />
                           </div>
                           <div>
                             <h4 className="font-semibold text-gray-900">{attendance.title}</h4>
