@@ -112,17 +112,21 @@ const SchoolCard = ({ school }: SchoolCardProps) => {
 
         <div className="mt-auto flex flex-col gap-3 sm:flex-row">
           <Link
-            href={`/schools/${id}`}
-            className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#FF3366] to-[#D12352] px-4 py-3 text-sm font-bold text-white shadow-lg transition-transform duration-300 hover:-translate-y-1 hover:from-[#D12352] hover:to-[#FF3366]"
-          >
-            Ver escuela
-          </Link>
-          <Link
             href={`/classes?schoolId=${id}`}
-            className="flex w-full items-center justify-center rounded-xl border-2 border-[#2EC4B6] px-4 py-3 text-sm font-bold text-[#011627] transition-transform duration-300 hover:-translate-y-1 hover:border-[#1BAA9C] hover:bg-[#E9FBF7]"
+            className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#FF3366] to-[#D12352] px-4 py-3 text-sm font-bold text-white shadow-lg transition-transform duration-300 hover:-translate-y-1 hover:from-[#D12352] hover:to-[#FF3366]"
           >
             Ver clases
           </Link>
+          {website && (
+            <Link
+              href={website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center rounded-xl border-2 border-[#2EC4B6] px-4 py-3 text-sm font-bold text-[#011627] transition-transform duration-300 hover:-translate-y-1 hover:border-[#1BAA9C] hover:bg-[#E9FBF7]"
+            >
+              Sitio web
+            </Link>
+          )}
         </div>
       </div>
     </article>

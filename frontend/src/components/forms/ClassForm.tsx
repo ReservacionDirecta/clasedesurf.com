@@ -30,6 +30,9 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
     instructor: classData?.instructor || '',
     studentDetails: ''
   });
+  
+  // Estado local para el precio mientras se escribe (permite string vacío)
+  const [priceInput, setPriceInput] = useState<string>(String(formData.price || ''));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -227,8 +230,31 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
           <input
             type="number"
             name="price"
-            value={formData.price}
-            onChange={handleChange}
+            value={priceInput}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Permitir cualquier valor mientras se escribe
+              setPriceInput(value);
+              // Actualizar formData solo si es un número válido
+              if (value !== '' && value !== '.') {
+                const numValue = parseFloat(value);
+                if (!isNaN(numValue)) {
+                  setFormData(prev => ({ ...prev, price: numValue }));
+                }
+              }
+            }}
+            onBlur={(e) => {
+              // Asegurar que el valor sea un número válido al perder el foco
+              const value = e.target.value;
+              if (value === '' || value === '.' || isNaN(parseFloat(value))) {
+                setPriceInput('0');
+                setFormData(prev => ({ ...prev, price: 0 }));
+              } else {
+                const numValue = parseFloat(value);
+                setPriceInput(String(numValue));
+                setFormData(prev => ({ ...prev, price: numValue }));
+              }
+            }}
             min="0"
             step="0.01"
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${

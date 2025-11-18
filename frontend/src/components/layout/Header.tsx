@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,7 +15,22 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  ChevronDown,
+  // Admin icons
+  BarChart3,
+  Users,
+  Calendar,
+  CreditCard,
+  FileText,
+  Settings,
+  Globe,
+  Eye,
+  // Instructor icons
+  BookOpen,
+  DollarSign,
+  // School icons
+  GraduationCap
 } from "lucide-react";
 
 type RoleOption = "STUDENT" | "INSTRUCTOR" | "SCHOOL_ADMIN" | "ADMIN" | undefined;
@@ -23,145 +38,85 @@ type RoleOption = "STUDENT" | "INSTRUCTOR" | "SCHOOL_ADMIN" | "ADMIN" | undefine
 const navLinkClass = "text-[#F6F7F8]/80 hover:text-[#FF3366] transition-colors";
 const headerOutlineButtonClass = "!bg-transparent !text-white !border-white/30 hover:!text-[#011627] hover:!bg-white/10 focus:!bg-white/10";
 const primaryButtonClass = "bg-gradient-to-r from-[#FF3366] to-[#D12352] hover:from-[#D12352] hover:to-[#FF3366]";
-const containerClass = "bg-[#011627]/95 backdrop-blur-sm shadow-lg sticky top-0 z-40 border-b border-white/10";
+const containerClass = "bg-[#011627]/95 backdrop-blur-sm shadow-lg sticky top-0 z-[60] border-b border-white/10";
 const mobileSectionBorderClass = "border-t border-white/10";
 
-const roleLinkMap: Record<Exclude<RoleOption, undefined>, { href: string; icon: JSX.Element; label: string }[]> = {
-  STUDENT: [
-    {
-      href: "/dashboard/student",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-      label: "Dashboard"
-    }
-  ],
-  INSTRUCTOR: [
-    {
-      href: "/dashboard/instructor",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      ),
-      label: "Dashboard Instructor"
-    }
-  ],
-  SCHOOL_ADMIN: [
-    {
-      href: "/dashboard/school",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-      ),
-      label: "Dashboard Escuela"
-    }
-  ],
-  ADMIN: [
-    {
-      href: "/dashboard/admin",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-      label: "Dashboard Admin"
-    }
-  ]
-};
-
+// Base navigation links (reduced - solo las más importantes)
 const baseLinks = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/classes", label: "Clases", icon: Waves },
+];
+
+// Additional public links (en menú desplegable)
+const additionalPublicLinks = [
   { href: "/schools", label: "Escuelas", icon: School },
   { href: "/contact", label: "Contacto", icon: Mail }
 ];
 
+// Role-specific navigation items
+const roleNavigationMap: Record<Exclude<RoleOption, undefined>, { href: string; icon: React.ComponentType<{ className?: string }>; label: string }[]> = {
+  ADMIN: [
+    { href: "/dashboard/admin", icon: Home, label: "Dashboard" },
+    { href: "/dashboard/admin/overview", icon: BarChart3, label: "Overview" },
+    { href: "/dashboard/admin/users", icon: Users, label: "Users" },
+    { href: "/dashboard/admin/schools", icon: School, label: "Schools" },
+    { href: "/dashboard/admin/classes", icon: Waves, label: "Classes" },
+    { href: "/dashboard/admin/reservations", icon: Calendar, label: "Reservations" },
+    { href: "/dashboard/admin/payments", icon: CreditCard, label: "Payments" },
+    { href: "/dashboard/admin/reports", icon: FileText, label: "Reports" },
+    { href: "/dashboard/admin/settings", icon: Settings, label: "Settings" },
+  ],
+  SCHOOL_ADMIN: [
+    { href: "/dashboard/school", icon: Home, label: "Dashboard" },
+    { href: "/dashboard/school/classes", icon: Waves, label: "Clases" },
+    { href: "/dashboard/school/instructors", icon: GraduationCap, label: "Instructores" },
+    { href: "/dashboard/school/students", icon: Users, label: "Estudiantes" },
+    { href: "/dashboard/school/calendar", icon: Calendar, label: "Calendario" },
+    { href: "/dashboard/school/reservations", icon: Calendar, label: "Reservas" },
+    { href: "/dashboard/school/payments", icon: CreditCard, label: "Pagos" },
+    { href: "/dashboard/school/profile", icon: Settings, label: "Perfil" },
+  ],
+  INSTRUCTOR: [
+    { href: "/dashboard/instructor", icon: Home, label: "Dashboard" },
+    { href: "/dashboard/instructor/profile", icon: User, label: "Mi Perfil" },
+    { href: "/dashboard/instructor/classes", icon: BookOpen, label: "Mis Clases" },
+    { href: "/dashboard/instructor/students", icon: Users, label: "Estudiantes" },
+    { href: "/dashboard/instructor/earnings", icon: DollarSign, label: "Ganancias" },
+  ],
+  STUDENT: [
+    { href: "/dashboard/student", icon: Home, label: "Dashboard" },
+    { href: "/dashboard/student/profile", icon: User, label: "Mi Perfil" },
+    { href: "/reservations", icon: Calendar, label: "Mis Reservas" },
+  ],
+};
+
 export const Header = (): JSX.Element => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(0);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const pathname = usePathname();
   const role = (session as any)?.user?.role as RoleOption;
+  
   const roleLinks = useMemo(() => {
-    if (!role || !roleLinkMap[role as Exclude<RoleOption, undefined>]) return [];
-    return roleLinkMap[role as Exclude<RoleOption, undefined>];
+    if (!role || !roleNavigationMap[role as Exclude<RoleOption, undefined>]) return [];
+    return roleNavigationMap[role as Exclude<RoleOption, undefined>];
   }, [role]);
-  
-  // Detectar si estamos en una página de dashboard o páginas públicas con sidebar
-  const isDashboardPage = pathname?.startsWith('/dashboard/');
-  const isPublicPageWithSidebar = pathname === '/classes' || pathname === '/schools';
-  const hasSidebar = isDashboardPage || isPublicPageWithSidebar;
-  
-  // Detectar el estado del sidebar
+
+  // Cerrar menú "Más" al hacer clic fuera
   useEffect(() => {
-    if (!hasSidebar) {
-      setSidebarWidth(0);
-      setIsSidebarCollapsed(false);
-      return;
-    }
-
-    const updateSidebarState = () => {
-      // Intentar encontrar el sidebar según la página
-      let sidebarId = '';
-      if (pathname === '/classes' || pathname === '/schools') {
-        sidebarId = 'public-sidebar';
-      } else if (pathname?.startsWith('/dashboard/student')) {
-        sidebarId = 'student-sidebar';
-      } else if (pathname?.startsWith('/dashboard/school')) {
-        sidebarId = 'school-sidebar';
-      } else if (pathname?.startsWith('/dashboard/instructor')) {
-        sidebarId = 'instructor-sidebar';
-      } else if (pathname?.startsWith('/dashboard/admin')) {
-        sidebarId = 'admin-sidebar';
-      }
-
-      if (sidebarId) {
-        const sidebar = document.getElementById(sidebarId) as HTMLElement;
-        if (sidebar) {
-          const isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
-          const width = isCollapsed ? 80 : 256;
-          setSidebarWidth(width);
-          setIsSidebarCollapsed(isCollapsed);
-        }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setMoreMenuOpen(false);
       }
     };
 
-    updateSidebarState();
-    const interval = setInterval(updateSidebarState, 100);
-    const observer = new MutationObserver(updateSidebarState);
-    
-    let sidebarId = '';
-    if (pathname === '/classes' || pathname === '/schools') {
-      sidebarId = 'public-sidebar';
-    } else if (pathname?.startsWith('/dashboard/student')) {
-      sidebarId = 'student-sidebar';
-    } else if (pathname?.startsWith('/dashboard/school')) {
-      sidebarId = 'school-sidebar';
-    } else if (pathname?.startsWith('/dashboard/instructor')) {
-      sidebarId = 'instructor-sidebar';
-    } else if (pathname?.startsWith('/dashboard/admin')) {
-      sidebarId = 'admin-sidebar';
+    if (moreMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-    
-    if (sidebarId) {
-      const sidebar = document.getElementById(sidebarId);
-      if (sidebar) {
-        observer.observe(sidebar, { attributes: true, attributeFilter: ['data-collapsed'] });
-      }
-    }
-
-    return () => {
-      clearInterval(interval);
-      observer.disconnect();
-    };
-  }, [pathname, hasSidebar]);
+  }, [moreMenuOpen]);
   
   const handleToggleMenu = () => setIsMenuOpen((prev) => !prev);
   
@@ -197,25 +152,8 @@ export const Header = (): JSX.Element => {
     return pathname?.startsWith(href);
   };
   
-  // Calcular el margen izquierdo solo en desktop y cuando hay sidebar
-  const headerMarginLeft = hasSidebar && typeof window !== 'undefined' && window.innerWidth >= 1024 
-    ? `${sidebarWidth}px` 
-    : '0';
-  
-  // Calcular el ancho del contenedor para que se ajuste al sidebar
-  const containerWidth = hasSidebar && typeof window !== 'undefined' && window.innerWidth >= 1024
-    ? `calc(100% - ${sidebarWidth}px)`
-    : '100%';
-  
   return (
-    <header 
-      className={containerClass}
-      style={{ 
-        marginLeft: headerMarginLeft,
-        width: containerWidth,
-        transition: 'margin-left 0.3s ease-in-out, width 0.3s ease-in-out'
-      }}
-    >
+    <header className={containerClass}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center">
@@ -230,19 +168,103 @@ export const Header = (): JSX.Element => {
               />
             </div>
           </Link>
-          <nav className="hidden lg:flex items-center space-x-8">
-            {baseLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={navLinkClass}>
-                {link.label}
-              </Link>
-            ))}
-            {roleLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={`flex items-center space-x-1 ${navLinkClass}`}>
-                {link.icon}
-                <span>{link.label}</span>
-              </Link>
-            ))}
+          
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-1">
+            {/* Base Links - Solo las más importantes */}
+            {baseLinks.map((link) => {
+              const IconComponent = link.icon;
+              const active = isActive(link.href);
+              return (
+                <Link 
+                  key={link.href} 
+                  href={link.href} 
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+                    active 
+                      ? 'text-[#FF3366] bg-white/10' 
+                      : navLinkClass
+                  }`}
+                >
+                  <IconComponent className="w-5 h-5" />
+                  <span>{link.label}</span>
+                </Link>
+              );
+            })}
+
+            {/* Menú "Más" para opciones públicas adicionales */}
+            {additionalPublicLinks.length > 0 && (
+              <div className="relative" ref={moreMenuRef}>
+                <button
+                  onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 ${
+                    moreMenuOpen
+                      ? 'text-[#FF3366] bg-white/10'
+                      : navLinkClass
+                  }`}
+                >
+                  <span>Más</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {moreMenuOpen && (
+                  <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[200px] py-2 animate-fade-in">
+                    {additionalPublicLinks.map((link) => {
+                      const IconComponent = link.icon;
+                      const active = isActive(link.href);
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={() => setMoreMenuOpen(false)}
+                          className={`flex items-center space-x-3 px-4 py-3 transition-all duration-200 ${
+                            active
+                              ? 'bg-[#FF3366]/10 text-[#FF3366]'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <IconComponent className="w-5 h-5" />
+                          <span className="font-medium">{link.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Separador visual si hay opciones de perfil */}
+            {roleLinks.length > 0 && (
+              <div className="h-6 w-px bg-white/20 mx-2"></div>
+            )}
+            
+            {/* Role-specific Links - Icon only with hover tooltip */}
+            {roleLinks.map((link) => {
+              const IconComponent = link.icon;
+              const active = isActive(link.href);
+              return (
+                <div key={link.href} className="relative group">
+                  <Link 
+                    href={link.href} 
+                    className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ${
+                      active 
+                        ? 'text-[#FF3366] bg-white/10' 
+                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/10'
+                    }`}
+                  >
+                    <IconComponent className="w-5 h-5" />
+                  </Link>
+                  {/* Tooltip on hover */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#011627] text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
+                    {link.label}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-[#011627]"></div>
+                  </div>
+                </div>
+              );
+            })}
           </nav>
+          
+          {/* Desktop User Actions */}
           <div className="hidden lg:flex items-center space-x-4">
             {session ? (
               <>
@@ -266,7 +288,8 @@ export const Header = (): JSX.Element => {
               </>
             )}
           </div>
-          {/* Botón hamburguesa - solo para menú móvil (pantallas < 1024px) */}
+          
+          {/* Mobile Menu Button */}
           <button 
             aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"} 
             className="lg:hidden p-2 rounded-lg text-[#F6F7F8] hover:text-[#FF3366] hover:bg-white/10 transition-all duration-200 active:scale-95" 
@@ -279,7 +302,8 @@ export const Header = (): JSX.Element => {
             )}
           </button>
         </div>
-        {/* Mobile Menu - Slide Down Animation (solo en pantallas < 1024px) */}
+        
+        {/* Mobile Menu - Slide Down Animation */}
         <div 
           className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
             isMenuOpen ? 'max-h-[800px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0'
@@ -316,12 +340,13 @@ export const Header = (): JSX.Element => {
                     <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
                       active ? 'text-[#FF3366]' : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
                     }`} />
-                </Link>
+                  </Link>
                 );
               })}
-              
-              {/* Role-specific Dashboard Link */}
-              {roleLinks.map((link) => {
+
+              {/* Additional Public Links */}
+              {additionalPublicLinks.map((link) => {
+                const IconComponent = link.icon;
                 const active = isActive(link.href);
                 
                 return (
@@ -341,14 +366,47 @@ export const Header = (): JSX.Element => {
                           ? 'bg-[#FF3366]/20 text-[#FF3366]' 
                           : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
                       }`}>
-                  {link.icon}
+                        <IconComponent className="w-5 h-5" />
                       </div>
                       <span className="font-medium">{link.label}</span>
                     </div>
                     <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
                       active ? 'text-[#FF3366]' : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
                     }`} />
-                </Link>
+                  </Link>
+                );
+              })}
+              
+              {/* Role-specific Dashboard Links */}
+              {roleLinks.map((link) => {
+                const IconComponent = link.icon;
+                const active = isActive(link.href);
+                
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
+                      active
+                        ? 'bg-white/10 text-[#FF3366] shadow-sm'
+                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg transition-all duration-200 ${
+                        active 
+                          ? 'bg-[#FF3366]/20 text-[#FF3366]' 
+                          : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
+                      }`}>
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+                      <span className="font-medium">{link.label}</span>
+                    </div>
+                    <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
+                      active ? 'text-[#FF3366]' : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
+                    }`} />
+                  </Link>
                 );
               })}
               

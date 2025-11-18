@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { PublicSidebar } from '@/components/layout/PublicSidebar'
 import { MobileBottomNav } from '@/components/navigation/MobileBottomNav'
 import SchoolCard from '@/components/schools/school-card'
 import type { School } from '@/types'
@@ -135,39 +134,8 @@ export default function SchoolsPage() {
     setSelectedLocation(event.target.value)
   }
 
-  const [sidebarWidth, setSidebarWidth] = useState(256);
-
-  useEffect(() => {
-    const updateWidth = () => {
-      const sidebar = document.getElementById('public-sidebar') as HTMLElement;
-      if (sidebar) {
-        const isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
-        setSidebarWidth(isCollapsed ? 80 : 256);
-      }
-    };
-
-    updateWidth();
-    const interval = setInterval(updateWidth, 100);
-    const observer = new MutationObserver(updateWidth);
-    
-    const sidebar = document.getElementById('public-sidebar');
-    if (sidebar) {
-      observer.observe(sidebar, { attributes: true, attributeFilter: ['data-collapsed'] });
-    }
-
-    return () => {
-      clearInterval(interval);
-      observer.disconnect();
-    };
-  }, []);
-
   return (
-    <>
-      <PublicSidebar />
-      <div 
-        className="min-h-screen bg-[#F6F7F8] pb-16 transition-all duration-300"
-        style={{ marginLeft: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${sidebarWidth}px` : '0' }}
-      >
+    <div className="min-h-screen bg-[#F6F7F8] pb-16">
         <header className="bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] py-12 sm:py-16">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-4xl text-center text-white">
@@ -264,8 +232,7 @@ export default function SchoolsPage() {
             </div>
           )}
         </main>
-      </div>
       <MobileBottomNav />
-    </>
+    </div>
   )
 }

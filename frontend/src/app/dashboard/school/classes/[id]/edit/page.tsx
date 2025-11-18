@@ -57,6 +57,8 @@ export default function EditClassPage() {
     instructor: '',
     images: ['']
   });
+  // Estado local para el precio mientras se escribe (permite string vacío)
+  const [priceInput, setPriceInput] = useState<string>('25');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -118,6 +120,8 @@ export default function EditClassPage() {
         instructor: currentClass.instructor || '',
         images: currentClass.images && currentClass.images.length > 0 ? currentClass.images : ['']
       });
+      // Actualizar el estado local del precio
+      setPriceInput(String(currentClass.price || '25'));
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err instanceof Error ? err.message : 'Error loading class data');
@@ -537,8 +541,31 @@ export default function EditClassPage() {
               <input
                 type="number"
                 id="price"
-                value={formData.price}
-                onChange={(e) => handleInputChange('price', Number(e.target.value))}
+                value={priceInput}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Permitir cualquier valor mientras se escribe
+                  setPriceInput(value);
+                  // Actualizar formData solo si es un número válido
+                  if (value !== '' && value !== '.') {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue)) {
+                      handleInputChange('price', numValue);
+                    }
+                  }
+                }}
+                onBlur={(e) => {
+                  // Asegurar que el valor sea un número válido al perder el foco
+                  const value = e.target.value;
+                  if (value === '' || value === '.' || isNaN(parseFloat(value))) {
+                    setPriceInput('0');
+                    handleInputChange('price', 0);
+                  } else {
+                    const numValue = parseFloat(value);
+                    setPriceInput(String(numValue));
+                    handleInputChange('price', numValue);
+                  }
+                }}
                 min="0"
                 step="0.01"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ClassCard } from '@/components/classes/ClassCard'
 import { BookingModal } from '@/components/booking/BookingModal'
 import { AirbnbSearchBar, type FilterValues } from '@/components/classes/AirbnbSearchBar'
-import { PublicSidebar } from '@/components/layout/PublicSidebar'
 import { MobileBottomNav } from '@/components/navigation/MobileBottomNav'
 import { apiService, transformApiClassToFrontend } from '@/services/api'
 
@@ -330,39 +329,8 @@ export default function ClassesPage() {
     }
   }
 
-  const [sidebarWidth, setSidebarWidth] = useState(256);
-
-  useEffect(() => {
-    const updateWidth = () => {
-      const sidebar = document.getElementById('public-sidebar') as HTMLElement;
-      if (sidebar) {
-        const isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
-        setSidebarWidth(isCollapsed ? 80 : 256);
-      }
-    };
-
-    updateWidth();
-    const interval = setInterval(updateWidth, 100);
-    const observer = new MutationObserver(updateWidth);
-    
-    const sidebar = document.getElementById('public-sidebar');
-    if (sidebar) {
-      observer.observe(sidebar, { attributes: true, attributeFilter: ['data-collapsed'] });
-    }
-
-    return () => {
-      clearInterval(interval);
-      observer.disconnect();
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-[#F6F7F8]">
-      <PublicSidebar />
-      <div 
-        className="transition-all duration-300"
-        style={{ marginLeft: typeof window !== 'undefined' && window.innerWidth >= 1024 ? `${sidebarWidth}px` : '0' }}
-      >
         {renderHero()}
 
         <main className="relative -mt-12 pb-20">
@@ -412,7 +380,6 @@ export default function ClassesPage() {
           onSubmit={handleBookingSubmit}
         />
       )}
-      </div>
       <MobileBottomNav />
     </div>
   )

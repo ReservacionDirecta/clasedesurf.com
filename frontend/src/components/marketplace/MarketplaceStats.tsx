@@ -62,115 +62,120 @@ export function MarketplaceStats() {
         <div className="absolute bottom-10 right-10 w-18 h-18 bg-blue-400 rounded-full blur-xl"></div>
       </div>
 
-      <div className="relative z-10">
-        {/* Mobile-Optimized Header */}
-        <div className="text-center mb-4 sm:mb-6">
-          <div className="inline-flex items-center justify-center mb-2 sm:mb-3">
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg flex items-center">
-              <StarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              Plataforma Confiable
-            </div>
-          </div>
-
-          <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 mb-2 sm:mb-3 leading-tight px-2 sm:px-0">
-            Conectando Estudiantes con <span className="text-teal-700">Expertos</span>
-          </h2>
-
-          <div className="max-w-3xl mx-auto px-4 sm:px-0">
-            <p className="text-sm xs:text-base sm:text-lg md:text-xl text-white font-medium leading-relaxed">
-              La plataforma que conecta estudiantes con instructores expertos en todo Perú
+      {/* Sección para Escuelas - Diseño basado en referencia */}
+      <div className="relative mt-6 sm:mt-8">
+        <div className="bg-gradient-to-r from-blue-50 via-cyan-50 to-white rounded-3xl p-6 sm:p-8 lg:p-12 shadow-2xl border border-white/60">
+          {/* Header Section */}
+          <div className="text-center mb-8 sm:mb-10">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-[#011627] mb-3 sm:mb-4 leading-tight">
+              PARA ESCUELAS: IMPULSA TU NEGOCIO
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-[#46515F] font-medium max-w-3xl mx-auto leading-relaxed">
+              Únete a clasesde.pe y transforma tu gestión y promoción de tu escuela
             </p>
           </div>
-        </div>
 
-        {/* Mobile-Optimized Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className="group relative bg-white/80 backdrop-blur-sm rounded-lg sm:rounded-xl p-3 sm:p-4 text-center hover:bg-white hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-white/50"
-            >
-              {/* Gradient Background on Hover */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300`}></div>
-
+          {/* Feature Cards - 3 Cards Horizontal */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
+            {/* Card 1: Perfil Profesional */}
+            <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 relative overflow-hidden">
+              {/* Background Image - Subtle */}
+              <div className="absolute inset-0 opacity-5 pointer-events-none">
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-full blur-2xl"></div>
+              </div>
               <div className="relative z-10">
-                {/* Value with Gradient */}
-                <div className={`text-2xl font-black mb-1 text-transparent bg-clip-text bg-gradient-to-r ${stat.color} group-hover:scale-105 transition-transform duration-300`}>
-                  {stat.value}
+                {/* Icon - Two figures with gear */}
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mb-4 flex items-center justify-center relative">
+                  <svg className="w-full h-full text-[#011627]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    {/* Left figure */}
+                    <circle cx="8" cy="10" r="3" />
+                    <path d="M8 13c-2 0-4 1-4 3v1h8v-1c0-2-2-3-4-3z" />
+                    {/* Right figure */}
+                    <circle cx="16" cy="10" r="3" />
+                    <path d="M16 13c-2 0-4 1-4 3v1h8v-1c0-2-2-3-4-3z" />
+                    {/* Gear icon on right figure */}
+                    <circle cx="16" cy="10" r="2.5" fill="none" strokeWidth={1.5} />
+                    <circle cx="16" cy="10" r="1" fill="currentColor" />
+                    <line x1="16" y1="7.5" x2="16" y2="8.5" strokeWidth={1.5} />
+                    <line x1="18.5" y1="10" x2="17.5" y2="10" strokeWidth={1.5} />
+                    <line x1="16" y1="12.5" x2="16" y2="11.5" strokeWidth={1.5} />
+                    <line x1="13.5" y1="10" x2="14.5" y2="10" strokeWidth={1.5} />
+                  </svg>
                 </div>
-
-                {/* Label */}
-                <div className="text-xs font-bold text-gray-800 mb-1 group-hover:text-gray-900 transition-colors">
-                  {stat.label}
-                </div>
-
+                {/* Title */}
+                <h3 className="text-lg sm:text-xl font-black text-[#011627] mb-2">
+                  PERFIL PROFESIONAL
+                </h3>
                 {/* Description */}
-                <div className="text-xs text-gray-600 group-hover:text-gray-700 transition-colors">
-                  {stat.description}
-                </div>
+                <p className="text-sm sm:text-base text-[#46515F] leading-relaxed">
+                  Crea tu página con horarios, servicios y fotos
+                </p>
               </div>
-
-              {/* Subtle Border Glow */}
-              <div className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${stat.color} opacity-0 group-hover:opacity-20 blur-sm transition-opacity duration-300 -z-10`}></div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Mobile-Optimized Call to Action for Schools */}
-      <div className="relative">
-        <div className="bg-[#F6F7F8] rounded-3xl p-5 sm:p-6 shadow-2xl border border-white/40">
-          {/* Mobile-First Layout */}
-          <div className="text-center mb-4">
-            {/* Icon */}
-            <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg mx-auto mb-4 bg-gradient-to-br from-[#2EC4B6] to-[#FF3366]">
-              <EquipmentIcon className="w-8 h-8 text-white drop-shadow" />
+            {/* Card 2: Gestión Sencilla */}
+            <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 relative overflow-hidden">
+              <div className="absolute inset-0 opacity-5 pointer-events-none">
+                <div className="absolute bottom-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full blur-2xl"></div>
+              </div>
+              <div className="relative z-10">
+                {/* Icon - Calendar with checkmark */}
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mb-4 flex items-center justify-center">
+                  <svg className="w-full h-full text-[#011627]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    {/* Calendar */}
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                    {/* Checkmark in a square */}
+                    <rect x="7" y="12" width="6" height="6" rx="1" fill="currentColor" opacity="0.2" />
+                    <path d="M9 14l1.5 1.5L13 11" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                {/* Title */}
+                <h3 className="text-lg sm:text-xl font-black text-[#011627] mb-2">
+                  GESTIÓN SENCILLA
+                </h3>
+                {/* Description */}
+                <p className="text-sm sm:text-base text-[#46515F] leading-relaxed">
+                  Administra reservas, pagos y comunicados
+                </p>
+              </div>
             </div>
-            
-            {/* Content */}
-            <h3 className="text-xl sm:text-2xl font-black text-[#011627] mb-2 leading-tight">
-              ¿Eres instructor o tienes una academia?
-            </h3>
-            <p className="text-sm sm:text-base text-[#46515F] mb-6 leading-relaxed max-w-md mx-auto">
-              Únete a clasesde.pe y conecta con estudiantes de todo el país con una experiencia de onboarding guiada
-            </p>
-            
-            {/* Buttons - Mobile Optimized */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-6">
-              <Link
-                href="/register"
-                className="w-full sm:w-auto bg-gradient-to-r from-[#FF3366] to-[#D12352] text-white px-8 py-4 rounded-xl font-bold text-base hover:from-[#D12352] hover:to-[#FF3366] transition-all duration-300 flex items-center justify-center shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-              >
-                <LightningIcon className="w-5 h-5 mr-2" />
-                Registrarse ahora
-              </Link>
-              <button
-                type="button"
-                onClick={handleOpenInfoModal}
-                className="w-full sm:w-auto border-2 border-[#2EC4B6] text-[#011627] px-8 py-4 rounded-xl font-bold text-base hover:bg-[#E9FBF7] hover:border-[#1BAA9C] transition-all duration-300 flex items-center justify-center hover:shadow-lg transform hover:-translate-y-1"
-              >
-                <EquipmentIcon className="w-5 h-5 mr-2" />
-                Más Info
-              </button>
+
+            {/* Card 3: Mayor Visibilidad */}
+            <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 relative overflow-hidden">
+              {/* Background Image - More visible on this card */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none">
+                <div className="absolute bottom-0 right-0 w-40 h-40 bg-gradient-to-br from-orange-400 to-red-400 rounded-full blur-2xl"></div>
+              </div>
+              <div className="relative z-10">
+                {/* Icon */}
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mb-4 flex items-center justify-center">
+                  <svg className="w-full h-full text-[#011627]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                  </svg>
+                </div>
+                {/* Title */}
+                <h3 className="text-lg sm:text-xl font-black text-[#011627] mb-2">
+                  MAYOR VISIBILIDAD
+                </h3>
+                {/* Description */}
+                <p className="text-sm sm:text-base text-[#46515F] leading-relaxed">
+                  Llega a miles de nuevos estudiantes
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Trust Indicators - Mobile Optimized */}
-          <div className="pt-5 border-t border-[#E2E8F0]">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center">
-              <div className="flex items-center justify-center bg-white/70 rounded-xl px-4 py-3 shadow-sm">
-                <CheckIcon className="w-4 h-4 text-[#2EC4B6] mr-2 flex-shrink-0" />
-                <span className="text-sm font-semibold text-[#011627]">Sin comisiones</span>
-              </div>
-              <div className="flex items-center justify-center bg-white/70 rounded-xl px-4 py-3 shadow-sm">
-                <CheckIcon className="w-4 h-4 text-[#2EC4B6] mr-2 flex-shrink-0" />
-                <span className="text-sm font-semibold text-[#011627]">Setup gratuito</span>
-              </div>
-              <div className="flex items-center justify-center bg-white/70 rounded-xl px-4 py-3 shadow-sm">
-                <CheckIcon className="w-4 h-4 text-[#2EC4B6] mr-2 flex-shrink-0" />
-                <span className="text-sm font-semibold text-[#011627]">Soporte 24/7</span>
-              </div>
-            </div>
+          {/* CTA Button */}
+          <div className="text-center">
+            <Link
+              href="/register"
+              className="inline-block bg-gradient-to-r from-orange-500 to-[#FF3366] hover:from-[#FF3366] hover:to-orange-600 text-white font-black text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5 rounded-xl sm:rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+            >
+              REGISTRA TU ESCUELA
+            </Link>
           </div>
         </div>
       </div>
