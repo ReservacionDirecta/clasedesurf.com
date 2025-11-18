@@ -20,6 +20,9 @@ interface School {
   address?: string;
   logo?: string;
   coverImage?: string;
+  foundedYear?: number;
+  rating?: number;
+  totalReviews?: number;
 }
 
 export default function SchoolProfilePage() {
@@ -42,31 +45,15 @@ export default function SchoolProfilePage() {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
+      // Add cache: 'no-store' to prevent Next.js from caching the response
+      const res = await fetch('/api/schools/my-school', { 
+        headers,
+        cache: 'no-store' // Force fresh data from server
+      });
+      if (!res.ok) throw new Error('Failed to fetch school');
       
-      // Fetch classes first to determine which school has classes
-      const classesRes = await fetch('/api/classes', { headers });
-      const classesData = classesRes.ok ? await classesRes.json() : [];
-      
-      const res = await fetch('/api/schools', { headers });
-      if (!res.ok) throw new Error('Failed to fetch schools');
-      
-      const schools = await res.json();
-      
-      // Find the school that has classes assigned
-      let selectedSchool = null;
-      
-      for (const school of schools) {
-        const classesForSchool = classesData.filter((cls: any) => cls.schoolId === school.id);
-        if (classesForSchool.length > 0) {
-          selectedSchool = school;
-          break;
-        }
-      }
-      
-      // Fallback to first school if no school has classes
-      if (!selectedSchool && schools.length > 0) {
-        selectedSchool = schools[0];
-      }
+      const selectedSchool = await res.json();
+      console.log('[Frontend] Fetched school data:', JSON.stringify(selectedSchool, null, 2));
       
       if (selectedSchool) {
         setSchool(selectedSchool);
@@ -94,8 +81,12 @@ export default function SchoolProfilePage() {
       return;
     }
 
-    fetchSchool();
-  }, [session, status, router, fetchSchool]);
+    // Only fetch if we don't have school data yet
+    if (!school) {
+      fetchSchool();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, status, router]); // Removed fetchSchool from dependencies to prevent unnecessary refetches
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -110,19 +101,75 @@ export default function SchoolProfilePage() {
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // Using API proxy routes instead of direct backend calls
+      // Only send editable fields, exclude id, rating, totalReviews, createdAt, updatedAt
+      const updateData: any = {
+        name: school.name,
+        location: school.location,
+        description: school.description || null,
+        phone: school.phone || null,
+        email: school.email || null,
+        website: school.website || null,
+        instagram: school.instagram || null,
+        facebook: school.facebook || null,
+        whatsapp: school.whatsapp || null,
+        address: school.address || null,
+        logo: school.logo || null,
+        coverImage: school.coverImage || null
+      };
+      
+      // Handle foundedYear: send null if undefined or null, otherwise send the number
+      if (school.foundedYear !== undefined) {
+        updateData.foundedYear = school.foundedYear ?? null;
+      }
+      
+      console.log('[Frontend] Updating school:', school.id, 'with data:', JSON.stringify(updateData, null, 2));
       
       const res = await fetch(`/api/schools/${school.id}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify(school)
+        body: JSON.stringify(updateData)
       });
+      
+      console.log('[Frontend] Response status:', res.status, res.statusText);
 
-      if (!res.ok) throw new Error('Failed to update school');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Failed to update school' }));
+        console.error('Backend error response:', errorData);
+        const errorMessage = errorData.errors 
+          ? `Error de validación: ${errorData.errors.map((e: any) => `${e.field}: ${e.message}`).join(', ')}`
+          : errorData.message || errorData.error || 'Failed to update school';
+        throw new Error(errorMessage);
+      }
       
       const updatedSchool = await res.json();
+      console.log('[Frontend] Updated school received:', JSON.stringify(updatedSchool, null, 2));
+      
+      // Update the school state with the response from backend
       setSchool(updatedSchool);
       setSuccess(true);
+      
+      // Force a refetch from the server to ensure we have the latest data
+      // This ensures we get the data exactly as stored in the database
+      setTimeout(async () => {
+        console.log('[Frontend] Refetching school data from server...');
+        try {
+          const token = (session as any)?.backendToken;
+          const headers: any = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+          
+          const res = await fetch('/api/schools/my-school', { 
+            headers,
+            cache: 'no-store' // Prevent caching
+          });
+          if (res.ok) {
+            const freshSchool = await res.json();
+            console.log('[Frontend] Fresh school data from server:', JSON.stringify(freshSchool, null, 2));
+            setSchool(freshSchool);
+          }
+        } catch (err) {
+          console.error('[Frontend] Error refetching school:', err);
+        }
+      }, 100);
       
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
@@ -134,9 +181,15 @@ export default function SchoolProfilePage() {
     }
   };
 
-  const handleInputChange = (field: keyof School, value: string) => {
+  const handleInputChange = (field: keyof School, value: string | number | undefined) => {
     if (!school) return;
-    setSchool({ ...school, [field]: value });
+    console.log('[Frontend] handleInputChange:', field, '=', value, 'type:', typeof value);
+    setSchool((prevSchool) => {
+      if (!prevSchool) return prevSchool;
+      const updated = { ...prevSchool, [field]: value };
+      console.log('[Frontend] Updated school state:', JSON.stringify(updated, null, 2));
+      return updated;
+    });
   };
 
   if (status === 'loading' || loading) {
@@ -238,6 +291,35 @@ export default function SchoolProfilePage() {
           </div>
         )}
 
+        {/* School Stats Card */}
+        {school && (
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {school.foundedYear && (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">Años de Antigüedad</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {new Date().getFullYear() - school.foundedYear} años
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Fundada en {school.foundedYear}</p>
+                </div>
+              )}
+              {school.rating !== undefined && school.rating > 0 && (
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-1">Calificación</p>
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <span className="text-2xl font-bold text-yellow-600">{school.rating.toFixed(1)}</span>
+                    <svg className="w-6 h-6 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-gray-500">{school.totalReviews || 0} reseñas</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Basic Information */}
@@ -299,6 +381,28 @@ export default function SchoolProfilePage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Dirección completa de la escuela"
               />
+            </div>
+
+            <div>
+              <label htmlFor="foundedYear" className="block text-sm font-medium text-gray-700 mb-2">
+                Año de Fundación
+              </label>
+              <input
+                type="number"
+                id="foundedYear"
+                min="1900"
+                max={new Date().getFullYear()}
+                value={school.foundedYear || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  handleInputChange('foundedYear', value ? parseInt(value) : undefined);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ej: 2015"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {school.foundedYear ? `${new Date().getFullYear() - school.foundedYear} años de antigüedad` : 'Año en que se fundó la escuela'}
+              </p>
             </div>
 
             {/* Contact Information */}

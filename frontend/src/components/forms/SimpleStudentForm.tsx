@@ -139,20 +139,20 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
 
   return (
     <div>
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <div className="mb-4 sm:mb-6">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1 sm:mb-2">
           Crear Nuevo Estudiante
         </h3>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-xs sm:text-sm">
           Crea un perfil básico para el estudiante. Él podrá completar sus datos cuando inicie sesión.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
         {/* Nombre completo */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            <User className="w-4 h-4 inline mr-1" />
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+            <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1" />
             Nombre completo *
           </label>
           <input
@@ -161,18 +161,18 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
             value={formData.name}
             onChange={handleChange}
             placeholder="Ej: María González"
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-blue-500 ${
               errors.name ? 'border-red-500' : 'border-gray-300'
             }`}
             disabled={isLoading}
           />
-          {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+          {errors.name && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.name}</p>}
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            <Mail className="w-4 h-4 inline mr-1" />
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+            <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1" />
             Email *
           </label>
           <input
@@ -181,20 +181,20 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
             value={formData.email}
             onChange={handleChange}
             placeholder="estudiante@email.com"
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-blue-500 ${
               errors.email ? 'border-red-500' : 'border-gray-300'
             }`}
             disabled={isLoading}
           />
-          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+          {errors.email && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.email}</p>}
         </div>
 
         {/* Teléfono y Fecha de nacimiento en grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Teléfono */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              <Phone className="w-4 h-4 inline mr-1" />
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1" />
               Teléfono (opcional)
             </label>
             <input
@@ -203,15 +203,15 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
               value={formData.phone}
               onChange={handleChange}
               placeholder="+51 999 999 999"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               disabled={isLoading}
             />
           </div>
 
           {/* Fecha de nacimiento */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              <Calendar className="w-4 h-4 inline mr-1" />
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-1" />
               Fecha de nacimiento (opcional)
             </label>
             <input
@@ -219,7 +219,7 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
               name="birthdate"
               value={formData.birthdate}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               disabled={isLoading}
             />
           </div>
@@ -227,7 +227,7 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
 
         {/* Notas */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             Notas (opcional)
           </label>
           <textarea
@@ -236,14 +236,14 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
             onChange={handleChange}
             placeholder="Información adicional sobre el estudiante..."
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
             disabled={isLoading}
           />
         </div>
 
         {/* Contraseña temporal */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
             Contraseña temporal *
           </label>
           <input
@@ -252,39 +252,39 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
             value={formData.password}
             onChange={handleChange}
             placeholder="Mínimo 6 caracteres"
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+            className={`w-full px-3 py-2 text-sm sm:text-base border rounded-lg focus:ring-2 focus:ring-blue-500 ${
               errors.password ? 'border-red-500' : 'border-gray-300'
             }`}
             disabled={isLoading}
           />
-          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+          {errors.password && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.password}</p>}
           <p className="text-gray-500 text-xs mt-1">
             El estudiante podrá cambiar esta contraseña cuando inicie sesión
           </p>
         </div>
 
         {/* Enviar email de bienvenida */}
-        <div className="flex items-center">
+        <div className="flex items-start">
           <input
             type="checkbox"
             name="sendWelcomeEmail"
             checked={formData.sendWelcomeEmail}
             onChange={handleChange}
-            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-0.5 flex-shrink-0"
             disabled={isLoading}
           />
-          <label className="ml-2 text-sm text-gray-700">
+          <label className="ml-2 text-xs sm:text-sm text-gray-700">
             Enviar email de bienvenida con credenciales de acceso
           </label>
         </div>
 
         {/* Información adicional */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
           <div className="flex">
-            <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
-            <div className="text-sm">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm">
               <p className="font-medium text-yellow-800 mb-1">Información importante:</p>
-              <ul className="text-yellow-700 space-y-1">
+              <ul className="text-yellow-700 space-y-0.5 sm:space-y-1">
                 <li>• Se creará un perfil básico con datos mínimos</li>
                 <li>• El estudiante podrá completar su perfil y preferencias</li>
                 <li>• Será asignado automáticamente a tu escuela</li>
@@ -295,19 +295,19 @@ export default function SimpleStudentForm({ onSubmit, onCancel, isLoading }: Sim
         </div>
 
         {/* Botones */}
-        <div className="flex gap-3 justify-end pt-4 border-t">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-end pt-3 sm:pt-4 border-t">
           <button
             type="button"
             onClick={onCancel}
             disabled={isLoading}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 font-medium"
           >
             Cancelar
           </button>
           <button
             type="submit"
             disabled={isLoading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
           >
             {isLoading ? (
               <>

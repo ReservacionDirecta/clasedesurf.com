@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/Button'
 import { PriceDisplay } from '@/components/ui/PriceDisplay'
@@ -57,7 +58,13 @@ interface ClassCardProps {
 }
 
 export function ClassCard({ classData, onSelect, priority = false }: ClassCardProps) {
+  const router = useRouter()
   const [showDetails, setShowDetails] = useState(false)
+  
+  const handleReserveClick = () => {
+    // Redirigir directamente a la página de detalles de la clase
+    router.push(`/classes/${classData.id}`)
+  }
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('es-ES', { 
@@ -370,7 +377,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5' 
               : 'bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300'
           }`}
-          onClick={onSelect}
+          onClick={handleReserveClick}
           disabled={!classData.availableSpots || classData.availableSpots === 0}
         >
           {classData.availableSpots && classData.availableSpots > 0 ? 'Reservar Ahora' : 'Lista de Espera'}

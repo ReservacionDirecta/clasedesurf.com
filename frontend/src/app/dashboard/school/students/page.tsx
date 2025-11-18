@@ -204,13 +204,6 @@ export default function SchoolStudents() {
               <Plus className="w-5 h-5" />
               <span className="font-medium">Agregar Estudiante</span>
             </button>
-            <button
-              onClick={() => setShowAddStudentModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <Plus className="w-5 h-5" />
-              <span className="font-medium">Agregar Estudiante</span>
-            </button>
           </div>
         </div>
 
@@ -398,15 +391,16 @@ export default function SchoolStudents() {
 
         {/* Modal Detalles del Estudiante */}
         {showDetailModal && selectedStudent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold text-gray-900">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-t-3xl sm:rounded-lg p-4 sm:p-6 max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
+              <div className="flex justify-between items-center mb-4 sm:mb-6 sticky top-0 bg-white pb-2 border-b border-gray-200 sm:border-none sm:relative">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                   Detalles de {selectedStudent.name}
                 </h3>
                 <button 
                   onClick={() => setShowDetailModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 active:text-gray-800 text-2xl sm:text-3xl p-2 -mr-2 sm:mr-0 touch-target-lg"
+                  aria-label="Cerrar"
                 >
                   ✕
                 </button>
@@ -498,10 +492,15 @@ export default function SchoolStudents() {
                 </div>
               </div>
               
-              <div className="flex justify-end gap-3 mt-6">
+              <div 
+                className="flex justify-end gap-3 mt-4 sm:mt-6 pt-4 border-t border-gray-200 sm:border-none sm:pt-0 sticky bottom-0 bg-white sm:bg-transparent -mx-4 sm:mx-0 px-4 sm:px-0 safe-area-bottom"
+                style={{ 
+                  bottom: 'env(safe-area-inset-bottom, 0px)'
+                }}
+              >
                 <button 
                   onClick={() => setShowDetailModal(false)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  className="px-4 sm:px-6 py-3 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 active:bg-gray-800 font-medium text-base sm:text-sm touch-target-lg w-full sm:w-auto"
                 >
                   Cerrar
                 </button>
@@ -512,13 +511,22 @@ export default function SchoolStudents() {
 
         {/* Modal Agregar Estudiante */}
         {showAddStudentModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <SimpleStudentForm
-                onSubmit={handleCreateStudent}
-                onCancel={() => setShowAddStudentModal(false)}
-                isLoading={isCreatingStudent}
-              />
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-start sm:items-center justify-center overflow-y-auto p-0 sm:p-4"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowAddStudentModal(false);
+              }
+            }}
+          >
+            <div className="bg-white rounded-none sm:rounded-lg shadow-xl w-full sm:max-w-2xl sm:w-full my-0 sm:my-auto min-h-screen sm:min-h-0 max-h-screen sm:max-h-[90vh] flex flex-col safe-area-bottom">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch', paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+                <SimpleStudentForm
+                  onSubmit={handleCreateStudent}
+                  onCancel={() => setShowAddStudentModal(false)}
+                  isLoading={isCreatingStudent}
+                />
+              </div>
             </div>
           </div>
         )}

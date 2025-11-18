@@ -34,6 +34,7 @@ export const validateBody = (schema: z.ZodSchema) => {
         logValidated.profilePhoto = `[base64 string, ${logValidated.profilePhoto.length} chars]`;
       }
       console.log('[Validation] Validation passed:', JSON.stringify(logValidated, null, 2));
+      console.log('[Validation] foundedYear in validated data:', logValidated.foundedYear, typeof logValidated.foundedYear);
       
       // Replace req.body with validated and transformed data
       req.body = result.data;

@@ -4,9 +4,11 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { formatDualCurrency } from '@/lib/currency';
+import PaymentUpload from '@/components/payments/PaymentUpload';
 
 interface ReservationData {
   classId: string;
@@ -63,6 +65,11 @@ function ReservationConfirmationContent() {
   const [participants, setParticipants] = useState<ParticipantDetails[]>([]);
   const [showParticipantsForm, setShowParticipantsForm] = useState(true); // Mostrar por defecto
   const [participantsError, setParticipantsError] = useState<string | null>(null);
+  
+  // Estado para el formulario de pago
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
 
   useEffect(() => {
     // Get reservation data from URL params or sessionStorage
@@ -282,8 +289,8 @@ function ReservationConfirmationContent() {
         status: 'created'
       });
 
-      // Show success message
-      alert('¡Reserva creada con éxito!');
+      // Mostrar formulario de pago inmediatamente después de crear la reserva
+      setShowPaymentForm(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear la reserva');
       console.error(err);
@@ -369,12 +376,82 @@ function ReservationConfirmationContent() {
     });
   };
 
-  const formatTime = (date: Date | string) => {
-    const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatTime = (date: Date | string | undefined) => {
+    if (!date) return '00:00';
+    
+    // Si es un string en formato "HH:MM", devolverlo directamente
+    if (typeof date === 'string' && /^\d{2}:\d{2}$/.test(date)) {
+      return date;
+    }
+    
+    // Si es un string que parece una hora, intentar parsearlo
+    if (typeof date === 'string' && date.includes(':')) {
+      const timeMatch = date.match(/(\d{1,2}):(\d{2})/);
+      if (timeMatch) {
+        const hours = timeMatch[1].padStart(2, '0');
+        const minutes = timeMatch[2];
+        return `${hours}:${minutes}`;
+      }
+    }
+    
+    // Intentar parsear como fecha
+    try {
+      const d = date instanceof Date ? date : new Date(date);
+      if (isNaN(d.getTime())) {
+        return '00:00';
+      }
+      return d.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch {
+      return '00:00';
+    }
+  };
+
+  // Función para obtener los horarios de la clase
+  const getClassTimes = () => {
+    const classData = reservationData?.classData;
+    if (!classData) return { startTime: '00:00', endTime: '00:00' };
+
+    // Si startTime y endTime están disponibles y son válidos, usarlos
+    if (classData.startTime && classData.endTime) {
+      const start = formatTime(classData.startTime);
+      const end = formatTime(classData.endTime);
+      if (start !== '00:00' && end !== '00:00') {
+        return { startTime: start, endTime: end };
+      }
+    }
+
+    // Si no, calcular desde la fecha y duración
+    if (classData.date) {
+      try {
+        const classDate = new Date(classData.date);
+        if (!isNaN(classDate.getTime())) {
+          const startTime = classDate.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+          
+          // Calcular hora de fin (duración por defecto: 90 minutos)
+          const duration = (classData as any).duration || 90;
+          const endDate = new Date(classDate.getTime() + duration * 60000);
+          const endTime = endDate.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+          
+          return { startTime, endTime };
+        }
+      } catch (e) {
+        console.error('Error calculating class times:', e);
+      }
+    }
+
+    return { startTime: '00:00', endTime: '00:00' };
   };
 
   if (loading) {
@@ -464,7 +541,10 @@ function ReservationConfirmationContent() {
                     <div>
                       <span className="text-sm font-medium text-gray-700">Horario:</span>
                       <p className="text-gray-900">
-                        {formatTime(reservationData.classData.startTime)} - {formatTime(reservationData.classData.endTime)}
+                        {(() => {
+                          const times = getClassTimes();
+                          return `${times.startTime} - ${times.endTime}`;
+                        })()}
                       </p>
                     </div>
                     <div>
@@ -681,8 +761,10 @@ function ReservationConfirmationContent() {
               </div>
             )}
 
+            {/* Formulario de Pago - Ahora se muestra en un modal, no en la página */}
+
             {/* Formulario de Participantes */}
-            {isAuthenticated && reservationData.status === 'pending' && (
+            {isAuthenticated && reservationData.status === 'pending' && !showPaymentForm && (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -859,8 +941,8 @@ function ReservationConfirmationContent() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Price Summary */}
-            <div className={`bg-white rounded-lg shadow-lg p-6 ${!showRegisterForm && !showParticipantsForm ? 'sticky top-6' : ''}`}>
+            {/* Price Summary - Sticky en móvil y desktop */}
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 sticky top-4 sm:top-6 z-10 safe-area-bottom">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Resumen de Precio</h3>
               
               <div className="space-y-3 mb-4">
@@ -891,7 +973,7 @@ function ReservationConfirmationContent() {
 
               {/* Action Buttons */}
               {reservationData.status !== 'created' && reservationData.status !== 'confirmed' && (
-                <div className="space-y-3">
+                <div className="space-y-3 mt-4">
                   {!isAuthenticated ? (
                     <>
                       <Button
@@ -933,7 +1015,18 @@ function ReservationConfirmationContent() {
               )}
 
               {reservationData.status === 'created' || reservationData.status === 'confirmed' ? (
-                <div className="mt-4">
+                <div className="mt-4 space-y-3">
+                  {paymentSubmitted && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <p className="font-semibold text-green-900">¡Pago enviado exitosamente!</p>
+                      </div>
+                      <p className="text-sm text-green-800">
+                        Tu pago está siendo verificado. Recibirás una confirmación cuando sea aprobado.
+                      </p>
+                    </div>
+                  )}
                   <Link href="/reservations">
                     <Button variant="primary" className="w-full">
                       Ver Mis Reservas
@@ -945,6 +1038,55 @@ function ReservationConfirmationContent() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Pago */}
+      {showPaymentModal && reservationData.status === 'created' && reservationData.reservationId && (
+        <div 
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPaymentModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">¡Reserva Creada!</h2>
+                  <p className="text-sm text-gray-600">Completa el pago para confirmar</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl p-2 -mr-2"
+                aria-label="Cerrar"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <PaymentUpload
+                reservationId={parseInt(reservationData.reservationId)}
+                amount={reservationData.bookingData.totalAmount}
+                onPaymentSubmitted={() => {
+                  setPaymentSubmitted(true);
+                  setShowPaymentModal(false);
+                  // Actualizar estado de la reserva
+                  setReservationData({
+                    ...reservationData,
+                    status: 'confirmed'
+                  });
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

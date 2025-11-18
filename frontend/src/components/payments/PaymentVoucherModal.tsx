@@ -75,16 +75,17 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Modal Header */}
-        <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between rounded-t-lg">
-          <h2 className="text-2xl font-bold">Registrar Pago</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-t-3xl sm:rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
+        {/* Modal Header - Sticky en móvil */}
+        <div className="bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-lg sticky top-0 z-10">
+          <h2 className="text-xl sm:text-2xl font-bold">Registrar Pago</h2>
           <button
             onClick={onClose}
-            className="text-white hover:text-gray-200 transition-colors"
+            className="text-white hover:text-gray-200 active:text-gray-300 transition-colors p-2 -mr-2 sm:mr-0 touch-target-lg"
+            aria-label="Cerrar"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -228,19 +229,24 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
             </select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-4">
+          {/* Action Buttons - Sticky en móvil */}
+          <div 
+            className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-auto pt-4 border-t border-gray-200 sm:border-none sm:pt-0 sticky bottom-0 bg-white sm:bg-transparent -mx-4 sm:mx-0 px-4 sm:px-0 safe-area-bottom"
+            style={{ 
+              bottom: 'env(safe-area-inset-bottom, 0px)'
+            }}
+          >
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-4 sm:px-6 py-3 sm:py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium text-base sm:text-sm touch-target-lg order-2 sm:order-1"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={uploading}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center"
+              className="px-4 sm:px-6 py-3 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center justify-center font-medium text-base sm:text-sm touch-target-lg order-1 sm:order-2"
             >
               {uploading && (
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">

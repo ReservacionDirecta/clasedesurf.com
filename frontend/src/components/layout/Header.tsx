@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { 
   Home, 
@@ -17,6 +17,7 @@ import {
   X,
   ChevronRight,
   ChevronDown,
+  MoreHorizontal,
   // Admin icons
   BarChart3,
   Users,
@@ -24,8 +25,6 @@ import {
   CreditCard,
   FileText,
   Settings,
-  Globe,
-  Eye,
   // Instructor icons
   BookOpen,
   DollarSign,
@@ -41,14 +40,10 @@ const primaryButtonClass = "bg-gradient-to-r from-[#FF3366] to-[#D12352] hover:f
 const containerClass = "bg-[#011627]/95 backdrop-blur-sm shadow-lg sticky top-0 z-[60] border-b border-white/10";
 const mobileSectionBorderClass = "border-t border-white/10";
 
-// Base navigation links (reduced - solo las más importantes)
+// Base navigation links (solo para usuarios no autenticados)
 const baseLinks = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/classes", label: "Clases", icon: Waves },
-];
-
-// Additional public links (en menú desplegable)
-const additionalPublicLinks = [
   { href: "/schools", label: "Escuelas", icon: School },
   { href: "/contact", label: "Contacto", icon: Mail }
 ];
@@ -58,13 +53,13 @@ const roleNavigationMap: Record<Exclude<RoleOption, undefined>, { href: string; 
   ADMIN: [
     { href: "/dashboard/admin", icon: Home, label: "Dashboard" },
     { href: "/dashboard/admin/overview", icon: BarChart3, label: "Overview" },
-    { href: "/dashboard/admin/users", icon: Users, label: "Users" },
-    { href: "/dashboard/admin/schools", icon: School, label: "Schools" },
-    { href: "/dashboard/admin/classes", icon: Waves, label: "Classes" },
-    { href: "/dashboard/admin/reservations", icon: Calendar, label: "Reservations" },
-    { href: "/dashboard/admin/payments", icon: CreditCard, label: "Payments" },
-    { href: "/dashboard/admin/reports", icon: FileText, label: "Reports" },
-    { href: "/dashboard/admin/settings", icon: Settings, label: "Settings" },
+    { href: "/dashboard/admin/users", icon: Users, label: "Usuarios" },
+    { href: "/dashboard/admin/schools", icon: School, label: "Escuelas" },
+    { href: "/dashboard/admin/classes", icon: Waves, label: "Clases" },
+    { href: "/dashboard/admin/reservations", icon: Calendar, label: "Reservas" },
+    { href: "/dashboard/admin/payments", icon: CreditCard, label: "Pagos" },
+    { href: "/dashboard/admin/reports", icon: FileText, label: "Reportes" },
+    { href: "/dashboard/admin/settings", icon: Settings, label: "Configuración" },
   ],
   SCHOOL_ADMIN: [
     { href: "/dashboard/school", icon: Home, label: "Dashboard" },
@@ -94,9 +89,12 @@ export const Header = (): JSX.Element => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [visibleItems, setVisibleItems] = useState<number>(5);
   const moreMenuRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const role = (session as any)?.user?.role as RoleOption;
   
   const roleLinks = useMemo(() => {
@@ -104,6 +102,28 @@ export const Header = (): JSX.Element => {
     return roleNavigationMap[role as Exclude<RoleOption, undefined>];
   }, [role]);
 
+  // Calcular cuántos items caben en el navbar
+  useEffect(() => {
+    const calculateVisibleItems = () => {
+      if (!navRef.current || !session) return;
+      
+      const navWidth = navRef.current.offsetWidth;
+      const itemWidth = 140; // Ancho aproximado de cada item con texto
+      const moreButtonWidth = 100; // Ancho del botón "Más"
+      const userActionsWidth = 300; // Ancho de las acciones de usuario
+      const logoWidth = 200; // Ancho del logo y padding
+      
+      const availableWidth = navWidth - logoWidth - userActionsWidth - moreButtonWidth - 40; // 40px de padding
+      const maxItems = Math.floor(availableWidth / itemWidth);
+      
+      setVisibleItems(Math.max(3, Math.min(maxItems, roleLinks.length))); // Mínimo 3, máximo todos
+    };
+
+    calculateVisibleItems();
+    window.addEventListener('resize', calculateVisibleItems);
+    return () => window.removeEventListener('resize', calculateVisibleItems);
+  }, [session, roleLinks.length]);
+  
   // Cerrar menú "Más" al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -123,16 +143,22 @@ export const Header = (): JSX.Element => {
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
-      await signOut({ callbackUrl: "/", redirect: true });
+      await signOut({ redirect: false });
+      // Redirección manual para evitar problemas con NEXTAUTH_URL
+      router.push('/');
+      router.refresh();
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       setIsSigningOut(false);
+      // Intentar redirección manual incluso si hay error
+      router.push('/');
     }
   };
   
   // Cerrar menú al cambiar de ruta
   useEffect(() => {
     setIsMenuOpen(false);
+    setMoreMenuOpen(false);
   }, [pathname]);
   
   // Prevenir scroll cuando el menú está abierto
@@ -151,6 +177,10 @@ export const Header = (): JSX.Element => {
     if (href === '/') return pathname === href;
     return pathname?.startsWith(href);
   };
+
+  // Dividir links en visibles y ocultos
+  const visibleLinks = session ? roleLinks.slice(0, visibleItems) : baseLinks.slice(0, visibleItems);
+  const hiddenLinks = session ? roleLinks.slice(visibleItems) : baseLinks.slice(visibleItems);
   
   return (
     <header className={containerClass}>
@@ -170,46 +200,47 @@ export const Header = (): JSX.Element => {
           </Link>
           
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1">
-            {/* Base Links - Solo las más importantes */}
-            {baseLinks.map((link) => {
+          <nav ref={navRef} className="hidden lg:flex items-center space-x-2 flex-1 justify-center">
+            {/* Links visibles con texto */}
+            {visibleLinks.map((link) => {
               const IconComponent = link.icon;
               const active = isActive(link.href);
               return (
                 <Link 
                   key={link.href} 
                   href={link.href} 
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
                     active 
                       ? 'text-[#FF3366] bg-white/10' 
                       : navLinkClass
                   }`}
                 >
-                  <IconComponent className="w-5 h-5" />
-                  <span>{link.label}</span>
+                  <IconComponent className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm font-medium">{link.label}</span>
                 </Link>
               );
             })}
 
-            {/* Menú "Más" para opciones públicas adicionales */}
-            {additionalPublicLinks.length > 0 && (
+            {/* Botón "Más" para opciones adicionales */}
+            {hiddenLinks.length > 0 && (
               <div className="relative" ref={moreMenuRef}>
                 <button
                   onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
                     moreMenuOpen
                       ? 'text-[#FF3366] bg-white/10'
                       : navLinkClass
                   }`}
                 >
-                  <span>Más</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${moreMenuOpen ? 'rotate-180' : ''}`} />
+                  <MoreHorizontal className="w-4 h-4" />
+                  <span className="text-sm font-medium">Más</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${moreMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
                 
                 {/* Dropdown Menu */}
                 {moreMenuOpen && (
-                  <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 min-w-[200px] py-2 animate-fade-in">
-                    {additionalPublicLinks.map((link) => {
+                  <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-[100] min-w-[200px] py-2 animate-fade-in">
+                    {hiddenLinks.map((link) => {
                       const IconComponent = link.icon;
                       const active = isActive(link.href);
                       return (
@@ -223,8 +254,8 @@ export const Header = (): JSX.Element => {
                               : 'text-gray-700 hover:bg-gray-50'
                           }`}
                         >
-                          <IconComponent className="w-5 h-5" />
-                          <span className="font-medium">{link.label}</span>
+                          <IconComponent className="w-4 h-4" />
+                          <span className="font-medium text-sm">{link.label}</span>
                         </Link>
                       );
                     })}
@@ -232,44 +263,22 @@ export const Header = (): JSX.Element => {
                 )}
               </div>
             )}
-            
-            {/* Separador visual si hay opciones de perfil */}
-            {roleLinks.length > 0 && (
-              <div className="h-6 w-px bg-white/20 mx-2"></div>
-            )}
-            
-            {/* Role-specific Links - Icon only with hover tooltip */}
-            {roleLinks.map((link) => {
-              const IconComponent = link.icon;
-              const active = isActive(link.href);
-              return (
-                <div key={link.href} className="relative group">
-                  <Link 
-                    href={link.href} 
-                    className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200 ${
-                      active 
-                        ? 'text-[#FF3366] bg-white/10' 
-                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/10'
-                    }`}
-                  >
-                    <IconComponent className="w-5 h-5" />
-                  </Link>
-                  {/* Tooltip on hover */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#011627] text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                    {link.label}
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-[#011627]"></div>
-                  </div>
-                </div>
-              );
-            })}
           </nav>
           
           {/* Desktop User Actions */}
           <div className="hidden lg:flex items-center space-x-4">
             {session ? (
               <>
-                <span className="text-sm text-[#F6F7F8]/80">{(session as any).user?.name}</span>
-                <Button variant="outline" size="sm" className={headerOutlineButtonClass} onClick={handleSignOut} disabled={isSigningOut}>
+                <span className="text-sm text-[#F6F7F8]/80 truncate max-w-[200px]">
+                  {(session as any).user?.email || (session as any).user?.name}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={headerOutlineButtonClass} 
+                  onClick={handleSignOut} 
+                  disabled={isSigningOut}
+                >
                   {isSigningOut ? 'Cerrando...' : 'Cerrar sesión'}
                 </Button>
               </>
@@ -311,74 +320,8 @@ export const Header = (): JSX.Element => {
         >
           <div className={`pb-4 ${mobileSectionBorderClass}`}>
             <nav className="flex flex-col space-y-1 mt-4">
-              {/* Base Navigation Links */}
-              {baseLinks.map((link) => {
-                const IconComponent = link.icon;
-                const active = isActive(link.href);
-                
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
-                      active
-                        ? 'bg-white/10 text-[#FF3366] shadow-sm'
-                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg transition-all duration-200 ${
-                        active 
-                          ? 'bg-[#FF3366]/20 text-[#FF3366]' 
-                          : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
-                      }`}>
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <span className="font-medium">{link.label}</span>
-                    </div>
-                    <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
-                      active ? 'text-[#FF3366]' : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
-                    }`} />
-                  </Link>
-                );
-              })}
-
-              {/* Additional Public Links */}
-              {additionalPublicLinks.map((link) => {
-                const IconComponent = link.icon;
-                const active = isActive(link.href);
-                
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
-                      active
-                        ? 'bg-white/10 text-[#FF3366] shadow-sm'
-                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg transition-all duration-200 ${
-                        active 
-                          ? 'bg-[#FF3366]/20 text-[#FF3366]' 
-                          : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
-                      }`}>
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <span className="font-medium">{link.label}</span>
-                    </div>
-                    <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
-                      active ? 'text-[#FF3366]' : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
-                    }`} />
-                  </Link>
-                );
-              })}
-              
-              {/* Role-specific Dashboard Links */}
-              {roleLinks.map((link) => {
+              {/* Navigation Links */}
+              {(session ? roleLinks : baseLinks).map((link) => {
                 const IconComponent = link.icon;
                 const active = isActive(link.href);
                 

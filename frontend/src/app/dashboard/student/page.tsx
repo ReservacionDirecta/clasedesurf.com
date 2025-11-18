@@ -20,11 +20,13 @@ import {
   MapPin
 } from 'lucide-react';
 import { formatDualCurrency } from '@/lib/currency';
+import { AvatarDisplay } from '@/components/avatar/AvatarSelector';
 
 interface StudentProfile {
   name: string;
   email: string;
   profilePhoto: string | null;
+  avatar: string | null;
   age?: number;
   weight?: number;
   height?: number;
@@ -143,6 +145,7 @@ export default function StudentDashboard() {
         name: profileData.name || session?.user?.name || 'Surfista',
         email: profileData.email || session?.user?.email || '',
         profilePhoto: profileData.profilePhoto || null,
+        avatar: profileData.avatar || profileData.profilePhoto || null,
         age: profileData.age,
         weight: profileData.weight,
         height: profileData.height,
@@ -403,14 +406,12 @@ export default function StudentDashboard() {
                   <div className="relative">
                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white/20 backdrop-blur-sm p-1 shadow-xl">
                       <div className="w-full h-full rounded-full bg-white overflow-hidden">
-                        {profile?.profilePhoto ? (
-                          <Image
-                            src={profile.profilePhoto}
-                            alt={profile.name}
-                            width={128}
-                            height={128}
-                            className="w-full h-full object-cover"
-                            unoptimized
+                        {profile?.avatar ? (
+                          <AvatarDisplay 
+                            avatarId={profile.avatar} 
+                            role="STUDENT" 
+                            size="lg"
+                            className="w-full h-full"
                           />
                         ) : profile?.name ? (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-cyan-400">

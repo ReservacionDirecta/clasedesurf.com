@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
   Home,
@@ -21,6 +21,7 @@ import {
 export function SchoolSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('schoolSidebarCollapsed') === 'true';
@@ -117,12 +118,16 @@ export function SchoolSidebar() {
     try {
       setIsSigningOut(true);
       await signOut({ 
-        callbackUrl: '/login',
-        redirect: true 
+        redirect: false 
       });
+      // Redirección manual para evitar problemas con NEXTAUTH_URL
+      router.push('/login');
+      router.refresh();
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       setIsSigningOut(false);
+      // Intentar redirección manual incluso si hay error
+      router.push('/login');
     }
   };
 

@@ -37,6 +37,11 @@ export const createSchoolSchema = z.object({
     .optional(),
   coverImage: z.string()
     .max(500, 'Cover image URL must be less than 500 characters')
+    .optional(),
+  foundedYear: z.number()
+    .int()
+    .min(1900, 'Founded year must be after 1900')
+    .max(new Date().getFullYear(), 'Founded year cannot be in the future')
     .optional()
 });
 
@@ -89,7 +94,15 @@ export const updateSchoolSchema = z.object({
   coverImage: z.string()
     .max(500, 'Cover image URL must be less than 500 characters')
     .nullable()
-    .optional()
+    .optional(),
+  foundedYear: z.union([
+    z.number()
+      .int()
+      .min(1900, 'Founded year must be after 1900')
+      .max(new Date().getFullYear(), 'Founded year cannot be in the future'),
+    z.null()
+  ]).optional()
+    .transform((val) => val === undefined ? undefined : val) // Preserve undefined, null, or number
 });
 
 // Schema for school ID parameter

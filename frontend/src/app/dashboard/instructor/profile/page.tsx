@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { User, Mail, Phone, Star, Award, BookOpen, Calendar, Camera, Upload, Edit, Save, X } from 'lucide-react';
+import AvatarSelector, { AvatarDisplay } from '@/components/avatar/AvatarSelector';
 
 export default function InstructorProfile() {
   const { data: session, status } = useSession();
@@ -12,8 +13,7 @@ export default function InstructorProfile() {
   const [instructorData, setInstructorData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
 
   const fetchInstructorProfile = useCallback(async () => {
     try {
@@ -40,12 +40,12 @@ export default function InstructorProfile() {
         age: 29, // TODO: Add age field to backend
         bio: profileData.bio || 'Instructor profesional de surf.',
         yearsExperience: profileData.yearsExperience || 0,
-        rating: 4.9, // TODO: Calculate from reviews
-        totalReviews: profileData.reviews?.length || 0,
+        rating: profileData.rating || 0,
+        totalReviews: profileData.totalReviews || profileData.reviews?.length || 0,
         specialties: profileData.specialties || [],
         certifications: profileData.certifications || [],
         school: profileData.school?.name || 'Sin escuela asignada',
-        profileImage: profileData.profileImage || null,
+        avatar: profileData.avatar || profileData.profileImage || null,
         socialMedia: {
           instagram: profileData.instagram || '',
           facebook: profileData.facebook || '',
@@ -54,6 +54,7 @@ export default function InstructorProfile() {
         languages: profileData.languages || ['Español'],
         achievements: profileData.achievements || []
       });
+      setSelectedAvatar(profileData.avatar || profileData.profileImage || null);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching instructor profile:', error);
@@ -79,23 +80,54 @@ export default function InstructorProfile() {
     fetchInstructorProfile();
   }, [fetchInstructorProfile, router, session, status]);
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string);
-        setShowPhotoUpload(false);
-      };
-      reader.readAsDataURL(file);
+  const handleAvatarSelect = (avatarId: string) => {
+    setSelectedAvatar(avatarId);
+    if (!isEditing) {
+      setIsEditing(true);
     }
   };
 
-  const handleSaveProfile = () => {
-    // Aquí iría la lógica para guardar el perfil
+  const handleSaveProfile = async () => {
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // Update instructor profile with avatar
+      const updateRes = await fetch('/api/instructor/profile', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          avatar: selectedAvatar || null,
+        }),
+      });
+
+      if (!updateRes.ok) {
+        throw new Error('Failed to update profile');
+      }
+
+      // Also update user profile if needed
+      if (selectedAvatar) {
+        await fetch('/api/users/profile', {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify({
+            avatar: selectedAvatar,
+          }),
+        });
+      }
+
     setIsEditing(false);
-    // Simular guardado exitoso
+      fetchInstructorProfile(); // Reload to get updated data
     alert('Perfil actualizado exitosamente');
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Error al guardar el perfil');
+    }
   };
 
   if (status === 'loading' || loading) {
@@ -129,29 +161,14 @@ export default function InstructorProfile() {
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
               <div className="text-center">
-                {/* Profile Photo Section */}
+                {/* Avatar Section */}
                 <div className="relative inline-block mb-6">
-                  <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mx-auto shadow-lg">
-                    {profileImage || instructorData?.profileImage ? (
-                      <Image
-                        src={profileImage || instructorData?.profileImage}
-                        alt="Foto de perfil"
-                        width={128}
-                        height={128}
-                        className="h-32 w-32 object-cover"
-                      />
-                    ) : (
-                      <User className="w-16 h-16 text-white" />
-                    )}
-                  </div>
-                  
-                  {/* Camera Button */}
-                  <button
-                    onClick={() => setShowPhotoUpload(true)}
-                    className="absolute bottom-2 right-2 w-10 h-10 bg-white rounded-full shadow-lg border-2 border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                  >
-                    <Camera className="w-5 h-5 text-gray-600" />
-                  </button>
+                  <AvatarDisplay 
+                    avatarId={selectedAvatar || instructorData?.avatar} 
+                    role="INSTRUCTOR" 
+                    size="xl"
+                    className="mx-auto shadow-lg"
+                  />
                 </div>
 
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">{instructorData?.name}</h2>
@@ -179,7 +196,7 @@ export default function InstructorProfile() {
                 {/* Quick Actions */}
                 <div className="space-y-2">
                   <button
-                    onClick={() => setIsEditing(!isEditing)}
+                    onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
                     className={`w-full flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
                       isEditing 
                         ? 'bg-green-600 text-white hover:bg-green-700' 
@@ -201,7 +218,10 @@ export default function InstructorProfile() {
                   
                   {isEditing && (
                     <button
-                      onClick={() => setIsEditing(false)}
+                      onClick={() => {
+                        setIsEditing(false);
+                        fetchInstructorProfile(); // Reset changes
+                      }}
                       className="w-full flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium transition-colors"
                     >
                       <X className="w-4 h-4 mr-2" />
@@ -215,6 +235,19 @@ export default function InstructorProfile() {
 
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Avatar Selector */}
+            {isEditing && (
+              <div className="bg-white rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Selecciona tu Avatar</h3>
+                <AvatarSelector
+                  selectedAvatar={selectedAvatar || instructorData?.avatar}
+                  onSelectAvatar={handleAvatarSelect}
+                  role="INSTRUCTOR"
+                  size="md"
+                />
+              </div>
+            )}
+            
             {/* Personal Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
@@ -388,60 +421,6 @@ export default function InstructorProfile() {
             </div>
           </div>
         </div>
-        {/* Photo Upload Modal */}
-        {showPhotoUpload && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Cambiar Foto de Perfil</h3>
-                <button 
-                  onClick={() => setShowPhotoUpload(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-400 transition-colors">
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">
-                    Arrastra una imagen aquí o haz click para seleccionar
-                  </p>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                    id="photo-upload"
-                  />
-                  <label
-                    htmlFor="photo-upload"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    Seleccionar Imagen
-                  </label>
-                </div>
-                
-                <div className="text-sm text-gray-500">
-                  <p>• Formatos soportados: JPG, PNG, GIF</p>
-                  <p>• Tamaño máximo: 5MB</p>
-                  <p>• Recomendado: 400x400 píxeles</p>
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-3 mt-6">
-                <button 
-                  onClick={() => setShowPhotoUpload(false)}
-                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
