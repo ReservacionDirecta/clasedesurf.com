@@ -18,6 +18,7 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
   const [filters, setFilters] = useState<FilterValues>({})
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [dropdownPosition, setDropdownPosition] = useState<number>(0)
+  const [isMobile, setIsMobile] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
@@ -28,9 +29,19 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
     type: useRef<HTMLDivElement>(null)
   }
 
+  // Detect mobile on mount and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
   // Calculate dropdown position when activeDropdown changes
   useEffect(() => {
-    if (!activeDropdown || typeof window === 'undefined' || window.innerWidth < 640) {
+    if (!activeDropdown || isMobile) {
       return
     }
 
@@ -44,7 +55,6 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
       }
     }
 
-    // Use requestAnimationFrame to ensure DOM is updated
     requestAnimationFrame(() => {
       updatePosition()
     })
@@ -52,13 +62,13 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
     window.addEventListener('resize', updatePosition)
     return () => window.removeEventListener('resize', updatePosition)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeDropdown])
+  }, [activeDropdown, isMobile])
 
   // Close dropdown when clicking outside
   useEffect(() => {
     if (!activeDropdown) return
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node
       if (
         containerRef.current?.contains(target) ||
@@ -69,9 +79,12 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
       setActiveDropdown(null)
     }
 
+    // Escuchar tanto mousedown como touchstart para mejor compatibilidad móvil
     document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('touchstart', handleClickOutside)
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
     }
   }, [activeDropdown])
 
@@ -88,33 +101,33 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
     setActiveDropdown(null)
   }
 
+  const handleDateButtonClick = (e: React.MouseEvent | React.TouchEvent) => {
+    if (isMobile) {
+      e.preventDefault()
+      e.stopPropagation()
+      // En móvil, activar directamente el input nativo
+      if (dateInputRef.current) {
+        // Usar un pequeño delay para asegurar que el evento se procese
+        setTimeout(() => {
+          dateInputRef.current?.focus()
+          // Forzar el click en el input
+          const clickEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          })
+          dateInputRef.current?.dispatchEvent(clickEvent)
+        }, 10)
+      }
+    } else {
+      // En escritorio, abrir el dropdown
+      setActiveDropdown(activeDropdown === 'date' ? null : 'date')
+    }
+  }
+
   const toggleDropdown = (field: string) => {
-    // En móvil, para el campo de fecha, abrir directamente el datepicker nativo
-    if (field === 'date' && typeof window !== 'undefined' && window.innerWidth < 640) {
-      setTimeout(() => {
-        if (dateInputRef.current) {
-          try {
-            // showPicker puede retornar void o Promise<void>
-            // Intentamos llamarlo y si retorna una Promise, manejamos el error
-            const input = dateInputRef.current
-            const showPickerResult = input.showPicker?.()
-            
-            // Si showPicker retorna algo (no void), verificamos si es una Promise
-            if (showPickerResult !== undefined && showPickerResult !== null) {
-              // Verificamos si tiene el método 'then' que caracteriza a una Promise
-              const resultAsAny = showPickerResult as unknown
-              if (typeof resultAsAny === 'object' && resultAsAny !== null && 'then' in resultAsAny) {
-                (resultAsAny as Promise<void>).catch(() => {
-                  input.click()
-                })
-              }
-            }
-          } catch (error) {
-            // Fallback si showPicker no está disponible o falla
-            dateInputRef.current?.click()
-          }
-        }
-      }, 100)
+    if (field === 'date' && isMobile) {
+      // En móvil, el botón maneja esto directamente
       return
     }
     setActiveDropdown(activeDropdown === field ? null : field)
@@ -297,31 +310,40 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
           </button>
         </div>
 
-        {/* Date Button */}
+        {/* Date Button - Refactorizado para iOS */}
         <div ref={buttonRefs.date} className="relative flex-1">
-          <button
-            onClick={() => toggleDropdown('date')}
-            type="button"
-            className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-left border-b sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 transition-all duration-200 ease-out ${
-              filters.date ? 'font-semibold text-[#011627]' : 'text-gray-600'
-            } ${activeDropdown === 'date' ? 'bg-gray-50' : ''}`}
-          >
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-500">¿Cuándo?</div>
-            <div className="text-sm truncate mt-1">
-              {formatDate(filters.date) || 'Cualquier fecha'}
-            </div>
-          </button>
-          {/* Input de fecha oculto para móvil - se activa directamente */}
+          {/* Input de fecha nativo - completamente funcional en móvil, sobre el botón */}
           <input
             ref={dateInputRef}
             type="date"
             value={filters.date || ''}
             onChange={(e) => handleChange('date', e.target.value)}
             min={new Date().toISOString().split('T')[0]}
-            className="absolute inset-0 w-full h-full opacity-0 pointer-events-none sm:hidden"
+            className="absolute inset-0 w-full h-full z-20 opacity-0 cursor-pointer sm:hidden"
             aria-label="Seleccionar fecha"
-            tabIndex={-1}
+            style={{ 
+              fontSize: '16px', // Previene zoom en iOS
+              WebkitAppearance: 'none',
+              appearance: 'none',
+              pointerEvents: 'auto' // Asegurar que sea clickeable
+            }}
+            tabIndex={0}
           />
+          {/* Botón visual - en móvil el input está encima y captura los eventos */}
+          <button
+            onClick={handleDateButtonClick}
+            onTouchStart={handleDateButtonClick}
+            type="button"
+            className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-left border-b sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 transition-all duration-200 ease-out relative ${
+              filters.date ? 'font-semibold text-[#011627]' : 'text-gray-600'
+            } ${activeDropdown === 'date' ? 'bg-gray-50' : ''}`}
+            style={isMobile ? { pointerEvents: 'none' } : {}}
+          >
+            <div className="text-xs font-bold uppercase tracking-wider text-gray-500">¿Cuándo?</div>
+            <div className="text-sm truncate mt-1">
+              {formatDate(filters.date) || 'Cualquier fecha'}
+            </div>
+          </button>
         </div>
 
         {/* Level Button */}
@@ -375,24 +397,33 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
       {/* Dropdown Container - Modal on mobile, Dropdown on desktop */}
       {activeDropdown && (
         <>
-          {/* Backdrop for mobile */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-[9998] sm:hidden animate-fade-in"
-            onClick={() => setActiveDropdown(null)}
-          />
+          {/* Backdrop for mobile - solo aparece cuando hay dropdown activo */}
+          {isMobile && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-[100] animate-fade-in"
+              onClick={() => setActiveDropdown(null)}
+              onTouchStart={(e) => {
+                // Solo cerrar si el click es directamente en el backdrop
+                if (e.target === e.currentTarget) {
+                  setActiveDropdown(null)
+                }
+              }}
+            />
+          )}
           {/* Dropdown - Posicionado relativo al botón activo en desktop */}
           <div
             ref={dropdownRef}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-white rounded-2xl shadow-2xl z-[9999] p-6 max-h-[85vh] overflow-y-auto
+            className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-white rounded-2xl shadow-2xl z-[101] p-6 max-h-[85vh] overflow-y-auto
                        animate-slide-down
                        sm:absolute sm:top-full sm:mt-2 sm:w-auto sm:min-w-[400px] sm:max-w-md sm:rounded-xl sm:translate-x-0 sm:translate-y-0
-                       sm:animate-scale-in"
+                       sm:animate-scale-in sm:z-50`}
             style={{
-              ...(typeof window !== 'undefined' && window.innerWidth >= 640
+              ...(!isMobile && activeDropdown
                 ? { left: `${dropdownPosition}px` }
                 : {})
             }}
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
           >
             {renderDropdownContent()}
             {hasActiveFilters && (

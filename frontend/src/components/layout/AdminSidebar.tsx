@@ -16,8 +16,6 @@ import {
   FileText,
   Settings,
   LogOut,
-  Menu,
-  X,
   ChevronLeft,
   ChevronRight,
   Globe,
@@ -27,7 +25,6 @@ import {
 export function AdminSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('adminSidebarCollapsed') === 'true';
@@ -69,23 +66,6 @@ export function AdminSidebar() {
     loadProfile();
   }, [session]);
 
-  // Close mobile menu when route changes
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
-
-  // Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [mobileMenuOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -151,35 +131,13 @@ export function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200"
-        aria-label="Toggle menu"
-      >
-        {mobileMenuOpen ? (
-          <X className="h-6 w-6 text-gray-700" />
-        ) : (
-          <Menu className="h-6 w-6 text-gray-700" />
-        )}
-      </button>
-
-      {/* Mobile Overlay */}
-      {mobileMenuOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
+      {/* Sidebar - Solo visible en desktop (lg y superior) */}
       <aside 
         id="admin-sidebar"
         className={`
-          fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-40
+          hidden lg:block fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-40
           transition-all duration-300 ease-in-out
           ${isCollapsed ? 'w-20' : 'w-64'}
-          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         data-collapsed={isCollapsed}
       >
@@ -231,7 +189,6 @@ export function AdminSidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
                   className={`
                     group flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200
                     ${active
@@ -267,7 +224,6 @@ export function AdminSidebar() {
                     <Link
                       key={action.name}
                       href={action.href}
-                      onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       <ActionIcon className="w-4 h-4 mr-3" />
@@ -337,7 +293,6 @@ export function AdminSidebar() {
                     href="/dashboard/admin/profile"
                     onClick={() => {
                       setProfileDropdownOpen(false);
-                      setMobileMenuOpen(false);
                     }}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
@@ -348,7 +303,6 @@ export function AdminSidebar() {
                     href="/dashboard/admin/account"
                     onClick={() => {
                       setProfileDropdownOpen(false);
-                      setMobileMenuOpen(false);
                     }}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >

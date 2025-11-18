@@ -27,12 +27,31 @@ export default function RootLayout({
             __html: `
               // Protección contra errores de scripts externos (como share-modal.js)
               window.addEventListener('error', function(e) {
-                if (e.message && e.message.includes('share-modal')) {
+                const errorMessage = e.message || '';
+                const errorSource = e.filename || '';
+                const errorStack = e.error?.stack || '';
+                
+                // Verificar si el error está relacionado con share-modal
+                if (errorMessage.includes('share-modal') || 
+                    errorSource.includes('share-modal') ||
+                    errorStack.includes('share-modal') ||
+                    errorMessage.includes('addEventListener') && errorMessage.includes('null')) {
                   e.preventDefault();
+                  e.stopPropagation();
                   console.warn('Script externo share-modal.js no disponible, ignorando error.');
                   return true;
                 }
               }, true);
+              
+              // También capturar errores no capturados
+              window.addEventListener('unhandledrejection', function(e) {
+                const reason = e.reason?.message || String(e.reason || '');
+                if (reason.includes('share-modal')) {
+                  e.preventDefault();
+                  console.warn('Promise rejection de share-modal.js ignorada.');
+                  return true;
+                }
+              });
             `,
           }}
         />

@@ -458,7 +458,7 @@ export default function Home() {
             </p>
 
             {/* Mobile-Optimized Search Engine */}
-            <div className="max-w-5xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 relative z-50">
+            <div className="max-w-5xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 relative z-10">
               <AirbnbSearchBar 
                 onFilterChange={handleAirbnbFilterChange}
                 onReset={handleAirbnbReset}

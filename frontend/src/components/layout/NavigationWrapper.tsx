@@ -1,11 +1,13 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { MobileBottomNav } from '@/components/navigation/MobileBottomNav';
 import { Header } from './Header';
 
 export function NavigationWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   
   // La página principal (marketplace) solo debe tener el Header superior
   const isMarketplacePage = pathname === '/';
@@ -14,11 +16,8 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
   const noNavPages = ['/login', '/register', '/denied'];
   const shouldShowNav = !noNavPages.includes(pathname || '');
   
-  // Páginas de dashboard manejan su propio MobileBottomNav
-  const isDashboardPage = pathname?.startsWith('/dashboard/');
-  
-  // Páginas públicas con sidebar también manejan su propio MobileBottomNav
-  const isPublicPageWithSidebar = pathname === '/classes' || pathname === '/schools';
+  // MobileBottomNav solo se muestra si hay sesión (en móvil)
+  const shouldShowMobileNav = session?.user && typeof window !== 'undefined' && window.innerWidth < 1024;
 
   return (
     <>
@@ -28,8 +27,8 @@ export function NavigationWrapper({ children }: { children: React.ReactNode }) {
       {/* Contenido principal */}
       {children}
       
-      {/* Navbar móvil inferior - se muestra en todas las páginas EXCEPTO el marketplace, dashboards y páginas públicas con sidebar */}
-      {shouldShowNav && !isMarketplacePage && !isDashboardPage && !isPublicPageWithSidebar && <MobileBottomNav />}
+      {/* Navbar móvil inferior - se muestra solo si hay sesión (los dashboards ya lo incluyen en su layout) */}
+      {/* No lo mostramos aquí porque los layouts de dashboard ya lo incluyen */}
     </>
   );
 }

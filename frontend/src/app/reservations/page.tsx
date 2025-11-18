@@ -65,40 +65,7 @@ export default function ReservationsPage() {
     }
   }, [session]);
 
-  // Refresh data when page becomes visible (user returns to tab)
-  useEffect(() => {
-    if (!session) return;
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('[Reservations] Page visible, refreshing data...');
-        fetchReservations();
-      }
-    };
-
-    const handleFocus = () => {
-      console.log('[Reservations] Window focused, refreshing data...');
-      fetchReservations();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
-    // Optional: Poll for updates every 30 seconds when page is visible
-    const pollInterval = setInterval(() => {
-      if (document.visibilityState === 'visible' && session) {
-        console.log('[Reservations] Polling for updates...');
-        fetchReservations();
-      }
-    }, 30000); // 30 seconds
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-      clearInterval(pollInterval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+  // Removed auto-refresh on visibility/focus change to preserve user state
 
   const fetchReservations = async () => {
     try {
