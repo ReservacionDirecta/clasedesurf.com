@@ -30,7 +30,8 @@ export async function GET(req: Request) {
     
     const response = await fetch(backendUrl, {
       method: 'GET',
-      headers
+      headers,
+      cache: 'no-store' // Prevent caching to always get fresh data
     });
     
     console.log('[API Route] Backend response status:', response.status);

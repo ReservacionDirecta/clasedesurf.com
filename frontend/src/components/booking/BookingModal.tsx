@@ -63,6 +63,28 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loadingProfile, setLoadingProfile] = useState(false)
 
+  // Prevenir scroll del body cuando el modal está abierto
+  useEffect(() => {
+    if (isOpen) {
+      // Guardar el scroll actual del body
+      const scrollY = window.scrollY
+      // Bloquear scroll del body
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
+      document.body.style.overflow = 'hidden'
+      
+      return () => {
+        // Restaurar scroll del body cuando se cierra el modal
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.width = ''
+        document.body.style.overflow = ''
+        window.scrollTo(0, scrollY)
+      }
+    }
+  }, [isOpen])
+
   // Pre-llenar datos del usuario logueado y su perfil
   useEffect(() => {
     if (session?.user && isOpen) {
@@ -199,18 +221,38 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
   const totalPrices = formatDualCurrency(totalPriceUSD)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 p-6 rounded-t-2xl">
+    <div 
+      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black bg-opacity-50 backdrop-blur-sm overscroll-contain overflow-y-auto"
+      onClick={(e) => {
+        // Cerrar modal al hacer clic en el backdrop
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-2xl overflow-y-auto overscroll-contain flex flex-col safe-area-bottom"
+        style={{ 
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+          maxHeight: '95vh'
+        }}
+        onClick={(e) => {
+          // Prevenir que el clic se propague al backdrop
+          e.stopPropagation()
+        }}
+      >
+        {/* Header - Sticky en móviles */}
+        <div className="bg-white border-b border-gray-200 p-4 sm:p-6 rounded-t-none sm:rounded-t-2xl sticky top-0 z-10">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Reservar Clase</h2>
-              <p className="text-gray-600">{classData.title}</p>
+            <div className="flex-1 min-w-0 pr-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Reservar Clase</h2>
+              <p className="text-sm sm:text-base text-gray-600 truncate">{classData.title}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+              aria-label="Cerrar modal"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -240,8 +282,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
           )}
 
           {/* Class Info Summary */}
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="mt-4 p-3 sm:p-4 bg-blue-50 rounded-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-700">Fecha:</span>
                 <p className="text-gray-900 capitalize">{formatDate(classData.date)}</p>
@@ -263,7 +305,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
 
           {/* School Information */}
           {classData.school && (
-            <div className="mt-4 p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+            <div className="mt-4 p-3 sm:p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
               <div className="flex items-center gap-2 mb-3">
                 <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -294,7 +336,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
                     <span>{classData.school.location}</span>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-indigo-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-indigo-200">
                   {classData.school.phone && (
                     <div className="flex items-center gap-2 text-sm text-gray-700">
                       <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,7 +364,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6 pb-6">
           {/* Personal Information */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
@@ -559,7 +601,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
           </div>
 
           {/* Price Summary */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
             <div className="flex justify-between items-center mb-2">
               <span className="text-lg font-medium text-gray-900">Total a pagar:</span>
               <div className="text-right">
@@ -579,20 +621,25 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
             </p>
           </div>
 
-          {/* Submit Buttons */}
-          <div className="flex space-x-4">
+          {/* Submit Buttons - Sticky en móvil */}
+          <div 
+            className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:space-x-4 pt-4 border-t border-gray-200 sm:border-none sm:pt-2 sticky bottom-0 bg-white sm:bg-transparent -mx-4 sm:mx-0 px-4 sm:px-0 safe-area-bottom"
+            style={{ 
+              bottom: 'env(safe-area-inset-bottom, 0px)'
+            }}
+          >
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 w-full sm:w-auto py-3 sm:py-2 text-base sm:text-sm touch-target-lg"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               variant="primary"
-              className="flex-1"
+              className="flex-1 w-full sm:w-auto py-3 sm:py-2 text-base sm:text-sm touch-target-lg"
             >
               Confirmar Reserva
             </Button>

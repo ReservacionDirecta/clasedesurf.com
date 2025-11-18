@@ -648,11 +648,11 @@ export default function ReservationsPage() {
 
       {/* Modal de Pago - Se muestra automáticamente después de hacer click en Reservar */}
       {showPaymentModal && selectedReservation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0 z-10">
-              <h2 className="text-2xl font-bold">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-t-3xl sm:rounded-lg shadow-xl max-w-3xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
+            {/* Header - Sticky en móvil */}
+            <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-lg sticky top-0 z-10">
+              <h2 className="text-xl sm:text-2xl font-bold">
                 {selectedReservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Métodos de Pago'}
               </h2>
               <button
@@ -660,17 +660,18 @@ export default function ReservationsPage() {
                   setShowPaymentModal(false);
                   setSelectedReservation(null);
                 }}
-                className="text-white hover:text-gray-200 transition-colors"
+                className="text-white hover:text-gray-200 active:text-gray-300 transition-colors p-2 -mr-2 sm:mr-0 touch-target-lg"
+                aria-label="Cerrar"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-6">
-              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="p-4 sm:p-6 flex-1 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                 <p className="text-sm font-medium text-blue-900">Reserva #{selectedReservation.id}</p>
                 <p className="text-lg font-semibold text-blue-900">{selectedReservation.class.title}</p>
                 <div className="text-sm text-blue-700">

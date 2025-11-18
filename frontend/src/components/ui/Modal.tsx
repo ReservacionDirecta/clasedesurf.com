@@ -51,7 +51,7 @@ export default function Modal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -59,23 +59,23 @@ export default function Modal({
       />
       
       {/* Modal */}
-      <div className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col`}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+      <div className={`relative bg-white rounded-t-3xl sm:rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] sm:max-h-[90vh] flex flex-col safe-area-bottom`}>
+        {/* Header - Sticky en móvil */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10 sm:relative">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{title}</h2>
           {showCloseButton && (
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close modal"
+              className="text-gray-400 hover:text-gray-600 active:text-gray-800 transition-colors p-2 -mr-2 sm:mr-0 touch-target-lg"
+              aria-label="Cerrar modal"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           )}
         </div>
         
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
           {children}
         </div>
       </div>

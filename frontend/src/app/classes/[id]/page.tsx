@@ -470,38 +470,57 @@ export default function ClassDetailsPage() {
       return;
     }
 
+    if (!classDetails) {
+      return;
+    }
+
     setReservationLoading(true);
     try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Crear nueva reserva mock
-      const newReservation = {
-        id: Date.now(),
-        userId: parseInt(session.user.id || '1'),
-        status: 'PENDING' as const,
-        specialRequest,
-        createdAt: new Date().toISOString(),
-        user: {
-          id: parseInt(session.user.id || '1'),
-          name: session.user.name || 'Usuario',
-          email: session.user.email || 'usuario@email.com'
-        }
+      // Preparar datos de reserva para la página de confirmación
+      const reservationData = {
+        classId: classDetails.id.toString(),
+        classData: {
+          id: classDetails.id,
+          title: classDetails.title,
+          description: classDetails.description,
+          price: classDetails.price,
+          date: classDetails.date,
+          startTime: classDetails.startTime,
+          endTime: classDetails.endTime,
+          level: classDetails.level,
+          location: classDetails.location,
+          school: classDetails.school
+        },
+        bookingData: {
+          name: session.user.name || '',
+          email: session.user.email || '',
+          age: '',
+          height: '',
+          weight: '',
+          canSwim: false,
+          swimmingLevel: 'BEGINNER',
+          hasSurfedBefore: false,
+          injuries: '',
+          emergencyContact: '',
+          emergencyPhone: '',
+          participants: 1,
+          specialRequest: specialRequest || '',
+          totalAmount: classDetails.price
+        },
+        status: 'pending' as const
       };
 
-      // Actualizar estado local
-      setUserReservation(newReservation);
-      if (classDetails) {
-        setClassDetails({
-          ...classDetails,
-          enrolled: classDetails.enrolled + 1,
-          reservations: [...classDetails.reservations, newReservation]
-        });
-      }
+      // Guardar datos en sessionStorage para la página de confirmación
+      sessionStorage.setItem('pendingReservation', JSON.stringify(reservationData));
 
+      // Cerrar modal
       setShowReservationModal(false);
+
+      // Redirigir a la página de confirmación donde se completará la reserva y el pago
+      router.push('/reservations/confirmation');
     } catch (error) {
-      console.error('Error al reservar:', error);
+      console.error('Error al preparar reserva:', error);
+      alert('Error al procesar la reserva. Por favor, inténtalo de nuevo.');
     } finally {
       setReservationLoading(false);
     }
@@ -1064,31 +1083,61 @@ export default function ClassDetailsPage() {
 
         {/* Modal de Reserva */}
         {showReservationModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl p-6 max-w-md w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-gray-900">Confirmar Reserva</h3>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-t-3xl sm:rounded-xl p-4 sm:p-6 max-w-lg w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
+              {/* Header con botón de cerrar */}
+              <div className="flex justify-between items-center mb-4 sm:mb-6 sticky top-0 bg-white pb-2 border-b border-gray-200 sm:border-none sm:relative">
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Reservar Clase</h3>
                 <button 
                   onClick={() => setShowReservationModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl p-2 -mr-2 sm:mr-0 touch-target-lg"
+                  aria-label="Cerrar"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className="mb-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                  <h4 className="font-semibold text-blue-900 mb-2">{classDetails?.title}</h4>
-                  <div className="text-sm text-blue-800 space-y-1">
-                    <p>📅 {classDetails && formatDate(classDetails.date)}</p>
-                    <p>⏰ {classDetails && formatTime(classDetails.startTime)} - {classDetails && formatTime(classDetails.endTime)}</p>
-                    <p>📍 {classDetails?.location}</p>
+              <div className="mb-4 sm:mb-6 flex-1 overflow-y-auto">
+                {/* Resumen de la clase */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                  <h4 className="font-semibold text-blue-900 mb-2 sm:mb-3 text-base sm:text-lg">{classDetails?.title}</h4>
+                  <div className="text-xs sm:text-sm text-blue-800 space-y-1.5 sm:space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="break-words">{classDetails && formatDate(classDetails.date)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span>{classDetails && formatTime(classDetails.startTime)} - {classDetails && formatTime(classDetails.endTime)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="break-words">{classDetails?.location}</span>
+                    </div>
                     {classDetails && (() => {
                       const prices = formatDualCurrency(classDetails.price);
                       return (
-                        <p className="font-semibold">💰 {prices.pen} ({prices.usd})</p>
+                        <div className="flex items-center gap-2 font-semibold text-base sm:text-lg mt-2 pt-2 border-t border-blue-300">
+                          <CreditCard className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span>{prices.pen} ({prices.usd})</span>
+                        </div>
                       );
                     })()}
+                  </div>
+                </div>
+
+                {/* Información importante */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs sm:text-sm text-yellow-800">
+                      <p className="font-semibold mb-1">Próximos pasos:</p>
+                      <ul className="list-disc list-inside space-y-0.5 sm:space-y-1">
+                        <li>Completarás los datos de los participantes</li>
+                        <li>Procederás con el pago de la reserva</li>
+                        <li>Recibirás confirmación inmediata</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
@@ -1097,8 +1146,8 @@ export default function ClassDetailsPage() {
                   const formData = new FormData(e.currentTarget);
                   const specialRequest = formData.get('specialRequest') as string;
                   handleReservation(specialRequest);
-                }}>
-                  <div className="mb-4">
+                }} className="flex flex-col flex-1">
+                  <div className="mb-4 sm:mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Solicitud especial (opcional)
                     </label>
@@ -1106,24 +1155,33 @@ export default function ClassDetailsPage() {
                       name="specialRequest"
                       rows={3}
                       placeholder="¿Hay algo específico que quieras que sepamos? (primera vez, miedos, objetivos, etc.)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2.5 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                     />
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      Esta información ayudará al instructor a preparar mejor la clase
+                    </p>
                   </div>
 
-                  <div className="flex gap-3">
+                  {/* Botones fijos en la parte inferior en móvil */}
+                  <div 
+                    className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-auto pt-4 border-t border-gray-200 sm:border-none sm:pt-0 sticky bottom-0 bg-white sm:bg-transparent -mx-4 sm:mx-0 px-4 sm:px-0 safe-area-bottom"
+                    style={{ 
+                      bottom: 'env(safe-area-inset-bottom, 0px)'
+                    }}
+                  >
                     <button
                       type="button"
                       onClick={() => setShowReservationModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex-1 px-4 py-3 sm:py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium text-base sm:text-sm touch-target-lg"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={reservationLoading}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      className="flex-1 px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 font-medium text-base sm:text-sm touch-target-lg"
                     >
-                      {reservationLoading ? 'Reservando...' : 'Confirmar Reserva'}
+                      {reservationLoading ? 'Procesando...' : 'Continuar con Reserva y Pago'}
                     </button>
                   </div>
                 </form>
@@ -1134,13 +1192,14 @@ export default function ClassDetailsPage() {
 
         {/* Modal de Perfil del Estudiante */}
         {showStudentProfileModal && selectedStudent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">Perfil del Estudiante</h3>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+            <div className="bg-white rounded-t-3xl sm:rounded-xl p-4 sm:p-6 max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
+              <div className="flex justify-between items-center mb-4 sm:mb-6 sticky top-0 bg-white pb-2 border-b border-gray-200 sm:border-none sm:relative">
+                <h3 className="text-lg sm:text-2xl font-bold text-gray-900">Perfil del Estudiante</h3>
                 <button 
                   onClick={() => setShowStudentProfileModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                  className="text-gray-400 hover:text-gray-600 active:text-gray-800 text-2xl sm:text-3xl p-2 -mr-2 sm:mr-0 touch-target-lg"
+                  aria-label="Cerrar"
                 >
                   ✕
                 </button>
@@ -1237,10 +1296,15 @@ export default function ClassDetailsPage() {
                 )}
               </div>
 
-              <div className="flex justify-end mt-6 pt-6 border-t border-gray-200">
+              <div 
+                className="flex justify-end mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200 sticky bottom-0 bg-white sm:bg-transparent -mx-4 sm:mx-0 px-4 sm:px-0 safe-area-bottom"
+                style={{ 
+                  bottom: 'env(safe-area-inset-bottom, 0px)'
+                }}
+              >
                 <button 
                   onClick={() => setShowStudentProfileModal(false)}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  className="px-4 sm:px-6 py-3 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 active:bg-gray-800 transition-colors font-medium text-base sm:text-sm touch-target-lg w-full sm:w-auto"
                 >
                   Cerrar
                 </button>

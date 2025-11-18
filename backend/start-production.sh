@@ -76,7 +76,9 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
 done
 
 # Regenerate Prisma Client with runtime DATABASE_URL
+# This is critical to ensure Prisma Client matches the current database schema
 echo "🔄 Regenerating Prisma Client with runtime DATABASE_URL..."
+rm -rf node_modules/.prisma/client
 npx prisma generate
 
 # Start the server

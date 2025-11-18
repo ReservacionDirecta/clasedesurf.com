@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
   Home,
@@ -23,6 +23,7 @@ import {
 export function SchoolNavbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
@@ -124,12 +125,16 @@ export function SchoolNavbar() {
     try {
       setIsSigningOut(true);
       await signOut({ 
-        callbackUrl: '/login',
-        redirect: true 
+        redirect: false 
       });
+      // Redirección manual para evitar problemas con NEXTAUTH_URL
+      router.push('/login');
+      router.refresh();
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       setIsSigningOut(false);
+      // Intentar redirección manual incluso si hay error
+      router.push('/login');
     }
   };
 

@@ -279,8 +279,8 @@ export function MobileBottomNav() {
                                         onClick={() => setMoreMenuOpen(false)}
                                     />
                                     
-                                    {/* Menu */}
-                                    <div className="absolute bottom-full left-0 right-0 mb-2 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 max-h-[60vh] overflow-y-auto animate-slide-up">
+                                    {/* Menu - Posicionado para no salirse de la pantalla */}
+                                    <div className="fixed bottom-20 left-0 right-0 mx-2 mb-2 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 max-h-[60vh] overflow-y-auto animate-slide-up">
                                         <div className="p-2">
                                             <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 py-2 mb-1">
                                                 Más opciones

@@ -40,7 +40,11 @@ export const updateProfileSchema = z.object({
     z.string().max(10000000, 'Profile photo must be less than 10MB when base64 encoded'),
     z.literal('').transform(() => null),
     z.null()
-  ]).optional()
+  ]).optional(),
+  avatar: z.string()
+    .max(50, 'Avatar ID must be less than 50 characters')
+    .nullable()
+    .optional()
 });
 
 // Types derived from schemas

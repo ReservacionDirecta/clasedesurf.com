@@ -432,7 +432,6 @@ export default function Home() {
               <path d="M0 540C200 500 400 580 600 540C800 500 1000 580 1200 540C1320 520 1440 560 1440 560" stroke="url(#searchWaveGradient)" strokeWidth="2" fill="none" opacity="0.25" />
             </svg>
           </div>
-          <div className="absolute -bottom-24 -right-0 h-64 w-64 rounded-full bg-[#2EC4B6]/25 blur-3xl" />
           <div className="absolute top-1/3 right-1/4 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         </div>
 

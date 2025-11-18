@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useToast } from '@/contexts/ToastContext';
 
 type UserRole = 'STUDENT' | 'INSTRUCTOR' | 'SCHOOL_ADMIN';
 
@@ -14,12 +16,41 @@ export default function RegisterPage() {
   const [role, setRole] = useState<UserRole>('STUDENT');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [countdown, setCountdown] = useState(9);
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const getDashboardPath = (userRole: string) => {
+    switch (userRole) {
+      case 'ADMIN':
+        return '/dashboard/admin';
+      case 'SCHOOL_ADMIN':
+        return '/dashboard/school';
+      case 'INSTRUCTOR':
+        return '/dashboard/instructor';
+      case 'STUDENT':
+      default:
+        return '/dashboard/student/profile';
+    }
+  };
+
+  // Limpiar intervalos cuando el componente se desmonte
+  useEffect(() => {
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setIsRedirecting(false);
+    setCountdown(9);
 
     // Post to the frontend API proxy so client-side calls are routed correctly
     const response = await fetch('/api/auth/register', {
@@ -40,10 +71,109 @@ export default function RegisterPage() {
     }
 
     if (!response.ok) {
-      setError(data?.message || 'Registration failed');
+      const errorMessage = data?.message || 'Error al registrar usuario';
+      setError(errorMessage);
+      showError('Error de registro', errorMessage);
     } else {
-      setSuccess(data?.message || 'Registration successful!');
-      router.push('/login'); // Redirect to login page after successful registration
+      const successMessage = '¡Registro exitoso! Serás redirigido en breve...';
+      setSuccess(successMessage);
+      showSuccess('¡Registro exitoso!', 'Tu cuenta ha sido creada correctamente. Redirigiendo...', 9000);
+      setIsRedirecting(true);
+
+      // Intentar iniciar sesión automáticamente
+      try {
+        const loginResult = await signIn('credentials', {
+          redirect: false,
+          email,
+          password,
+        });
+
+        if (loginResult?.ok) {
+          // Obtener la sesión para determinar el rol
+          try {
+            const sessionResponse = await fetch('/api/auth/session');
+            const session = await sessionResponse.json();
+            
+            const dashboardPath = getDashboardPath(session?.user?.role || role);
+            
+            // Limpiar intervalo anterior si existe
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+            }
+            
+            // Esperar 9 segundos antes de redirigir
+            setCountdown(9);
+            let remainingSeconds = 9;
+            countdownIntervalRef.current = setInterval(() => {
+              remainingSeconds--;
+              setCountdown(remainingSeconds);
+              if (remainingSeconds <= 0) {
+                if (countdownIntervalRef.current) {
+                  clearInterval(countdownIntervalRef.current);
+                  countdownIntervalRef.current = null;
+                }
+                router.push(dashboardPath);
+              }
+            }, 1000);
+          } catch (sessionError) {
+            console.error('Error obteniendo sesión:', sessionError);
+            // Si falla, redirigir al login después de 9 segundos
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+            }
+            setCountdown(9);
+            let remainingSeconds = 9;
+            countdownIntervalRef.current = setInterval(() => {
+              remainingSeconds--;
+              setCountdown(remainingSeconds);
+              if (remainingSeconds <= 0) {
+                if (countdownIntervalRef.current) {
+                  clearInterval(countdownIntervalRef.current);
+                  countdownIntervalRef.current = null;
+                }
+                router.push('/login');
+              }
+            }, 1000);
+          }
+        } else {
+          // Si el login automático falla, redirigir al login después de 9 segundos
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+          }
+          setCountdown(9);
+          let remainingSeconds = 9;
+          countdownIntervalRef.current = setInterval(() => {
+            remainingSeconds--;
+            setCountdown(remainingSeconds);
+            if (remainingSeconds <= 0) {
+              if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+              }
+              router.push('/login');
+            }
+          }, 1000);
+        }
+      } catch (loginError) {
+        console.error('Error en login automático:', loginError);
+        // Si hay error, redirigir al login después de 9 segundos
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+        }
+        setCountdown(9);
+        let remainingSeconds = 9;
+        countdownIntervalRef.current = setInterval(() => {
+          remainingSeconds--;
+          setCountdown(remainingSeconds);
+          if (remainingSeconds <= 0) {
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            router.push('/login');
+          }
+        }, 1000);
+      }
     }
   };
 
@@ -211,11 +341,18 @@ export default function RegisterPage() {
 
             {success && (
               <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex">
-                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <p className="ml-3 text-sm text-green-700">{success}</p>
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-green-800">{success}</p>
+                    {isRedirecting && (
+                      <p className="mt-1 text-sm text-green-700">
+                        Redirigiendo en <span className="font-semibold">{countdown}</span> segundo{countdown !== 1 ? 's' : ''}...
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -223,9 +360,14 @@ export default function RegisterPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              disabled={isRedirecting}
+              className={`w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-lg transition-all transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                isRedirecting
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'hover:from-blue-700 hover:to-cyan-700 hover:scale-105'
+              }`}
             >
-              Crear Cuenta
+              {isRedirecting ? 'Redirigiendo...' : 'Crear Cuenta'}
             </button>
 
             {/* Login Link */}

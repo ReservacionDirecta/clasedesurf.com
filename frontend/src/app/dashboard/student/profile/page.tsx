@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '@/contexts/ToastContext';
+import AvatarSelector, { AvatarDisplay } from '@/components/avatar/AvatarSelector';
 
 interface UserProfile {
   name: string;
@@ -44,11 +45,8 @@ export default function StudentProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Photo states - simplified
-  const [currentPhoto, setCurrentPhoto] = useState<string | null>(null); // From server
-  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null); // Local preview
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  // Avatar state
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   
   // Stats
   const [attendances, setAttendances] = useState<ClassAttendance[]>([]);
@@ -84,8 +82,8 @@ export default function StudentProfile() {
         phone: data.phone || '',
       });
       
-      // Set current photo from server
-      setCurrentPhoto(data.profilePhoto || null);
+      // Set avatar from server (fallback to profilePhoto for migration, then to null)
+      setSelectedAvatar(data.avatar || data.profilePhoto || null);
       
       // Auto-enable editing if profile is incomplete
       if (!data.name || !data.age || !data.phone) {
@@ -156,67 +154,12 @@ export default function StudentProfile() {
     setBestDay(best);
   };
   
-  // Handle photo selection
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    console.log('[Profile] Photo selected:', file.name, file.size, 'bytes');
-    
-    // Validate size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showError('Imagen muy grande', 'El archivo no puede ser mayor a 5MB');
-      e.target.value = '';
-      return;
-    }
-    
-    // Validate type
-    if (!file.type.startsWith('image/')) {
-      showError('Tipo inválido', 'Solo se permiten archivos de imagen');
-      e.target.value = '';
-      return;
-    }
-    
-    setUploadingPhoto(true);
-    
-    // Read file
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      console.log('[Profile] Photo loaded, size:', result.length, 'chars');
-      setPreviewPhoto(result);
-      setPhotoFile(file);
-      setUploadingPhoto(false);
-      
-      // Auto-enable editing
-      if (!isEditing) {
-        setIsEditing(true);
-      }
-      
-      showInfo('Foto seleccionada', 'Haz clic en "Guardar Cambios" para actualizar tu foto');
-    };
-    
-    reader.onerror = () => {
-      showError('Error', 'No se pudo leer el archivo');
-      setUploadingPhoto(false);
-      e.target.value = '';
-    };
-    
-    reader.readAsDataURL(file);
-  };
-  
-  // Remove photo
-  const handleRemovePhoto = () => {
-    setPreviewPhoto(null);
-    setPhotoFile(null);
-    const input = document.getElementById('photo-input') as HTMLInputElement;
-    if (input) input.value = '';
-    
+  // Handle avatar selection
+  const handleAvatarSelect = (avatarId: string) => {
+    setSelectedAvatar(avatarId);
     if (!isEditing) {
       setIsEditing(true);
     }
-    
-    showInfo('Foto eliminada', 'Haz clic en "Guardar Cambios" para confirmar');
   };
   
   // Handle form change
@@ -235,8 +178,7 @@ export default function StudentProfile() {
     e.preventDefault();
     
     console.log('[Profile] ===== SAVING PROFILE =====');
-    console.log('[Profile] Preview photo:', previewPhoto ? `${previewPhoto.length} chars` : 'null');
-    console.log('[Profile] Photo file:', photoFile?.name || 'null');
+    console.log('[Profile] Selected avatar:', selectedAvatar || 'null');
     
     setSaving(true);
     setError(null);
@@ -250,13 +192,10 @@ export default function StudentProfile() {
         age: userProfile.age ? Number(userProfile.age) : null,
         weight: userProfile.weight ? Number(userProfile.weight) : null,
         height: userProfile.height ? Number(userProfile.height) : null,
-        profilePhoto: previewPhoto || null, // Send preview or null to clear
+        avatar: selectedAvatar || null,
       };
       
-      console.log('[Profile] Sending data:', {
-        ...data,
-        profilePhoto: data.profilePhoto ? `${data.profilePhoto.length} chars` : 'null'
-      });
+      console.log('[Profile] Sending data:', data);
       
       const res = await fetch(`/api/users/profile`, {
         method: 'PUT',
@@ -273,15 +212,10 @@ export default function StudentProfile() {
       }
       
       const saved = await res.json();
-      console.log('[Profile] Saved successfully:', {
-        ...saved,
-        profilePhoto: saved.profilePhoto ? `${saved.profilePhoto.length} chars` : 'null'
-      });
+      console.log('[Profile] Saved successfully:', saved);
       
-      // Update current photo from server response
-      setCurrentPhoto(saved.profilePhoto || null);
-      setPreviewPhoto(null);
-      setPhotoFile(null);
+      // Update avatar from server response
+      setSelectedAvatar(saved.avatar || null);
       
       // Update session
       await update({ name: userProfile.name });
@@ -300,12 +234,6 @@ export default function StudentProfile() {
   
   // Cancel editing
   const handleCancel = () => {
-    // Reset photo preview
-    setPreviewPhoto(null);
-    setPhotoFile(null);
-    const input = document.getElementById('photo-input') as HTMLInputElement;
-    if (input) input.value = '';
-    
     // Reload profile to reset all changes
     loadProfile();
     setIsEditing(false);
@@ -399,8 +327,6 @@ export default function StudentProfile() {
     );
   }
   
-  // Get display photo (preview > current > null)
-  const displayPhoto = previewPhoto || currentPhoto;
   const recommendations = getRecommendations();
   
   return (
@@ -427,81 +353,18 @@ export default function StudentProfile() {
           {/* Profile Card */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-              {/* Photo Section */}
+              {/* Avatar Section */}
               <div className="bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-8 text-center">
                 <div className="relative inline-block">
-                  <div className="w-32 h-32 bg-white rounded-full overflow-hidden flex items-center justify-center shadow-lg mx-auto relative">
-                    {uploadingPhoto ? (
-                      <div className="flex items-center justify-center w-full h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                      </div>
-                    ) : displayPhoto ? (
-                      <Image
-                        src={displayPhoto}
-                        alt="Foto de perfil"
-                        width={128}
-                        height={128}
-                        className="h-32 w-32 object-cover"
-                        unoptimized
-                      />
-                    ) : userProfile.name ? (
-                      <span className="text-4xl font-bold text-blue-600">
-                        {userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                      </span>
-                    ) : (
-                      <svg className="w-16 h-16 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    
-                    {/* Remove button */}
-                    {displayPhoto && !uploadingPhoto && (
-                      <button
-                        onClick={handleRemovePhoto}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1.5 shadow-lg hover:bg-red-600 transition-colors"
-                        type="button"
-                        title="Eliminar foto"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
-                  
-                  {/* Camera button */}
-                  <label
-                    htmlFor="photo-input"
-                    className={`absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg transition-colors ${
-                      uploadingPhoto ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-gray-50'
-                    }`}
-                    title="Cambiar foto"
-                  >
-                    {uploadingPhoto ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                    ) : (
-                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    )}
-                  </label>
-                  <input
-                    id="photo-input"
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
-                    onChange={handlePhotoSelect}
-                    className="hidden"
-                    disabled={uploadingPhoto}
+                  <AvatarDisplay 
+                    avatarId={selectedAvatar} 
+                    role="STUDENT" 
+                    size="xl"
+                    className="mx-auto shadow-lg"
                   />
                 </div>
                 <h2 className="text-2xl font-bold text-white mt-4">{userProfile.name || 'Surfista'}</h2>
                 <p className="text-blue-100 text-sm">{userProfile.email}</p>
-                {photoFile && (
-                  <p className="text-blue-100 text-xs mt-2 opacity-90">
-                    📷 {photoFile.name}
-                  </p>
-                )}
               </div>
               
               {/* Stats */}
@@ -569,6 +432,19 @@ export default function StudentProfile() {
               </div>
               
               <form onSubmit={handleSave} className="p-6">
+                {/* Avatar Selector */}
+                {isEditing && (
+                  <div className="mb-6 pb-6 border-b border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">Selecciona tu Avatar</label>
+                    <AvatarSelector
+                      selectedAvatar={selectedAvatar}
+                      onSelectAvatar={handleAvatarSelect}
+                      role="STUDENT"
+                      size="md"
+                    />
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Nombre Completo</label>

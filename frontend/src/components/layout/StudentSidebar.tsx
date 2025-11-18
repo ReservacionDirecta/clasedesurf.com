@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
   User, 
@@ -14,10 +14,12 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { AvatarDisplay } from '@/components/avatar/AvatarSelector';
 
 export function StudentSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('studentSidebarCollapsed') === 'true';
@@ -25,7 +27,7 @@ export function StudentSidebar() {
     return false;
   });
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
 
   // Save collapsed state to localStorage
   useEffect(() => {
@@ -47,7 +49,7 @@ export function StudentSidebar() {
         
         if (res.ok) {
           const data = await res.json();
-          setProfilePhoto(data.profilePhoto || null);
+          setAvatar(data.avatar || data.profilePhoto || null);
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -102,12 +104,16 @@ export function StudentSidebar() {
     try {
       setIsSigningOut(true);
       await signOut({ 
-        callbackUrl: '/login',
-        redirect: true 
+        redirect: false 
       });
+      // Redirección manual para evitar problemas con NEXTAUTH_URL
+      router.push('/login');
+      router.refresh();
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
       setIsSigningOut(false);
+      // Intentar redirección manual incluso si hay error
+      router.push('/login');
     }
   };
 
@@ -219,22 +225,18 @@ export function StudentSidebar() {
           >
             <div className="relative flex-shrink-0">
               <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-blue-100">
-                {profilePhoto ? (
-                  <Image
-                    src={profilePhoto}
-                    alt={session?.user?.name || 'User'}
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
-                    <span className="text-white font-semibold text-sm">
-                      {getInitials(session?.user?.name)}
-                    </span>
-                  </div>
-                )}
+                <AvatarDisplay 
+                  avatarId={avatar} 
+                  role="STUDENT" 
+                  size="md"
+                  fallback={
+                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {getInitials(session?.user?.name)}
+                      </span>
+                    </div>
+                  }
+                />
               </div>
               <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
