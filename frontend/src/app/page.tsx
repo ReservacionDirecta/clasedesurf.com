@@ -390,6 +390,7 @@ export default function Home() {
                     sizes="(min-width: 768px) 33vw, 100vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     priority={highlight.id === 'beginners'}
+                    loading={highlight.id === 'beginners' ? undefined : 'lazy'}
                   />
                 </div>
                 <div className="flex flex-1 flex-col gap-4 p-6">
@@ -431,7 +432,6 @@ export default function Home() {
               <path d="M0 540C200 500 400 580 600 540C800 500 1000 580 1200 540C1320 520 1440 560 1440 560" stroke="url(#searchWaveGradient)" strokeWidth="2" fill="none" opacity="0.25" />
             </svg>
           </div>
-          <div className="absolute -top-32 -left-16 h-72 w-72 rounded-full bg-[#FF3366]/25 blur-3xl" />
           <div className="absolute -bottom-24 -right-0 h-64 w-64 rounded-full bg-[#2EC4B6]/25 blur-3xl" />
           <div className="absolute top-1/3 right-1/4 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         </div>
@@ -458,7 +458,7 @@ export default function Home() {
             </p>
 
             {/* Mobile-Optimized Search Engine */}
-            <div className="max-w-5xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 relative z-30">
+            <div className="max-w-5xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 relative z-50">
               <AirbnbSearchBar 
                 onFilterChange={handleAirbnbFilterChange}
                 onReset={handleAirbnbReset}
@@ -518,11 +518,12 @@ export default function Home() {
         {/* Mobile-Optimized Grid de clases */}
         {!loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {filteredClasses.map((classData) => (
+            {filteredClasses.map((classData, index) => (
               <ClassCard
                 key={classData.id}
                 classData={classData}
                 onSelect={() => handleClassSelect(classData)}
+                priority={index === 0}
               />
             ))}
           </div>

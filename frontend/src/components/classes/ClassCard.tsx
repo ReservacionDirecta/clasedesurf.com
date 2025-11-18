@@ -53,9 +53,10 @@ interface ClassData {
 interface ClassCardProps {
   classData: ClassData
   onSelect: () => void
+  priority?: boolean
 }
 
-export function ClassCard({ classData, onSelect }: ClassCardProps) {
+export function ClassCard({ classData, onSelect, priority = false }: ClassCardProps) {
   const [showDetails, setShowDetails] = useState(false)
 
   const formatTime = (date: Date) => {
@@ -196,6 +197,8 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
               alt={`Clase de ${classData.title}`}
               fill
               className="object-cover transition-transform duration-300 hover:scale-105"
+              priority={priority}
+              loading={priority ? undefined : 'lazy'}
             />
             {/* Image counter badge */}
             <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
@@ -208,6 +211,8 @@ export function ClassCard({ classData, onSelect }: ClassCardProps) {
             alt={`Clase de ${classData.title}`}
             fill
             className="object-cover transition-transform duration-300 hover:scale-105"
+            priority={priority}
+            loading={priority ? undefined : 'lazy'}
           />
         )}
 

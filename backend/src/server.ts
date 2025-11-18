@@ -31,6 +31,8 @@ const corsOptions = {
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
+      'https://clasedesurf.com',
+      'https://www.clasedesurf.com',
       'https://clasedesurfcom-production.up.railway.app',
       'https://clasesde-pe-production.up.railway.app',
       'https://clasesde-pe-frontend-production.up.railway.app',
