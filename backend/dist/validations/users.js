@@ -42,5 +42,9 @@ exports.updateProfileSchema = zod_1.z.object({
         zod_1.z.string().max(10000000, 'Profile photo must be less than 10MB when base64 encoded'),
         zod_1.z.literal('').transform(() => null),
         zod_1.z.null()
-    ]).optional()
+    ]).optional(),
+    avatar: zod_1.z.string()
+        .max(50, 'Avatar ID must be less than 50 characters')
+        .nullable()
+        .optional()
 });

@@ -64,7 +64,7 @@ const optionalAuth = (req, res, next) => {
 // GET /classes - list classes with filters (supports multi-tenant filtering)
 router.get('/', optionalAuth, async (req, res) => {
     try {
-        const { date, level, type, minPrice, maxPrice, schoolId } = req.query;
+        const { date, level, type, minPrice, maxPrice, schoolId, locality } = req.query;
         // Build filter object
         const where = {};
         // Apply multi-tenant filtering if authenticated
@@ -75,6 +75,24 @@ router.get('/', optionalAuth, async (req, res) => {
         // Filter by schoolId if provided (and not already filtered by multi-tenant)
         if (schoolId && !where.schoolId) {
             where.schoolId = Number(schoolId);
+        }
+        // Filter by locality (school location)
+        if (locality && typeof locality === 'string') {
+            // If we already have a school filter, merge it
+            if (where.school) {
+                where.school.location = {
+                    contains: locality,
+                    mode: 'insensitive'
+                };
+            }
+            else {
+                where.school = {
+                    location: {
+                        contains: locality,
+                        mode: 'insensitive'
+                    }
+                };
+            }
         }
         // Filter by date (exact date match)
         if (date && typeof date === 'string') {
@@ -105,7 +123,29 @@ router.get('/', optionalAuth, async (req, res) => {
         const classes = await prisma_1.default.class.findMany({
             where,
             include: {
-                school: true,
+                school: {
+                    select: {
+                        id: true,
+                        name: true,
+                        location: true,
+                        description: true,
+                        phone: true,
+                        email: true,
+                        website: true,
+                        instagram: true,
+                        facebook: true,
+                        whatsapp: true,
+                        address: true,
+                        logo: true,
+                        coverImage: true,
+                        foundedYear: true,
+                        rating: true,
+                        totalReviews: true,
+                        createdAt: true,
+                        updatedAt: true
+                        // Excluir reviews explícitamente para evitar errores si la migración falló
+                    }
+                },
                 reservations: {
                     include: {
                         payment: true,
@@ -139,8 +179,13 @@ router.get('/', optionalAuth, async (req, res) => {
         res.json(classesWithInfo);
     }
     catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('[GET /classes] Error:', err);
+        console.error('[GET /classes] Error message:', err?.message);
+        console.error('[GET /classes] Error stack:', err?.stack);
+        res.status(500).json({
+            message: 'Internal server error',
+            error: process.env.NODE_ENV === 'development' ? err?.message : undefined
+        });
     }
 });
 // GET /classes/:id - get single class
