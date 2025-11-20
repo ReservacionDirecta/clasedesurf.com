@@ -252,7 +252,7 @@ export const enforceStudentAccess = async (
  */
 export const buildMultiTenantWhere = async (
   req: AuthRequest,
-  resourceType: 'class' | 'instructor' | 'student' | 'reservation' | 'payment'
+  resourceType: 'class' | 'instructor' | 'student' | 'reservation' | 'payment' | 'calendarNote'
 ): Promise<any> => {
   const { role, userId, schoolId } = req;
   const where: any = {};
@@ -280,6 +280,7 @@ export const buildMultiTenantWhere = async (
       case 'class':
       case 'instructor':
       case 'student':
+      case 'calendarNote':
         where.schoolId = adminSchoolId;
         break;
       case 'reservation':
