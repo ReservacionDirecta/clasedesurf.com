@@ -271,7 +271,9 @@ export const buildMultiTenantWhere = async (
         where: { ownerId: Number(userId) } 
       });
       if (!school) {
-        throw new Error('No school found for this SCHOOL_ADMIN');
+        // Retornar where vacío en lugar de lanzar error
+        // El endpoint puede manejar este caso
+        return where;
       }
       adminSchoolId = school.id;
     }
@@ -330,6 +332,9 @@ export const buildMultiTenantWhere = async (
         where.reservation = { 
           class: { schoolId: instructor.schoolId } 
         };
+        break;
+      case 'calendarNote':
+        where.schoolId = instructor.schoolId;
         break;
     }
 

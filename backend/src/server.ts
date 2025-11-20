@@ -108,10 +108,28 @@ app.get('/db-test', async (req, res) => {
   try {
     const schoolCount = await prisma.school.count();
     const schools = await prisma.school.findMany({ take: 2 });
+    
+    // Test CalendarNote model
+    let calendarNoteCount = 0;
+    let calendarNoteError = null;
+    let calendarNoteAvailable = false;
+    try {
+      // Try to access the model
+      calendarNoteCount = await (prisma as any).calendarNote?.count() || 0;
+      calendarNoteAvailable = true;
+    } catch (err: any) {
+      calendarNoteError = err?.message;
+      console.error('CalendarNote test error:', err);
+    }
+    
     res.json({ 
       message: 'Database connection working', 
       schoolCount, 
       schools,
+      calendarNoteCount,
+      calendarNoteAvailable,
+      calendarNoteError,
+      prismaModels: Object.keys(prisma).filter(key => !key.startsWith('$') && !key.startsWith('_')),
       timestamp: new Date().toISOString()
     });
   } catch (error) {

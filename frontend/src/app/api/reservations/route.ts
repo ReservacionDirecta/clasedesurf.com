@@ -1,17 +1,25 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
+    }
+
+    const token = (session as any).backendToken;
+    if (!token) {
+      return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
+    }
     
     const headers: any = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     };
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    }
 
     const url = new URL(req.url);
     const searchParams = url.search;
@@ -40,16 +48,22 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
+    }
+
+    const token = (session as any).backendToken;
+    if (!token) {
+      return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
+    }
     
     const headers: any = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     };
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    }
 
     const body = await req.json();
     
@@ -76,16 +90,22 @@ export async function POST(req: Request) {
   }
 }
 
-export async function PUT(req: Request) {
+export async function PUT(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
+    }
+
+    const token = (session as any).backendToken;
+    if (!token) {
+      return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
+    }
     
     const headers: any = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     };
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    }
 
     const body = await req.json();
     

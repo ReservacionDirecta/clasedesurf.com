@@ -11,10 +11,11 @@ export const createNoteSchema = z.object({
     .optional(),
   date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe estar en formato YYYY-MM-DD'),
-  time: z.string()
-    .regex(/^\d{2}:\d{2}$/, 'La hora debe estar en formato HH:mm')
-    .nullable()
-    .optional()
+  time: z.union([
+    z.string().regex(/^\d{2}:\d{2}$/, 'La hora debe estar en formato HH:mm'),
+    z.null(),
+    z.undefined()
+  ]).optional().transform(val => val === undefined || val === '' || val === '00:00' ? null : val)
 });
 
 // Schema for updating a calendar note
@@ -30,10 +31,11 @@ export const updateNoteSchema = z.object({
   date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'La fecha debe estar en formato YYYY-MM-DD')
     .optional(),
-  time: z.string()
-    .regex(/^\d{2}:\d{2}$/, 'La hora debe estar en formato HH:mm')
-    .nullable()
-    .optional()
+  time: z.union([
+    z.string().regex(/^\d{2}:\d{2}$/, 'La hora debe estar en formato HH:mm'),
+    z.null(),
+    z.undefined()
+  ]).optional().transform(val => val === undefined || val === '' || val === '00:00' ? null : val)
 });
 
 // Schema for note ID parameter

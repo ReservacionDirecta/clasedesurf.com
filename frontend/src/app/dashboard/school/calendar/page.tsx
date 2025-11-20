@@ -2,8 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Clock, Users, MapPin, Plus, StickyNote, X, BookOpen, Filter, List, Grid } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Clock, Users, Plus, StickyNote, X, BookOpen } from 'lucide-react';
 import ClassForm from '@/components/forms/ClassForm';
 import { Class } from '@/types';
 
@@ -17,67 +17,48 @@ interface CalendarEvent {
   instructor?: string;
   capacity?: number;
   enrolled?: number;
-  location?: string;
-  status?: 'scheduled' | 'completed' | 'cancelled';
   content?: string;
+  noteId?: number; // ID de la nota en la base de datos
 }
-
-interface CalendarNote {
-  id: number;
-  title: string;
-  content?: string;
-  date: string;
-  time?: string;
-}
-
-type ViewMode = 'month' | 'week' | 'day' | 'list';
 
 export default function SchoolCalendar() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [notes, setNotes] = useState<CalendarNote[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ date: Date; hour: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ date: Date; hour: number; minute?: number } | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showQuickModal, setShowQuickModal] = useState<'class' | 'reservation' | 'note' | null>(null);
+  const [showQuickModal, setShowQuickModal] = useState<'class' | 'note' | 'reservation' | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [schoolId, setSchoolId] = useState<number | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const calendarRef = useRef<HTMLDivElement>(null);
-
-  // Horarios disponibles (de 6 AM a 10 PM)
-  const hours = Array.from({ length: 17 }, (_, i) => i + 6);
+  const [selectedTime, setSelectedTime] = useState<string>('09:00');
+  const [selectedNote, setSelectedNote] = useState<CalendarEvent | null>(null);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [isEditingNote, setIsEditingNote] = useState(false);
+  const [availableClasses, setAvailableClasses] = useState<any[]>([]);
+  const [showReservationModal, setShowReservationModal] = useState(false);
+  const [isCreatingReservation, setIsCreatingReservation] = useState(false);
 
   const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
-      const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      // No enviar headers de autorización desde el cliente
+      // Las rutas API del servidor manejarán la autenticación
 
-      const schoolResponse = await fetch('/api/schools/my-school', { headers });
+      const schoolResponse = await fetch('/api/schools/my-school');
       if (!schoolResponse.ok) {
-        console.error('No se pudo obtener la escuela');
         setEvents([]);
-        setNotes([]);
         setLoading(false);
         return;
       }
 
       const school = await schoolResponse.json();
-      setSchoolId(school.id);
 
       const [classesResponse, reservationsResponse, notesResponse] = await Promise.all([
-        fetch(`/api/schools/${school.id}/classes`, { headers }),
-        fetch('/api/reservations', { headers }),
-        fetch('/api/notes', { headers })
+        fetch(`/api/schools/${school.id}/classes`),
+        fetch('/api/reservations'),
+        fetch('/api/notes')
       ]);
 
       const classes = classesResponse.ok ? await classesResponse.json() : [];
@@ -112,12 +93,6 @@ export default function SchoolCalendar() {
         const dateString = classDate.toISOString().split('T')[0];
         const enrolled = reservationsByClass[cls.id] || 0;
 
-        const now = new Date();
-        let status: 'scheduled' | 'completed' | 'cancelled' = 'scheduled';
-        if (classDate < now) {
-          status = 'completed';
-        }
-
         return {
           id: cls.id,
           title: cls.title,
@@ -127,9 +102,7 @@ export default function SchoolCalendar() {
           type: 'class' as const,
           instructor: cls.instructor || 'Por asignar',
           capacity: cls.capacity,
-          enrolled,
-          location: school.location || 'Por definir',
-          status
+          enrolled
         };
       });
 
@@ -145,17 +118,16 @@ export default function SchoolCalendar() {
           startTime: time,
           endTime: time,
           type: 'note' as const,
-          content: note.content || ''
+          content: note.content || '',
+          noteId: note.id // Guardar el ID de la nota para poder editarla/eliminarla
         };
       });
 
       setEvents([...calendarEvents, ...noteEvents]);
-      setNotes(notesData);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching events:', error);
       setEvents([]);
-      setNotes([]);
       setLoading(false);
     }
   }, [session]);
@@ -170,53 +142,34 @@ export default function SchoolCalendar() {
       router.push('/dashboard/student/profile');
       return;
     }
-    if (session) {
-      fetchEvents();
-    }
+    fetchEvents();
   }, [session, status, router, fetchEvents]);
-
-  // Swipe gestures para móvil
-  const minSwipeDistance = 50;
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    if (isLeftSwipe) navigateMonth('next');
-    if (isRightSwipe) navigateMonth('prev');
-  };
 
   const handleCreateClass = async (data: Partial<Class>) => {
     try {
       setIsCreating(true);
-      const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      // No enviar headers de autorización desde el cliente
+      // La ruta API del servidor manejará la autenticación
 
       const response = await fetch('/api/classes', {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error al crear clase: ${errorData.message || 'Error desconocido'}`);
-        throw new Error(errorData.message || 'Failed to create class');
+        alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        return;
       }
 
       await fetchEvents();
       setShowCreateModal(false);
       setShowQuickModal(null);
       setSelectedTimeSlot(null);
-      alert('¡Clase creada exitosamente!');
+      setSelectedDate(null);
     } catch (error) {
       console.error('Error creating class:', error);
     } finally {
@@ -226,121 +179,260 @@ export default function SchoolCalendar() {
 
   const handleCreateNote = async (title: string, content: string, date: Date, time?: string) => {
     try {
-      const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const dateString = date.toISOString().split('T')[0];
-      const timeString = time || `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+      const timeValue = time && time !== '00:00' ? time : null;
 
       const response = await fetch('/api/notes', {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           title,
-          content,
+          content: content || null,
           date: dateString,
-          time: timeString
+          time: timeValue
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error al crear nota: ${errorData.message || 'Error desconocido'}`);
+        alert(`Error: ${errorData.message || 'Error desconocido'}`);
         return;
       }
 
       await fetchEvents();
       setShowQuickModal(null);
       setSelectedTimeSlot(null);
-      alert('¡Nota creada exitosamente!');
+      setSelectedDate(null);
     } catch (error) {
       console.error('Error creating note:', error);
-      alert('Error al crear la nota');
+      alert('Error al crear la nota. Por favor, intenta de nuevo.');
     }
   };
 
-  const handleCreateQuickReservation = async (classId: number, userId: number) => {
+  const handleUpdateNote = async (noteId: number, title: string, content: string, date: Date, time?: string) => {
     try {
-      const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const dateString = date.toISOString().split('T')[0];
+      const timeValue = time && time !== '00:00' ? time : null;
 
-      const response = await fetch('/api/reservations', {
-        method: 'POST',
-        headers,
+      const response = await fetch(`/api/notes/${noteId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          classId,
-          participants: [{ name: 'Reserva rápida', age: 18 }]
+          title,
+          content: content || null,
+          date: dateString,
+          time: timeValue
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error al crear reserva: ${errorData.message || 'Error desconocido'}`);
+        alert(`Error: ${errorData.message || 'Error desconocido'}`);
         return;
       }
 
       await fetchEvents();
-      setShowQuickModal(null);
-      setSelectedTimeSlot(null);
-      alert('¡Reserva creada exitosamente!');
+      setShowNoteModal(false);
+      setSelectedNote(null);
+      setIsEditingNote(false);
     } catch (error) {
-      console.error('Error creating reservation:', error);
-      alert('Error al crear la reserva');
+      console.error('Error updating note:', error);
+      alert('Error al actualizar la nota. Por favor, intenta de nuevo.');
     }
   };
 
+  const handleDeleteNote = async (noteId: number) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta nota?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/notes/${noteId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        return;
+      }
+
+      await fetchEvents();
+      setShowNoteModal(false);
+      setSelectedNote(null);
+      setIsEditingNote(false);
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      alert('Error al eliminar la nota. Por favor, intenta de nuevo.');
+    }
+  };
+
+  const handleOpenReservationModal = async () => {
+    try {
+      // Obtener clases disponibles para la fecha y hora seleccionada
+      const schoolResponse = await fetch('/api/schools/my-school');
+      if (!schoolResponse.ok) return;
+      
+      const school = await schoolResponse.json();
+      const dateString = selectedDate?.toISOString().split('T')[0];
+      const [hours, minutes] = selectedTime.split(':').map(Number);
+      
+      // Buscar clases en esa fecha
+      const classesResponse = await fetch(`/api/schools/${school.id}/classes`);
+      if (classesResponse.ok) {
+        const allClasses = await classesResponse.json();
+        const selectedDateTime = new Date(selectedDate!);
+        selectedDateTime.setHours(hours, minutes, 0, 0);
+        
+        // Filtrar clases que coincidan con la fecha/hora
+        const matchingClasses = allClasses.filter((cls: any) => {
+          const classDate = new Date(cls.date);
+          const classTime = new Date(classDate);
+          classTime.setHours(classDate.getHours(), classDate.getMinutes(), 0, 0);
+          return classTime.getTime() === selectedDateTime.getTime();
+        });
+        
+        setAvailableClasses(matchingClasses);
+      }
+      
+      setShowReservationModal(true);
+      setShowQuickModal(null);
+    } catch (error) {
+      console.error('Error loading classes:', error);
+    }
+  };
+
+  const handleCreateReservation = async (classId: number, studentData: any) => {
+    try {
+      setIsCreatingReservation(true);
+      
+      const response = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          classId,
+          participants: [
+            {
+              name: studentData.name,
+              email: studentData.email,
+              age: studentData.age,
+              height: studentData.height,
+              weight: studentData.weight,
+              canSwim: studentData.canSwim || false,
+              swimmingLevel: studentData.swimmingLevel || 'BEGINNER',
+              hasSurfedBefore: studentData.hasSurfedBefore || false,
+              injuries: studentData.injuries || '',
+              emergencyContact: studentData.emergencyContact || '',
+              emergencyPhone: studentData.emergencyPhone || '',
+              specialRequest: studentData.specialRequest || ''
+            }
+          ],
+          status: 'CONFIRMED'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        return;
+      }
+
+      await fetchEvents();
+      setShowReservationModal(false);
+      setSelectedTimeSlot(null);
+      setSelectedDate(null);
+      setAvailableClasses([]);
+    } catch (error) {
+      console.error('Error creating reservation:', error);
+      alert('Error al crear la reserva. Por favor, intenta de nuevo.');
+    } finally {
+      setIsCreatingReservation(false);
+    }
+  };
+
+  // Calcular días del mes correctamente
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
+    
+    // Primer día del mes
     const firstDay = new Date(year, month, 1);
+    // Último día del mes
     const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
+    
+    // Día de la semana del primer día (0 = domingo, 6 = sábado)
     const startingDayOfWeek = firstDay.getDay();
-
-    const days = [];
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      const prevDate = new Date(year, month, -i);
-      days.push({ date: prevDate, isCurrentMonth: false });
-    }
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push({ date: new Date(year, month, day), isCurrentMonth: true });
-    }
-    const remainingDays = 42 - days.length;
-    for (let day = 1; day <= remainingDays; day++) {
-      days.push({ date: new Date(year, month + 1, day), isCurrentMonth: false });
-    }
-    return days;
-  };
-
-  const getWeekDays = (date: Date) => {
-    const startOfWeek = new Date(date);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day;
-    startOfWeek.setDate(diff);
+    const daysInMonth = lastDay.getDate();
     
     const days = [];
-    for (let i = 0; i < 7; i++) {
-      const currentDay = new Date(startOfWeek);
-      currentDay.setDate(startOfWeek.getDate() + i);
-      days.push(currentDay);
+    
+    // Días del mes anterior para completar la primera semana
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      days.push({
+        date: new Date(year, month - 1, prevMonthLastDay - i),
+        isCurrentMonth: false
+      });
     }
+    
+    // Días del mes actual
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push({
+        date: new Date(year, month, day),
+        isCurrentMonth: true
+      });
+    }
+    
+    // Días del mes siguiente para completar la última semana
+    const remainingDays = 42 - days.length; // 6 semanas * 7 días
+    for (let day = 1; day <= remainingDays; day++) {
+      days.push({
+        date: new Date(year, month + 1, day),
+        isCurrentMonth: false
+      });
+    }
+    
     return days;
-  };
-
-  const getEventsForDateAndHour = (date: Date, hour: number) => {
-    const dateString = date.toISOString().split('T')[0];
-    return events.filter(event => {
-      if (event.date !== dateString) return false;
-      const eventHour = parseInt(event.startTime.split(':')[0]);
-      return eventHour === hour;
-    });
   };
 
   const getEventsForDate = (date: Date) => {
     const dateString = date.toISOString().split('T')[0];
-    return events.filter(event => event.date === dateString);
+    const dayEvents = events.filter(event => event.date === dateString);
+    // Ordenar eventos por hora
+    return dayEvents.sort((a, b) => {
+      const [aHour, aMin] = a.startTime.split(':').map(Number);
+      const [bHour, bMin] = b.startTime.split(':').map(Number);
+      return aHour * 60 + aMin - (bHour * 60 + bMin);
+    });
+  };
+
+  // Convertir hora HH:mm a minutos desde medianoche
+  const timeToMinutes = (time: string): number => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Obtener posición vertical de un evento en el día (0-100%)
+  const getEventPosition = (event: CalendarEvent): { top: number; height: number } => {
+    const startMinutes = timeToMinutes(event.startTime);
+    const endMinutes = event.endTime ? timeToMinutes(event.endTime) : startMinutes + 60;
+    const duration = endMinutes - startMinutes;
+    
+    // Día de 6:00 AM a 10:00 PM = 16 horas = 960 minutos
+    const dayStart = 6 * 60; // 6:00 AM
+    const dayEnd = 22 * 60; // 10:00 PM
+    const dayDuration = dayEnd - dayStart;
+    
+    const top = ((startMinutes - dayStart) / dayDuration) * 100;
+    const height = (duration / dayDuration) * 100;
+    
+    return { top: Math.max(0, top), height: Math.min(100, height) };
   };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -355,53 +447,16 @@ export default function SchoolCalendar() {
     });
   };
 
-  const navigateWeek = (direction: 'prev' | 'next') => {
-    setCurrentDate(prev => {
-      const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setDate(prev.getDate() - 7);
-      } else {
-        newDate.setDate(prev.getDate() + 7);
-      }
-      return newDate;
-    });
-  };
-
-  const navigateDay = (direction: 'prev' | 'next') => {
-    setCurrentDate(prev => {
-      const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setDate(prev.getDate() - 1);
-      } else {
-        newDate.setDate(prev.getDate() + 1);
-      }
-      return newDate;
-    });
-  };
-
   const getEventTypeColor = (type: string) => {
     switch (type) {
       case 'class':
-        return 'bg-blue-500 text-white';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'note':
-        return 'bg-yellow-500 text-white';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'reservation':
-        return 'bg-green-500 text-white';
+        return 'bg-green-100 text-green-800 border-green-200';
       default:
-        return 'bg-gray-500 text-white';
-    }
-  };
-
-  const getEventTypeIcon = (type: string) => {
-    switch (type) {
-      case 'class':
-        return <BookOpen className="w-3 h-3" />;
-      case 'note':
-        return <StickyNote className="w-3 h-3" />;
-      case 'reservation':
-        return <Users className="w-3 h-3" />;
-      default:
-        return null;
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -411,18 +466,6 @@ export default function SchoolCalendar() {
   ];
 
   const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-  const dayNamesFull = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-
-  const todayEvents = getEventsForDate(new Date());
-  const upcomingEvents = events
-    .filter(event => new Date(event.date) >= new Date())
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 10);
-
-  const handleTimeSlotClick = (date: Date, hour: number) => {
-    setSelectedTimeSlot({ date, hour });
-    setShowQuickModal('class');
-  };
 
   if (status === 'loading' || loading) {
     return (
@@ -435,340 +478,175 @@ export default function SchoolCalendar() {
     );
   }
 
+  const days = getDaysInMonth(currentDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
-      {/* Header Mobile-First */}
+      {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-        <div className="px-4 py-3 md:px-6 md:py-4">
-          <div className="flex items-center justify-between mb-3 md:mb-0">
+        <div className="px-4 py-4 md:px-6">
+          <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => router.push('/dashboard/school')}
-              className="text-blue-600 hover:text-blue-800 flex items-center text-sm md:text-base"
+              className="text-blue-600 hover:text-blue-800 text-sm md:text-base"
             >
               ← Volver
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="md:hidden p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors touch-manipulation"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
             >
-              <Plus className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="hidden md:flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Nueva Clase
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Nueva Clase</span>
             </button>
           </div>
           
-          <h1 className="text-xl md:text-3xl font-bold text-gray-900 mb-2">Calendario</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Calendario</h1>
           
-          {/* Selector de Vista - Mobile */}
-          <div className="flex items-center justify-between md:hidden mb-3">
-            <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors touch-manipulation ${
-                  viewMode === 'month' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                }`}
-              >
-                Mes
-              </button>
-              <button
-                onClick={() => setViewMode('week')}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors touch-manipulation ${
-                  viewMode === 'week' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                }`}
-              >
-                Semana
-              </button>
-              <button
-                onClick={() => setViewMode('day')}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors touch-manipulation ${
-                  viewMode === 'day' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                }`}
-              >
-                Día
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors touch-manipulation ${
-                  viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600'
-                }`}
-              >
-                Lista
-              </button>
-            </div>
-          </div>
-
-          {/* Navegación de Fecha */}
-          <div 
-            className="flex items-center justify-between"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
+          {/* Navegación */}
+          <div className="flex items-center justify-between">
             <button
-              onClick={() => {
-                if (viewMode === 'month') navigateMonth('prev');
-                else if (viewMode === 'week') navigateWeek('prev');
-                else navigateDay('prev');
-              }}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
+              onClick={() => navigateMonth('prev')}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-lg md:text-xl font-semibold text-gray-900 text-center flex-1">
-              {viewMode === 'month' && `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
-              {viewMode === 'week' && `Semana del ${getWeekDays(currentDate)[0].toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`}
-              {viewMode === 'day' && `${dayNamesFull[currentDate.getDay()]}, ${currentDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}`}
-              {viewMode === 'list' && 'Próximos Eventos'}
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </h2>
             <button
-              onClick={() => {
-                if (viewMode === 'month') navigateMonth('next');
-                else if (viewMode === 'week') navigateWeek('next');
-                else navigateDay('next');
-              }}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors touch-manipulation"
+              onClick={() => navigateMonth('next')}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Contenido del Calendario */}
-      <div className="px-4 md:px-6 py-4 md:py-6" ref={calendarRef}>
-        {/* Vista de Mes */}
-        {viewMode === 'month' && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="grid grid-cols-7 gap-px bg-gray-200">
-              {dayNames.map(day => (
-                <div key={day} className="bg-gray-50 p-2 text-center text-xs md:text-sm font-semibold text-gray-700 hidden md:block">
-                  {day}
-                </div>
-              ))}
-              {getDaysInMonth(currentDate).map((day, index) => {
-                const dayEvents = getEventsForDate(day.date);
-                const isToday = day.date.toDateString() === new Date().toDateString();
-                const isSelected = selectedDate?.toDateString() === day.date.toDateString();
+      {/* Calendario */}
+      <div className="px-4 md:px-6 py-6">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Días de la semana */}
+          <div className="grid grid-cols-7 border-b border-gray-200">
+            {dayNames.map(day => (
+              <div key={day} className="p-3 text-center text-xs md:text-sm font-semibold text-gray-600 bg-gray-50">
+                {day}
+              </div>
+            ))}
+          </div>
 
-                return (
-                  <div
-                    key={index}
-                    onClick={() => setSelectedDate(day.date)}
-                    className={`min-h-[80px] md:min-h-[120px] p-1 md:p-2 bg-white cursor-pointer hover:bg-gray-50 transition-colors ${
-                      !day.isCurrentMonth ? 'opacity-40' : ''
-                    } ${isToday ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''} ${
-                      isSelected ? 'ring-2 ring-blue-500' : ''
+          {/* Días del mes */}
+          <div className="grid grid-cols-7">
+            {days.map((day, index) => {
+              const dayEvents = getEventsForDate(day.date);
+              const dayDate = new Date(day.date);
+              dayDate.setHours(0, 0, 0, 0);
+              const isToday = dayDate.getTime() === today.getTime();
+              const isSelected = selectedDate && dayDate.getTime() === selectedDate.getTime();
+
+              return (
+                <div
+                  key={index}
+                  className={`relative min-h-[120px] md:min-h-[180px] p-2 border-r border-b border-gray-100 ${
+                    !day.isCurrentMonth ? 'bg-gray-50 opacity-50' : 'bg-white'
+                  } ${isToday ? 'bg-blue-50' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+                >
+                  <div 
+                    onClick={() => {
+                      setSelectedDate(day.date);
+                      setSelectedTimeSlot({ date: day.date, hour: 9, minute: 0 });
+                      setSelectedTime('09:00');
+                      setShowQuickModal(null); // Abrir selector de tipo
+                    }}
+                    className={`text-sm md:text-base font-medium mb-2 cursor-pointer hover:bg-gray-100 rounded px-1 ${
+                      isToday ? 'text-blue-600 font-bold' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
                     }`}
                   >
-                    <div className={`text-xs md:text-sm font-medium mb-1 ${
-                      isToday ? 'text-blue-600 font-bold' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-                    }`}>
-                      {day.date.getDate()}
-                    </div>
-                    <div className="space-y-0.5">
-                      {dayEvents.slice(0, 2).map(event => (
+                    {day.date.getDate()}
+                  </div>
+                  
+                  {/* Bloques de tiempo para eventos */}
+                  <div className="relative space-y-0.5">
+                    {dayEvents.map(event => {
+                      const position = getEventPosition(event);
+                      const [hours, minutes] = event.startTime.split(':').map(Number);
+                      const timeLabel = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                      
+                      return (
                         <div
                           key={event.id}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (event.type === 'class') {
                               router.push(`/dashboard/school/classes/${event.id}/reservations`);
+                            } else if (event.type === 'note' && event.noteId) {
+                              setSelectedNote(event);
+                              setShowNoteModal(true);
+                              setIsEditingNote(false);
                             }
                           }}
-                          className={`text-[10px] md:text-xs p-1 rounded ${getEventTypeColor(event.type)} truncate flex items-center gap-1`}
-                          title={event.title}
-                        >
-                          {getEventTypeIcon(event.type)}
-                          <span className="truncate">{event.startTime} {event.title}</span>
-                        </div>
-                      ))}
-                      {dayEvents.length > 2 && (
-                        <div className="text-[10px] text-gray-500 font-medium">
-                          +{dayEvents.length - 2} más
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Vista de Semana */}
-        {viewMode === 'week' && (
-          <div className="space-y-4">
-            {getWeekDays(currentDate).map((day, index) => {
-              const dayEvents = getEventsForDate(day);
-              const isToday = day.toDateString() === new Date().toDateString();
-              
-              return (
-                <div
-                  key={index}
-                  className="bg-white rounded-xl shadow-sm p-4"
-                >
-                  <div className={`text-sm md:text-base font-semibold mb-3 pb-2 border-b ${
-                    isToday ? 'text-blue-600' : 'text-gray-900'
-                  }`}>
-                    {dayNamesFull[day.getDay()]} {day.getDate()} {monthNames[day.getMonth()]}
-                  </div>
-                  <div className="space-y-2">
-                    {dayEvents.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-4">No hay eventos</p>
-                    ) : (
-                      dayEvents.map(event => (
-                        <div
-                          key={event.id}
-                          onClick={() => {
-                            if (event.type === 'class') {
-                              router.push(`/dashboard/school/classes/${event.id}/reservations`);
-                            }
+                          className={`text-[9px] md:text-[10px] p-1 rounded border cursor-pointer hover:opacity-80 transition-opacity ${getEventTypeColor(event.type)}`}
+                          style={{
+                            minHeight: `${Math.max(20, position.height)}%`
                           }}
-                          className={`p-3 rounded-lg ${getEventTypeColor(event.type)} cursor-pointer touch-manipulation`}
+                          title={`${timeLabel} - ${event.title}${event.endTime ? ` (hasta ${event.endTime})` : ''}`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {getEventTypeIcon(event.type)}
-                              <span className="font-medium text-sm">{event.title}</span>
+                          <div className="flex items-start gap-1">
+                            <div className="flex-shrink-0 mt-0.5">
+                              {event.type === 'note' && <StickyNote className="w-2.5 h-2.5" />}
+                              {event.type === 'class' && <BookOpen className="w-2.5 h-2.5" />}
                             </div>
-                            <span className="text-xs opacity-90">{event.startTime}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold truncate">{timeLabel}</div>
+                              <div className="truncate">{event.title}</div>
+                              {event.type === 'class' && event.enrolled !== undefined && (
+                                <div className="text-[8px] opacity-75">
+                                  {event.enrolled}/{event.capacity || '∞'}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          {event.instructor && (
-                            <div className="text-xs mt-1 opacity-90">Instructor: {event.instructor}</div>
-                          )}
                         </div>
-                      ))
-                    )}
+                      );
+                    })}
+                    
+                    {/* Botón para agregar evento rápido - siempre visible */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedDate(day.date);
+                        setSelectedTimeSlot({ date: day.date, hour: 9, minute: 0 });
+                        setSelectedTime('09:00');
+                        setShowQuickModal(null);
+                      }}
+                      className={`w-full text-[10px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded p-1 transition-colors flex items-center justify-center gap-1 ${
+                        dayEvents.length > 0 ? 'mt-1 border border-dashed border-gray-300' : ''
+                      }`}
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Agregar</span>
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
-        )}
+        </div>
 
-        {/* Vista de Día */}
-        {viewMode === 'day' && (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {dayNamesFull[currentDate.getDay()]} {currentDate.getDate()} {monthNames[currentDate.getMonth()]}
-              </h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {hours.map(hour => {
-                const hourEvents = getEventsForDateAndHour(currentDate, hour);
-                const timeString = `${hour.toString().padStart(2, '0')}:00`;
-
-                return (
-                  <div
-                    key={hour}
-                    onClick={() => handleTimeSlotClick(currentDate, hour)}
-                    className="p-3 md:p-4 hover:bg-gray-50 cursor-pointer transition-colors touch-manipulation border-l-4 border-l-transparent hover:border-l-blue-500"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="text-sm font-medium text-gray-500 min-w-[60px]">{timeString}</div>
-                      <div className="flex-1 space-y-2">
-                        {hourEvents.length === 0 ? (
-                          <div className="text-sm text-gray-400">Disponible - Toca para agregar</div>
-                        ) : (
-                          hourEvents.map(event => (
-                            <div
-                              key={event.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (event.type === 'class') {
-                                  router.push(`/dashboard/school/classes/${event.id}/reservations`);
-                                }
-                              }}
-                              className={`p-2 rounded-lg ${getEventTypeColor(event.type)}`}
-                            >
-                              <div className="flex items-center gap-2">
-                                {getEventTypeIcon(event.type)}
-                                <span className="font-medium text-sm">{event.title}</span>
-                              </div>
-                              {event.content && (
-                                <div className="text-xs mt-1 opacity-90">{event.content}</div>
-                              )}
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Vista de Lista */}
-        {viewMode === 'list' && (
-          <div className="space-y-3">
-            {upcomingEvents.length === 0 ? (
-              <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                <p className="text-gray-500">No hay eventos próximos</p>
-              </div>
-            ) : (
-              upcomingEvents.map(event => (
-                <div
-                  key={event.id}
-                  onClick={() => {
-                    if (event.type === 'class') {
-                      router.push(`/dashboard/school/classes/${event.id}/reservations`);
-                    }
-                  }}
-                  className="bg-white rounded-xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow touch-manipulation"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`p-1.5 rounded ${getEventTypeColor(event.type)}`}>
-                          {getEventTypeIcon(event.type)}
-                        </div>
-                        <h3 className="font-semibold text-gray-900">{event.title}</h3>
-                      </div>
-                      <div className="flex flex-wrap gap-3 text-sm text-gray-600 ml-8">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          {new Date(event.date).toLocaleDateString('es-ES')}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {event.startTime} - {event.endTime}
-                        </div>
-                        {event.instructor && (
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {event.instructor}
-                          </div>
-                        )}
-                      </div>
-                      {event.content && (
-                        <div className="mt-2 text-sm text-gray-600 ml-8">{event.content}</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
       </div>
 
-      {/* Modales */}
+      {/* Modal crear clase completa */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 md:p-0">
-          <div className="bg-white rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-900">Nueva Clase</h3>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-400 hover:text-gray-600 touch-manipulation"
+                className="text-gray-400 hover:text-gray-600"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -784,85 +662,132 @@ export default function SchoolCalendar() {
         </div>
       )}
 
+      {/* Modal de selección de tipo */}
+      {selectedDate && selectedTimeSlot && !showQuickModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {selectedDate.toLocaleDateString('es-ES', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </h3>
+                <div className="mt-2">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Hora</label>
+                  <input
+                    type="time"
+                    value={selectedTime}
+                    onChange={(e) => {
+                      setSelectedTime(e.target.value);
+                      const [hours, minutes] = e.target.value.split(':').map(Number);
+                      setSelectedTimeSlot({ ...selectedTimeSlot, hour: hours, minute: minutes });
+                    }}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedDate(null);
+                  setSelectedTimeSlot(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-600 mb-4">¿Qué deseas agregar a las {selectedTime}?</p>
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={() => setShowQuickModal('class')}
+                  className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-lg transition-colors text-left"
+                >
+                  <div className="p-2 bg-blue-600 rounded-lg">
+                    <BookOpen className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900">Nueva Clase</div>
+                    <div className="text-sm text-gray-600">Crear una nueva clase de surf</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setShowQuickModal('note')}
+                  className="flex items-center gap-3 p-4 bg-yellow-50 hover:bg-yellow-100 border-2 border-yellow-200 rounded-lg transition-colors text-left"
+                >
+                  <div className="p-2 bg-yellow-600 rounded-lg">
+                    <StickyNote className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900">Nueva Nota</div>
+                    <div className="text-sm text-gray-600">Agregar una nota o recordatorio</div>
+                  </div>
+                </button>
+                <button
+                  onClick={handleOpenReservationModal}
+                  className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 border-2 border-green-200 rounded-lg transition-colors text-left"
+                >
+                  <div className="p-2 bg-green-600 rounded-lg">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900">Nueva Reserva</div>
+                    <div className="text-sm text-gray-600">Registrar reserva de alumno</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal rápido de formulario */}
       {showQuickModal && selectedTimeSlot && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+          <div className="bg-white rounded-xl w-full max-w-md">
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-900">
-                {selectedTimeSlot.hour.toString().padStart(2, '0')}:00
+                {showQuickModal === 'class' ? 'Nueva Clase' : 'Nueva Nota'}
               </h3>
               <button
                 onClick={() => {
                   setShowQuickModal(null);
                   setSelectedTimeSlot(null);
+                  setSelectedDate(null);
                 }}
-                className="text-gray-400 hover:text-gray-600 touch-manipulation"
+                className="text-gray-400 hover:text-gray-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4">
-              <div className="flex gap-2 mb-4">
-                <button
-                  onClick={() => setShowQuickModal('class')}
-                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors touch-manipulation ${
-                    showQuickModal === 'class' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  Clase
-                </button>
-                <button
-                  onClick={() => setShowQuickModal('note')}
-                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors touch-manipulation ${
-                    showQuickModal === 'note' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  Nota
-                </button>
-                <button
-                  onClick={() => setShowQuickModal('reservation')}
-                  className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors touch-manipulation ${
-                    showQuickModal === 'reservation' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  Reserva
-                </button>
-              </div>
-
-              {showQuickModal === 'class' && (
+              {showQuickModal === 'class' ? (
                 <QuickClassForm
                   selectedDate={selectedTimeSlot.date}
                   selectedHour={selectedTimeSlot.hour}
+                  selectedMinute={selectedTimeSlot.minute}
                   onSubmit={handleCreateClass}
                   onCancel={() => {
                     setShowQuickModal(null);
                     setSelectedTimeSlot(null);
+                    setSelectedDate(null);
                   }}
                   isLoading={isCreating}
                 />
-              )}
-
-              {showQuickModal === 'note' && (
+              ) : (
                 <QuickNoteForm
                   selectedDate={selectedTimeSlot.date}
                   selectedHour={selectedTimeSlot.hour}
+                  selectedMinute={selectedTimeSlot.minute}
                   onSubmit={handleCreateNote}
                   onCancel={() => {
                     setShowQuickModal(null);
                     setSelectedTimeSlot(null);
-                  }}
-                />
-              )}
-
-              {showQuickModal === 'reservation' && (
-                <QuickReservationForm
-                  selectedDate={selectedTimeSlot.date}
-                  selectedHour={selectedTimeSlot.hour}
-                  events={events}
-                  onSubmit={handleCreateQuickReservation}
-                  onCancel={() => {
-                    setShowQuickModal(null);
-                    setSelectedTimeSlot(null);
+                    setSelectedDate(null);
                   }}
                 />
               )}
@@ -870,23 +795,204 @@ export default function SchoolCalendar() {
           </div>
         </div>
       )}
+
+      {/* Modal de ver/editar/eliminar nota */}
+      {showNoteModal && selectedNote && selectedNote.noteId && (
+        <NoteViewEditModal
+          note={selectedNote}
+          isEditing={isEditingNote}
+          onEdit={() => setIsEditingNote(true)}
+          onSave={(title, content, date, time) => handleUpdateNote(selectedNote.noteId!, title, content, date, time)}
+          onDelete={() => handleDeleteNote(selectedNote.noteId!)}
+          onClose={() => {
+            setShowNoteModal(false);
+            setSelectedNote(null);
+            setIsEditingNote(false);
+          }}
+        />
+      )}
+
+      {/* Modal de reserva */}
+      {showReservationModal && selectedDate && selectedTimeSlot && (
+        <ReservationModal
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          availableClasses={availableClasses}
+          onCreateClass={() => {
+            setShowReservationModal(false);
+            setShowQuickModal('class');
+          }}
+          onCreateReservation={handleCreateReservation}
+          onCancel={() => {
+            setShowReservationModal(false);
+            setSelectedTimeSlot(null);
+            setSelectedDate(null);
+            setAvailableClasses([]);
+          }}
+          isLoading={isCreatingReservation}
+        />
+      )}
     </div>
   );
 }
 
-// Componentes de formularios rápidos (mantener igual que antes)
-function QuickClassForm({ selectedDate, selectedHour, onSubmit, onCancel, isLoading }: any) {
+interface NoteViewEditModalProps {
+  note: CalendarEvent;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSave: (title: string, content: string, date: Date, time: string) => void;
+  onDelete: () => void;
+  onClose: () => void;
+}
+
+function NoteViewEditModal({ note, isEditing, onEdit, onSave, onDelete, onClose }: NoteViewEditModalProps) {
+  const [title, setTitle] = useState(note.title);
+  const [content, setContent] = useState(note.content || '');
+  const [date, setDate] = useState(note.date);
+  const [time, setTime] = useState(note.startTime);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const noteDate = new Date(date);
+    onSave(title, content, noteDate, time);
+  };
+
+  const noteDate = new Date(note.date);
+  const formattedDate = noteDate.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl w-full max-w-md">
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {isEditing ? 'Editar Nota' : 'Ver Nota'}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">{formattedDate}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {isEditing ? (
+          <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Hora *</label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+              />
+            </div>
+            <div className="flex gap-2 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium"
+              >
+                Guardar
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="p-4 space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Hora</label>
+              <p className="text-sm text-gray-900">{time}</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Título</label>
+              <p className="text-base text-gray-900 font-medium">{note.title}</p>
+            </div>
+            {note.content && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Contenido</label>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
+              </div>
+            )}
+            <div className="flex gap-2 pt-4 border-t border-gray-200">
+              <button
+                onClick={onEdit}
+                className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium"
+              >
+                Editar
+              </button>
+              <button
+                onClick={onDelete}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuickClassForm({ selectedDate, selectedHour, selectedMinute, onSubmit, onCancel, isLoading }: any) {
   const [formData, setFormData] = useState({
     title: '',
     duration: 120,
     capacity: 10,
     price: 0
   });
+  const [time, setTime] = useState(
+    `${selectedHour?.toString().padStart(2, '0') || '09'}:${(selectedMinute || 0).toString().padStart(2, '0')}`
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const [hours, minutes] = time.split(':').map(Number);
     const dateTime = new Date(selectedDate);
-    dateTime.setHours(selectedHour, 0, 0, 0);
+    dateTime.setHours(hours, minutes, 0, 0);
     
     onSubmit({
       ...formData,
@@ -899,12 +1005,22 @@ function QuickClassForm({ selectedDate, selectedHour, onSubmit, onCancel, isLoad
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Hora de inicio *</label>
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+      <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
         <input
           type="text"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           required
         />
       </div>
@@ -915,7 +1031,7 @@ function QuickClassForm({ selectedDate, selectedHour, onSubmit, onCancel, isLoad
             type="number"
             value={formData.duration}
             onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
@@ -924,7 +1040,7 @@ function QuickClassForm({ selectedDate, selectedHour, onSubmit, onCancel, isLoad
             type="number"
             value={formData.capacity}
             onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
@@ -932,50 +1048,340 @@ function QuickClassForm({ selectedDate, selectedHour, onSubmit, onCancel, isLoad
         <label className="block text-sm font-medium text-gray-700 mb-1">Precio</label>
         <input
           type="number"
+          step="0.01"
           value={formData.price}
           onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
         />
       </div>
       <div className="flex gap-2 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors touch-manipulation font-medium"
+          className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors touch-manipulation font-medium"
+          className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
         >
-          {isLoading ? 'Creando...' : 'Crear Clase'}
+          {isLoading ? 'Creando...' : 'Crear'}
         </button>
       </div>
     </form>
   );
 }
 
-function QuickNoteForm({ selectedDate, selectedHour, onSubmit, onCancel }: any) {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+interface ReservationModalProps {
+  selectedDate: Date;
+  selectedTime: string;
+  availableClasses: any[];
+  onCreateClass: () => void;
+  onCreateReservation: (classId: number, studentData: any) => void;
+  onCancel: () => void;
+  isLoading: boolean;
+}
+
+function ReservationModal({ 
+  selectedDate, 
+  selectedTime, 
+  availableClasses, 
+  onCreateClass, 
+  onCreateReservation, 
+  onCancel, 
+  isLoading 
+}: ReservationModalProps) {
+  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
+  const [showStudentForm, setShowStudentForm] = useState(false);
+  const [studentData, setStudentData] = useState({
+    name: '',
+    email: '',
+    age: '',
+    height: '',
+    weight: '',
+    canSwim: false,
+    swimmingLevel: 'BEGINNER',
+    hasSurfedBefore: false,
+    injuries: '',
+    emergencyContact: '',
+    emergencyPhone: '',
+    specialRequest: ''
+  });
+
+  const handleClassSelect = (classId: number) => {
+    setSelectedClassId(classId);
+    setShowStudentForm(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const timeString = `${selectedHour.toString().padStart(2, '0')}:00`;
-    onSubmit(title, content, selectedDate, timeString);
+    if (selectedClassId) {
+      onCreateReservation(selectedClassId, studentData);
+    }
+  };
+
+  const formattedDate = selectedDate.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Nueva Reserva</h3>
+            <p className="text-sm text-gray-500 mt-1">{formattedDate} a las {selectedTime}</p>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4">
+          {!showStudentForm ? (
+            <div className="space-y-4">
+              <div className="mb-4">
+                <h4 className="text-md font-semibold text-gray-900 mb-2">Selecciona una clase</h4>
+                {availableClasses.length > 0 ? (
+                  <div className="space-y-2">
+                    {availableClasses.map((cls: any) => {
+                      const classDate = new Date(cls.date);
+                      const startTime = classDate.toLocaleTimeString('es-ES', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      });
+                      return (
+                        <button
+                          key={cls.id}
+                          onClick={() => handleClassSelect(cls.id)}
+                          className="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
+                        >
+                          <div className="font-semibold text-gray-900">{cls.title}</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            {startTime} - {cls.duration || 120} min | ${cls.price || 0} | Capacidad: {cls.capacity || 10}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">No hay clases disponibles para esta fecha y hora.</p>
+                    <button
+                      onClick={onCreateClass}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                    >
+                      Crear Nueva Clase
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="mb-4 pb-4 border-b border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStudentForm(false);
+                    setSelectedClassId(null);
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-sm"
+                >
+                  ← Volver a seleccionar clase
+                </button>
+              </div>
+
+              <h4 className="text-md font-semibold text-gray-900 mb-4">Información del Alumno</h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
+                  <input
+                    type="text"
+                    value={studentData.name}
+                    onChange={(e) => setStudentData({ ...studentData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={studentData.email}
+                    onChange={(e) => setStudentData({ ...studentData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Edad *</label>
+                  <input
+                    type="number"
+                    min="8"
+                    value={studentData.age}
+                    onChange={(e) => setStudentData({ ...studentData, age: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Altura (cm)</label>
+                  <input
+                    type="number"
+                    min="100"
+                    value={studentData.height}
+                    onChange={(e) => setStudentData({ ...studentData, height: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Peso (kg)</label>
+                  <input
+                    type="number"
+                    min="20"
+                    value={studentData.weight}
+                    onChange={(e) => setStudentData({ ...studentData, weight: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nivel de natación</label>
+                  <select
+                    value={studentData.swimmingLevel}
+                    onChange={(e) => setStudentData({ ...studentData, swimmingLevel: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="BEGINNER">Principiante</option>
+                    <option value="INTERMEDIATE">Intermedio</option>
+                    <option value="ADVANCED">Avanzado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={studentData.canSwim}
+                    onChange={(e) => setStudentData({ ...studentData, canSwim: e.target.checked })}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-sm text-gray-700">¿Sabe nadar?</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={studentData.hasSurfedBefore}
+                    onChange={(e) => setStudentData({ ...studentData, hasSurfedBefore: e.target.checked })}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-sm text-gray-700">¿Ha surfeado antes?</span>
+                </label>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contacto de emergencia</label>
+                <input
+                  type="text"
+                  value={studentData.emergencyContact}
+                  onChange={(e) => setStudentData({ ...studentData, emergencyContact: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono de emergencia</label>
+                <input
+                  type="tel"
+                  value={studentData.emergencyPhone}
+                  onChange={(e) => setStudentData({ ...studentData, emergencyPhone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Lesiones o condiciones médicas</label>
+                <textarea
+                  value={studentData.injuries}
+                  onChange={(e) => setStudentData({ ...studentData, injuries: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Solicitud especial</label>
+                <textarea
+                  value={studentData.specialRequest}
+                  onChange={(e) => setStudentData({ ...studentData, specialRequest: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+                >
+                  {isLoading ? 'Creando...' : 'Crear Reserva'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuickNoteForm({ selectedDate, selectedHour, selectedMinute, onSubmit, onCancel }: any) {
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [time, setTime] = useState(
+    `${selectedHour?.toString().padStart(2, '0') || '09'}:${(selectedMinute || 0).toString().padStart(2, '0')}`
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(title, content, selectedDate, time);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Hora *</label>
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
+          required
+        />
+      </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
           required
         />
       </div>
@@ -985,92 +1391,22 @@ function QuickNoteForm({ selectedDate, selectedHour, onSubmit, onCancel }: any) 
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
         />
       </div>
       <div className="flex gap-2 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors touch-manipulation font-medium"
+          className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="flex-1 px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors touch-manipulation font-medium"
+          className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium"
         >
           Crear Nota
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function QuickReservationForm({ selectedDate, selectedHour, events, onSubmit, onCancel }: any) {
-  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
-
-  const availableClasses = events.filter((event: CalendarEvent) => {
-    if (event.type !== 'class') return false;
-    const eventDate = new Date(event.date);
-    const eventHour = parseInt(event.startTime.split(':')[0]);
-    return eventDate.toDateString() === selectedDate.toDateString() && eventHour === selectedHour;
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedClassId && userId) {
-      onSubmit(selectedClassId, userId);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Clase *</label>
-        <select
-          value={selectedClassId || ''}
-          onChange={(e) => setSelectedClassId(parseInt(e.target.value))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          required
-        >
-          <option value="">Seleccionar clase</option>
-          {availableClasses.map((event: CalendarEvent) => (
-            <option key={event.id} value={event.id}>
-              {event.title} - {event.startTime}
-            </option>
-          ))}
-        </select>
-        {availableClasses.length === 0 && (
-          <p className="text-sm text-gray-500 mt-1">No hay clases disponibles para este horario</p>
-        )}
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">ID de Usuario *</label>
-        <input
-          type="number"
-          value={userId || ''}
-          onChange={(e) => setUserId(parseInt(e.target.value))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          placeholder="ID del usuario"
-          required
-        />
-      </div>
-      <div className="flex gap-2 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors touch-manipulation font-medium"
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={!selectedClassId || !userId}
-          className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors touch-manipulation font-medium"
-        >
-          Crear Reserva
         </button>
       </div>
     </form>
