@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Clock, Users, Plus, StickyNote, X, BookOpen } from 'lucide-react';
 import ClassForm from '@/components/forms/ClassForm';
 import { Class } from '@/types';
@@ -26,7 +26,8 @@ export default function SchoolCalendar() {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Solo para carga inicial
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // Flag para distinguir carga inicial
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ date: Date; hour: number; minute?: number } | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -40,16 +41,17 @@ export default function SchoolCalendar() {
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [isCreatingReservation, setIsCreatingReservation] = useState(false);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = useCallback(async (showLoading = false) => {
     try {
-      setLoading(true);
-      // No enviar headers de autorización desde el cliente
-      // Las rutas API del servidor manejarán la autenticación
+      // Solo mostrar loading si se solicita explícitamente (carga inicial)
+      if (showLoading) {
+        setLoading(true);
+      }
 
       const schoolResponse = await fetch('/api/schools/my-school');
       if (!schoolResponse.ok) {
         setEvents([]);
-        setLoading(false);
+        if (showLoading) setLoading(false);
         return;
       }
 
@@ -124,26 +126,63 @@ export default function SchoolCalendar() {
       });
 
       setEvents([...calendarEvents, ...noteEvents]);
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+        setIsInitialLoad(false);
+      }
     } catch (error) {
       console.error('Error fetching events:', error);
       setEvents([]);
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
-  }, [session]);
+  }, []); // Removido session de las dependencias para evitar recargas innecesarias
+
+  // Guardar el ID del usuario para detectar cambios reales de sesión
+  const lastUserId = useRef<string | null>(null);
+  const isRefreshingRef = useRef(false);
 
   useEffect(() => {
     if (status === 'loading') return;
     if (!session) {
       router.push('/login');
+      lastUserId.current = null;
       return;
     }
     if (session.user?.role !== 'SCHOOL_ADMIN') {
       router.push('/dashboard/student/profile');
       return;
     }
-    fetchEvents();
-  }, [session, status, router, fetchEvents]);
+    
+    const currentUserId = session.user?.id?.toString() || null;
+    
+    // Solo recargar eventos si el usuario realmente cambió (nueva sesión)
+    // No recargar si es el mismo usuario (solo refresco de pestaña)
+    if (lastUserId.current !== currentUserId) {
+      lastUserId.current = currentUserId;
+      // Carga inicial: mostrar loading
+      fetchEvents(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, status, router]); // fetchEvents es estable, no necesita estar en dependencias
+
+  // Listener para recargar datos silenciosamente cuando la pestaña vuelve a estar activa
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      // Solo recargar si la pestaña vuelve a estar visible y ya pasó la carga inicial
+      if (document.visibilityState === 'visible' && !isInitialLoad && !isRefreshingRef.current) {
+        isRefreshingRef.current = true;
+        // Recargar silenciosamente (sin mostrar loading)
+        fetchEvents(false).finally(() => {
+          isRefreshingRef.current = false;
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isInitialLoad, fetchEvents]);
 
   const handleCreateClass = async (data: Partial<Class>) => {
     try {
@@ -165,7 +204,7 @@ export default function SchoolCalendar() {
         return;
       }
 
-      await fetchEvents();
+      await fetchEvents(false); // Actualización silenciosa
       setShowCreateModal(false);
       setShowQuickModal(null);
       setSelectedTimeSlot(null);
@@ -201,7 +240,7 @@ export default function SchoolCalendar() {
         return;
       }
 
-      await fetchEvents();
+      await fetchEvents(false); // Actualización silenciosa
       setShowQuickModal(null);
       setSelectedTimeSlot(null);
       setSelectedDate(null);
@@ -235,7 +274,7 @@ export default function SchoolCalendar() {
         return;
       }
 
-      await fetchEvents();
+      await fetchEvents(false); // Actualización silenciosa
       setShowNoteModal(false);
       setSelectedNote(null);
       setIsEditingNote(false);
@@ -261,7 +300,7 @@ export default function SchoolCalendar() {
         return;
       }
 
-      await fetchEvents();
+      await fetchEvents(false); // Actualización silenciosa
       setShowNoteModal(false);
       setSelectedNote(null);
       setIsEditingNote(false);
@@ -343,7 +382,7 @@ export default function SchoolCalendar() {
         return;
       }
 
-      await fetchEvents();
+      await fetchEvents(false); // Actualización silenciosa
       setShowReservationModal(false);
       setSelectedTimeSlot(null);
       setSelectedDate(null);
