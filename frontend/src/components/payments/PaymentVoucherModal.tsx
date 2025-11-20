@@ -38,7 +38,7 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setUploading(true);
       setError(null);
@@ -48,7 +48,7 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      
+
       const res = await fetch(`/api/payments/${payment.id}`, {
         method: 'PUT',
         headers,
@@ -75,7 +75,7 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-t-3xl sm:rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
         {/* Modal Header - Sticky en móvil */}
         <div className="bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-lg sticky top-0 z-10">
@@ -114,11 +114,10 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
               </div>
               <div>
                 <p className="text-sm text-gray-500">Estado Actual</p>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  payment.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                  payment.status === 'UNPAID' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${payment.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                    payment.status === 'UNPAID' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                  }`}>
                   {payment.status === 'PAID' ? 'Pagado' : payment.status === 'UNPAID' ? 'Pendiente' : 'Reembolsado'}
                 </span>
               </div>
@@ -177,7 +176,7 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
             <p className="text-xs text-gray-500 mt-1">
               Puedes subir la imagen a un servicio como Imgur, Cloudinary, o usar un enlace directo
             </p>
-            
+
             {/* Preview */}
             {formData.voucherImage && (
               <div className="mt-3">
@@ -230,9 +229,9 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
           </div>
 
           {/* Action Buttons - Sticky en móvil */}
-          <div 
+          <div
             className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-4 mt-auto pt-4 border-t border-gray-200 sm:border-none sm:pt-0 sticky bottom-0 bg-white sm:bg-transparent -mx-4 sm:mx-0 px-4 sm:px-0 safe-area-bottom"
-            style={{ 
+            style={{
               bottom: 'env(safe-area-inset-bottom, 0px)'
             }}
           >

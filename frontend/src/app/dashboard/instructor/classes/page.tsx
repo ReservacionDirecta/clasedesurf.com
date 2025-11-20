@@ -69,7 +69,7 @@ export default function InstructorClasses() {
         const now = new Date();
         const classDate = new Date(cls.date);
         let status: 'upcoming' | 'completed' | 'cancelled' = 'upcoming';
-        
+
         if (classDate < now) {
           status = 'completed';
         }
@@ -111,229 +111,229 @@ export default function InstructorClasses() {
       // Fallback to mock data if no real data
       if (processedClasses.length === 0) {
         const mockClasses: Class[] = [
-        {
-          id: 1,
-          title: 'Surf para Principiantes',
-          description: 'Clase introductoria al surf con técnicas básicas y seguridad',
-          date: '2024-12-15T10:00:00',
-          duration: 120,
-          capacity: 8,
-          enrolled: 6,
-          price: 80,
-          level: 'BEGINNER',
-          location: 'Playa Miraflores',
-          status: 'upcoming',
-          reservations: [
-            {
-              id: 1,
-              userId: 1,
-              status: 'CONFIRMED',
-              specialRequest: 'Primera vez surfeando, necesito ayuda extra',
-              createdAt: '2024-12-10T10:00:00',
-              user: { id: 1, name: 'Ana García', email: 'ana@email.com', phone: '+51 987 654 321' }
-            },
-            {
-              id: 2,
-              userId: 2,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-11T14:30:00',
-              user: { id: 2, name: 'Carlos López', email: 'carlos@email.com', phone: '+51 987 654 322' }
-            },
-            {
-              id: 3,
-              userId: 3,
-              status: 'PENDING',
-              specialRequest: 'Tengo miedo al agua, necesito paciencia',
-              createdAt: '2024-12-12T09:15:00',
-              user: { id: 3, name: 'María Rodríguez', email: 'maria@email.com' }
-            },
-            {
-              id: 4,
-              userId: 4,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-12T16:45:00',
-              user: { id: 4, name: 'José Martínez', email: 'jose@email.com', phone: '+51 987 654 324' }
-            },
-            {
-              id: 5,
-              userId: 5,
-              status: 'CONFIRMED',
-              specialRequest: 'Soy zurdo, ¿hay tablas especiales?',
-              createdAt: '2024-12-13T11:20:00',
-              user: { id: 5, name: 'Laura Fernández', email: 'laura@email.com' }
-            },
-            {
-              id: 6,
-              userId: 6,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-13T18:30:00',
-              user: { id: 6, name: 'Diego Vargas', email: 'diego@email.com', phone: '+51 987 654 326' }
-            }
-          ]
-        },
-        {
-          id: 2,
-          title: 'Técnicas Avanzadas',
-          description: 'Perfeccionamiento de maniobras y técnicas avanzadas',
-          date: '2024-12-16T14:00:00',
-          duration: 150,
-          capacity: 6,
-          enrolled: 4,
-          price: 120,
-          level: 'ADVANCED',
-          location: 'Playa Barranco',
-          status: 'upcoming',
-          reservations: [
-            {
-              id: 7,
-              userId: 7,
-              status: 'CONFIRMED',
-              specialRequest: 'Quiero mejorar mis cutbacks',
-              createdAt: '2024-12-11T08:00:00',
-              user: { id: 7, name: 'Roberto Silva', email: 'roberto@email.com', phone: '+51 987 654 327' }
-            },
-            {
-              id: 8,
-              userId: 8,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-12T13:15:00',
-              user: { id: 8, name: 'Patricia Morales', email: 'patricia@email.com' }
-            },
-            {
-              id: 9,
-              userId: 9,
-              status: 'PENDING',
-              specialRequest: 'Necesito trabajar en mi bottom turn',
-              createdAt: '2024-12-13T10:30:00',
-              user: { id: 9, name: 'Fernando Castro', email: 'fernando@email.com', phone: '+51 987 654 329' }
-            },
-            {
-              id: 10,
-              userId: 10,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-13T15:45:00',
-              user: { id: 10, name: 'Sofía Herrera', email: 'sofia@email.com' }
-            }
-          ]
-        },
-        {
-          id: 3,
-          title: 'Longboard Session',
-          description: 'Clase especializada en longboard y estilo clásico',
-          date: '2024-12-18T16:00:00',
-          duration: 180,
-          capacity: 10,
-          enrolled: 8,
-          price: 100,
-          level: 'INTERMEDIATE',
-          location: 'Playa Chorrillos',
-          status: 'upcoming',
-          reservations: [
-            {
-              id: 11,
-              userId: 11,
-              status: 'CONFIRMED',
-              specialRequest: 'Quiero aprender nose riding',
-              createdAt: '2024-12-10T12:00:00',
-              user: { id: 11, name: 'Andrés Jiménez', email: 'andres@email.com', phone: '+51 987 654 330' }
-            },
-            {
-              id: 12,
-              userId: 12,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-11T16:30:00',
-              user: { id: 12, name: 'Valentina Cruz', email: 'valentina@email.com' }
-            },
-            {
-              id: 13,
-              userId: 13,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-12T09:45:00',
-              user: { id: 13, name: 'Mateo Ruiz', email: 'mateo@email.com', phone: '+51 987 654 332' }
-            },
-            {
-              id: 14,
-              userId: 14,
-              status: 'PENDING',
-              specialRequest: 'Primera vez con longboard',
-              createdAt: '2024-12-12T14:20:00',
-              user: { id: 14, name: 'Camila Torres', email: 'camila@email.com' }
-            },
-            {
-              id: 15,
-              userId: 15,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-13T11:10:00',
-              user: { id: 15, name: 'Sebastián Mendoza', email: 'sebastian@email.com', phone: '+51 987 654 334' }
-            },
-            {
-              id: 16,
-              userId: 16,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-13T17:25:00',
-              user: { id: 16, name: 'Isabella Paredes', email: 'isabella@email.com' }
-            },
-            {
-              id: 17,
-              userId: 17,
-              status: 'CONFIRMED',
-              specialRequest: 'Tengo mi propia tabla longboard',
-              createdAt: '2024-12-14T08:40:00',
-              user: { id: 17, name: 'Nicolás Vega', email: 'nicolas@email.com', phone: '+51 987 654 336' }
-            },
-            {
-              id: 18,
-              userId: 18,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-14T13:55:00',
-              user: { id: 18, name: 'Gabriela Ramos', email: 'gabriela@email.com' }
-            }
-          ]
-        },
-        {
-          id: 4,
-          title: 'Surf Matutino',
-          description: 'Sesión de surf aprovechando las mejores olas de la mañana',
-          date: '2024-12-10T07:00:00',
-          duration: 120,
-          capacity: 8,
-          enrolled: 8,
-          price: 90,
-          level: 'INTERMEDIATE',
-          location: 'Playa San Bartolo',
-          status: 'completed',
-          reservations: [
-            {
-              id: 19,
-              userId: 19,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-08T10:00:00',
-              user: { id: 19, name: 'Ricardo Flores', email: 'ricardo@email.com', phone: '+51 987 654 337' }
-            },
-            {
-              id: 20,
-              userId: 20,
-              status: 'CONFIRMED',
-              createdAt: '2024-12-08T14:30:00',
-              user: { id: 20, name: 'Alejandra Soto', email: 'alejandra@email.com' }
-            }
-          ]
-        },
-        {
-          id: 5,
-          title: 'Competición Prep',
-          description: 'Preparación para competencias de surf',
-          date: '2024-12-12T15:00:00',
-          duration: 180,
-          capacity: 4,
-          enrolled: 0,
-          price: 150,
-          level: 'ADVANCED',
-          location: 'Playa Punta Hermosa',
-          status: 'cancelled',
-          reservations: []
-        }
-      ];
+          {
+            id: 1,
+            title: 'Surf para Principiantes',
+            description: 'Clase introductoria al surf con técnicas básicas y seguridad',
+            date: '2024-12-15T10:00:00',
+            duration: 120,
+            capacity: 8,
+            enrolled: 6,
+            price: 80,
+            level: 'BEGINNER',
+            location: 'Playa Miraflores',
+            status: 'upcoming',
+            reservations: [
+              {
+                id: 1,
+                userId: 1,
+                status: 'CONFIRMED',
+                specialRequest: 'Primera vez surfeando, necesito ayuda extra',
+                createdAt: '2024-12-10T10:00:00',
+                user: { id: 1, name: 'Ana García', email: 'ana@email.com', phone: '+51 987 654 321' }
+              },
+              {
+                id: 2,
+                userId: 2,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-11T14:30:00',
+                user: { id: 2, name: 'Carlos López', email: 'carlos@email.com', phone: '+51 987 654 322' }
+              },
+              {
+                id: 3,
+                userId: 3,
+                status: 'PENDING',
+                specialRequest: 'Tengo miedo al agua, necesito paciencia',
+                createdAt: '2024-12-12T09:15:00',
+                user: { id: 3, name: 'María Rodríguez', email: 'maria@email.com' }
+              },
+              {
+                id: 4,
+                userId: 4,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-12T16:45:00',
+                user: { id: 4, name: 'José Martínez', email: 'jose@email.com', phone: '+51 987 654 324' }
+              },
+              {
+                id: 5,
+                userId: 5,
+                status: 'CONFIRMED',
+                specialRequest: 'Soy zurdo, ¿hay tablas especiales?',
+                createdAt: '2024-12-13T11:20:00',
+                user: { id: 5, name: 'Laura Fernández', email: 'laura@email.com' }
+              },
+              {
+                id: 6,
+                userId: 6,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-13T18:30:00',
+                user: { id: 6, name: 'Diego Vargas', email: 'diego@email.com', phone: '+51 987 654 326' }
+              }
+            ]
+          },
+          {
+            id: 2,
+            title: 'Técnicas Avanzadas',
+            description: 'Perfeccionamiento de maniobras y técnicas avanzadas',
+            date: '2024-12-16T14:00:00',
+            duration: 150,
+            capacity: 6,
+            enrolled: 4,
+            price: 120,
+            level: 'ADVANCED',
+            location: 'Playa Barranco',
+            status: 'upcoming',
+            reservations: [
+              {
+                id: 7,
+                userId: 7,
+                status: 'CONFIRMED',
+                specialRequest: 'Quiero mejorar mis cutbacks',
+                createdAt: '2024-12-11T08:00:00',
+                user: { id: 7, name: 'Roberto Silva', email: 'roberto@email.com', phone: '+51 987 654 327' }
+              },
+              {
+                id: 8,
+                userId: 8,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-12T13:15:00',
+                user: { id: 8, name: 'Patricia Morales', email: 'patricia@email.com' }
+              },
+              {
+                id: 9,
+                userId: 9,
+                status: 'PENDING',
+                specialRequest: 'Necesito trabajar en mi bottom turn',
+                createdAt: '2024-12-13T10:30:00',
+                user: { id: 9, name: 'Fernando Castro', email: 'fernando@email.com', phone: '+51 987 654 329' }
+              },
+              {
+                id: 10,
+                userId: 10,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-13T15:45:00',
+                user: { id: 10, name: 'Sofía Herrera', email: 'sofia@email.com' }
+              }
+            ]
+          },
+          {
+            id: 3,
+            title: 'Longboard Session',
+            description: 'Clase especializada en longboard y estilo clásico',
+            date: '2024-12-18T16:00:00',
+            duration: 180,
+            capacity: 10,
+            enrolled: 8,
+            price: 100,
+            level: 'INTERMEDIATE',
+            location: 'Playa Chorrillos',
+            status: 'upcoming',
+            reservations: [
+              {
+                id: 11,
+                userId: 11,
+                status: 'CONFIRMED',
+                specialRequest: 'Quiero aprender nose riding',
+                createdAt: '2024-12-10T12:00:00',
+                user: { id: 11, name: 'Andrés Jiménez', email: 'andres@email.com', phone: '+51 987 654 330' }
+              },
+              {
+                id: 12,
+                userId: 12,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-11T16:30:00',
+                user: { id: 12, name: 'Valentina Cruz', email: 'valentina@email.com' }
+              },
+              {
+                id: 13,
+                userId: 13,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-12T09:45:00',
+                user: { id: 13, name: 'Mateo Ruiz', email: 'mateo@email.com', phone: '+51 987 654 332' }
+              },
+              {
+                id: 14,
+                userId: 14,
+                status: 'PENDING',
+                specialRequest: 'Primera vez con longboard',
+                createdAt: '2024-12-12T14:20:00',
+                user: { id: 14, name: 'Camila Torres', email: 'camila@email.com' }
+              },
+              {
+                id: 15,
+                userId: 15,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-13T11:10:00',
+                user: { id: 15, name: 'Sebastián Mendoza', email: 'sebastian@email.com', phone: '+51 987 654 334' }
+              },
+              {
+                id: 16,
+                userId: 16,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-13T17:25:00',
+                user: { id: 16, name: 'Isabella Paredes', email: 'isabella@email.com' }
+              },
+              {
+                id: 17,
+                userId: 17,
+                status: 'CONFIRMED',
+                specialRequest: 'Tengo mi propia tabla longboard',
+                createdAt: '2024-12-14T08:40:00',
+                user: { id: 17, name: 'Nicolás Vega', email: 'nicolas@email.com', phone: '+51 987 654 336' }
+              },
+              {
+                id: 18,
+                userId: 18,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-14T13:55:00',
+                user: { id: 18, name: 'Gabriela Ramos', email: 'gabriela@email.com' }
+              }
+            ]
+          },
+          {
+            id: 4,
+            title: 'Surf Matutino',
+            description: 'Sesión de surf aprovechando las mejores olas de la mañana',
+            date: '2024-12-10T07:00:00',
+            duration: 120,
+            capacity: 8,
+            enrolled: 8,
+            price: 90,
+            level: 'INTERMEDIATE',
+            location: 'Playa San Bartolo',
+            status: 'completed',
+            reservations: [
+              {
+                id: 19,
+                userId: 19,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-08T10:00:00',
+                user: { id: 19, name: 'Ricardo Flores', email: 'ricardo@email.com', phone: '+51 987 654 337' }
+              },
+              {
+                id: 20,
+                userId: 20,
+                status: 'CONFIRMED',
+                createdAt: '2024-12-08T14:30:00',
+                user: { id: 20, name: 'Alejandra Soto', email: 'alejandra@email.com' }
+              }
+            ]
+          },
+          {
+            id: 5,
+            title: 'Competición Prep',
+            description: 'Preparación para competencias de surf',
+            date: '2024-12-12T15:00:00',
+            duration: 180,
+            capacity: 4,
+            enrolled: 0,
+            price: 150,
+            level: 'ADVANCED',
+            location: 'Playa Punta Hermosa',
+            status: 'cancelled',
+            reservations: []
+          }
+        ];
 
         setClasses(mockClasses);
       }
@@ -362,7 +362,7 @@ export default function InstructorClasses() {
     fetchClasses();
   }, [fetchClasses, router, session, status]);
 
-  const filteredClasses = classes.filter(cls => 
+  const filteredClasses = classes.filter(cls =>
     filter === 'all' || cls.status === filter
   );
 
@@ -435,7 +435,7 @@ export default function InstructorClasses() {
   const confirmDelete = async () => {
     if (selectedClass) {
       // Aquí iría la llamada a la API para cancelar/eliminar la clase
-      const updatedClasses = classes.map(c => 
+      const updatedClasses = classes.map(c =>
         c.id === selectedClass.id ? { ...c, status: 'cancelled' as const } : c
       );
       setClasses(updatedClasses);
@@ -447,7 +447,7 @@ export default function InstructorClasses() {
   const handleSaveEdit = async (updatedClass: Partial<Class>) => {
     if (selectedClass) {
       // Aquí iría la llamada a la API para actualizar la clase
-      const updatedClasses = classes.map(c => 
+      const updatedClasses = classes.map(c =>
         c.id === selectedClass.id ? { ...c, ...updatedClass } : c
       );
       setClasses(updatedClasses);
@@ -464,7 +464,7 @@ export default function InstructorClasses() {
       enrolled: 0,
       status: 'upcoming'
     };
-    
+
     setClasses([...classes, newClass]);
     setShowCreateModal(false);
   };
@@ -496,7 +496,7 @@ export default function InstructorClasses() {
               <h1 className="text-3xl font-bold text-gray-900">Mis Clases</h1>
               <p className="text-gray-600 mt-2">Gestiona tus clases de surf</p>
             </div>
-            <button 
+            <button
               onClick={() => setShowCreateModal(true)}
               className="mt-4 sm:mt-0 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
@@ -560,41 +560,37 @@ export default function InstructorClasses() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'all'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Todas ({classes.length})
             </button>
             <button
               onClick={() => setFilter('upcoming')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'upcoming'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'upcoming'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Próximas ({classes.filter(c => c.status === 'upcoming').length})
             </button>
             <button
               onClick={() => setFilter('completed')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'completed'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'completed'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Completadas ({classes.filter(c => c.status === 'completed').length})
             </button>
             <button
               onClick={() => setFilter('cancelled')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'cancelled'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'cancelled'
                   ? 'bg-red-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Canceladas ({classes.filter(c => c.status === 'cancelled').length})
             </button>
@@ -614,12 +610,12 @@ export default function InstructorClasses() {
                     </div>
                     <div className="flex gap-2 ml-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(cls.status)}`}>
-                        {cls.status === 'upcoming' ? 'Próxima' : 
-                         cls.status === 'completed' ? 'Completada' : 'Cancelada'}
+                        {cls.status === 'upcoming' ? 'Próxima' :
+                          cls.status === 'completed' ? 'Completada' : 'Cancelada'}
                       </span>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(cls.level)}`}>
                         {cls.level === 'BEGINNER' ? 'Principiante' :
-                         cls.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                          cls.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
                       </span>
                     </div>
                   </div>
@@ -648,14 +644,14 @@ export default function InstructorClasses() {
                       S/. {cls.price}
                     </div>
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => router.push(`/classes/${cls.id}`)}
                         className="flex items-center px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Ver Detalles
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleViewClass(cls)}
                         className="flex items-center px-3 py-1 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                       >
@@ -663,7 +659,7 @@ export default function InstructorClasses() {
                         Reservas
                       </button>
                       {cls.status === 'upcoming' && (
-                        <button 
+                        <button
                           onClick={() => handleEditClass(cls)}
                           className="flex items-center px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                         >
@@ -672,7 +668,7 @@ export default function InstructorClasses() {
                         </button>
                       )}
                       {cls.status === 'upcoming' && (
-                        <button 
+                        <button
                           onClick={() => handleDeleteClass(cls)}
                           className="flex items-center px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         >
@@ -693,12 +689,12 @@ export default function InstructorClasses() {
             <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay clases</h3>
             <p className="text-gray-600 mb-4">
-              {filter === 'all' 
+              {filter === 'all'
                 ? 'Aún no tienes clases programadas'
                 : `No tienes clases ${filter === 'upcoming' ? 'próximas' : filter === 'completed' ? 'completadas' : 'canceladas'}`
               }
             </p>
-            <button 
+            <button
               onClick={() => setShowCreateModal(true)}
               className="flex items-center mx-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
@@ -710,14 +706,14 @@ export default function InstructorClasses() {
 
         {/* Modal Ver Reservas */}
         {showViewModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
             <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900">{selectedClass.title}</h3>
                   <p className="text-gray-600 mt-1">Reservas de la clase</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setShowViewModal(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl"
                 >
@@ -743,8 +739,8 @@ export default function InstructorClasses() {
                   <div>
                     <span className="text-gray-500 block">Estado</span>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedClass.status)}`}>
-                      {selectedClass.status === 'upcoming' ? 'Próxima' : 
-                       selectedClass.status === 'completed' ? 'Completada' : 'Cancelada'}
+                      {selectedClass.status === 'upcoming' ? 'Próxima' :
+                        selectedClass.status === 'completed' ? 'Completada' : 'Cancelada'}
                     </span>
                   </div>
                 </div>
@@ -773,7 +769,7 @@ export default function InstructorClasses() {
                     {selectedClass.reservations.map((reservation) => {
                       const badge = getReservationStatusBadge(reservation.status);
                       const IconComponent = badge.icon;
-                      
+
                       return (
                         <div key={reservation.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex items-start justify-between">
@@ -789,7 +785,7 @@ export default function InstructorClasses() {
                                     {badge.text}
                                   </span>
                                 </div>
-                                
+
                                 <div className="space-y-1 text-sm text-gray-600">
                                   <div className="flex items-center">
                                     <Mail className="w-4 h-4 mr-2" />
@@ -840,19 +836,19 @@ export default function InstructorClasses() {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
                 <div className="text-sm text-gray-600">
                   Total de ingresos estimados: <span className="font-semibold text-green-600">S/. {(selectedClass.reservations?.filter(r => r.status !== 'CANCELED').length || 0) * selectedClass.price}</span>
                 </div>
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => router.push(`/classes/${selectedClass.id}`)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Ver Página Pública
                   </button>
-                  <button 
+                  <button
                     onClick={() => setShowViewModal(false)}
                     className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                   >
@@ -866,18 +862,18 @@ export default function InstructorClasses() {
 
         {/* Modal Editar Clase */}
         {showEditModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-900">Editar Clase</h3>
-                <button 
+                <button
                   onClick={() => setShowEditModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
               </div>
-              
+
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
@@ -892,55 +888,55 @@ export default function InstructorClasses() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                    <input 
+                    <input
                       name="title"
-                      type="text" 
+                      type="text"
                       defaultValue={selectedClass.title}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                    <textarea 
+                    <textarea
                       name="description"
                       defaultValue={selectedClass.description}
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Capacidad</label>
-                      <input 
+                      <input
                         name="capacity"
-                        type="number" 
+                        type="number"
                         defaultValue={selectedClass.capacity}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Ubicación</label>
-                      <input 
+                      <input
                         name="location"
-                        type="text" 
+                        type="text"
                         defaultValue={selectedClass.location}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-end gap-3 mt-6">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowEditModal(false)}
                     className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                   >
                     Cancelar
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
@@ -954,31 +950,31 @@ export default function InstructorClasses() {
 
         {/* Modal Confirmar Eliminación */}
         {showDeleteModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-900">Cancelar Clase</h3>
-                <button 
+                <button
                   onClick={() => setShowDeleteModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
               </div>
-              
+
               <p className="text-gray-600 mb-6">
-                ¿Estás seguro de que quieres cancelar la clase &quot;{selectedClass.title}&quot;? 
+                ¿Estás seguro de que quieres cancelar la clase &quot;{selectedClass.title}&quot;?
                 Esta acción notificará a todos los estudiantes inscritos.
               </p>
-              
+
               <div className="flex justify-end gap-3">
-                <button 
+                <button
                   onClick={() => setShowDeleteModal(false)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                 >
                   No, mantener
                 </button>
-                <button 
+                <button
                   onClick={confirmDelete}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
@@ -991,33 +987,33 @@ export default function InstructorClasses() {
 
         {/* Modal Crear Clase */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
             <div className="bg-white rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-2xl font-bold text-gray-900">Crear Nueva Clase</h3>
-                <button 
+                <button
                   onClick={() => setShowCreateModal(false)}
                   className="text-gray-400 hover:text-gray-600 text-2xl"
                 >
                   ✕
                 </button>
               </div>
-              
+
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
-                
+
                 // Combinar fecha y hora
                 let classDate = formData.get('classDate') as string;
-                
+
                 // Si no hay fecha seleccionada en radio buttons, usar el input de fecha fallback
                 if (!classDate) {
                   classDate = formData.get('classDateFallback') as string;
                 }
-                
+
                 const startTime = formData.get('startTime') as string;
                 const dateTime = `${classDate}T${startTime}`;
-                
+
                 const newClass = {
                   title: formData.get('title') as string,
                   description: formData.get('description') as string,
@@ -1028,7 +1024,7 @@ export default function InstructorClasses() {
                   level: formData.get('level') as string,
                   location: formData.get('location') as string,
                 };
-                
+
                 handleCreateClass(newClass);
               }}>
                 <div className="space-y-6">
@@ -1040,20 +1036,20 @@ export default function InstructorClasses() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Título de la Clase *
                         </label>
-                        <input 
+                        <input
                           name="title"
-                          type="text" 
+                          type="text"
                           required
                           placeholder="Ej: Surf para Principiantes"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Descripción *
                         </label>
-                        <textarea 
+                        <textarea
                           name="description"
                           required
                           rows={3}
@@ -1072,7 +1068,7 @@ export default function InstructorClasses() {
                         <label className="block text-sm font-medium text-gray-700 mb-3">
                           Fecha de la Clase *
                         </label>
-                        
+
                         {/* Selector de Fecha Visual */}
                         <div className="space-y-3">
                           {/* Accesos Rápidos */}
@@ -1126,7 +1122,7 @@ export default function InstructorClasses() {
                                 const dayNum = date.getDate();
                                 const isToday = i === 0;
                                 const isTomorrow = i === 1;
-                                
+
                                 return (
                                   <label
                                     key={i}
@@ -1163,16 +1159,16 @@ export default function InstructorClasses() {
                               <Calendar className="w-4 h-4 text-gray-500" />
                               <span className="text-sm font-medium text-gray-600">O selecciona otra fecha:</span>
                             </div>
-                            <input 
+                            <input
                               name="classDateFallback"
-                              type="date" 
+                              type="date"
                               min={new Date().toISOString().split('T')[0]}
                               onChange={(e) => {
                                 if (e.target.value) {
                                   // Deseleccionar radio buttons
                                   const radios = document.querySelectorAll('input[name="classDate"]') as NodeListOf<HTMLInputElement>;
                                   radios.forEach(radio => radio.checked = false);
-                                  
+
                                   // Crear un radio button temporal para el valor seleccionado
                                   const tempRadio = document.createElement('input');
                                   tempRadio.type = 'radio';
@@ -1209,11 +1205,11 @@ export default function InstructorClasses() {
                             Horario de Inicio *
                           </label>
                         </div>
-                        
+
                         <label className="relative flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                          <input 
-                            type="radio" 
-                            name="startTime" 
+                          <input
+                            type="radio"
+                            name="startTime"
                             value="06:00:00"
                             required
                             className="sr-only peer"
@@ -1227,9 +1223,9 @@ export default function InstructorClasses() {
                         </label>
 
                         <label className="relative flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                          <input 
-                            type="radio" 
-                            name="startTime" 
+                          <input
+                            type="radio"
+                            name="startTime"
                             value="08:00:00"
                             className="sr-only peer"
                           />
@@ -1242,9 +1238,9 @@ export default function InstructorClasses() {
                         </label>
 
                         <label className="relative flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                          <input 
-                            type="radio" 
-                            name="startTime" 
+                          <input
+                            type="radio"
+                            name="startTime"
                             value="10:00:00"
                             className="sr-only peer"
                           />
@@ -1257,9 +1253,9 @@ export default function InstructorClasses() {
                         </label>
 
                         <label className="relative flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                          <input 
-                            type="radio" 
-                            name="startTime" 
+                          <input
+                            type="radio"
+                            name="startTime"
                             value="14:00:00"
                             className="sr-only peer"
                           />
@@ -1272,9 +1268,9 @@ export default function InstructorClasses() {
                         </label>
 
                         <label className="relative flex items-center p-3 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                          <input 
-                            type="radio" 
-                            name="startTime" 
+                          <input
+                            type="radio"
+                            name="startTime"
                             value="16:00:00"
                             className="sr-only peer"
                           />
@@ -1336,14 +1332,14 @@ export default function InstructorClasses() {
                           <option value="ADVANCED">Avanzado</option>
                         </select>
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Capacidad *
                         </label>
-                        <input 
+                        <input
                           name="capacity"
-                          type="number" 
+                          type="number"
                           required
                           min="1"
                           max="20"
@@ -1351,14 +1347,14 @@ export default function InstructorClasses() {
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Precio (S/.) *
                         </label>
-                        <input 
+                        <input
                           name="price"
-                          type="number" 
+                          type="number"
                           required
                           min="0"
                           step="0.01"
@@ -1376,9 +1372,9 @@ export default function InstructorClasses() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Lugar de la Clase *
                       </label>
-                      <input 
+                      <input
                         name="location"
-                        type="text" 
+                        type="text"
                         required
                         placeholder="Ej: Playa Miraflores, Lima"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1413,16 +1409,16 @@ export default function InstructorClasses() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
                     className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                   >
                     Cancelar
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
                   >

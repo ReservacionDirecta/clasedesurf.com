@@ -66,20 +66,20 @@ export default function InstructorsPage() {
         const data = await response.json();
         const normalized = Array.isArray(data)
           ? data.map((it: any) => ({
-              id: it.id,
-              name: it.user?.name ?? it.name ?? 'Instructor',
-              email: it.user?.email ?? it.email ?? '',
-              phone: it.user?.phone ?? it.phone,
-              specialties: it.specialties ?? [],
-              rating: it.rating ?? 0,
-              totalClasses: it.totalClasses ?? 0,
-              profileImage: it.profileImage ?? undefined,
-              userId: it.userId ?? it.user?.id,
-              bio: it.bio ?? '',
-              yearsExperience: it.yearsExperience ?? 0,
-              certifications: it.certifications ?? [],
-              isActive: it.isActive ?? true
-            }))
+            id: it.id,
+            name: it.user?.name ?? it.name ?? 'Instructor',
+            email: it.user?.email ?? it.email ?? '',
+            phone: it.user?.phone ?? it.phone,
+            specialties: it.specialties ?? [],
+            rating: it.rating ?? 0,
+            totalClasses: it.totalClasses ?? 0,
+            profileImage: it.profileImage ?? undefined,
+            userId: it.userId ?? it.user?.id,
+            bio: it.bio ?? '',
+            yearsExperience: it.yearsExperience ?? 0,
+            certifications: it.certifications ?? [],
+            isActive: it.isActive ?? true
+          }))
           : [];
         setInstructors(normalized);
       }
@@ -217,7 +217,7 @@ export default function InstructorsPage() {
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">Gestión de Instructores</h1>
               <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Administra el equipo de instructores de tu escuela</p>
             </div>
-            <button 
+            <button
               onClick={() => setShowCreateModal(true)}
               className="flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base whitespace-nowrap"
             >
@@ -304,16 +304,16 @@ export default function InstructorsPage() {
                         <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
                       </div>
                     )}
-                    
+
                     <div className="min-w-0 flex-1">
                       <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{instructor.name}</h3>
-                      
+
                       <div className="flex flex-col gap-1 mt-2">
                         <div className="flex items-center text-gray-600 text-xs sm:text-sm">
                           <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
                           <span className="truncate">{instructor.email}</span>
                         </div>
-                        
+
                         {instructor.phone && (
                           <div className="flex items-center text-gray-600 text-xs sm:text-sm">
                             <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
@@ -363,7 +363,7 @@ export default function InstructorsPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-3 sm:p-4">
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
               <SimpleInstructorForm
                 onSubmit={handleCreateInstructor}
@@ -376,7 +376,7 @@ export default function InstructorsPage() {
 
         {/* Edit Modal */}
         {showEditModal && selectedInstructor && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-3 sm:p-4">
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg sm:text-xl font-bold mb-4">Editar Instructor</h3>
               <InstructorForm
@@ -402,7 +402,7 @@ export default function InstructorsPage() {
 
         {/* Delete Confirm Modal */}
         {deleteTarget && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-3 sm:p-4">
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar Instructor</h3>
               <p className="text-gray-600 mb-4">

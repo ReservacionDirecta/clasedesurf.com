@@ -12,13 +12,13 @@ interface ModalProps {
   showCloseButton?: boolean;
 }
 
-export default function Modal({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children, 
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
   size = 'md',
-  showCloseButton = true 
+  showCloseButton = true
 }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -51,13 +51,13 @@ export default function Modal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className={`relative bg-white rounded-t-3xl sm:rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] sm:max-h-[90vh] flex flex-col safe-area-bottom`}>
         {/* Header - Sticky en móvil */}
@@ -73,7 +73,7 @@ export default function Modal({
             </button>
           )}
         </div>
-        
+
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
           {children}

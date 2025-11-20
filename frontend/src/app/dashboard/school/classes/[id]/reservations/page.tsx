@@ -55,7 +55,7 @@ export default function ClassReservationsPage() {
   const router = useRouter();
   const params = useParams();
   const classId = params?.id as string;
-  
+
   const [classData, setClassData] = useState<ClassData | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,26 +70,26 @@ export default function ClassReservationsPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      
+
       // Fetch class details
       const classRes = await fetch('/api/classes', { headers });
       if (!classRes.ok) throw new Error('Failed to fetch class');
-      
+
       const allClasses = await classRes.json();
       const currentClass = allClasses.find((cls: any) => cls.id === parseInt(classId));
-      
+
       if (!currentClass) {
         throw new Error('Class not found');
       }
-      
+
       setClassData(currentClass);
-      
+
       // Fetch reservations
       const reservationsRes = await fetch('/api/reservations', { headers });
       if (reservationsRes.ok) {
@@ -129,13 +129,13 @@ export default function ClassReservationsPage() {
     try {
       setUpdating(reservationId);
       setError(null);
-      
+
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       console.log('[School] Updating reservation status:', { reservationId, newStatus });
-      
+
       const res = await fetch(`/api/reservations/${reservationId}`, {
         method: 'PUT',
         headers,
@@ -147,13 +147,13 @@ export default function ClassReservationsPage() {
         console.error('[School] Update reservation error:', errorData);
         throw new Error(errorData.message || 'Failed to update reservation');
       }
-      
+
       const updatedReservation = await res.json();
       console.log('[School] Reservation updated successfully:', updatedReservation);
-      
+
       // Refresh reservations to get latest data
       await fetchClassAndReservations();
-      
+
       // Show success message
       alert(`Reserva ${newStatus === 'CONFIRMED' ? 'confirmada' : newStatus === 'CANCELED' ? 'cancelada' : 'actualizada'} exitosamente`);
     } catch (err) {
@@ -169,7 +169,7 @@ export default function ClassReservationsPage() {
   const updatePaymentStatus = async (paymentId: number, paymentStatus: string) => {
     try {
       setUpdating(paymentId);
-      
+
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -177,7 +177,7 @@ export default function ClassReservationsPage() {
       const res = await fetch(`/api/payments/${paymentId}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           status: paymentStatus,
           paidAt: paymentStatus === 'PAID' ? new Date().toISOString() : null
         })
@@ -187,7 +187,7 @@ export default function ClassReservationsPage() {
         const errorData = await res.json();
         throw new Error(errorData.message || 'Failed to update payment');
       }
-      
+
       // Refresh reservations
       await fetchClassAndReservations();
       setError(null);
@@ -396,7 +396,7 @@ export default function ClassReservationsPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Student Details */}
                       <div className="flex flex-wrap gap-2 mt-2">
                         {reservation.user.age && (
@@ -610,7 +610,7 @@ export default function ClassReservationsPage() {
 
       {/* Details Modal */}
       {showDetailsModal && selectedReservation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0 z-10">
@@ -784,9 +784,9 @@ export default function ClassReservationsPage() {
                         <div className="md:col-span-2">
                           <p className="text-sm text-gray-500 mb-2 font-medium">Comprobante de Pago</p>
                           <div className="bg-white p-4 rounded-lg border border-gray-300">
-                            <img 
-                              src={selectedReservation.payment?.voucherImage || ''} 
-                              alt="Comprobante de pago" 
+                            <img
+                              src={selectedReservation.payment?.voucherImage || ''}
+                              alt="Comprobante de pago"
                               className="max-w-full h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
                               onClick={() => {
                                 const voucherUrl = selectedReservation.payment?.voucherImage;
@@ -812,7 +812,7 @@ export default function ClassReservationsPage() {
                           <div className="space-y-3">
                             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                               <p className="text-sm text-yellow-800 font-medium mb-1">
-                                {selectedReservation.payment?.paymentMethod === 'cash' 
+                                {selectedReservation.payment?.paymentMethod === 'cash'
                                   ? '💰 Pago en Efectivo Pendiente'
                                   : '📄 Comprobante Pendiente de Verificación'}
                               </p>
@@ -949,7 +949,7 @@ export default function ClassReservationsPage() {
                       Confirmar Reserva
                     </button>
                   )}
-                  
+
                   {selectedReservation.payment && selectedReservation.payment.status === 'UNPAID' && (
                     <button
                       onClick={() => {
@@ -962,7 +962,7 @@ export default function ClassReservationsPage() {
                       Marcar como Pagado
                     </button>
                   )}
-                  
+
                   {selectedReservation.status !== 'CANCELED' && selectedReservation.status !== 'COMPLETED' && (
                     <button
                       onClick={() => {

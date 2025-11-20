@@ -62,13 +62,13 @@ export default function InstructorStudents() {
         }
 
         // Calculate progress based on completed classes
-        const completedClasses = student.classes?.filter((c: any) => 
+        const completedClasses = student.classes?.filter((c: any) =>
           c.reservationStatus === 'CONFIRMED' && new Date(c.date) < new Date()
         ).length || 0;
         const progress = Math.min(Math.round((completedClasses / 10) * 100), 100);
 
         // Get last class date
-        const sortedClasses = (student.classes || []).sort((a: any, b: any) => 
+        const sortedClasses = (student.classes || []).sort((a: any, b: any) =>
           new Date(b.date).getTime() - new Date(a.date).getTime()
         );
         const lastClass = sortedClasses[0]?.date || new Date().toISOString();
@@ -97,92 +97,92 @@ export default function InstructorStudents() {
       // Fallback to mock data if no real data
       if (processedStudents.length === 0) {
         const mockStudents: Student[] = [
-        {
-          id: 1,
-          name: 'María González',
-          age: 25,
-          level: 'BEGINNER',
-          totalClasses: 8,
-          completedClasses: 6,
-          rating: 4.8,
-          joinDate: '2024-10-15',
-          lastClass: '2024-12-10',
-          canSwim: true,
-          progress: 75,
-          notes: 'Muy dedicada, progresa rápidamente en el equilibrio'
-        },
-        {
-          id: 2,
-          name: 'Carlos Mendoza',
-          age: 32,
-          level: 'INTERMEDIATE',
-          totalClasses: 15,
-          completedClasses: 12,
-          rating: 4.9,
-          joinDate: '2024-08-20',
-          lastClass: '2024-12-12',
-          canSwim: true,
-          progress: 80,
-          notes: 'Excelente técnica, listo para maniobras avanzadas'
-        },
-        {
-          id: 3,
-          name: 'Ana Rodríguez',
-          age: 28,
-          level: 'BEGINNER',
-          totalClasses: 4,
-          completedClasses: 3,
-          rating: 4.2,
-          joinDate: '2024-11-01',
-          lastClass: '2024-12-08',
-          canSwim: true,
-          injuries: 'Lesión menor en rodilla izquierda',
-          progress: 45,
-          notes: 'Cuidar la rodilla, enfocar en técnica de remada'
-        },
-        {
-          id: 4,
-          name: 'Diego Fernández',
-          age: 35,
-          level: 'ADVANCED',
-          totalClasses: 25,
-          completedClasses: 22,
-          rating: 4.7,
-          joinDate: '2024-06-10',
-          lastClass: '2024-12-11',
-          canSwim: true,
-          progress: 90,
-          notes: 'Surfista experimentado, trabajando en competición'
-        },
-        {
-          id: 5,
-          name: 'Sofía López',
-          age: 22,
-          level: 'BEGINNER',
-          totalClasses: 2,
-          completedClasses: 1,
-          rating: 4.0,
-          joinDate: '2024-12-01',
-          lastClass: '2024-12-05',
-          canSwim: false,
-          progress: 20,
-          notes: 'Priorizar natación antes de surf avanzado'
-        },
-        {
-          id: 6,
-          name: 'Roberto Silva',
-          age: 29,
-          level: 'INTERMEDIATE',
-          totalClasses: 18,
-          completedClasses: 16,
-          rating: 4.6,
-          joinDate: '2024-07-15',
-          lastClass: '2024-12-09',
-          canSwim: true,
-          progress: 85,
-          notes: 'Buen progreso, trabajar en lectura de olas'
-        }
-      ];
+          {
+            id: 1,
+            name: 'María González',
+            age: 25,
+            level: 'BEGINNER',
+            totalClasses: 8,
+            completedClasses: 6,
+            rating: 4.8,
+            joinDate: '2024-10-15',
+            lastClass: '2024-12-10',
+            canSwim: true,
+            progress: 75,
+            notes: 'Muy dedicada, progresa rápidamente en el equilibrio'
+          },
+          {
+            id: 2,
+            name: 'Carlos Mendoza',
+            age: 32,
+            level: 'INTERMEDIATE',
+            totalClasses: 15,
+            completedClasses: 12,
+            rating: 4.9,
+            joinDate: '2024-08-20',
+            lastClass: '2024-12-12',
+            canSwim: true,
+            progress: 80,
+            notes: 'Excelente técnica, listo para maniobras avanzadas'
+          },
+          {
+            id: 3,
+            name: 'Ana Rodríguez',
+            age: 28,
+            level: 'BEGINNER',
+            totalClasses: 4,
+            completedClasses: 3,
+            rating: 4.2,
+            joinDate: '2024-11-01',
+            lastClass: '2024-12-08',
+            canSwim: true,
+            injuries: 'Lesión menor en rodilla izquierda',
+            progress: 45,
+            notes: 'Cuidar la rodilla, enfocar en técnica de remada'
+          },
+          {
+            id: 4,
+            name: 'Diego Fernández',
+            age: 35,
+            level: 'ADVANCED',
+            totalClasses: 25,
+            completedClasses: 22,
+            rating: 4.7,
+            joinDate: '2024-06-10',
+            lastClass: '2024-12-11',
+            canSwim: true,
+            progress: 90,
+            notes: 'Surfista experimentado, trabajando en competición'
+          },
+          {
+            id: 5,
+            name: 'Sofía López',
+            age: 22,
+            level: 'BEGINNER',
+            totalClasses: 2,
+            completedClasses: 1,
+            rating: 4.0,
+            joinDate: '2024-12-01',
+            lastClass: '2024-12-05',
+            canSwim: false,
+            progress: 20,
+            notes: 'Priorizar natación antes de surf avanzado'
+          },
+          {
+            id: 6,
+            name: 'Roberto Silva',
+            age: 29,
+            level: 'INTERMEDIATE',
+            totalClasses: 18,
+            completedClasses: 16,
+            rating: 4.6,
+            joinDate: '2024-07-15',
+            lastClass: '2024-12-09',
+            canSwim: true,
+            progress: 85,
+            notes: 'Buen progreso, trabajar en lectura de olas'
+          }
+        ];
 
         setStudents(mockStudents);
       }
@@ -213,7 +213,7 @@ export default function InstructorStudents() {
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (student.notes && student.notes.toLowerCase().includes(searchTerm.toLowerCase()));
+      (student.notes && student.notes.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesLevel = levelFilter === 'all' || student.level === levelFilter;
     return matchesSearch && matchesLevel;
   });
@@ -258,7 +258,7 @@ export default function InstructorStudents() {
 
   const handleSaveNotes = (newNotes: string) => {
     if (selectedStudent) {
-      const updatedStudents = students.map(s => 
+      const updatedStudents = students.map(s =>
         s.id === selectedStudent.id ? { ...s, notes: newNotes } : s
       );
       setStudents(updatedStudents);
@@ -388,44 +388,40 @@ export default function InstructorStudents() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setLevelFilter('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  levelFilter === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${levelFilter === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Todos
               </button>
               <button
                 onClick={() => setLevelFilter('BEGINNER')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  levelFilter === 'BEGINNER'
-                    ? 'bg-yellow-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${levelFilter === 'BEGINNER'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Principiantes
               </button>
               <button
                 onClick={() => setLevelFilter('INTERMEDIATE')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  levelFilter === 'INTERMEDIATE'
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${levelFilter === 'INTERMEDIATE'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Intermedios
               </button>
               <button
                 onClick={() => setLevelFilter('ADVANCED')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  levelFilter === 'ADVANCED'
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${levelFilter === 'ADVANCED'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Avanzados
               </button>
@@ -449,7 +445,7 @@ export default function InstructorStudents() {
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(student.level)}`}>
                   {student.level === 'BEGINNER' ? 'Principiante' :
-                   student.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                    student.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
                 </span>
               </div>
 
@@ -515,14 +511,14 @@ export default function InstructorStudents() {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <button 
+                <button
                   onClick={() => handleShowNotes(student)}
                   className="flex-1 flex items-center justify-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
                 >
                   <MessageCircle className="w-4 h-4 mr-1" />
                   Notas
                 </button>
-                <button 
+                <button
                   onClick={() => handleShowHistory(student)}
                   className="flex-1 flex items-center justify-center px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
                 >
@@ -549,26 +545,26 @@ export default function InstructorStudents() {
 
         {/* Modal Notas del Estudiante */}
         {showNotesModal && selectedStudent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Notas de {selectedStudent.name}
                 </h3>
-                <button 
+                <button
                   onClick={() => setShowNotesModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
               </div>
-              
+
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium">Nivel:</span> {
                       selectedStudent.level === 'BEGINNER' ? 'Principiante' :
-                      selectedStudent.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'
+                        selectedStudent.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'
                     }
                   </div>
                   <div>
@@ -593,7 +589,7 @@ export default function InstructorStudents() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Notas del Instructor
                   </label>
-                  <textarea 
+                  <textarea
                     name="notes"
                     defaultValue={selectedStudent.notes || ''}
                     rows={6}
@@ -601,16 +597,16 @@ export default function InstructorStudents() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
                 <div className="flex justify-end gap-3">
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowNotesModal(false)}
                     className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                   >
                     Cancelar
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
@@ -624,20 +620,20 @@ export default function InstructorStudents() {
 
         {/* Modal Historial del Estudiante */}
         {showHistoryModal && selectedStudent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Historial de {selectedStudent.name}
                 </h3>
-                <button 
+                <button
                   onClick={() => setShowHistoryModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
               </div>
-              
+
               <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-medium text-blue-900">Total de Clases</h4>
@@ -679,9 +675,9 @@ export default function InstructorStudents() {
                   </div>
                 ))}
               </div>
-              
+
               <div className="flex justify-end mt-6">
-                <button 
+                <button
                   onClick={() => setShowHistoryModal(false)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                 >

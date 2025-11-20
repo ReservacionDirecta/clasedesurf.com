@@ -70,7 +70,7 @@ export default function SchoolReservations() {
       }
 
       const response = await fetch('/api/reservations', { headers });
-      
+
       if (response.ok) {
         const data = await response.json();
         setReservations(data);
@@ -78,7 +78,7 @@ export default function SchoolReservations() {
         console.error('Error fetching reservations:', response.statusText);
         setReservations([]);
       }
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching reservations:', error);
@@ -89,8 +89,8 @@ export default function SchoolReservations() {
 
   const filteredReservations = reservations.filter(reservation => {
     const matchesSearch = reservation.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reservation.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reservation.class.title.toLowerCase().includes(searchTerm.toLowerCase());
+      reservation.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      reservation.class.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || reservation.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -160,9 +160,9 @@ export default function SchoolReservations() {
   const handleStatusChange = async (reservationId: number, newStatus: string) => {
     try {
       // Aquí iría la llamada a la API para actualizar el estado
-      setReservations(prev => 
-        prev.map(r => 
-          r.id === reservationId 
+      setReservations(prev =>
+        prev.map(r =>
+          r.id === reservationId
             ? { ...r, status: newStatus as any, updatedAt: new Date().toISOString() }
             : r
         )
@@ -268,11 +268,11 @@ export default function SchoolReservations() {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">Todos los estados</option>
                 <option value="PENDING">Pendientes</option>
@@ -303,14 +303,13 @@ export default function SchoolReservations() {
                             {getStatusIcon(reservation.status)}
                             <span className="ml-1">
                               {reservation.status === 'CONFIRMED' ? 'Confirmada' :
-                               reservation.status === 'PENDING' ? 'Pendiente' :
-                               reservation.status === 'CANCELED' ? 'Cancelada' : 'Pagada'}
+                                reservation.status === 'PENDING' ? 'Pendiente' :
+                                  reservation.status === 'CANCELED' ? 'Cancelada' : 'Pagada'}
                             </span>
                           </span>
                           {reservation.payment && (
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              reservation.payment.status === 'PAID' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                            }`}>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${reservation.payment.status === 'PAID' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
                               {reservation.payment.status === 'PAID' ? 'Pagado' : 'Sin pagar'}
                             </span>
                           )}
@@ -324,7 +323,7 @@ export default function SchoolReservations() {
                       <h4 className="font-medium text-gray-900">{reservation.class.title}</h4>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getLevelColor(reservation.class.level)}`}>
                         {reservation.class.level === 'BEGINNER' ? 'Principiante' :
-                         reservation.class.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                          reservation.class.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
                       </span>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
@@ -358,7 +357,7 @@ export default function SchoolReservations() {
                       )}
                     </div>
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => handleViewReservation(reservation)}
                         className="flex items-center px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       >
@@ -367,14 +366,14 @@ export default function SchoolReservations() {
                       </button>
                       {reservation.status === 'PENDING' && (
                         <>
-                          <button 
+                          <button
                             onClick={() => handleStatusChange(reservation.id, 'CONFIRMED')}
                             className="flex items-center px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                           >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Confirmar
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleStatusChange(reservation.id, 'CANCELED')}
                             className="flex items-center px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
@@ -406,20 +405,20 @@ export default function SchoolReservations() {
 
         {/* Modal Detalles de la Reserva */}
         {showDetailModal && selectedReservation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Reserva #{selectedReservation.id}
                 </h3>
-                <button 
+                <button
                   onClick={() => setShowDetailModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
               </div>
-              
+
               <div className="space-y-6">
                 {/* Información del Estudiante */}
                 <div className="bg-blue-50 p-4 rounded-lg">
@@ -462,7 +461,7 @@ export default function SchoolReservations() {
                       <span className="font-medium text-gray-700">Nivel:</span>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(selectedReservation.class.level)}`}>
                         {selectedReservation.class.level === 'BEGINNER' ? 'Principiante' :
-                         selectedReservation.class.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                          selectedReservation.class.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
                       </span>
                     </div>
                     <div>
@@ -482,8 +481,8 @@ export default function SchoolReservations() {
                         {getStatusIcon(selectedReservation.status)}
                         <span className="ml-1">
                           {selectedReservation.status === 'CONFIRMED' ? 'Confirmada' :
-                           selectedReservation.status === 'PENDING' ? 'Pendiente' :
-                           selectedReservation.status === 'CANCELED' ? 'Cancelada' : 'Pagada'}
+                            selectedReservation.status === 'PENDING' ? 'Pendiente' :
+                              selectedReservation.status === 'CANCELED' ? 'Cancelada' : 'Pagada'}
                         </span>
                       </span>
                     </div>
@@ -519,9 +518,8 @@ export default function SchoolReservations() {
                       </div>
                       <div>
                         <span className="font-medium text-gray-700">Estado:</span>
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          selectedReservation.payment.status === 'PAID' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${selectedReservation.payment.status === 'PAID' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
                           {selectedReservation.payment.status === 'PAID' ? 'Pagado' : 'Sin pagar'}
                         </span>
                       </div>
@@ -530,7 +528,7 @@ export default function SchoolReservations() {
                           <span className="font-medium text-gray-700">Método:</span>
                           <p className="text-gray-900">
                             {selectedReservation.payment.paymentMethod === 'credit_card' ? 'Tarjeta de Crédito' :
-                             selectedReservation.payment.paymentMethod === 'cash' ? 'Efectivo' : 'Transferencia'}
+                              selectedReservation.payment.paymentMethod === 'cash' ? 'Efectivo' : 'Transferencia'}
                           </p>
                         </div>
                       )}
@@ -538,11 +536,11 @@ export default function SchoolReservations() {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex justify-end gap-3 mt-6">
                 {selectedReservation.status === 'PENDING' && (
                   <>
-                    <button 
+                    <button
                       onClick={() => {
                         handleStatusChange(selectedReservation.id, 'CONFIRMED');
                         setShowDetailModal(false);
@@ -551,7 +549,7 @@ export default function SchoolReservations() {
                     >
                       Confirmar
                     </button>
-                    <button 
+                    <button
                       onClick={() => {
                         handleStatusChange(selectedReservation.id, 'CANCELED');
                         setShowDetailModal(false);
@@ -562,7 +560,7 @@ export default function SchoolReservations() {
                     </button>
                   </>
                 )}
-                <button 
+                <button
                   onClick={() => setShowDetailModal(false)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                 >

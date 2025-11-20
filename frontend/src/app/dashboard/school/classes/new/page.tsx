@@ -42,7 +42,7 @@ interface ClassFormData {
 export default function NewClassPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [school, setSchool] = useState<School | null>(null);
   const [formData, setFormData] = useState<ClassFormData>({
     title: '',
@@ -96,17 +96,17 @@ export default function NewClassPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const token = (session as any)?.backendToken;
 
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      
+
       const res = await fetch('/api/schools', { headers });
       if (!res.ok) throw new Error('Failed to fetch schools');
-      
+
       const schools = await res.json();
       if (schools.length > 0) {
         setSchool(schools[0]); // For now, take the first school
@@ -204,7 +204,7 @@ export default function NewClassPage() {
   const generateOccurrences = (): Array<{ date: string; time: string }> => {
     const occurrences: Array<{ date: string; time: string }> = [];
     const validTimes = formData.times.filter(t => t.trim() !== '');
-    
+
     if (validTimes.length === 0 || formData.selectedDays.length === 0 || !formData.startDate) {
       return occurrences;
     }
@@ -225,11 +225,11 @@ export default function NewClassPage() {
       formData.selectedDays.forEach(day => {
         const dayOfWeek = dayMap[day];
         const currentDate = new Date(startDate);
-        
+
         // Encontrar el próximo día de la semana
         const daysToAdd = (dayOfWeek - currentDate.getDay() + 7) % 7;
         currentDate.setDate(currentDate.getDate() + daysToAdd + (week * 7));
-        
+
         validTimes.forEach(time => {
           occurrences.push({
             date: currentDate.toISOString().split('T')[0],
@@ -296,13 +296,13 @@ export default function NewClassPage() {
 
       // Combine date and time
       const dateTime = new Date(`${formData.date}T${formData.time}`);
-      
+
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Using API proxy routes instead of direct backend calls
-      
+
       // Filtrar imágenes vacías y validar que haya al menos 1
       const validImages = formData.images.filter(img => img.trim() !== '');
       if (validImages.length === 0) {
@@ -335,7 +335,7 @@ export default function NewClassPage() {
         const errorData = await res.json();
         throw new Error(errorData.message || 'Failed to create class');
       }
-      
+
       // Redirect to classes list on success
       router.push('/dashboard/school/classes');
     } catch (err) {
@@ -645,7 +645,7 @@ export default function NewClassPage() {
               <p className="text-sm text-gray-600 mb-4">
                 Agrega entre 1 y 5 imágenes para tu clase. Ingresa la URL de cada imagen.
               </p>
-              
+
               <div className="space-y-3">
                 {formData.images.map((image, index) => (
                   <div key={index} className="flex gap-3 items-start">
@@ -689,7 +689,7 @@ export default function NewClassPage() {
                     )}
                   </div>
                 ))}
-                
+
                 {formData.images.length < 5 && (
                   <button
                     type="button"
@@ -732,10 +732,10 @@ export default function NewClassPage() {
 
         {/* Modal para agregar nueva playa */}
         {showAddBeachModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <h3 className="text-xl font-bold mb-4">Agregar Nueva Playa</h3>
-              
+
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                   <p className="text-red-800 text-sm">{error}</p>

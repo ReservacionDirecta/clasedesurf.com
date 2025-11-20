@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic' as const;
+
 // Use same logic as next.config.js - force localhost:4000 in development
 const BACKEND = process.env.NODE_ENV === 'development'
   ? 'http://localhost:4000'
   : (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000');
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const authHeader = req.headers.get('authorization');
     
     const headers: any = {
@@ -16,9 +22,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       headers['Authorization'] = authHeader;
     }
 
-    const response = await fetch(`${BACKEND}/reservations/${params.id}`, {
+    const response = await fetch(`${BACKEND}/reservations/${id}`, {
       method: 'GET',
-      headers
+      headers,
+      cache: 'no-store'
     });
     
     if (!response.ok) {
@@ -39,8 +46,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const authHeader = req.headers.get('authorization');
     
     const headers: any = {
@@ -52,10 +63,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     const body = await req.json();
     
-    const response = await fetch(`${BACKEND}/reservations/${params.id}`, {
+    const response = await fetch(`${BACKEND}/reservations/${id}`, {
       method: 'PUT',
       headers,
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      cache: 'no-store'
     });
 
     if (!response.ok) {
@@ -75,8 +87,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await params;
     const authHeader = req.headers.get('authorization');
     
     const headers: any = {
@@ -86,9 +102,10 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       headers['Authorization'] = authHeader;
     }
 
-    const response = await fetch(`${BACKEND}/reservations/${params.id}`, {
+    const response = await fetch(`${BACKEND}/reservations/${id}`, {
       method: 'DELETE',
-      headers
+      headers,
+      cache: 'no-store'
     });
 
     if (!response.ok) {

@@ -162,6 +162,74 @@ router.get('/', auth_1.default, resolve_school_1.default, async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+// GET /reservations/:id - get single reservation details
+router.get('/:id', auth_1.default, (0, validation_1.validateParams)(reservations_1.reservationIdSchema), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.userId;
+        if (!userId)
+            return res.status(401).json({ message: 'User not authenticated' });
+        const reservation = await prisma_1.default.reservation.findUnique({
+            where: { id: Number(id) },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true
+                    }
+                },
+                class: {
+                    include: {
+                        school: {
+                            select: {
+                                id: true,
+                                name: true,
+                                location: true,
+                                description: true,
+                                phone: true,
+                                email: true,
+                                website: true,
+                                instagram: true,
+                                facebook: true,
+                                whatsapp: true,
+                                address: true,
+                                logo: true,
+                                coverImage: true,
+                                rating: true,
+                                totalReviews: true,
+                                foundedYear: true
+                            }
+                        },
+                        // instructor is a String field, not a relation
+                    }
+                },
+                payment: true
+            }
+        });
+        if (!reservation) {
+            return res.status(404).json({ message: 'Reservation not found' });
+        }
+        // Multi-tenant check: users can only see their own reservations unless they're admin/school_admin
+        if (req.role !== 'ADMIN' && req.role !== 'SCHOOL_ADMIN') {
+            if (reservation.userId !== Number(userId)) {
+                return res.status(403).json({ message: 'You can only view your own reservations' });
+            }
+        }
+        // SCHOOL_ADMIN can only see reservations from their school
+        if (req.role === 'SCHOOL_ADMIN' && req.schoolId) {
+            if (reservation.class.schoolId !== req.schoolId) {
+                return res.status(403).json({ message: 'You can only view reservations from your school' });
+            }
+        }
+        res.json(reservation);
+    }
+    catch (err) {
+        console.error('[GET /reservations/:id] Error:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 // PUT /reservations/:id - update reservation (admin and school_admin only)
 router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateParams)(reservations_1.reservationIdSchema), (0, validation_1.validateBody)(reservations_1.updateReservationSchema), async (req, res) => {
     try {
@@ -193,6 +261,16 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
             }
             if (reservation.class.schoolId !== req.schoolId) {
                 return res.status(403).json({ message: 'You can only update reservations from your school' });
+            }
+        }
+        // STUDENT can only update their own reservations
+        if (req.role === 'STUDENT') {
+            if (reservation.userId !== Number(req.userId)) {
+                return res.status(403).json({ message: 'You can only update your own reservations' });
+            }
+            // Students can only cancel reservations (set status to CANCELED)
+            if (updateData.status && updateData.status !== 'CANCELED') {
+                return res.status(403).json({ message: 'Students can only cancel reservations' });
             }
         }
         // Update reservation

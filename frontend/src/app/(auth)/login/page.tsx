@@ -24,11 +24,20 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error);
     } else if (result?.ok) {
+      // Check for callbackUrl
+      const params = new URLSearchParams(window.location.search);
+      const callbackUrl = params.get('callbackUrl');
+
+      if (callbackUrl) {
+        router.push(callbackUrl);
+        return;
+      }
+
       // Get user session to determine role-based redirect
       try {
         const response = await fetch('/api/auth/session');
         const session = await response.json();
-        
+
         if (session?.user?.role) {
           switch (session.user.role) {
             case 'ADMIN':

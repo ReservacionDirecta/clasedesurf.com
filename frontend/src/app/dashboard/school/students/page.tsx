@@ -61,10 +61,10 @@ export default function SchoolStudents() {
       }
 
       const response = await fetch('/api/students', { headers });
-      
+
       if (response.ok) {
         const data = await response.json();
-        
+
         // Transform backend data to match frontend interface
         const transformedStudents: Student[] = data.map((student: any) => ({
           id: student.id,
@@ -82,13 +82,13 @@ export default function SchoolStudents() {
           totalPaid: 0, // TODO: Calculate from payments
           averageRating: 4.5 // TODO: Calculate from reviews
         }));
-        
+
         setStudents(transformedStudents);
       } else {
         console.error('Error fetching students:', response.statusText);
         setStudents([]);
       }
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -99,7 +99,7 @@ export default function SchoolStudents() {
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      student.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel = levelFilter === 'all' || student.level === levelFilter;
     const matchesStatus = statusFilter === 'all' || student.status === statusFilter;
     return matchesSearch && matchesLevel && matchesStatus;
@@ -271,11 +271,11 @@ export default function SchoolStudents() {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
               <select
                 value={levelFilter}
                 onChange={(e) => setLevelFilter(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">Todos los niveles</option>
                 <option value="BEGINNER">Principiantes</option>
@@ -285,7 +285,7 @@ export default function SchoolStudents() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">Todos los estados</option>
                 <option value="active">Activos</option>
@@ -345,7 +345,7 @@ export default function SchoolStudents() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(student.level)}`}>
                         {student.level === 'BEGINNER' ? 'Principiante' :
-                         student.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                          student.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -391,13 +391,13 @@ export default function SchoolStudents() {
 
         {/* Modal Detalles del Estudiante */}
         {showDetailModal && selectedStudent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
             <div className="bg-white rounded-t-3xl sm:rounded-lg p-4 sm:p-6 max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
               <div className="flex justify-between items-center mb-4 sm:mb-6 sticky top-0 bg-white pb-2 border-b border-gray-200 sm:border-none sm:relative">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
                   Detalles de {selectedStudent.name}
                 </h3>
-                <button 
+                <button
                   onClick={() => setShowDetailModal(false)}
                   className="text-gray-400 hover:text-gray-600 active:text-gray-800 text-2xl sm:text-3xl p-2 -mr-2 sm:mr-0 touch-target-lg"
                   aria-label="Cerrar"
@@ -405,7 +405,7 @@ export default function SchoolStudents() {
                   ✕
                 </button>
               </div>
-              
+
               <div className="space-y-6">
                 {/* Información Personal */}
                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -448,7 +448,7 @@ export default function SchoolStudents() {
                       <span className="font-medium text-gray-700">Nivel:</span>
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getLevelColor(selectedStudent.level)}`}>
                         {selectedStudent.level === 'BEGINNER' ? 'Principiante' :
-                         selectedStudent.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                          selectedStudent.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
                       </span>
                     </div>
                     <div>
@@ -491,14 +491,14 @@ export default function SchoolStudents() {
                   </div>
                 </div>
               </div>
-              
-              <div 
+
+              <div
                 className="flex justify-end gap-3 mt-4 sm:mt-6 pt-4 border-t border-gray-200 sm:border-none sm:pt-0 sticky bottom-0 bg-white sm:bg-transparent -mx-4 sm:mx-0 px-4 sm:px-0 safe-area-bottom"
-                style={{ 
+                style={{
                   bottom: 'env(safe-area-inset-bottom, 0px)'
                 }}
               >
-                <button 
+                <button
                   onClick={() => setShowDetailModal(false)}
                   className="px-4 sm:px-6 py-3 sm:py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 active:bg-gray-800 font-medium text-base sm:text-sm touch-target-lg w-full sm:w-auto"
                 >
@@ -511,7 +511,7 @@ export default function SchoolStudents() {
 
         {/* Modal Agregar Estudiante */}
         {showAddStudentModal && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-start sm:items-center justify-center overflow-y-auto p-0 sm:p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) {

@@ -70,7 +70,7 @@ export default function ClassesManagementPage() {
   const fetchSchoolAndClasses = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Obtener información de la escuela
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
@@ -238,27 +238,27 @@ export default function ClassesManagementPage() {
     });
   };
 
-  const filteredClasses: Class[] = Array.isArray(classes) 
+  const filteredClasses: Class[] = Array.isArray(classes)
     ? classes.filter((cls: Class) => {
-        if (filter === 'all') return true;
-        // Calculate status based on date if status is not set
-        if (!cls.status) {
-          const classDate = new Date(cls.date);
-          const now = new Date();
-          if (classDate < now) {
-            return filter === 'completed';
-          } else {
-            return filter === 'upcoming';
-          }
+      if (filter === 'all') return true;
+      // Calculate status based on date if status is not set
+      if (!cls.status) {
+        const classDate = new Date(cls.date);
+        const now = new Date();
+        if (classDate < now) {
+          return filter === 'completed';
+        } else {
+          return filter === 'upcoming';
         }
-        return cls.status === filter;
-      })
+      }
+      return cls.status === filter;
+    })
     : [];
 
   const totalRevenue = (classes || []).reduce((sum, cls) => sum + (cls.paymentInfo?.totalRevenue || 0), 0);
   const totalStudents = (classes || []).reduce((sum, cls) => sum + (cls.enrolled || 0), 0);
-  const averageOccupancy = (classes || []).length > 0 
-    ? (classes || []).reduce((sum, cls) => sum + (cls.paymentInfo?.occupancyRate || 0), 0) / (classes || []).length 
+  const averageOccupancy = (classes || []).length > 0
+    ? (classes || []).reduce((sum, cls) => sum + (cls.paymentInfo?.occupancyRate || 0), 0) / (classes || []).length
     : 0;
 
   if (status === 'loading' || loading) {
@@ -283,16 +283,16 @@ export default function ClassesManagementPage() {
           >
             ← Volver al Dashboard
           </button>
-          
+
           {/* School Context Banner */}
           <SchoolContextBanner school={school} loading={loading} />
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Gestión de Clases</h1>
               <p className="text-gray-600 mt-2">Administra las clases de {school?.name || 'tu escuela'}</p>
             </div>
-            <button 
+            <button
               onClick={() => router.push('/dashboard/school/classes/new')}
               className="mt-4 sm:mt-0 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
@@ -350,41 +350,37 @@ export default function ClassesManagementPage() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'all'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Todas ({(classes || []).length})
             </button>
             <button
               onClick={() => setFilter('upcoming')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'upcoming'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'upcoming'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Próximas ({(classes || []).filter(c => c.status === 'upcoming').length})
             </button>
             <button
               onClick={() => setFilter('completed')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'completed'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'completed'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Completadas ({(classes || []).filter(c => c.status === 'completed').length})
             </button>
             <button
               onClick={() => setFilter('cancelled')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filter === 'cancelled'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'cancelled'
                   ? 'bg-red-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Canceladas ({(classes || []).filter(c => c.status === 'cancelled').length})
             </button>
@@ -404,12 +400,12 @@ export default function ClassesManagementPage() {
                     </div>
                     <div className="flex gap-2 ml-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(cls.status || 'upcoming')}`}>
-                        {cls.status === 'upcoming' ? 'Próxima' : 
-                         cls.status === 'completed' ? 'Completada' : 'Cancelada'}
+                        {cls.status === 'upcoming' ? 'Próxima' :
+                          cls.status === 'completed' ? 'Completada' : 'Cancelada'}
                       </span>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(cls.level)}`}>
                         {cls.level === 'BEGINNER' ? 'Principiante' :
-                         cls.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                          cls.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
                       </span>
                     </div>
                   </div>
@@ -438,21 +434,21 @@ export default function ClassesManagementPage() {
                       S/. {cls.price}
                     </div>
                     <div className="flex gap-2">
-                      <button 
+                      <button
                         onClick={() => router.push(`/dashboard/school/classes/${cls.id}`)}
                         className="flex items-center px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Ver Detalles
                       </button>
-                      <button 
+                      <button
                         onClick={() => router.push(`/classes/${cls.id}`)}
                         className="flex items-center px-3 py-1 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Vista Pública
                       </button>
-                      <button 
+                      <button
                         onClick={() => {
                           setSelectedClass(cls);
                           setShowEditModal(true);
@@ -464,7 +460,7 @@ export default function ClassesManagementPage() {
                         Editar
                       </button>
                       {cls.status === 'upcoming' && (
-                        <button 
+                        <button
                           onClick={() => {
                             setSelectedClass(cls);
                             setShowDeleteModal(true);
@@ -488,11 +484,11 @@ export default function ClassesManagementPage() {
             <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No hay clases</h3>
             <p className="text-gray-600 mb-4">
-              {filter === 'all' 
+              {filter === 'all'
                 ? 'Aún no tienes clases programadas'
                 : `No tienes clases ${filter === 'upcoming' ? 'próximas' : filter === 'completed' ? 'completadas' : 'canceladas'}`}
             </p>
-            <button 
+            <button
               onClick={() => router.push('/dashboard/school/classes/new')}
               className="flex items-center mx-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
@@ -506,7 +502,7 @@ export default function ClassesManagementPage() {
         {showCreateModal && null}
 
         {showEditModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <h3 className="text-lg font-bold mb-4">Editar Clase</h3>
               <p className="text-gray-600 mb-4">Editando: {selectedClass.title}</p>
@@ -521,7 +517,7 @@ export default function ClassesManagementPage() {
                 </div>
               )}
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedClass(null);
@@ -530,7 +526,7 @@ export default function ClassesManagementPage() {
                 >
                   Cancelar
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     router.push(`/dashboard/school/classes/${selectedClass.id}/edit`);
                   }}
@@ -544,14 +540,14 @@ export default function ClassesManagementPage() {
         )}
 
         {showDeleteModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <h3 className="text-lg font-bold mb-4">Cancelar Clase</h3>
               <p className="text-gray-600 mb-4">
                 ¿Estás seguro de que quieres cancelar la clase &quot;{selectedClass.title}&quot;?
               </p>
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => {
                     setShowDeleteModal(false);
                     setSelectedClass(null);
@@ -560,7 +556,7 @@ export default function ClassesManagementPage() {
                 >
                   No, mantener
                 </button>
-                <button 
+                <button
                   onClick={handleDeleteClass}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >

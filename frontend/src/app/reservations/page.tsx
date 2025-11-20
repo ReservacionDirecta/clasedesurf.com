@@ -27,7 +27,7 @@ interface Reservation {
   id: number;
   classId: number;
   userId: number;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'PAID';
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'PAID' | 'COMPLETED';
   specialRequest: string | null;
   createdAt: string;
   class: Class;
@@ -67,19 +67,62 @@ export default function ReservationsPage() {
 
   // Removed auto-refresh on visibility/focus change to preserve user state
 
+  const handleCancelReservation = async (reservationId: number) => {
+    // Confirmar cancelación
+    if (!confirm('¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      const token = (session as any)?.backendToken;
+      if (!token) {
+        alert('Debes estar autenticado para cancelar la reserva');
+        return;
+      }
+
+      setLoading(true);
+
+      // Llamar a la API para cancelar la reserva
+      const response = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: 'CANCELED'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al cancelar la reserva');
+      }
+
+      // Recargar las reservas para reflejar el cambio
+      await fetchReservations();
+
+      alert('Reserva cancelada exitosamente');
+    } catch (error) {
+      console.error('Error al cancelar reserva:', error);
+      alert(error instanceof Error ? error.message : 'Error al cancelar la reserva. Por favor, inténtalo de nuevo.');
+      setLoading(false);
+    }
+  };
+
   const fetchReservations = async () => {
     try {
       setLoading(true);
-      
+
       const token = (session as any)?.backendToken;
-      
+
       if (!token) {
         console.error('No backend token found in session');
         setReservations([]);
         setLoading(false);
         return;
       }
-      
+
       const response = await fetch('/api/reservations', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -98,8 +141,8 @@ export default function ReservationsPage() {
           console.warn('[Reservations] Reservation without class data:', res);
         }
         const processed = {
-        ...res,
-        payment: res.payment || undefined
+          ...res,
+          payment: res.payment || undefined
         };
         console.log('[Reservations] Reservation processed:', {
           id: processed.id,
@@ -120,16 +163,16 @@ export default function ReservationsPage() {
   const getFilteredReservations = () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Reset to start of day for comparison
-    
+
     const filtered = reservations.filter(reservation => {
       if (!reservation.class || !reservation.class.date) {
         console.warn('[Reservations] Reservation missing class or date:', reservation);
         return false;
       }
-      
+
       const classDate = new Date(reservation.class.date);
       classDate.setHours(0, 0, 0, 0); // Reset to start of day for comparison
-      
+
       if (filter === 'upcoming') {
         // Show all non-canceled reservations that are either:
         // 1. Future dates, OR
@@ -141,7 +184,7 @@ export default function ReservationsPage() {
       }
       return true;
     });
-    
+
     console.log('[Reservations] Filter:', filter, 'Total reservations:', reservations.length, 'Filtered:', filtered.length);
     return filtered;
   };
@@ -152,7 +195,7 @@ export default function ReservationsPage() {
       CONFIRMED: 'bg-green-100 text-green-800',
       CANCELED: 'bg-red-100 text-red-800'
     };
-    
+
     const labels = {
       PENDING: 'Pendiente',
       CONFIRMED: 'Confirmada',
@@ -188,12 +231,12 @@ export default function ReservationsPage() {
     // Calculate start and end times from date and duration
     const classDate = new Date(classData.date);
     const startTime = classDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-    
+
     // Get duration from class data or calculate from startTime/endTime if available
     const duration = (classData as any).duration || 120; // Default 120 minutes
     const endDate = new Date(classDate.getTime() + duration * 60000);
     const endTime = endDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-    
+
     return { startTime, endTime };
   };
 
@@ -231,10 +274,10 @@ export default function ReservationsPage() {
             className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Actualizar reservas"
           >
-            <svg 
-              className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -247,31 +290,28 @@ export default function ReservationsPage() {
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
           <button
             onClick={() => setFilter('upcoming')}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-              filter === 'upcoming'
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${filter === 'upcoming'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+              }`}
           >
             Próximas
           </button>
           <button
             onClick={() => setFilter('past')}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-              filter === 'past'
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${filter === 'past'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+              }`}
           >
             Pasadas
           </button>
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
-              filter === 'all'
+            className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${filter === 'all'
                 ? 'bg-blue-600 text-white'
                 : 'bg-white text-gray-700 hover:bg-gray-50'
-            }`}
+              }`}
           >
             Todas
           </button>
@@ -411,26 +451,25 @@ export default function ReservationsPage() {
                       </svg>
                       Ver Reserva
                     </button>
-                    
+
                     {reservation.status !== 'CANCELED' && (
                       <button
                         onClick={() => {
                           setSelectedReservation(reservation);
                           setShowPaymentModal(true);
                         }}
-                        className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                          reservation.payment?.status === 'PAID'
+                        className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${reservation.payment?.status === 'PAID'
                             ? 'bg-green-600 text-white hover:bg-green-700'
                             : 'bg-green-600 text-white hover:bg-green-700'
-                        }`}
+                          }`}
                       >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        {reservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Reservar'}
+                        {reservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Pagar'}
                       </button>
                     )}
-                    
+
                     <button
                       onClick={() => router.push(`/classes/${reservation.classId}`)}
                       className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
@@ -440,10 +479,12 @@ export default function ReservationsPage() {
                       </svg>
                       Ver Clase
                     </button>
-                    
-                    {reservation.status === 'PENDING' && new Date(reservation.class.date) >= new Date() && (
+
+                    {reservation.status !== 'CANCELED' && reservation.status !== 'COMPLETED' && new Date(reservation.class.date) >= new Date() && (
                       <button
-                        className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
+                        onClick={() => handleCancelReservation(reservation.id)}
+                        disabled={loading}
+                        className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -451,7 +492,7 @@ export default function ReservationsPage() {
                         Cancelar Reserva
                       </button>
                     )}
-                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -461,7 +502,7 @@ export default function ReservationsPage() {
 
       {/* Modal de Detalles de Reserva */}
       {showDetailsModal && selectedReservation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0 z-10">
@@ -515,18 +556,18 @@ export default function ReservationsPage() {
                     <p className="text-sm text-gray-600">Nivel</p>
                     <p className="text-lg font-medium text-gray-900">{selectedReservation.class.level}</p>
                   </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Precio</p>
-                      {(() => {
-                        const prices = formatDualCurrency(selectedReservation.class.price);
-                        return (
-                          <div>
-                            <p className="text-lg font-bold text-gray-900">{prices.pen}</p>
-                            <p className="text-xs text-gray-500">{prices.usd}</p>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Precio</p>
+                    {(() => {
+                      const prices = formatDualCurrency(selectedReservation.class.price);
+                      return (
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{prices.pen}</p>
+                          <p className="text-xs text-gray-500">{prices.usd}</p>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
                 {selectedReservation.class.description && (
                   <div className="mt-4">
@@ -574,9 +615,8 @@ export default function ReservationsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Estado del Pago</p>
-                      <p className={`text-lg font-medium ${
-                        selectedReservation.payment.status === 'PAID' ? 'text-green-600' : 'text-yellow-600'
-                      }`}>
+                      <p className={`text-lg font-medium ${selectedReservation.payment.status === 'PAID' ? 'text-green-600' : 'text-yellow-600'
+                        }`}>
                         {selectedReservation.payment.status === 'PAID' ? 'Pagado' : 'Pendiente'}
                       </p>
                     </div>
@@ -646,9 +686,9 @@ export default function ReservationsPage() {
         </div>
       )}
 
-      {/* Modal de Pago - Se muestra automáticamente después de hacer click en Reservar */}
+      {/* Modal de Pago - Se muestra automáticamente después de hacer click en Pagar */}
       {showPaymentModal && selectedReservation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-t-3xl sm:rounded-lg shadow-xl max-w-3xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
             {/* Header - Sticky en móvil */}
             <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-lg sticky top-0 z-10">
@@ -686,7 +726,7 @@ export default function ReservationsPage() {
                   })()}
                 </div>
               </div>
-              
+
               <PaymentUpload
                 reservationId={selectedReservation.id}
                 amount={selectedReservation.class.price}

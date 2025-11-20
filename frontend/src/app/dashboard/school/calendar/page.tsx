@@ -78,21 +78,21 @@ export default function SchoolCalendar() {
       // Convertir clases a eventos del calendario
       const calendarEvents: CalendarEvent[] = classes.map((cls: any) => {
         const classDate = new Date(cls.date);
-        const startTime = classDate.toLocaleTimeString('es-ES', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: false 
+        const startTime = classDate.toLocaleTimeString('es-ES', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
         });
         const duration = cls.duration || 120;
         const endDate = new Date(classDate.getTime() + duration * 60000);
-        const endTime = endDate.toLocaleTimeString('es-ES', { 
-          hour: '2-digit', 
-          minute: '2-digit', 
-          hour12: false 
+        const endTime = endDate.toLocaleTimeString('es-ES', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
         });
         const dateString = classDate.toISOString().split('T')[0];
         const enrolled = reservationsByClass[cls.id] || 0;
-        
+
         // Determinar el estado basado en la fecha
         const now = new Date();
         let status: 'scheduled' | 'completed' | 'cancelled' = 'scheduled';
@@ -164,24 +164,24 @@ export default function SchoolCalendar() {
         const errorData = await response.json();
         console.error('❌ Error del backend:', errorData);
         console.error('❌ Errores detallados:', JSON.stringify(errorData.errors, null, 2));
-        
+
         let errorMsg = errorData.message || 'Error desconocido';
         if (errorData.errors && Array.isArray(errorData.errors)) {
           console.error('❌ Cada error:', errorData.errors.forEach((e: any, i: number) => {
             console.error(`Error ${i}:`, e);
           }));
-          errorMsg += '\n\nDetalles:\n' + errorData.errors.map((e: any) => 
+          errorMsg += '\n\nDetalles:\n' + errorData.errors.map((e: any) =>
             `- Campo: ${e.path?.join('.') || 'desconocido'}\n  Mensaje: ${e.message}`
           ).join('\n');
         }
-        
+
         alert(`Error al crear clase:\n${errorMsg}`);
         throw new Error(errorData.message || 'Failed to create class');
       }
 
       const result = await response.json();
       console.log('✅ Clase creada exitosamente:', result);
-      
+
       await fetchEvents();
       setShowCreateModal(false);
       alert('¡Clase creada exitosamente!');
@@ -201,24 +201,24 @@ export default function SchoolCalendar() {
     const startingDayOfWeek = firstDay.getDay();
 
     const days = [];
-    
+
     // Días del mes anterior
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
       const prevDate = new Date(year, month, -i);
       days.push({ date: prevDate, isCurrentMonth: false });
     }
-    
+
     // Días del mes actual
     for (let day = 1; day <= daysInMonth; day++) {
       days.push({ date: new Date(year, month, day), isCurrentMonth: true });
     }
-    
+
     // Días del mes siguiente para completar la grilla
     const remainingDays = 42 - days.length;
     for (let day = 1; day <= remainingDays; day++) {
       days.push({ date: new Date(year, month + 1, day), isCurrentMonth: false });
     }
-    
+
     return days;
   };
 
@@ -309,7 +309,7 @@ export default function SchoolCalendar() {
               <h1 className="text-3xl font-bold text-gray-900">Calendario de Clases</h1>
               <p className="text-gray-600 mt-2">Visualiza y gestiona el horario de tu escuela</p>
             </div>
-            <button 
+            <button
               onClick={() => setShowCreateModal(true)}
               className="mt-4 sm:mt-0 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
               <Plus className="w-5 h-5 mr-2" />
@@ -373,15 +373,12 @@ export default function SchoolCalendar() {
                       <div
                         key={index}
                         onClick={() => setSelectedDate(day.date)}
-                        className={`min-h-[100px] p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${
-                          !day.isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
-                        } ${isToday ? 'bg-blue-50 border-blue-200' : ''} ${
-                          isSelected ? 'ring-2 ring-blue-500' : ''
-                        }`}
+                        className={`min-h-[100px] p-2 border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors ${!day.isCurrentMonth ? 'bg-gray-50 text-gray-400' : ''
+                          } ${isToday ? 'bg-blue-50 border-blue-200' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''
+                          }`}
                       >
-                        <div className={`text-sm font-medium mb-1 ${
-                          isToday ? 'text-blue-600' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-                        }`}>
+                        <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                          }`}>
                           {day.date.getDate()}
                         </div>
                         <div className="space-y-1">
@@ -422,8 +419,8 @@ export default function SchoolCalendar() {
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-gray-900 text-sm">{event.title}</h4>
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(event.status)}`}>
-                          {event.status === 'scheduled' ? 'Programado' : 
-                           event.status === 'completed' ? 'Completado' : 'Cancelado'}
+                          {event.status === 'scheduled' ? 'Programado' :
+                            event.status === 'completed' ? 'Completado' : 'Cancelado'}
                         </span>
                       </div>
                       <div className="space-y-1 text-xs text-gray-600">
@@ -463,7 +460,7 @@ export default function SchoolCalendar() {
                         <h4 className="font-medium text-gray-900 text-sm">{event.title}</h4>
                         <span className={`px-2 py-1 text-xs font-medium rounded border ${getEventTypeColor(event.type)}`}>
                           {event.type === 'class' ? 'Clase' :
-                           event.type === 'meeting' ? 'Reunión' : 'Mantenimiento'}
+                            event.type === 'meeting' ? 'Reunión' : 'Mantenimiento'}
                         </span>
                       </div>
                       <div className="space-y-1 text-xs text-gray-600">
@@ -517,33 +514,33 @@ export default function SchoolCalendar() {
         {/* Modal de Evento Seleccionado */}
         {/* Modal de Creación de Clase */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Nueva Clase</h3>
-              <ClassForm 
-                onSubmit={handleCreateClass} 
-                onCancel={() => setShowCreateModal(false)} 
-                isLoading={isCreating} 
+              <ClassForm
+                onSubmit={handleCreateClass}
+                onCancel={() => setShowCreateModal(false)}
+                isLoading={isCreating}
               />
             </div>
           </div>
         )}
 
         {selectedDate && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
                   Eventos del {selectedDate.toLocaleDateString('es-ES')}
                 </h3>
-                <button 
+                <button
                   onClick={() => setSelectedDate(null)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
               </div>
-              
+
               <div className="space-y-3">
                 {getEventsForDate(selectedDate).length === 0 ? (
                   <p className="text-gray-500 text-center py-4">No hay eventos programados para este día</p>
@@ -554,7 +551,7 @@ export default function SchoolCalendar() {
                         <h4 className="font-medium text-gray-900">{event.title}</h4>
                         <span className={`px-2 py-1 text-xs font-medium rounded border ${getEventTypeColor(event.type)}`}>
                           {event.type === 'class' ? 'Clase' :
-                           event.type === 'meeting' ? 'Reunión' : 'Mantenimiento'}
+                            event.type === 'meeting' ? 'Reunión' : 'Mantenimiento'}
                         </span>
                       </div>
                       <div className="space-y-2 text-sm text-gray-600">
@@ -583,7 +580,7 @@ export default function SchoolCalendar() {
                       </div>
                       {event.type === 'class' && (
                         <div className="mt-3">
-                          <button 
+                          <button
                             onClick={() => {
                               router.push(`/dashboard/school/classes/${event.id}/reservations`);
                             }}
@@ -597,9 +594,9 @@ export default function SchoolCalendar() {
                   ))
                 )}
               </div>
-              
+
               <div className="flex justify-end mt-6">
-                <button 
+                <button
                   onClick={() => setSelectedDate(null)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                 >

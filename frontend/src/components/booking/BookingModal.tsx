@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { formatDualCurrency } from '@/lib/currency'
+import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
 
 interface School {
   id?: number | string
@@ -31,7 +32,7 @@ interface ClassData {
   instructorName?: string
   capacity: number
   availableSpots?: number
-  images?: string[]  // Array de URLs de imágenes
+  images?: string[]
   school?: School
 }
 
@@ -42,8 +43,15 @@ interface BookingModalProps {
   onSubmit: (bookingData: any) => void
 }
 
+const STEPS = [
+  { id: 1, name: 'Información Personal', icon: '👤' },
+  { id: 2, name: 'Detalles', icon: '📋' },
+  { id: 3, name: 'Emergencia', icon: '🆘' }
+]
+
 export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingModalProps) {
   const { data: session } = useSession()
+  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -62,20 +70,19 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loadingProfile, setLoadingProfile] = useState(false)
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set())
+  const formRef = useRef<HTMLFormElement>(null)
 
-  // Prevenir scroll del body cuando el modal está abierto
+  // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      // Guardar el scroll actual del body
       const scrollY = window.scrollY
-      // Bloquear scroll del body
       document.body.style.position = 'fixed'
       document.body.style.top = `-${scrollY}px`
       document.body.style.width = '100%'
       document.body.style.overflow = 'hidden'
-      
+
       return () => {
-        // Restaurar scroll del body cuando se cierra el modal
         document.body.style.position = ''
         document.body.style.top = ''
         document.body.style.width = ''
@@ -85,17 +92,15 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
     }
   }, [isOpen])
 
-  // Pre-llenar datos del usuario logueado y su perfil
+  // Pre-fill user data
   useEffect(() => {
     if (session?.user && isOpen) {
-      // Pre-llenar datos básicos de la sesión
       setFormData(prev => ({
         ...prev,
         name: session.user.name || '',
         email: session.user.email || ''
       }))
 
-      // Si el usuario es estudiante, cargar su perfil completo
       if (session.user.role === 'STUDENT') {
         loadStudentProfile()
       }
@@ -103,15 +108,20 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, isOpen])
 
+  // Reset step when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentStep(1)
+      setTouchedFields(new Set())
+    }
+  }, [isOpen])
+
   const loadStudentProfile = async () => {
     try {
       setLoadingProfile(true)
       const token = (session as any)?.backendToken
-      
-      if (!token) {
-        console.log('No token available to load profile')
-        return
-      }
+
+      if (!token) return
 
       const response = await fetch('/api/users/profile', {
         headers: {
@@ -119,29 +129,21 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
         }
       })
 
-      if (!response.ok) {
-        console.log('Failed to load profile, using session data only')
-        return
-      }
+      if (!response.ok) return
 
       const profile = await response.json()
-      console.log('Profile loaded:', profile)
 
-      // Pre-llenar campos con datos del perfil
-      setFormData(prev => {
-        const updated = {
-          ...prev,
-          name: profile.name || prev.name || session?.user?.name || '',
-          email: profile.email || prev.email || session?.user?.email || '',
-          age: profile.age ? profile.age.toString() : prev.age,
-          height: profile.height ? profile.height.toString() : prev.height,
-          weight: profile.weight ? profile.weight.toString() : prev.weight,
-          canSwim: profile.canSwim !== undefined ? profile.canSwim : prev.canSwim,
-          injuries: profile.injuries || prev.injuries,
-          emergencyPhone: profile.phone || prev.emergencyPhone || ''
-        }
-        return updated
-      })
+      setFormData(prev => ({
+        ...prev,
+        name: profile.name || prev.name || session?.user?.name || '',
+        email: profile.email || prev.email || session?.user?.email || '',
+        age: profile.age ? profile.age.toString() : prev.age,
+        height: profile.height ? profile.height.toString() : prev.height,
+        weight: profile.weight ? profile.weight.toString() : prev.weight,
+        canSwim: profile.canSwim !== undefined ? profile.canSwim : prev.canSwim,
+        injuries: profile.injuries || prev.injuries,
+        emergencyPhone: profile.phone || prev.emergencyPhone || ''
+      }))
     } catch (error) {
       console.error('Error loading student profile:', error)
     } finally {
@@ -152,14 +154,14 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
   if (!isOpen) return null
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(date).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('es-ES', { 
+    return new Date(date).toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -176,6 +178,9 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
       [name]: type === 'checkbox' ? checked : value
     }))
 
+    // Mark field as touched
+    setTouchedFields(prev => new Set(prev).add(name))
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
@@ -185,26 +190,53 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
     }
   }
 
-  const validateForm = () => {
+  const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {}
 
-    if (!formData.name.trim()) newErrors.name = 'El nombre es requerido'
-    if (!formData.email.trim()) newErrors.email = 'El email es requerido'
-    if (!formData.email.includes('@')) newErrors.email = 'Email inválido'
-    if (!formData.age || parseInt(formData.age) < 8) newErrors.age = 'La edad mínima es 8 años'
-    if (!formData.height || parseInt(formData.height) < 100) newErrors.height = 'Altura requerida (mínimo 100cm)'
-    if (!formData.weight || parseInt(formData.weight) < 20) newErrors.weight = 'Peso requerido (mínimo 20kg)'
-    if (!formData.emergencyContact.trim()) newErrors.emergencyContact = 'Contacto de emergencia requerido'
-    if (!formData.emergencyPhone.trim()) newErrors.emergencyPhone = 'Teléfono de emergencia requerido'
+    if (step === 1) {
+      if (!formData.name.trim()) newErrors.name = 'El nombre es requerido'
+      if (!formData.email.trim()) newErrors.email = 'El email es requerido'
+      if (!formData.email.includes('@')) newErrors.email = 'Email inválido'
+      if (!formData.age || parseInt(formData.age) < 8) newErrors.age = 'La edad mínima es 8 años'
+    }
+
+    if (step === 3) {
+      if (!formData.emergencyContact.trim()) newErrors.emergencyContact = 'Contacto de emergencia requerido'
+      if (!formData.emergencyPhone.trim()) newErrors.emergencyPhone = 'Teléfono de emergencia requerido'
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      if (currentStep < STEPS.length) {
+        setCurrentStep(prev => prev + 1)
+        // Scroll to top of form
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1)
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!validateForm()) {
+
+    // Validate all steps
+    if (!validateStep(1) || !validateStep(3)) {
+      // Go to first step with errors
+      if (errors.name || errors.email || errors.age) {
+        setCurrentStep(1)
+      } else if (errors.emergencyContact || errors.emergencyPhone) {
+        setCurrentStep(3)
+      }
       return
     }
 
@@ -220,38 +252,40 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
   const totalPriceUSD = classData.price * formData.participants
   const totalPrices = formatDualCurrency(totalPriceUSD)
 
+  const isStepComplete = (step: number) => {
+    if (step === 1) {
+      return formData.name && formData.email && formData.age && parseInt(formData.age) >= 8
+    }
+    if (step === 2) {
+      return true // Optional fields
+    }
+    if (step === 3) {
+      return formData.emergencyContact && formData.emergencyPhone
+    }
+    return false
+  }
+
   return (
-    <div 
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black bg-opacity-50 backdrop-blur-sm overscroll-contain overflow-y-auto"
+    <div
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black bg-opacity-50 backdrop-blur-sm"
       onClick={(e) => {
-        // Cerrar modal al hacer clic en el backdrop
-        if (e.target === e.currentTarget) {
-          onClose()
-        }
+        if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div 
-        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-2xl overflow-y-auto overscroll-contain flex flex-col safe-area-bottom"
-        style={{ 
-          touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch',
-          maxHeight: '95vh'
-        }}
-        onClick={(e) => {
-          // Prevenir que el clic se propague al backdrop
-          e.stopPropagation()
-        }}
+      <div
+        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-2xl overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header - Sticky en móviles */}
-        <div className="bg-white border-b border-gray-200 p-4 sm:p-6 rounded-t-none sm:rounded-t-2xl sticky top-0 z-10">
-          <div className="flex items-center justify-between">
+        {/* Header with Progress */}
+        <div className="bg-white border-b border-gray-200 p-4 sm:p-6 sticky top-0 z-10">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex-1 min-w-0 pr-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">Reservar Clase</h2>
-              <p className="text-sm sm:text-base text-gray-600 truncate">{classData.title}</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Reservar Clase</h2>
+              <p className="text-sm text-gray-600 truncate">{classData.title}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 touch-target"
               aria-label="Cerrar modal"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,115 +294,46 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
             </button>
           </div>
 
-          {/* Class Images Gallery */}
-          {classData.images && classData.images.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Imágenes de la Clase</h3>
-              <div className={`grid gap-2 ${classData.images.length === 1 ? 'grid-cols-1' : classData.images.length === 2 ? 'grid-cols-2' : classData.images.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-                {classData.images.map((imageUrl, index) => (
-                  <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
-                    <img
-                      src={imageUrl}
-                      alt={`${classData.title} - Imagen ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+          {/* Progress Steps */}
+          <div className="flex items-center justify-between mb-2">
+            {STEPS.map((step, index) => (
+              <div key={step.id} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${currentStep === step.id
+                      ? 'bg-blue-600 text-white scale-110'
+                      : currentStep > step.id || isStepComplete(step.id)
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                      }`}
+                  >
+                    {currentStep > step.id || isStepComplete(step.id) ? (
+                      <Check className="w-5 h-5" />
+                    ) : (
+                      step.icon
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Class Info Summary */}
-          <div className="mt-4 p-3 sm:p-4 bg-blue-50 rounded-lg">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-              <div>
-                <span className="font-medium text-gray-700">Fecha:</span>
-                <p className="text-gray-900 capitalize">{formatDate(classData.date)}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Horario:</span>
-                <p className="text-gray-900">{formatTime(classData.startTime)} - {formatTime(classData.endTime)}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Ubicación:</span>
-                <p className="text-gray-900">{classData.location || 'Por confirmar'}</p>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Instructor:</span>
-                <p className="text-gray-900">{classData.instructorName || 'Por asignar'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* School Information */}
-          {classData.school && (
-            <div className="mt-4 p-3 sm:p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
-              <div className="flex items-center gap-2 mb-3">
-                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                <h3 className="text-lg font-semibold text-gray-900">Información de la Escuela</h3>
-              </div>
-              <div className="space-y-2">
-                <div>
-                  <span className="font-semibold text-indigo-900">{classData.school.name || 'Escuela de Surf'}</span>
-                  {classData.school.rating && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <svg className="w-4 h-4 text-yellow-500 fill-current" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-700">{classData.school.rating.toFixed(1)}</span>
-                      {classData.school.totalReviews && (
-                        <span className="text-sm text-gray-600">({classData.school.totalReviews} reseñas)</span>
-                      )}
-                    </div>
-                  )}
+                  <span className={`text-xs mt-1 hidden sm:block ${currentStep === step.id ? 'text-blue-600 font-semibold' : 'text-gray-600'
+                    }`}>
+                    {step.name}
+                  </span>
                 </div>
-                {classData.school.location && (
-                  <div className="flex items-start gap-2 text-sm text-gray-700">
-                    <svg className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>{classData.school.location}</span>
-                  </div>
+                {index < STEPS.length - 1 && (
+                  <div className={`h-1 flex-1 mx-2 rounded transition-all ${currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
+                    }`} />
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-indigo-200">
-                  {classData.school.phone && (
-                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      <a href={`tel:${classData.school.phone}`} className="hover:text-indigo-600 transition-colors">
-                        {classData.school.phone}
-                      </a>
-                    </div>
-                  )}
-                  {classData.school.email && (
-                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <a href={`mailto:${classData.school.email}`} className="hover:text-indigo-600 transition-colors truncate">
-                        {classData.school.email}
-                      </a>
-                    </div>
-                  )}
-                </div>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6 pb-6">
-          {/* Personal Information */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Form Content */}
+        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+          {/* Step 1: Personal Information */}
+          {currentStep === 1 && (
+            <div className="space-y-4 animate-fadeIn">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
+
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                   Nombre completo *
@@ -379,7 +344,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
                   type="text"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className={errors.name ? 'border-red-500' : ''}
+                  className={`h-12 ${errors.name ? 'border-red-500' : touchedFields.has('name') && formData.name ? 'border-green-500' : ''}`}
+                  placeholder="Tu nombre completo"
                 />
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
@@ -394,148 +360,132 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
                   type="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={errors.email ? 'border-red-500' : ''}
+                  className={`h-12 ${errors.email ? 'border-red-500' : touchedFields.has('email') && formData.email.includes('@') ? 'border-green-500' : ''}`}
+                  placeholder="tu@email.com"
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>
 
-              <div>
-                <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
-                  Edad *
-                </label>
-                <Input
-                  id="age"
-                  name="age"
-                  type="number"
-                  min="8"
-                  max="100"
-                  value={formData.age}
-                  onChange={handleInputChange}
-                  className={errors.age ? 'border-red-500' : ''}
-                />
-                {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
+                    Edad *
+                  </label>
+                  <Input
+                    id="age"
+                    name="age"
+                    type="number"
+                    min="8"
+                    max="100"
+                    value={formData.age}
+                    onChange={handleInputChange}
+                    className={`h-12 ${errors.age ? 'border-red-500' : touchedFields.has('age') && parseInt(formData.age) >= 8 ? 'border-green-500' : ''}`}
+                    placeholder="25"
+                  />
+                  {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
+                </div>
 
-              <div>
-                <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-1">
-                  Número de participantes
-                </label>
-                <select
-                  id="participants"
-                  name="participants"
-                  value={formData.participants}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {Array.from({ length: Math.min(classData.availableSpots || 1, 5) }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {i + 1} {i === 0 ? 'persona' : 'personas'}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Physical Information */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Física</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">
-                  Altura (cm) *
-                </label>
-                <Input
-                  id="height"
-                  name="height"
-                  type="number"
-                  min="100"
-                  max="250"
-                  value={formData.height}
-                  onChange={handleInputChange}
-                  className={errors.height ? 'border-red-500' : ''}
-                />
-                {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">
-                  Peso (kg) *
-                </label>
-                <Input
-                  id="weight"
-                  name="weight"
-                  type="number"
-                  min="20"
-                  max="200"
-                  value={formData.weight}
-                  onChange={handleInputChange}
-                  className={errors.weight ? 'border-red-500' : ''}
-                />
-                {errors.weight && <p className="text-red-500 text-sm mt-1">{errors.weight}</p>}
+                <div>
+                  <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-1">
+                    Participantes
+                  </label>
+                  <select
+                    id="participants"
+                    name="participants"
+                    value={formData.participants}
+                    onChange={handleInputChange}
+                    className="w-full h-12 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {Array.from({ length: Math.min(classData.availableSpots || 1, 5) }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        {i + 1} {i === 0 ? 'persona' : 'personas'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Swimming and Experience */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Experiencia y Habilidades</h3>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <input
-                  id="canSwim"
-                  name="canSwim"
-                  type="checkbox"
-                  checked={formData.canSwim}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="canSwim" className="text-sm font-medium text-gray-700">
-                  Sé nadar
-                </label>
+          {/* Step 2: Additional Details */}
+          {currentStep === 2 && (
+            <div className="space-y-4 animate-fadeIn">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Detalles Adicionales</h3>
+              <p className="text-sm text-gray-600 mb-4">Estos campos son opcionales pero nos ayudan a brindarte una mejor experiencia</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">
+                    Altura (cm)
+                  </label>
+                  <Input
+                    id="height"
+                    name="height"
+                    type="number"
+                    min="100"
+                    max="250"
+                    value={formData.height}
+                    onChange={handleInputChange}
+                    className="h-12"
+                    placeholder="170"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">
+                    Peso (kg)
+                  </label>
+                  <Input
+                    id="weight"
+                    name="weight"
+                    type="number"
+                    min="20"
+                    max="200"
+                    value={formData.weight}
+                    onChange={handleInputChange}
+                    className="h-12"
+                    placeholder="70"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="swimmingLevel" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nivel de natación
-                </label>
-                <select
-                  id="swimmingLevel"
-                  name="swimmingLevel"
-                  value={formData.swimmingLevel}
-                  onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="BEGINNER">Principiante</option>
-                  <option value="INTERMEDIATE">Intermedio</option>
-                  <option value="ADVANCED">Avanzado</option>
-                  <option value="EXPERT">Experto</option>
-                </select>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <input
+                    id="canSwim"
+                    name="canSwim"
+                    type="checkbox"
+                    checked={formData.canSwim}
+                    onChange={handleInputChange}
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="canSwim" className="text-sm font-medium text-gray-700">
+                    Sé nadar
+                  </label>
+                </div>
+
+                <div>
+                  <label htmlFor="swimmingLevel" className="block text-sm font-medium text-gray-700 mb-1">
+                    Nivel de natación
+                  </label>
+                  <select
+                    id="swimmingLevel"
+                    name="swimmingLevel"
+                    value={formData.swimmingLevel}
+                    onChange={handleInputChange}
+                    className="w-full h-12 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="BEGINNER">Principiante</option>
+                    <option value="INTERMEDIATE">Intermedio</option>
+                    <option value="ADVANCED">Avanzado</option>
+                    <option value="EXPERT">Experto</option>
+                  </select>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <input
-                  id="hasSurfedBefore"
-                  name="hasSurfedBefore"
-                  type="checkbox"
-                  checked={formData.hasSurfedBefore}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="hasSurfedBefore" className="text-sm font-medium text-gray-700">
-                  He practicado surf antes
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Health and Emergency */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Salud y Contacto de Emergencia</h3>
-            <div className="space-y-4">
               <div>
                 <label htmlFor="injuries" className="block text-sm font-medium text-gray-700 mb-1">
-                  Lesiones o condiciones médicas relevantes
+                  Lesiones o condiciones médicas
                 </label>
                 <textarea
                   id="injuries"
@@ -543,109 +493,148 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
                   rows={3}
                   value={formData.injuries}
                   onChange={handleInputChange}
-                  placeholder="Describe cualquier lesión, condición médica o limitación que debamos conocer..."
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Describe cualquier lesión o condición que debamos conocer..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+            </div>
+          )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="emergencyContact" className="block text-sm font-medium text-gray-700 mb-1">
-                    Contacto de emergencia *
-                  </label>
-                  <Input
-                    id="emergencyContact"
-                    name="emergencyContact"
-                    type="text"
-                    value={formData.emergencyContact}
-                    onChange={handleInputChange}
-                    placeholder="Nombre completo"
-                    className={errors.emergencyContact ? 'border-red-500' : ''}
-                  />
-                  {errors.emergencyContact && <p className="text-red-500 text-sm mt-1">{errors.emergencyContact}</p>}
+          {/* Step 3: Emergency Contact */}
+          {currentStep === 3 && (
+            <div className="space-y-4 animate-fadeIn">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Contacto de Emergencia</h3>
+
+              <div>
+                <label htmlFor="emergencyContact" className="block text-sm font-medium text-gray-700 mb-1">
+                  Nombre completo *
+                </label>
+                <Input
+                  id="emergencyContact"
+                  name="emergencyContact"
+                  type="text"
+                  value={formData.emergencyContact}
+                  onChange={handleInputChange}
+                  className={`h-12 ${errors.emergencyContact ? 'border-red-500' : touchedFields.has('emergencyContact') && formData.emergencyContact ? 'border-green-500' : ''}`}
+                  placeholder="Nombre del contacto de emergencia"
+                />
+                {errors.emergencyContact && <p className="text-red-500 text-sm mt-1">{errors.emergencyContact}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="emergencyPhone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Teléfono *
+                </label>
+                <Input
+                  id="emergencyPhone"
+                  name="emergencyPhone"
+                  type="tel"
+                  value={formData.emergencyPhone}
+                  onChange={handleInputChange}
+                  className={`h-12 ${errors.emergencyPhone ? 'border-red-500' : touchedFields.has('emergencyPhone') && formData.emergencyPhone ? 'border-green-500' : ''}`}
+                  placeholder="+51 999 999 999"
+                />
+                {errors.emergencyPhone && <p className="text-red-500 text-sm mt-1">{errors.emergencyPhone}</p>}
+              </div>
+
+              {/* Price Summary */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 mt-6">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-lg font-semibold text-gray-900">Total a pagar:</span>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {totalPrices.pen}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {totalPrices.usd}
+                    </div>
+                  </div>
                 </div>
-
-                <div>
-                  <label htmlFor="emergencyPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Teléfono de emergencia *
-                  </label>
-                  <Input
-                    id="emergencyPhone"
-                    name="emergencyPhone"
-                    type="tel"
-                    value={formData.emergencyPhone}
-                    onChange={handleInputChange}
-                    placeholder="+34 600 000 000"
-                    className={errors.emergencyPhone ? 'border-red-500' : ''}
-                  />
-                  {errors.emergencyPhone && <p className="text-red-500 text-sm mt-1">{errors.emergencyPhone}</p>}
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Opciones de pago:</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <span>💵</span>
+                      <span>Efectivo</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>💳</span>
+                      <span>Tarjeta</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span>📱</span>
+                      <span>Yape/Plin</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Special Requests */}
-          <div>
-            <label htmlFor="specialRequest" className="block text-sm font-medium text-gray-700 mb-1">
-              Comentarios o requerimientos especiales
-            </label>
-            <textarea
-              id="specialRequest"
-              name="specialRequest"
-              rows={3}
-              value={formData.specialRequest}
-              onChange={handleInputChange}
-              placeholder="Cualquier información adicional que consideres importante..."
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Price Summary */}
-          <div className="bg-gray-50 p-3 sm:p-4 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-lg font-medium text-gray-900">Total a pagar:</span>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-blue-600">
-                  {totalPrices.pen}
-                </div>
-                <div className="text-lg text-gray-600">
-                  {totalPrices.usd}
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600">
-              ${classData.price} USD × {formData.participants} {formData.participants === 1 ? 'persona' : 'personas'}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Tipo de cambio: S/ 3.75 por USD (actualizado hoy)
-            </p>
-          </div>
-
-          {/* Submit Buttons - Sticky en móvil */}
-          <div 
-            className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:space-x-4 pt-4 border-t border-gray-200 sm:border-none sm:pt-2 sticky bottom-0 bg-white sm:bg-transparent -mx-4 sm:mx-0 px-4 sm:px-0 safe-area-bottom"
-            style={{ 
-              bottom: 'env(safe-area-inset-bottom, 0px)'
-            }}
-          >
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1 w-full sm:w-auto py-3 sm:py-2 text-base sm:text-sm touch-target-lg"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              className="flex-1 w-full sm:w-auto py-3 sm:py-2 text-base sm:text-sm touch-target-lg"
-            >
-              Confirmar Reserva
-            </Button>
-          </div>
+          )}
         </form>
+
+        {/* Sticky Footer with Navigation */}
+        <div className="bg-white border-t border-gray-200 p-4 sm:p-6 sticky bottom-0 safe-area-bottom">
+          <div className="flex gap-3">
+            {currentStep > 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePrevious}
+                className="flex-1 h-12 touch-target"
+              >
+                <ChevronLeft className="w-5 h-5 mr-1" />
+                Anterior
+              </Button>
+            )}
+
+            {currentStep < STEPS.length ? (
+              <Button
+                type="button"
+                onClick={handleNext}
+                className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white touch-target"
+              >
+                Siguiente
+                <ChevronRight className="w-5 h-5 ml-1" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white touch-target"
+              >
+                <Check className="w-5 h-5 mr-2" />
+                Confirmar Reserva
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
+
+      <style jsx>{`
+        .touch-target {
+          min-height: 44px;
+          min-width: 44px;
+        }
+        
+        .safe-area-bottom {
+          padding-bottom: env(safe-area-inset-bottom, 1rem);
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   )
 }

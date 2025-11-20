@@ -390,8 +390,13 @@ export default function PaymentUpload({
       }
 
       setSuccess(true);
+      
       setTimeout(() => {
         onPaymentSubmitted();
+        // Redirect to reservation details page after 2 seconds
+        if (typeof window !== 'undefined') {
+          window.location.href = `/reservations/${reservationId}`;
+        }
       }, 2000);
     } catch (err) {
       console.error('Error submitting payment:', err);

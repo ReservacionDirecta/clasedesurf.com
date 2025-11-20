@@ -80,8 +80,9 @@ const roleNavigationMap: Record<Exclude<RoleOption, undefined>, { href: string; 
   ],
   STUDENT: [
     { href: "/dashboard/student", icon: Home, label: "Dashboard" },
-    { href: "/dashboard/student/profile", icon: User, label: "Mi Perfil" },
+    { href: "/classes", icon: Waves, label: "Clases" },
     { href: "/reservations", icon: Calendar, label: "Mis Reservas" },
+    { href: "/dashboard/student/profile", icon: User, label: "Mi Perfil" },
   ],
 };
 

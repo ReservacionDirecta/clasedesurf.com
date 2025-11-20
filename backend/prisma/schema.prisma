@@ -1,7 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
-  engineType = "library"
+  engineType    = "library"
 }
 
 datasource db {
@@ -10,128 +10,127 @@ datasource db {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  email        String        @unique
-  name         String
-  password     String
-  role         UserRole      @default(STUDENT)
-  age          Int?
-  weight       Float?
-  height       Float?
-  canSwim      Boolean       @default(false)
-  injuries     String?
-  phone        String?
-  profilePhoto String?       // Base64 encoded image or URL (deprecated, use avatar)
-  avatar        String?      // Avatar ID (e.g., 'surfer1', 'instructor1')
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  reservations Reservation[]
-  instructor   Instructor?
-  student      Student?
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  name          String
+  password      String
+  role          UserRole       @default(STUDENT)
+  age           Int?
+  weight        Float?
+  height        Float?
+  canSwim       Boolean        @default(false)
+  injuries      String?
+  phone         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  profilePhoto  String?
+  instructor    Instructor?
   refreshTokens RefreshToken[]
-  
+  reservations  Reservation[]
+  student       Student?
+
   @@map("users")
 }
 
 model Instructor {
-  id              Int            @id @default(autoincrement())
-  user            User           @relation(fields: [userId], references: [id])
-  userId          Int            @unique
-  school          School         @relation(fields: [schoolId], references: [id])
+  id              Int                @id @default(autoincrement())
+  userId          Int                @unique
   schoolId        Int
   bio             String?
-  yearsExperience Int            @default(0)
-  specialties     String[]       // Array of specialties
-  certifications  String[]       // Array of certifications
-  rating          Float          @default(0)
-  totalReviews    Int            @default(0)
-  profileImage    String?        // Deprecated, use avatar
-  avatar          String?        // Avatar ID (e.g., 'instructor1', 'coach')
-  isActive        Boolean        @default(true)
-  instructorRole  InstructorRole @default(INSTRUCTOR)
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  yearsExperience Int                @default(0)
+  specialties     String[]
+  certifications  String[]
+  rating          Float              @default(0)
+  totalReviews    Int                @default(0)
+  profileImage    String?
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  instructorRole  InstructorRole     @default(INSTRUCTOR)
   reviews         InstructorReview[]
-  
+  school          School             @relation(fields: [schoolId], references: [id])
+  user            User               @relation(fields: [userId], references: [id])
+
   @@map("instructors")
 }
 
 model InstructorReview {
   id           Int        @id @default(autoincrement())
-  instructor   Instructor @relation(fields: [instructorId], references: [id])
   instructorId Int
   studentName  String
-  rating       Int        // 1-5 stars
+  rating       Int
   comment      String?
   createdAt    DateTime   @default(now())
-  
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+
   @@map("instructor_reviews")
 }
 
 model SchoolReview {
   id          Int      @id @default(autoincrement())
-  school      School   @relation(fields: [schoolId], references: [id])
   schoolId    Int
   studentName String
-  rating      Int      // 1-5 stars
+  rating      Int
   comment     String?
   createdAt   DateTime @default(now())
-  
+  school      School   @relation(fields: [schoolId], references: [id])
+
   @@map("school_reviews")
 }
 
 model Student {
-  id         Int       @id @default(autoincrement())
-  user       User      @relation(fields: [userId], references: [id])
-  userId     Int       @unique
-  school     School?   @relation(fields: [schoolId], references: [id])
-  schoolId   Int?
-  birthdate  DateTime?
-  notes      String?
-  level      ClassLevel @default(BEGINNER)
-  canSwim    Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  schoolId  Int?
+  birthdate DateTime?
+  notes     String?
+  level     ClassLevel @default(BEGINNER)
+  canSwim   Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  school    School?    @relation(fields: [schoolId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+
   @@map("students")
 }
 
 model School {
-  id            Int            @id @default(autoincrement())
-  name          String
-  location      String
-  description   String?
-  phone         String?
-  email         String?
-  website       String?
-  instagram     String?
-  facebook      String?
-  whatsapp      String?
-  address       String?
-  logo          String?
-  coverImage    String?
-  foundedYear   Int?           // Año de fundación de la escuela
-  rating        Float          @default(0)
-  totalReviews  Int            @default(0)
-  ownerId       Int?           // Owner of the school (SCHOOL_ADMIN)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  classes       Class[]
-  instructors   Instructor[]
-  students      Student[]
-  reviews       SchoolReview[]
-  
+  id           Int            @id @default(autoincrement())
+  name         String
+  location     String
+  description  String?
+  phone        String?
+  email        String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  address      String?
+  coverImage   String?
+  facebook     String?
+  instagram    String?
+  logo         String?
+  website      String?
+  whatsapp     String?
+  ownerId      Int?
+  foundedYear  Int?
+  rating       Float          @default(0)
+  totalReviews Int            @default(0)
+  classes      Class[]
+  instructors  Instructor[]
+  reviews      SchoolReview[]
+  students     Student[]
+
   @@map("schools")
 }
+
 model Beach {
   id          Int      @id @default(autoincrement())
   name        String
-  location    String?  // Ciudad o región
+  location    String?
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   classes     Class[]
-  
+
   @@map("beaches")
 }
 
@@ -140,64 +139,80 @@ model Class {
   title        String
   description  String?
   date         DateTime
-  duration     Int           // duración en minutos
+  duration     Int
   capacity     Int
   price        Float
   level        ClassLevel    @default(BEGINNER)
-  instructor   String?       // nombre del instructor
-  images       String[]      // array de URLs de imágenes (mínimo 1, máximo 5)
-  school       School        @relation(fields: [schoolId], references: [id])
   schoolId     Int
-  beach        Beach?        @relation(fields: [beachId], references: [id])
-  beachId      Int?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  instructor   String?
+  images       String[]
+  beachId      Int?
+  beach        Beach?        @relation(fields: [beachId], references: [id])
+  school       School        @relation(fields: [schoolId], references: [id])
   reservations Reservation[]
-  
+
   @@map("classes")
 }
+
 model Reservation {
-  id             Int                @id @default(autoincrement())
-  user           User               @relation(fields: [userId], references: [id])
+  id             Int               @id @default(autoincrement())
   userId         Int
-  class          Class              @relation(fields: [classId], references: [id])
   classId        Int
-  status         ReservationStatus  @default(PENDING)
+  status         ReservationStatus @default(PENDING)
   specialRequest String?
-  participants   Json?              // Array de datos de participantes: [{name, age, height, weight, canSwim, swimmingLevel, hasSurfedBefore, injuries, comments}]
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  participants   Json?
   payment        Payment?
-  
+  class          Class             @relation(fields: [classId], references: [id])
+  user           User              @relation(fields: [userId], references: [id])
+
   @@map("reservations")
 }
+
 model Payment {
   id            Int           @id @default(autoincrement())
-  reservation   Reservation   @relation(fields: [reservationId], references: [id])
   reservationId Int           @unique
   amount        Float
   status        PaymentStatus @default(UNPAID)
   paymentMethod String?
   transactionId String?
-  voucherImage  String?       // URL or path to voucher image
-  voucherNotes  String?       // Additional notes about the payment
   paidAt        DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  
+  voucherImage  String?
+  voucherNotes  String?
+  reservation   Reservation   @relation(fields: [reservationId], references: [id])
+
   @@map("payments")
 }
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String
+  userId    Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+}
+
 enum UserRole {
   STUDENT
-  INSTRUCTOR
   ADMIN
   SCHOOL_ADMIN
+  INSTRUCTOR
 }
+
 enum ClassLevel {
   BEGINNER
   INTERMEDIATE
   ADVANCED
 }
+
 enum ReservationStatus {
   PENDING
   CONFIRMED
@@ -205,24 +220,15 @@ enum ReservationStatus {
   CANCELED
   COMPLETED
 }
+
 enum PaymentStatus {
   UNPAID
-  PENDING
   PAID
   REFUNDED
+  PENDING
 }
+
 enum InstructorRole {
   INSTRUCTOR
   HEAD_COACH
-}
-
-model RefreshToken {
-  id        Int      @id @default(autoincrement())
-  tokenHash String
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@map("refresh_tokens")
 }

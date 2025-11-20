@@ -1,17 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Calendar, 
-  Users, 
-  DollarSign, 
-  BookOpen, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
+import {
+  Calendar,
+  Users,
+  DollarSign,
+  BookOpen,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
   Info,
   Clock,
-  TrendingUp,
   User,
   CreditCard
 } from 'lucide-react';
@@ -39,6 +38,7 @@ interface RecentActivityProps {
 
 export default function RecentActivity({ activities, maxItems = 10 }: RecentActivityProps) {
   const [filter, setFilter] = useState<'all' | 'reservation' | 'payment' | 'class'>('all');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const getActivityIcon = (type: string, status?: string) => {
     switch (type) {
@@ -63,7 +63,7 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
     if (status === 'success') return 'text-green-600 bg-green-100';
     if (status === 'warning') return 'text-yellow-600 bg-yellow-100';
     if (status === 'error') return 'text-red-600 bg-red-100';
-    
+
     switch (type) {
       case 'reservation':
         return 'text-blue-600 bg-blue-100';
@@ -84,7 +84,7 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Ahora mismo';
     if (diffInMinutes < 60) return `Hace ${diffInMinutes} min`;
     if (diffInMinutes < 1440) return `Hace ${Math.floor(diffInMinutes / 60)} h`;
@@ -93,14 +93,16 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
 
   const filteredActivities = activities
     .filter(activity => filter === 'all' || activity.type === filter)
-    .slice(0, maxItems);
+    .slice(0, isExpanded ? undefined : maxItems);
 
-  const filterButtons = [
+  const filterButtons: { key: 'all' | 'reservation' | 'payment' | 'class', label: string, count: number }[] = [
     { key: 'all', label: 'Todas', count: activities.length },
     { key: 'reservation', label: 'Reservas', count: activities.filter(a => a.type === 'reservation').length },
     { key: 'payment', label: 'Pagos', count: activities.filter(a => a.type === 'payment').length },
     { key: 'class', label: 'Clases', count: activities.filter(a => a.type === 'class').length },
   ];
+
+  const currentFilteredCount = activities.filter(activity => filter === 'all' || activity.type === filter).length;
 
   return (
     <div className="bg-white rounded-lg sm:rounded-xl shadow-lg border border-gray-100">
@@ -112,18 +114,17 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
             <span className="text-xs sm:text-sm text-gray-500">Tiempo real</span>
           </div>
         </div>
-        
+
         {/* Filter Buttons - Mobile Optimized */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
           {filterButtons.map(({ key, label, count }) => (
             <button
               key={key}
               onClick={() => setFilter(key as any)}
-              className={`px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${
-                filter === key
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent'
-              }`}
+              className={`px-2 sm:px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors ${filter === key
+                ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-transparent'
+                }`}
             >
               <span className="hidden sm:inline">{label} ({count})</span>
               <span className="sm:hidden">{label.charAt(0)}{count}</span>
@@ -146,19 +147,18 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
             {filteredActivities.map((activity, index) => {
               const Icon = getActivityIcon(activity.type, activity.status);
               const colorClasses = getActivityColor(activity.type, activity.status);
-              
+
               return (
-                <div 
-                  key={activity.id} 
-                  className={`p-3 sm:p-4 hover:bg-gray-50 transition-colors ${
-                    index === 0 ? 'bg-blue-50/30' : ''
-                  }`}
+                <div
+                  key={activity.id}
+                  className={`p-3 sm:p-4 hover:bg-gray-50 transition-colors ${index === 0 ? 'bg-blue-50/30' : ''
+                    }`}
                 >
                   <div className="flex items-start space-x-3 sm:space-x-4">
                     <div className={`p-1.5 sm:p-2 rounded-full ${colorClasses} flex-shrink-0`}>
                       <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between mb-1">
                         <h4 className="text-sm font-medium text-gray-900 leading-tight">
@@ -168,11 +168,11 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
                           {formatTimeAgo(activity.timestamp)}
                         </span>
                       </div>
-                      
+
                       <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">
                         {activity.description}
                       </p>
-                      
+
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-1 sm:space-y-0">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-500">
                           {activity.user && (
@@ -181,14 +181,14 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
                               <span className="truncate max-w-20 sm:max-w-none">{activity.user}</span>
                             </div>
                           )}
-                          
+
                           {activity.metadata?.className && (
                             <div className="flex items-center space-x-1">
                               <BookOpen className="w-3 h-3 flex-shrink-0" />
                               <span className="truncate max-w-24 sm:max-w-none">{activity.metadata.className}</span>
                             </div>
                           )}
-                          
+
                           {activity.metadata?.studentCount && (
                             <div className="flex items-center space-x-1">
                               <Users className="w-3 h-3 flex-shrink-0" />
@@ -196,7 +196,7 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
                             </div>
                           )}
                         </div>
-                        
+
                         {activity.amount && (
                           <div className="flex items-center space-x-1 text-sm font-medium text-green-600">
                             <DollarSign className="w-3 h-3" />
@@ -212,16 +212,21 @@ export default function RecentActivity({ activities, maxItems = 10 }: RecentActi
           </div>
         )}
       </div>
-      
+
       {filteredActivities.length > 0 && (
         <div className="p-3 sm:p-4 border-t border-gray-100 bg-gray-50">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <span className="text-xs sm:text-sm text-gray-500">
-              {filteredActivities.length} de {activities.length} actividades
+              {filteredActivities.length} de {currentFilteredCount} actividades
             </span>
-            <button className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium text-left sm:text-right">
-              Ver todas
-            </button>
+            {currentFilteredCount > maxItems && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium text-left sm:text-right"
+              >
+                {isExpanded ? 'Ver menos' : 'Ver todas'}
+              </button>
+            )}
           </div>
         </div>
       )}

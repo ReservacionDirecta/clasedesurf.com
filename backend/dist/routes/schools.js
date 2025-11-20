@@ -46,12 +46,40 @@ const router = express_1.default.Router();
 // GET /schools - list schools
 router.get('/', async (req, res) => {
     try {
-        const schools = await prisma_1.default.school.findMany({ orderBy: { createdAt: 'desc' } });
+        const schools = await prisma_1.default.school.findMany({
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                name: true,
+                location: true,
+                description: true,
+                phone: true,
+                email: true,
+                website: true,
+                instagram: true,
+                facebook: true,
+                whatsapp: true,
+                address: true,
+                logo: true,
+                coverImage: true,
+                foundedYear: true,
+                rating: true,
+                totalReviews: true,
+                createdAt: true,
+                updatedAt: true
+                // Excluir reviews explícitamente para evitar errores si la migración falló
+            }
+        });
         res.json(schools);
     }
     catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('[GET /schools] Error:', err);
+        console.error('[GET /schools] Error message:', err?.message);
+        console.error('[GET /schools] Error stack:', err?.stack);
+        res.status(500).json({
+            message: 'Internal server error',
+            error: process.env.NODE_ENV === 'development' ? err?.message : undefined
+        });
     }
 });
 // GET /schools/my-school - get current user's school (MUST be before /:id route)
@@ -80,6 +108,11 @@ router.get('/my-school', auth_1.default, async (req, res) => {
                         }
                     }
                 }
+                // Excluir reviews temporalmente para evitar errores si la migración falló
+                // reviews: {
+                //   orderBy: { createdAt: 'desc' },
+                //   take: 10
+                // }
             }
         });
         if (!school) {
@@ -88,8 +121,13 @@ router.get('/my-school', auth_1.default, async (req, res) => {
         res.json(school);
     }
     catch (err) {
-        console.error('Error in /my-school:', err);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('[GET /schools/my-school] Error:', err);
+        console.error('[GET /schools/my-school] Error message:', err?.message);
+        console.error('[GET /schools/my-school] Error stack:', err?.stack);
+        res.status(500).json({
+            message: 'Internal server error',
+            error: process.env.NODE_ENV === 'development' ? err?.message : undefined
+        });
     }
 });
 // GET /schools/:id
@@ -169,12 +207,51 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
                 return res.status(403).json({ message: 'You can only update your own school' });
             }
         }
-        const updated = await prisma_1.default.school.update({ where: { id: Number(id) }, data });
+        // Clean data: remove undefined values and handle null properly
+        const cleanData = {};
+        Object.keys(data).forEach(key => {
+            if (data[key] !== undefined) {
+                cleanData[key] = data[key];
+            }
+        });
+        console.log('[PUT /schools/:id] Raw data received:', JSON.stringify(data, null, 2));
+        console.log('[PUT /schools/:id] Cleaned data:', JSON.stringify(cleanData, null, 2));
+        console.log('[PUT /schools/:id] foundedYear in cleanData:', cleanData.foundedYear, typeof cleanData.foundedYear);
+        console.log('[PUT /schools/:id] School ID:', Number(id));
+        // Log what we're about to send to Prisma
+        console.log('[PUT /schools/:id] About to update with Prisma, cleanData keys:', Object.keys(cleanData));
+        console.log('[PUT /schools/:id] cleanData.foundedYear before Prisma:', cleanData.foundedYear, typeof cleanData.foundedYear);
+        const updated = await prisma_1.default.school.update({
+            where: { id: Number(id) },
+            data: cleanData
+        });
+        console.log('[PUT /schools/:id] School updated successfully');
+        console.log('[PUT /schools/:id] Updated school data from Prisma:', JSON.stringify(updated, null, 2));
+        console.log('[PUT /schools/:id] updated.foundedYear:', updated.foundedYear, typeof updated.foundedYear);
+        // Verify the update by fetching the school again
+        const verified = await prisma_1.default.school.findUnique({ where: { id: Number(id) } });
+        console.log('[PUT /schools/:id] Verified school data from DB:', JSON.stringify(verified, null, 2));
+        console.log('[PUT /schools/:id] verified.foundedYear:', verified?.foundedYear, typeof verified?.foundedYear);
         res.json(updated);
     }
     catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('[PUT /schools/:id] Error updating school:', err);
+        console.error('[PUT /schools/:id] Error details:', {
+            message: err?.message,
+            code: err?.code,
+            meta: err?.meta,
+            stack: err?.stack
+        });
+        const errorMessage = err?.message || 'Internal server error';
+        res.status(500).json({
+            message: 'Internal server error',
+            error: errorMessage,
+            code: err?.code,
+            details: process.env.NODE_ENV === 'development' ? {
+                stack: err?.stack,
+                meta: err?.meta
+            } : undefined
+        });
     }
 });
 exports.default = router;

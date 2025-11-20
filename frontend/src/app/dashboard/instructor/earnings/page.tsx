@@ -64,7 +64,7 @@ export default function InstructorEarnings() {
         const classInfo = classesData.classes?.find((c: any) => c.title === payment.className);
         const duration = classInfo?.duration || 120;
         const students = classInfo?.reservations?.filter((r: any) => r.status !== 'CANCELED').length || 0;
-        
+
         return {
           id: payment.id,
           date: payment.classDate,
@@ -87,8 +87,8 @@ export default function InstructorEarnings() {
         totalEarnings: earningsData.totalEarnings || 0,
         monthlyEarnings: monthlyEarnings,
         pendingPayments: 0, // TODO: Calculate from pending payments
-        averagePerClass: processedEarnings.length > 0 
-          ? (earningsData.totalEarnings || 0) / processedEarnings.length 
+        averagePerClass: processedEarnings.length > 0
+          ? (earningsData.totalEarnings || 0) / processedEarnings.length
           : 0,
         totalClasses: earningsData.totalClasses || 0,
         totalStudents: processedEarnings.reduce((sum, e) => sum + e.students, 0),
@@ -98,91 +98,91 @@ export default function InstructorEarnings() {
       // Fallback to mock data if no real data
       if (processedEarnings.length === 0) {
         const mockEarnings: Earning[] = [
-        {
-          id: 1,
-          date: '2024-12-15',
-          className: 'Surf para Principiantes',
-          students: 6,
-          instructorPayment: 408,
-          duration: 120,
-          status: 'pending',
-        },
-        {
-          id: 2,
-          date: '2024-12-12',
-          className: 'Técnicas Avanzadas',
-          students: 4,
-          instructorPayment: 408,
-          duration: 150,
-          status: 'processing',
-        },
-        {
-          id: 3,
-          date: '2024-12-10',
-          className: 'Surf Matutino',
-          students: 8,
-          instructorPayment: 612,
-          duration: 120,
-          status: 'paid',
-          paymentDate: '2024-12-11'
-        },
-        {
-          id: 4,
-          date: '2024-12-08',
-          className: 'Longboard Session',
-          students: 7,
-          instructorPayment: 595,
-          duration: 180,
-          status: 'paid',
-          paymentDate: '2024-12-09'
-        },
-        {
-          id: 5,
-          date: '2024-12-05',
-          className: 'Surf para Principiantes',
-          students: 5,
-          instructorPayment: 340,
-          duration: 120,
-          status: 'paid',
-          paymentDate: '2024-12-06'
-        },
-        {
-          id: 6,
-          date: '2024-12-03',
-          className: 'Técnicas Avanzadas',
-          students: 6,
-          instructorPayment: 612,
-          duration: 150,
-          status: 'paid',
-          paymentDate: '2024-12-04'
-        },
-        {
-          id: 7,
-          date: '2024-12-01',
-          className: 'Surf Matutino',
-          students: 8,
-          instructorPayment: 612,
-          duration: 120,
-          status: 'paid',
-          paymentDate: '2024-12-02'
-        }
-      ];
+          {
+            id: 1,
+            date: '2024-12-15',
+            className: 'Surf para Principiantes',
+            students: 6,
+            instructorPayment: 408,
+            duration: 120,
+            status: 'pending',
+          },
+          {
+            id: 2,
+            date: '2024-12-12',
+            className: 'Técnicas Avanzadas',
+            students: 4,
+            instructorPayment: 408,
+            duration: 150,
+            status: 'processing',
+          },
+          {
+            id: 3,
+            date: '2024-12-10',
+            className: 'Surf Matutino',
+            students: 8,
+            instructorPayment: 612,
+            duration: 120,
+            status: 'paid',
+            paymentDate: '2024-12-11'
+          },
+          {
+            id: 4,
+            date: '2024-12-08',
+            className: 'Longboard Session',
+            students: 7,
+            instructorPayment: 595,
+            duration: 180,
+            status: 'paid',
+            paymentDate: '2024-12-09'
+          },
+          {
+            id: 5,
+            date: '2024-12-05',
+            className: 'Surf para Principiantes',
+            students: 5,
+            instructorPayment: 340,
+            duration: 120,
+            status: 'paid',
+            paymentDate: '2024-12-06'
+          },
+          {
+            id: 6,
+            date: '2024-12-03',
+            className: 'Técnicas Avanzadas',
+            students: 6,
+            instructorPayment: 612,
+            duration: 150,
+            status: 'paid',
+            paymentDate: '2024-12-04'
+          },
+          {
+            id: 7,
+            date: '2024-12-01',
+            className: 'Surf Matutino',
+            students: 8,
+            instructorPayment: 612,
+            duration: 120,
+            status: 'paid',
+            paymentDate: '2024-12-02'
+          }
+        ];
 
-      const totalHours = mockEarnings.reduce((sum, e) => sum + (e.duration / 60), 0);
-      
-      const mockStats: EarningsStats = {
-        totalEarnings: mockEarnings.reduce((sum, e) => sum + e.instructorPayment, 0),
-        monthlyEarnings: mockEarnings
-          .filter(e => e.date.startsWith(selectedMonth))
-          .reduce((sum, e) => sum + e.instructorPayment, 0),
-        pendingPayments: mockEarnings
-          .filter(e => e.status === 'pending' || e.status === 'processing')
-          .reduce((sum, e) => sum + e.instructorPayment, 0),
-        averagePerClass: mockEarnings.reduce((sum, e) => sum + e.instructorPayment, 0) / mockEarnings.length,
-        totalClasses: mockEarnings.length,
-        totalStudents: mockEarnings.reduce((sum, e) => sum + e.students, 0),
-        averagePerHour: mockEarnings.reduce((sum, e) => sum + e.instructorPayment, 0) / totalHours
-      };
+        const totalHours = mockEarnings.reduce((sum, e) => sum + (e.duration / 60), 0);
+
+        const mockStats: EarningsStats = {
+          totalEarnings: mockEarnings.reduce((sum, e) => sum + e.instructorPayment, 0),
+          monthlyEarnings: mockEarnings
+            .filter(e => e.date.startsWith(selectedMonth))
+            .reduce((sum, e) => sum + e.instructorPayment, 0),
+          pendingPayments: mockEarnings
+            .filter(e => e.status === 'pending' || e.status === 'processing')
+            .reduce((sum, e) => sum + e.instructorPayment, 0),
+          averagePerClass: mockEarnings.reduce((sum, e) => sum + e.instructorPayment, 0) / mockEarnings.length,
+          totalClasses: mockEarnings.length,
+          totalStudents: mockEarnings.reduce((sum, e) => sum + e.students, 0),
+          averagePerHour: mockEarnings.reduce((sum, e) => sum + e.instructorPayment, 0) / totalHours
+        };
 
         setEarnings(mockEarnings);
         setStats(mockStats);
@@ -190,7 +190,7 @@ export default function InstructorEarnings() {
         setEarnings(processedEarnings);
         setStats(calculatedStats);
       }
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching earnings data:', error);
@@ -275,7 +275,7 @@ export default function InstructorEarnings() {
       payment: earning.instructorPayment,
       status: earning.status
     };
-    
+
     const dataStr = JSON.stringify(receiptData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -296,7 +296,7 @@ export default function InstructorEarnings() {
       totalClasses: filteredEarnings.length,
       earnings: filteredEarnings
     };
-    
+
     const dataStr = JSON.stringify(reportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -336,7 +336,7 @@ export default function InstructorEarnings() {
               <h1 className="text-3xl font-bold text-gray-900">Mis Ganancias</h1>
               <p className="text-gray-600 mt-2">Gestiona y revisa tus ingresos por clases</p>
             </div>
-            <button 
+            <button
               onClick={handleExportReport}
               className="mt-4 sm:mt-0 flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
@@ -415,44 +415,40 @@ export default function InstructorEarnings() {
                 <option value="2024-09">Septiembre 2024</option>
               </select>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setStatusFilter('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  statusFilter === 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Todos
               </button>
               <button
                 onClick={() => setStatusFilter('paid')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  statusFilter === 'paid'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'paid'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Pagados
               </button>
               <button
                 onClick={() => setStatusFilter('pending')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  statusFilter === 'pending'
-                    ? 'bg-yellow-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'pending'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Pendientes
               </button>
               <button
                 onClick={() => setStatusFilter('processing')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  statusFilter === 'processing'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === 'processing'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
               >
                 Procesando
               </button>
@@ -465,7 +461,7 @@ export default function InstructorEarnings() {
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">Detalle de Ganancias</h3>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
@@ -522,14 +518,14 @@ export default function InstructorEarnings() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button 
+                      <button
                         onClick={() => handleViewEarning(earning)}
                         className="text-blue-600 hover:text-blue-900 mr-3"
                         title="Ver detalles"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDownloadReceipt(earning)}
                         className="text-green-600 hover:text-green-900"
                         title="Descargar comprobante"
@@ -579,18 +575,18 @@ export default function InstructorEarnings() {
 
         {/* Modal Detalles de Ganancia */}
         {showDetailModal && selectedEarning && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
             <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-semibold text-gray-900">Detalles del Pago</h3>
-                <button 
+                <button
                   onClick={() => setShowDetailModal(false)}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
               </div>
-              
+
               <div className="space-y-6">
                 {/* Información de la Clase */}
                 <div className="bg-gray-50 p-4 rounded-lg">
@@ -663,16 +659,16 @@ export default function InstructorEarnings() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end gap-3 mt-6">
-                <button 
+                <button
                   onClick={() => handleDownloadReceipt(selectedEarning)}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
                 >
                   <Download className="w-4 h-4" />
                   Descargar Comprobante
                 </button>
-                <button 
+                <button
                   onClick={() => setShowDetailModal(false)}
                   className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                 >

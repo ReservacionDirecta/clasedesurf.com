@@ -1,6 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { ClassCard } from '@/components/classes/ClassCard'
 import { BookingModal } from '@/components/booking/BookingModal'
 import { AirbnbSearchBar, type FilterValues } from '@/components/classes/AirbnbSearchBar'
@@ -117,42 +119,43 @@ const useFilterHandlers = (setFilters: React.Dispatch<React.SetStateAction<Filte
 }
 
 const renderSkeleton = () => (
-  <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+  <div className="mt-8 sm:mt-12 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
     {Array.from({ length: 6 }).map((_, index) => (
-      <div key={index} className="animate-pulse rounded-3xl bg-white p-6 shadow-lg">
-        <div className="mb-6 h-48 rounded-2xl bg-gray-200" />
-        <div className="mb-3 h-4 rounded bg-gray-200" />
-        <div className="mb-3 h-4 rounded bg-gray-200" />
-        <div className="h-4 rounded.bg-gray-200" />
+      <div key={index} className="animate-pulse rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-6 shadow-lg">
+        <div className="mb-4 sm:mb-6 h-40 sm:h-48 rounded-xl sm:rounded-2xl bg-gray-200" />
+        <div className="mb-2 sm:mb-3 h-3 sm:h-4 rounded bg-gray-200" />
+        <div className="mb-2 sm:mb-3 h-3 sm:h-4 rounded bg-gray-200" />
+        <div className="h-3 sm:h-4 rounded bg-gray-200" />
       </div>
     ))}
   </div>
 )
 
 const renderEmptyState = (message?: string) => (
-  <div className="mx-auto mt-12 max-w-3xl rounded-3xl border border-[#CBD5E1] bg-white px-8 py-16 text-center shadow-xl">
-    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9FBF7] text-[#2EC4B6]">
-      <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+  <div className="mx-auto mt-8 sm:mt-12 max-w-3xl rounded-2xl sm:rounded-3xl border border-[#CBD5E1] bg-white px-4 sm:px-8 py-12 sm:py-16 text-center shadow-xl">
+    <div className="mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[#E9FBF7] text-[#2EC4B6]">
+      <svg className="h-8 w-8 sm:h-10 sm:w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <path d="M3 7l9-4 9 4-9 4-9-4Z" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M3 12l9 4 9-4" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M3 17l9 4 9-4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
-    <h2 className="mt-6 text-2xl font-semibold text-[#011627]">{message ?? 'No encontramos clases con ese filtro'}</h2>
-    <p className="mt-2 text-sm text-[#46515F]">
+    <h2 className="mt-4 sm:mt-6 text-xl sm:text-2xl font-semibold text-[#011627] px-2">{message ?? 'No encontramos clases con ese filtro'}</h2>
+    <p className="mt-2 text-xs sm:text-sm text-[#46515F] px-2">
       Ajusta los filtros o vuelve a intentarlo luego. Estamos conectando con más escuelas cada semana.
     </p>
   </div>
 )
 
 const renderErrorState = (message: string, retry: () => void) => (
-  <div className="mx-auto mt-12 max-w-3xl rounded-3xl border border-red-200 bg-red-50 px-8 py-16 text-center shadow-xl">
-    <h2 className="text-2xl font-semibold text-red-700">Ocurrió un error al cargar las clases</h2>
-    <p className="mt-3 text-sm text-red-600">{message}</p>
+  <div className="mx-auto mt-8 sm:mt-12 max-w-3xl rounded-2xl sm:rounded-3xl border border-red-200 bg-red-50 px-4 sm:px-8 py-12 sm:py-16 text-center shadow-xl">
+    <h2 className="text-xl sm:text-2xl font-semibold text-red-700 px-2">Ocurrió un error al cargar las clases</h2>
+    <p className="mt-3 text-xs sm:text-sm text-red-600 px-2">{message}</p>
     <button
       type="button"
       onClick={retry}
-      className="mt-6 inline-flex rounded-xl bg-[#FF3366] px-6 py-3 text-sm font-bold text-white shadow-lg transition-transform duration-200 hover:-translate-y-0.5 hover:bg-[#D12352]"
+      className="mt-6 inline-flex rounded-xl bg-[#FF3366] px-5 sm:px-6 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white shadow-lg transition-transform duration-200 active:scale-95 hover:-translate-y-0.5 hover:bg-[#D12352] touch-target-lg"
+      style={{ touchAction: 'manipulation' }}
     >
       Intentar nuevamente
     </button>
@@ -160,7 +163,7 @@ const renderErrorState = (message: string, retry: () => void) => (
 )
 
 const renderHero = () => (
-  <section className="relative overflow-hidden bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] pb-16 pt-20">
+  <section className="relative overflow-hidden bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] pb-12 sm:pb-16 pt-16 sm:pt-20 safe-area-top" style={{ paddingTop: 'max(4rem, env(safe-area-inset-top))' }}>
     <div className="absolute inset-0 opacity-40">
       <svg className="h-full w-full" viewBox="0 0 1440 960" preserveAspectRatio="none">
         <defs>
@@ -242,16 +245,16 @@ const renderHero = () => (
       </svg>
     </div>
 
-    <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="container relative mx-auto px-3 sm:px-4 lg:px-8">
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center text-white">
-        <span className="inline-flex items-center rounded-full bg-white/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-[#5DE0D0]">
+        <span className="inline-flex items-center rounded-full bg-white/15 px-3 sm:px-4 py-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.2em] sm:tracking-[0.32em] text-[#5DE0D0]">
           Marketplace de clases de surf
         </span>
-        <h1 className="mt-6 text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">
-        Domina cada ola con clases guiadas.
+        <h1 className="mt-4 sm:mt-6 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black leading-tight px-2 sm:px-0">
+          Domina cada ola con clases guiadas.
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-[#E1EDF5]/90 sm:text-base lg:text-lg text-center md:text-left md:text-justify px-2 sm:px-0">
-        Tu clase ideal, a solo un clic.
+        <p className="mt-3 sm:mt-4 text-xs sm:text-sm lg:text-base leading-relaxed text-[#E1EDF5]/90 text-center px-2 sm:px-0">
+          Tu clase ideal, a solo un clic.
         </p>
       </div>
     </div>
@@ -259,9 +262,20 @@ const renderHero = () => (
 )
 
 export default function ClassesPage() {
+  const { data: session } = useSession()
   const { classes, filters, setFilters, loading, error, refetch } = useClasses()
   const { selectedClass, isModalOpen, handleOpen, handleClose } = useBookingState()
   const { handleFilterChange, handleReset } = useFilterHandlers(setFilters)
+  const router = useRouter()
+
+  const handleBookingClick = (classItem: EnhancedClass) => {
+    if (!session) {
+      const callbackUrl = encodeURIComponent(window.location.href)
+      router.push(`/login?callbackUrl=${callbackUrl}`)
+      return
+    }
+    handleOpen(classItem)
+  }
 
   const resultsSummary = useMemo(() => {
     if (loading) {
@@ -277,7 +291,7 @@ export default function ClassesPage() {
     try {
       console.log('Reserva enviada:', payload);
       console.log('Selected class:', selectedClass);
-      
+
       // Prepare reservation data
       const reservationData = {
         classId: payload.classId?.toString() || selectedClass?.id?.toString() || '',
@@ -330,39 +344,39 @@ export default function ClassesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F7F8]">
-        {renderHero()}
+    <div className="min-h-screen bg-[#F6F7F8] safe-area-bottom" style={{ paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}>
+      {renderHero()}
 
-        <main className="relative -mt-12 pb-20">
-          <section className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-gray-100 lg:p-8">
-            <header className="flex flex-col gap-4 border-b border-gray-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
+      <main className="relative -mt-8 sm:-mt-12 pb-20 sm:pb-24">
+        <section className="container mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-6 shadow-xl sm:shadow-2xl ring-1 ring-gray-100 lg:p-8">
+            <header className="flex flex-col gap-3 sm:gap-4 border-b border-gray-100 pb-4 sm:pb-6">
               <div>
-                <h2 className="text-2xl font-bold text-[#011627] sm:text-3xl">Encuentra tu próxima clase</h2>
-                <p className="mt-1 text-sm text-[#46515F]">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-[#011627] leading-tight">Encuentra tu próxima clase</h2>
+                <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-[#46515F] leading-relaxed">
                   Busca clases de surf por ubicación, fecha, nivel y tipo. Visualiza disponibilidad en tiempo real.
                 </p>
               </div>
-              <span className="inline-flex rounded-full bg-[#E9FBF7] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#2EC4B6]">
+              <span className="inline-flex self-start rounded-full bg-[#E9FBF7] px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold uppercase tracking-wide text-[#2EC4B6]">
                 {resultsSummary}
               </span>
             </header>
 
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6">
               <AirbnbSearchBar onFilterChange={handleFilterChange} onReset={handleReset} />
             </div>
 
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               {loading && renderSkeleton()}
               {!loading && error && renderErrorState(error, refetch)}
               {!loading && !error && classes.length === 0 && renderEmptyState()}
               {!loading && !error && classes.length > 0 && (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {classes.map((classItem) => (
                     <ClassCard
                       key={classItem.id}
                       classData={classItem}
-                      onSelect={() => handleOpen(classItem)}
+                      onSelect={() => handleBookingClick(classItem)}
                     />
                   ))}
                 </div>
