@@ -40,6 +40,7 @@ export default function SchoolCalendar() {
   const [availableClasses, setAvailableClasses] = useState<any[]>([]);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [isCreatingReservation, setIsCreatingReservation] = useState(false);
+  const [isDeletingNote, setIsDeletingNote] = useState(false);
 
   const fetchEvents = useCallback(async (showLoading = false) => {
     try {
@@ -285,10 +286,14 @@ export default function SchoolCalendar() {
   };
 
   const handleDeleteNote = async (noteId: number) => {
+    if (isDeletingNote) return; // Prevenir múltiples clicks
+    
     if (!confirm('¿Estás seguro de que deseas eliminar esta nota?')) {
       return;
     }
 
+    setIsDeletingNote(true);
+    
     try {
       const response = await fetch(`/api/notes/${noteId}`, {
         method: 'DELETE',
@@ -297,16 +302,25 @@ export default function SchoolCalendar() {
       if (!response.ok) {
         const errorData = await response.json();
         alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        // No cerrar el modal si hay error, para que el usuario pueda intentar de nuevo
         return;
       }
 
-      await fetchEvents(false); // Actualización silenciosa
+      // Cerrar el modal solo si la eliminación fue exitosa
       setShowNoteModal(false);
       setSelectedNote(null);
       setIsEditingNote(false);
+
+      // Actualizar eventos en segundo plano sin bloquear la UI
+      fetchEvents(false).catch(err => {
+        console.error('Error refreshing events after delete:', err);
+      });
     } catch (error) {
       console.error('Error deleting note:', error);
       alert('Error al eliminar la nota. Por favor, intenta de nuevo.');
+      // No cerrar el modal si hay error de red
+    } finally {
+      setIsDeletingNote(false);
     }
   };
 
@@ -840,6 +854,7 @@ export default function SchoolCalendar() {
         <NoteViewEditModal
           note={selectedNote}
           isEditing={isEditingNote}
+          isDeleting={isDeletingNote}
           onEdit={() => setIsEditingNote(true)}
           onSave={(title, content, date, time) => handleUpdateNote(selectedNote.noteId!, title, content, date, time)}
           onDelete={() => handleDeleteNote(selectedNote.noteId!)}
@@ -878,13 +893,14 @@ export default function SchoolCalendar() {
 interface NoteViewEditModalProps {
   note: CalendarEvent;
   isEditing: boolean;
+  isDeleting?: boolean;
   onEdit: () => void;
   onSave: (title: string, content: string, date: Date, time: string) => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
-function NoteViewEditModal({ note, isEditing, onEdit, onSave, onDelete, onClose }: NoteViewEditModalProps) {
+function NoteViewEditModal({ note, isEditing, isDeleting = false, onEdit, onSave, onDelete, onClose }: NoteViewEditModalProps) {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content || '');
   const [date, setDate] = useState(note.date);
@@ -998,15 +1014,17 @@ function NoteViewEditModal({ note, isEditing, onEdit, onSave, onDelete, onClose 
             <div className="flex gap-2 pt-4 border-t border-gray-200">
               <button
                 onClick={onEdit}
-                className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium"
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 Editar
               </button>
               <button
                 onClick={onDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                Eliminar
+                {isDeleting ? 'Eliminando...' : 'Eliminar'}
               </button>
             </div>
           </div>

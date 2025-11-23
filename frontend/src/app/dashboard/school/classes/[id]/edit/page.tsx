@@ -242,7 +242,9 @@ export default function EditClassPage() {
   };
 
   const handleDelete = async () => {
-    if (!originalClass) return;
+    if (!originalClass || !classId) return;
+    
+    if (deleting) return; // Prevenir múltiples clicks
     
     const confirmDelete = window.confirm(
       `¿Estás seguro de que quieres eliminar la clase "${originalClass.title}"? Esta acción no se puede deshacer.`
@@ -255,26 +257,44 @@ export default function EditClassPage() {
       setError(null);
       
       const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      if (!token) {
+        throw new Error('No hay token de autenticación. Por favor, inicia sesión nuevamente.');
+      }
+      
+      const headers: any = { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      };
+
+      console.log('[handleDelete] Deleting class:', classId);
 
       // Using API proxy routes instead of direct backend calls
-      
-      const res = await fetch('/api/classes/${classId}', {
+      const res = await fetch(`/api/classes/${classId}`, {
         method: 'DELETE',
         headers
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to delete class');
+        const errorData = await res.json().catch(() => ({ message: 'Error desconocido' }));
+        console.error('[handleDelete] Error response:', errorData);
+        
+        // Mostrar mensaje de error más específico
+        const errorMessage = errorData.message || 'Error al eliminar la clase';
+        throw new Error(errorMessage);
       }
+      
+      const data = await res.json();
+      console.log('[handleDelete] Success:', data);
       
       // Redirect to classes list on success
       router.push('/dashboard/school/classes');
     } catch (err) {
-      console.error('Error deleting class:', err);
-      setError(err instanceof Error ? err.message : 'Error deleting class');
+      console.error('[handleDelete] Error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al eliminar la clase';
+      setError(errorMessage);
+      
+      // Mostrar alerta con el mensaje de error
+      alert(errorMessage);
     } finally {
       setDeleting(false);
     }
@@ -536,7 +556,7 @@ export default function EditClassPage() {
 
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                Precio (USD) *
+                Precio (PEN) *
               </label>
               <input
                 type="number"

@@ -192,12 +192,23 @@ export function PublicNavbar() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="md:hidden border-t border-gray-200 bg-white flex flex-col" style={{
+          maxHeight: 'calc(100vh - 64px)',
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          zIndex: 50
+        }}>
+          <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar px-2 pt-2 pb-2 space-y-1" style={{
+            WebkitOverflowScrolling: 'touch',
+            maxHeight: 'calc(100vh - 64px - 100px)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+          }}>
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-base font-medium ${
+              className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                 isActive('/')
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -208,7 +219,7 @@ export function PublicNavbar() {
             <Link
               href="/classes"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-base font-medium ${
+              className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                 isActive('/classes')
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -219,7 +230,7 @@ export function PublicNavbar() {
             <Link
               href="/schools"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-base font-medium ${
+              className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                 isActive('/schools')
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -230,7 +241,7 @@ export function PublicNavbar() {
             <Link
               href="/contact"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-base font-medium ${
+              className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                 isActive('/contact')
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -244,14 +255,14 @@ export function PublicNavbar() {
                 <Link
                   href={getDashboardLink()}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 >
                   Mi Dashboard
                 </Link>
                 <Link
                   href="/reservations"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 >
                   Mis Reservas
                 </Link>
@@ -259,25 +270,27 @@ export function PublicNavbar() {
             ) : null}
           </div>
           
-          {/* Mobile Auth/User Section */}
-          <div className="border-t border-gray-200 px-4 py-3">
+          {/* Mobile Auth/User Section - Fixed at bottom */}
+          <div className="border-t border-gray-200 px-3 py-2.5 bg-gray-50 flex-shrink-0" style={{
+            paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
+          }}>
             {session ? (
               <>
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-semibold text-sm">
+                <div className="flex items-center space-x-2.5 mb-2.5">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-blue-600 font-semibold text-xs">
                       {session.user?.name?.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
-                    <p className="text-xs text-gray-500">{session.user?.email}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-gray-900 truncate">{session.user?.name}</p>
+                    <p className="text-[10px] text-gray-500 truncate">{session.user?.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSigningOut ? 'Cerrando...' : 'Cerrar Sesión'}
                 </button>
@@ -287,14 +300,14 @@ export function PublicNavbar() {
                 <Link
                   href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full text-center px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  className="block w-full text-center px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
                   Iniciar Sesión
                 </Link>
                 <Link
                   href="/register"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full text-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  className="block w-full text-center px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                 >
                   Registrarse
                 </Link>

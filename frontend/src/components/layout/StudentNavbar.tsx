@@ -245,19 +245,23 @@ export function StudentNavbar() {
         />
         
         {/* Slide-out Panel */}
-        <div className={`absolute top-0 right-0 bottom-0 w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out ${
+        <div className={`absolute top-0 right-0 bottom-0 w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}>
+        }`} style={{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+        }}>
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Menú</h2>
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-3 flex-shrink-0">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-base font-bold text-white">Menú</h2>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors touch-manipulation"
                 aria-label="Cerrar menú"
+                style={{ touchAction: 'manipulation' }}
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
             
@@ -265,43 +269,45 @@ export function StudentNavbar() {
             <Link
               href="/dashboard/student/profile"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center space-x-3 p-3 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all duration-200"
+              className="flex items-center space-x-2 p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-all duration-200"
             >
-              <div className="relative">
-                <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/30">
+              <div className="relative flex-shrink-0">
+                <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-white/30">
                   {profilePhoto ? (
                     <Image
                       src={profilePhoto}
                       alt={session?.user?.name || 'User'}
-                      width={48}
-                      height={48}
+                      width={32}
+                      height={32}
                       className="w-full h-full object-cover"
                       unoptimized
                     />
                   ) : (
                     <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">
+                      <span className="text-white font-bold text-xs">
                         {getInitials(session?.user?.name)}
                       </span>
                     </div>
                   )}
                 </div>
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full"></div>
+                <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-400 border border-white rounded-full"></div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">
+                <p className="text-xs font-semibold text-white truncate">
                   {session?.user?.name}
                 </p>
-                <p className="text-xs text-blue-100 truncate">
+                <p className="text-[10px] text-blue-100 truncate">
                   {session?.user?.email}
                 </p>
               </div>
-              <ChevronRight className="w-5 h-5 text-white/60" />
+              <ChevronRight className="w-3 h-3 text-white/60 flex-shrink-0" />
             </Link>
           </div>
           
-          {/* Navigation Links */}
-          <div className="p-4 space-y-2">
+          {/* Navigation Links - Scrollable */}
+          <div className="flex-1 overflow-y-auto overscroll-contain p-1.5 space-y-0.5 no-scrollbar" style={{
+            WebkitOverflowScrolling: 'touch'
+          }}>
             {navigation.map((item) => {
               const IconComponent = item.icon;
               const active = isActive(item.href);
@@ -311,26 +317,27 @@ export function StudentNavbar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`group flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${
+                  className={`group flex items-center justify-between p-2 rounded-lg transition-all duration-200 ${
                     active
                       ? 'bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 shadow-sm'
                       : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
                   }`}
+                  style={{ touchAction: 'manipulation' }}
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg transition-all duration-200 ${
+                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                    <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${
                       active 
                         ? 'bg-blue-100 text-blue-700' 
                         : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
                     }`}>
-                      <IconComponent className="w-5 h-5" />
+                      <IconComponent className="w-3.5 h-3.5" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.description}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium truncate">{item.name}</p>
+                      <p className="text-[10px] text-gray-500 truncate">{item.description}</p>
                     </div>
                   </div>
-                  <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0 ${
                     active ? 'text-blue-700' : 'text-gray-400 group-hover:translate-x-1'
                   }`} />
                 </Link>
@@ -339,14 +346,17 @@ export function StudentNavbar() {
           </div>
           
           {/* Logout Button */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
+          <div className="p-2 border-t border-gray-200 bg-gray-50 flex-shrink-0" style={{
+            paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
+          }}>
             <button
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+              className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-xs font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 touch-manipulation"
+              style={{ touchAction: 'manipulation' }}
             >
-              <LogOut className="w-5 h-5" />
-              <span>{isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}</span>
+              <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
+              <span className="truncate">{isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}</span>
             </button>
           </div>
         </div>

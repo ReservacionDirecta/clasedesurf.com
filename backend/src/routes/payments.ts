@@ -4,6 +4,8 @@ import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validation';
 import { createPaymentSchema, updatePaymentSchema, paymentIdSchema } from '../validations/payments';
 import resolveSchool from '../middleware/resolve-school';
+import { PaymentService } from '../services/payments/PaymentService';
+import { PaymentProvider, PaymentMethod } from '../services/payments/types';
 
 const router = express.Router();
 
@@ -87,6 +89,45 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
         where: { id: reservationId }, 
         data: { status: 'PAID' } 
       });
+    }
+
+    // Si el método de pago requiere un intent online, crearlo
+    const paymentMethodEnum = paymentMethod as PaymentMethod;
+    const requiresOnlineIntent = ['CREDIT_CARD', 'DEBIT_CARD', 'PAYPAL', 'MERCADOPAGO'].includes(paymentMethodEnum);
+    
+    if (requiresOnlineIntent) {
+      try {
+        // Intentar crear payment intent con el proveedor apropiado
+        const provider = req.body.provider as PaymentProvider | undefined;
+        const intent = await PaymentService.createPaymentIntent({
+          amount: payment.amount,
+          currency: 'PEN',
+          reservationId: payment.reservationId,
+          userId: Number(userId),
+          paymentMethod: paymentMethodEnum,
+          metadata: {
+            paymentId: payment.id.toString(),
+            reservationId: payment.reservationId.toString()
+          }
+        }, provider);
+
+        // Actualizar payment con el intent ID si existe
+        if (intent.id && intent.id !== payment.id.toString()) {
+          await prisma.payment.update({
+            where: { id: payment.id },
+            data: { transactionId: intent.id }
+          });
+        }
+
+        // Retornar payment con intent info
+        return res.status(201).json({
+          ...payment,
+          paymentIntent: intent
+        });
+      } catch (intentError) {
+        // Si falla el intent, continuar con el pago manual
+        console.warn('[POST /payments] Error creando payment intent, continuando con pago manual:', intentError);
+      }
     }
 
     res.status(201).json(payment);
@@ -333,6 +374,82 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN']), validateParams(paymen
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// POST /payments/create-intent - Create payment intent for online payments
+router.post('/create-intent', requireAuth, validateBody(createPaymentSchema), async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId;
+    const { reservationId, amount, paymentMethod, provider } = req.body;
+    
+    if (!userId) return res.status(401).json({ message: 'User not authenticated' });
+
+    // Verify reservation exists
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { user: true, class: true }
+    });
+
+    if (!reservation) {
+      return res.status(404).json({ message: 'Reservation not found' });
+    }
+
+    // Check permissions
+    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
+    if (!user) return res.status(401).json({ message: 'User not found' });
+
+    if (reservation.userId !== Number(userId) && user.role !== 'ADMIN' && user.role !== 'SCHOOL_ADMIN') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    // Create payment intent using PaymentService
+    const intent = await PaymentService.createPaymentIntent({
+      amount,
+      currency: 'PEN',
+      reservationId,
+      userId: Number(userId),
+      paymentMethod: paymentMethod as PaymentMethod,
+      metadata: {
+        reservationId: reservationId.toString(),
+        userId: userId.toString()
+      }
+    }, provider as PaymentProvider | undefined);
+
+    res.json(intent);
+  } catch (err) {
+    console.error('[POST /payments/create-intent] Error:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    res.status(500).json({ message: errorMessage });
+  }
+});
+
+// GET /payments/providers - Get available payment providers
+router.get('/providers', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const providers = PaymentService.getAvailableProviders();
+    res.json(providers);
+  } catch (err) {
+    console.error('[GET /payments/providers] Error:', err);
+    res.status(500).json({ message: 'Error fetching providers' });
+  }
+});
+
+// POST /payments/webhook/:provider - Webhook handler for payment providers
+router.post('/webhook/:provider', async (req, res) => {
+  try {
+    const { provider } = req.params;
+    const providerEnum = provider.toUpperCase() as PaymentProvider;
+
+    // TODO: Implementar webhook handlers específicos
+    // Por ahora, solo aceptamos el webhook pero no lo procesamos
+    console.log(`[Webhook] Received webhook from ${provider}:`, req.body);
+
+    // Retornar 200 para evitar reintentos
+    res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('[POST /payments/webhook] Error:', err);
+    res.status(500).json({ message: 'Webhook processing error' });
   }
 });
 

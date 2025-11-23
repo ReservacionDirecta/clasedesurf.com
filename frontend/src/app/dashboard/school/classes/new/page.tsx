@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { MultiDatePicker } from '@/components/ui/MultiDatePicker';
 
 interface School {
   id: number;
@@ -32,11 +33,16 @@ interface ClassFormData {
   images: string[];
   beachId?: number;
   // Schedule options
-  scheduleType: 'single' | 'recurring'; // 'single' para una sola clase, 'recurring' para recurrente
+  scheduleType: 'single' | 'recurring' | 'dateRange' | 'specificDates'; // 'single' para una sola clase, 'recurring' para recurrente, 'dateRange' para bloque de fechas, 'specificDates' para fechas específicas
   selectedDays: DayOfWeek[];
   times: string[]; // Array de horarios
   startDate: string; // Fecha de inicio para clases recurrentes
   weeksCount: number; // Número de semanas
+  // Date range options
+  dateRangeStart: string; // Fecha inicio para bloque
+  dateRangeEnd: string; // Fecha fin para bloque
+  // Specific dates options
+  specificDates: string[]; // Array de fechas específicas seleccionadas
 }
 
 export default function NewClassPage() {
@@ -59,7 +65,10 @@ export default function NewClassPage() {
     selectedDays: [],
     times: [''],
     startDate: '',
-    weeksCount: 4
+    weeksCount: 4,
+    dateRangeStart: '',
+    dateRangeEnd: '',
+    specificDates: []
   });
   // Estado local para el precio mientras se escribe (permite string vacío)
   const [priceInput, setPriceInput] = useState<string>('25');
@@ -242,6 +251,56 @@ export default function NewClassPage() {
     return occurrences;
   };
 
+  // Función para generar ocurrencias por rango de fechas
+  const generateDateRangeOccurrences = (): Array<{ date: string; time: string }> => {
+    const occurrences: Array<{ date: string; time: string }> = [];
+
+    if (!formData.dateRangeStart || !formData.dateRangeEnd || !formData.time) {
+      return occurrences;
+    }
+
+    const startDate = new Date(formData.dateRangeStart);
+    const endDate = new Date(formData.dateRangeEnd);
+    const time = formData.time;
+
+    // Validar que la fecha fin sea mayor o igual a la fecha inicio
+    if (endDate < startDate) {
+      return occurrences;
+    }
+
+    // Generar una ocurrencia para cada día en el rango
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      occurrences.push({
+        date: currentDate.toISOString().split('T')[0],
+        time: time
+      });
+      // Avanzar al siguiente día
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return occurrences;
+  };
+
+  // Función para generar ocurrencias por fechas específicas
+  const generateSpecificDatesOccurrences = (): Array<{ date: string; time: string }> => {
+    const occurrences: Array<{ date: string; time: string }> = [];
+
+    if (formData.specificDates.length === 0 || !formData.time) {
+      return occurrences;
+    }
+
+    // Generar una ocurrencia para cada fecha seleccionada
+    formData.specificDates.forEach(dateStr => {
+      occurrences.push({
+        date: dateStr,
+        time: formData.time
+      });
+    });
+
+    return occurrences;
+  };
+
   const handleAddBeach = async () => {
     if (!newBeachName.trim()) {
       setError('El nombre de la playa es requerido');
@@ -294,14 +353,9 @@ export default function NewClassPage() {
       setSaving(true);
       setError(null);
 
-      // Combine date and time
-      const dateTime = new Date(`${formData.date}T${formData.time}`);
-
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      // Using API proxy routes instead of direct backend calls
 
       // Filtrar imágenes vacías y validar que haya al menos 1
       const validImages = formData.images.filter(img => img.trim() !== '');
@@ -311,33 +365,165 @@ export default function NewClassPage() {
         return;
       }
 
-      const classData = {
+      // Preparar datos base de la clase
+      const baseData = {
         title: formData.title,
-        description: formData.description,
-        date: dateTime.toISOString(),
+        description: formData.description || null,
         duration: Number(formData.duration),
         capacity: Number(formData.capacity),
         price: Number(formData.price),
         level: formData.level,
-        instructor: formData.instructor,
+        instructor: formData.instructor || null,
         images: validImages,
-        schoolId: school.id,
-        ...(formData.beachId && { beachId: formData.beachId })
+        studentDetails: null
       };
 
-      const res = await fetch('/api/classes', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(classData)
-      });
+      // Manejar diferentes tipos de creación
+      if (formData.scheduleType === 'dateRange') {
+        // Crear clases en bloque por rango de fechas
+        const occurrences = generateDateRangeOccurrences();
+        
+        if (occurrences.length === 0) {
+          setError('Debes seleccionar un rango de fechas válido y una hora');
+          setSaving(false);
+          return;
+        }
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to create class');
+        if (occurrences.length > 100) {
+          setError(`El rango de fechas generaría ${occurrences.length} clases. El máximo permitido es 100. Por favor, reduce el rango.`);
+          setSaving(false);
+          return;
+        }
+
+        const bulkData: any = {
+          baseData,
+          schoolId: school.id,
+          occurrences
+        };
+
+        if (formData.beachId) {
+          bulkData.beachId = formData.beachId;
+        }
+
+        const res = await fetch('/api/classes/bulk', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(bulkData)
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to create classes');
+        }
+
+        const result = await res.json();
+        // Redirect to classes list on success
+        router.push(`/dashboard/school/classes?created=${result.createdCount || occurrences.length}`);
+      } else if (formData.scheduleType === 'specificDates') {
+        // Crear clases para fechas específicas seleccionadas
+        const occurrences = generateSpecificDatesOccurrences();
+        
+        if (occurrences.length === 0) {
+          setError('Debes seleccionar al menos una fecha del calendario y una hora');
+          setSaving(false);
+          return;
+        }
+
+        if (occurrences.length > 100) {
+          setError(`Has seleccionado ${occurrences.length} fechas. El máximo permitido es 100. Por favor, reduce el número de fechas.`);
+          setSaving(false);
+          return;
+        }
+
+        const bulkData: any = {
+          baseData,
+          schoolId: school.id,
+          occurrences
+        };
+
+        if (formData.beachId) {
+          bulkData.beachId = formData.beachId;
+        }
+
+        const res = await fetch('/api/classes/bulk', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(bulkData)
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to create classes');
+        }
+
+        const result = await res.json();
+        // Redirect to classes list on success
+        router.push(`/dashboard/school/classes?created=${result.createdCount || occurrences.length}`);
+      } else if (formData.scheduleType === 'recurring') {
+        // Crear clases recurrentes
+        const occurrences = generateOccurrences();
+        
+        if (occurrences.length === 0) {
+          setError('Debes seleccionar al menos un día, un horario y una fecha de inicio');
+          setSaving(false);
+          return;
+        }
+
+        if (occurrences.length > 100) {
+          setError(`La configuración generaría ${occurrences.length} clases. El máximo permitido es 100. Por favor, reduce el número de semanas o días.`);
+          setSaving(false);
+          return;
+        }
+
+        const bulkData: any = {
+          baseData,
+          schoolId: school.id,
+          occurrences
+        };
+
+        if (formData.beachId) {
+          bulkData.beachId = formData.beachId;
+        }
+
+        const res = await fetch('/api/classes/bulk', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(bulkData)
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to create classes');
+        }
+
+        const result = await res.json();
+        // Redirect to classes list on success
+        router.push(`/dashboard/school/classes?created=${result.createdCount || occurrences.length}`);
+      } else {
+        // Crear una sola clase
+        const dateTime = new Date(`${formData.date}T${formData.time}`);
+        
+        const classData = {
+          ...baseData,
+          date: dateTime.toISOString(),
+          schoolId: school.id,
+          ...(formData.beachId && { beachId: formData.beachId })
+        };
+
+        const res = await fetch('/api/classes', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(classData)
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to create class');
+        }
+
+        // Redirect to classes list on success
+        router.push('/dashboard/school/classes');
       }
-
-      // Redirect to classes list on success
-      router.push('/dashboard/school/classes');
     } catch (err) {
       console.error('Error creating class:', err);
       setError(err instanceof Error ? err.message : 'Error creating class');
@@ -467,34 +653,215 @@ export default function NewClassPage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Fecha y Horario</h2>
             </div>
 
-            <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-                Fecha *
+            {/* Tipo de horario */}
+            <div className="md:col-span-2">
+              <label htmlFor="scheduleType" className="block text-sm font-medium text-gray-700 mb-2">
+                Tipo de Horario *
               </label>
-              <input
-                type="date"
-                id="date"
-                value={formData.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
-                min={getMinDate()}
+              <select
+                id="scheduleType"
+                value={formData.scheduleType}
+                onChange={(e) => handleInputChange('scheduleType', e.target.value as 'single' | 'recurring' | 'dateRange' | 'specificDates')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
-              />
+              >
+                <option value="single">Clase Única</option>
+                <option value="dateRange">Clases en Bloque (Rango de Fechas)</option>
+                <option value="specificDates">Fechas Específicas (Seleccionar del Calendario)</option>
+                <option value="recurring">Clases Recurrentes (Días de la Semana)</option>
+              </select>
+              <p className="text-sm text-gray-500 mt-1">
+                {formData.scheduleType === 'single' && 'Crea una sola clase para una fecha y hora específica'}
+                {formData.scheduleType === 'dateRange' && 'Crea múltiples clases, una por cada día en el rango de fechas seleccionado'}
+                {formData.scheduleType === 'specificDates' && 'Selecciona fechas específicas del calendario para crear clases'}
+                {formData.scheduleType === 'recurring' && 'Crea clases recurrentes según días de la semana seleccionados'}
+              </p>
             </div>
 
-            <div>
-              <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
-                Hora de Inicio *
-              </label>
-              <input
-                type="time"
-                id="time"
-                value={formData.time}
-                onChange={(e) => handleInputChange('time', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-            </div>
+            {/* Campos para clase única */}
+            {formData.scheduleType === 'single' && (
+              <>
+                <div>
+                  <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha *
+                  </label>
+                  <input
+                    type="date"
+                    id="date"
+                    value={formData.date}
+                    onChange={(e) => handleInputChange('date', e.target.value)}
+                    min={getMinDate()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
+                    Hora de Inicio *
+                  </label>
+                  <input
+                    type="time"
+                    id="time"
+                    value={formData.time}
+                    onChange={(e) => handleInputChange('time', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Campos para rango de fechas */}
+            {formData.scheduleType === 'dateRange' && (
+              <>
+                <div>
+                  <label htmlFor="dateRangeStart" className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de Inicio *
+                  </label>
+                  <input
+                    type="date"
+                    id="dateRangeStart"
+                    value={formData.dateRangeStart}
+                    onChange={(e) => handleInputChange('dateRangeStart', e.target.value)}
+                    min={getMinDate()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required={formData.scheduleType === 'dateRange'}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="dateRangeEnd" className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de Fin *
+                  </label>
+                  <input
+                    type="date"
+                    id="dateRangeEnd"
+                    value={formData.dateRangeEnd}
+                    onChange={(e) => handleInputChange('dateRangeEnd', e.target.value)}
+                    min={formData.dateRangeStart || getMinDate()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required={formData.scheduleType === 'dateRange'}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
+                    Hora de Inicio *
+                  </label>
+                  <input
+                    type="time"
+                    id="time"
+                    value={formData.time}
+                    onChange={(e) => handleInputChange('time', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required={formData.scheduleType === 'dateRange'}
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Esta hora se aplicará a todas las clases del rango
+                  </p>
+                </div>
+
+                {formData.dateRangeStart && formData.dateRangeEnd && formData.time && (
+                  <div className="md:col-span-2">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-800">
+                        <strong>Vista previa:</strong> Se crearán{' '}
+                        {(() => {
+                          const occurrences = generateDateRangeOccurrences();
+                          return occurrences.length;
+                        })()}{' '}
+                        clases desde el {new Date(formData.dateRangeStart).toLocaleDateString('es-ES')} hasta el{' '}
+                        {new Date(formData.dateRangeEnd).toLocaleDateString('es-ES')} a las {formData.time}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Campos para fechas específicas */}
+            {formData.scheduleType === 'specificDates' && (
+              <>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Seleccionar Fechas del Calendario *
+                  </label>
+                  <MultiDatePicker
+                    selectedDates={formData.specificDates}
+                    onChange={(dates) => handleInputChange('specificDates', dates)}
+                    minDate={getMinDate()}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-gray-500 mt-2">
+                    Haz clic en las fechas del calendario para seleccionarlas. Puedes seleccionar múltiples fechas.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
+                    Hora de Inicio *
+                  </label>
+                  <input
+                    type="time"
+                    id="time"
+                    value={formData.time}
+                    onChange={(e) => handleInputChange('time', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required={formData.scheduleType === 'specificDates'}
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Esta hora se aplicará a todas las clases seleccionadas
+                  </p>
+                </div>
+
+                {formData.specificDates.length > 0 && formData.time && (
+                  <div className="md:col-span-2">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-800">
+                        <strong>Vista previa:</strong> Se crearán {formData.specificDates.length} clase(s) en las fechas seleccionadas a las {formData.time}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Campos para clases recurrentes (mantener existente) */}
+            {formData.scheduleType === 'recurring' && (
+              <>
+                <div>
+                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de Inicio *
+                  </label>
+                  <input
+                    type="date"
+                    id="startDate"
+                    value={formData.startDate}
+                    onChange={(e) => handleInputChange('startDate', e.target.value)}
+                    min={getMinDate()}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required={formData.scheduleType === 'recurring'}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="weeksCount" className="block text-sm font-medium text-gray-700 mb-2">
+                    Número de Semanas *
+                  </label>
+                  <input
+                    type="number"
+                    id="weeksCount"
+                    value={formData.weeksCount}
+                    onChange={(e) => handleInputChange('weeksCount', Number(e.target.value))}
+                    min="1"
+                    max="52"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required={formData.scheduleType === 'recurring'}
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
@@ -601,7 +968,7 @@ export default function NewClassPage() {
 
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                Precio (USD) *
+                Precio (PEN) *
               </label>
               <input
                 type="number"

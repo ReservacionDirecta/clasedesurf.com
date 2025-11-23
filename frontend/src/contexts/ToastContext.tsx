@@ -32,8 +32,24 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
 
   const showToast = useCallback((type: ToastType, title: string, message?: string, duration?: number) => {
     const id = `toast-${Date.now()}-${Math.random()}`;
-    const newToast: Toast = { id, type, title, message, duration };
-    setToasts((prev) => [...prev, newToast]);
+    const newToast: Toast = { id, type, title, message, duration: duration ?? 5000 };
+    
+    setToasts((prev) => {
+      const updated = [...prev, newToast];
+      
+      // Limitar el número máximo de toasts visibles (máximo 5)
+      if (updated.length > 5) {
+        // Ordenar por tiempo y mantener solo los 5 más recientes
+        const sorted = [...updated].sort((a, b) => {
+          const aTime = parseInt(a.id.split('-')[1] || '0');
+          const bTime = parseInt(b.id.split('-')[1] || '0');
+          return aTime - bTime;
+        });
+        return sorted.slice(-5);
+      }
+      
+      return updated;
+    });
   }, []);
 
   const showSuccess = useCallback((title: string, message?: string, duration?: number) => {

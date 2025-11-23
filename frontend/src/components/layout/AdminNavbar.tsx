@@ -227,12 +227,20 @@ export function AdminNavbar() {
 
       {/* Mobile Menu */}
       <div className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-        mobileMenuOpen ? 'max-h-[calc(100vh-80px)] opacity-100' : 'max-h-0 opacity-0'
+        mobileMenuOpen ? 'max-h-[calc(100vh-64px)] opacity-100' : 'max-h-0 opacity-0'
       }`}>
-        <div className="pb-4 border-t border-white/10 bg-[#011627]/95 backdrop-blur-sm">
+        <div className="border-t border-white/10 bg-[#011627]/95 backdrop-blur-sm" style={{ 
+          maxHeight: 'calc(100vh - 64px)',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
           {/* Scrollable Menu Container */}
-          <div className="max-h-[calc(100vh-160px)] overflow-y-auto overscroll-contain scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
-            <nav className="flex flex-col space-y-1 mt-4">
+          <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar" style={{ 
+            WebkitOverflowScrolling: 'touch',
+            maxHeight: 'calc(100vh - 64px - 80px)', // Header height - logout button height
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+          }}>
+            <nav className="flex flex-col space-y-1 px-2 py-2">
               {navigation.map((item) => {
                 const IconComponent = item.icon;
                 const active = isActive(item.href);
@@ -242,23 +250,23 @@ export function AdminNavbar() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
+                    className={`group flex items-center justify-between px-2.5 py-2 rounded-lg transition-all duration-200 ${
                       active
                         ? 'bg-white/10 text-[#FF3366] shadow-sm'
                         : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
                     }`}
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded-lg transition-all duration-200 ${
+                    <div className="flex items-center space-x-2 min-w-0 flex-1">
+                      <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${
                         active
                           ? 'bg-[#FF3366]/20 text-[#FF3366]'
                           : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
                       }`}>
-                        <IconComponent className="w-5 h-5" />
+                        <IconComponent className="w-4 h-4" />
                       </div>
-                      <span className="font-medium">{item.name}</span>
+                      <span className="font-medium text-sm truncate">{item.name}</span>
                     </div>
-                    <ChevronRight className={`w-5 h-5 transition-transform duration-200 ${
+                    <ChevronRight className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${
                       active
                         ? 'text-[#FF3366]'
                         : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
@@ -266,25 +274,29 @@ export function AdminNavbar() {
                   </Link>
                 );
               })}
+            </nav>
+          </div>
               
-              {/* User Profile & Logout Section */}
-              <div className="flex flex-col space-y-3 pt-4 mt-4 border-t border-white/10">
-                <div className="flex items-center space-x-3 px-4 py-3 bg-white/5 rounded-xl backdrop-blur-sm">
-                  <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+              {/* User Profile & Logout Section - Fixed at bottom */}
+              <div className="flex flex-col space-y-2 pt-2 mt-2 border-t border-white/10 bg-[#011627]/95 flex-shrink-0" style={{ 
+                paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
+              }}>
+                <div className="flex items-center space-x-2.5 px-3 py-2.5 bg-white/5 rounded-lg backdrop-blur-sm">
+                  <div className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0">
                     <Image
                       src="/logoclasedesusrf.png"
                       alt="clasesde.pe"
-                      width={40}
-                      height={40}
+                      width={32}
+                      height={32}
                       className="w-full h-full object-contain"
                       unoptimized
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">
+                    <p className="text-xs font-semibold text-white truncate">
                       {session?.user?.name || 'Super Admin'}
                     </p>
-                    <p className="text-xs text-[#F6F7F8]/60 truncate">
+                    <p className="text-[10px] text-[#F6F7F8]/60 truncate">
                       {session?.user?.email}
                     </p>
                   </div>
@@ -293,16 +305,14 @@ export function AdminNavbar() {
                 <button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="flex items-center justify-center space-x-2 w-full px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 border border-white/20"
+                  className="flex items-center justify-center space-x-2 w-full px-3 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 border border-white/20 text-sm font-medium"
                 >
-                  <LogOut className="w-5 h-5" />
-                  <span className="font-medium">
+                  <LogOut className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">
                     {isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
                   </span>
                 </button>
               </div>
-            </nav>
-          </div>
         </div>
       </div>
       

@@ -76,30 +76,54 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   try {
     const authHeader = req.headers.get('authorization');
     
-    const headers: any = {
-      'Content-Type': 'application/json'
-    };
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
+    if (!authHeader) {
+      console.error('[DELETE /api/classes/:id] No authorization header');
+      return NextResponse.json(
+        { message: 'No autorizado. Por favor, inicia sesión nuevamente.' }, 
+        { status: 401 }
+      );
     }
+    
+    const headers: any = {
+      'Content-Type': 'application/json',
+      'Authorization': authHeader
+    };
 
-    const response = await fetch(`${BACKEND}/classes/${params.id}`, {
+    const classId = params.id;
+    console.log('[DELETE /api/classes/:id] Deleting class:', classId);
+    console.log('[DELETE /api/classes/:id] Backend URL:', `${BACKEND}/classes/${classId}`);
+
+    const response = await fetch(`${BACKEND}/classes/${classId}`, {
       method: 'DELETE',
       headers
     });
 
+    console.log('[DELETE /api/classes/:id] Response status:', response.status);
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Backend error' }));
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText || 'Error desconocido del servidor' };
+      }
+      console.error('[DELETE /api/classes/:id] Backend error:', errorData);
       return NextResponse.json(errorData, { status: response.status });
     }
 
     const data = await response.json();
+    console.log('[DELETE /api/classes/:id] Success:', data);
     return NextResponse.json(data, { status: response.status });
     
-  } catch (error) {
-    console.error('Error deleting class:', error);
+  } catch (error: any) {
+    console.error('[DELETE /api/classes/:id] Error completo:', error);
+    console.error('[DELETE /api/classes/:id] Error message:', error?.message);
     return NextResponse.json(
-      { message: 'Internal server error' }, 
+      { 
+        message: 'Error al eliminar la clase',
+        error: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      }, 
       { status: 500 }
     );
   }

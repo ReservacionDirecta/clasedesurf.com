@@ -50,9 +50,15 @@ function AdminReservationsContent() {
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const res = await fetch('/api/reservations/all', { headers });
-        if (!res.ok) throw new Error('Failed to fetch reservations');
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ message: 'Error desconocido' }));
+          console.error('Error fetching reservations:', errorData);
+          setReservations([]);
+          return;
+        }
         const data = await res.json();
-        setReservations(data);
+        // Asegurar que data sea un array
+        setReservations(Array.isArray(data) ? data : []);
         
         if (classId) {
           const classRes = await fetch(`/api/classes/${classId}`, { headers });

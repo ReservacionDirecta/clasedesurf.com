@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X } from 'lucide-react';
 import { SchoolContextBanner } from '@/components/school/SchoolContextBanner';
 
 interface Class {
@@ -174,6 +174,11 @@ export default function ClassesManagementPage() {
   const handleDeleteClass = async () => {
     if (!selectedClass) return;
 
+    // Confirmación adicional
+    if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente la clase "${selectedClass.title}"?\n\nEsta acción no se puede deshacer.`)) {
+      return;
+    }
+
     try {
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
@@ -192,11 +197,12 @@ export default function ClassesManagementPage() {
         setSelectedClass(null);
         alert('Clase eliminada exitosamente');
       } else {
-        throw new Error('Error al eliminar la clase');
+        const errorData = await response.json().catch(() => ({ message: 'Error al eliminar la clase' }));
+        throw new Error(errorData.message || 'Error al eliminar la clase');
       }
     } catch (error) {
       console.error('Error deleting class:', error);
-      alert('Error al eliminar la clase');
+      alert(error instanceof Error ? error.message : 'Error al eliminar la clase');
     }
   };
 
@@ -459,18 +465,17 @@ export default function ClassesManagementPage() {
                         <Edit className="w-4 h-4 mr-1" />
                         Editar
                       </button>
-                      {cls.status === 'upcoming' && (
                         <button
                           onClick={() => {
                             setSelectedClass(cls);
                             setShowDeleteModal(true);
                           }}
                           className="flex items-center px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Eliminar clase permanentemente"
                         >
                           <Trash2 className="w-4 h-4 mr-1" />
-                          Cancelar
+                        Eliminar
                         </button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -540,27 +545,61 @@ export default function ClassesManagementPage() {
         )}
 
         {showDeleteModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-bold mb-4">Cancelar Clase</h3>
-              <p className="text-gray-600 mb-4">
-                ¿Estás seguro de que quieres cancelar la clase &quot;{selectedClass.title}&quot;?
-              </p>
-              <div className="flex gap-3">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4" onClick={() => setShowDeleteModal(false)}>
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">Eliminar Clase</h3>
                 <button
                   onClick={() => {
                     setShowDeleteModal(false);
                     setSelectedClass(null);
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  className="text-gray-400 hover:text-gray-600 p-1"
                 >
-                  No, mantener
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-red-800 font-medium mb-2">⚠️ Esta acción es permanente</p>
+                  <p className="text-xs text-red-700">
+                    La clase &quot;{selectedClass.title}&quot; será eliminada permanentemente y no se podrá recuperar.
+                  </p>
+                </div>
+                
+                {(selectedClass.reservations?.length ?? 0) > 0 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-yellow-800 font-medium">
+                      Esta clase tiene {(selectedClass.reservations?.length ?? 0)} reserva(s) activa(s).
+              </p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      Al eliminar la clase, las reservas asociadas también se verán afectadas.
+                    </p>
+                  </div>
+                )}
+                
+                <p className="text-gray-700 text-sm">
+                  ¿Estás seguro de que deseas eliminar esta clase?
+                </p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setSelectedClass(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium"
+                >
+                  Cancelar
                 </button>
                 <button
                   onClick={handleDeleteClass}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center justify-center"
                 >
-                  Sí, cancelar
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Sí, Eliminar
                 </button>
               </div>
             </div>

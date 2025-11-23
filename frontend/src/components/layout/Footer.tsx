@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import CookieSettingsButton from '@/components/cookies/CookieSettingsButton'
 
 export function Footer() {
   return (
@@ -124,9 +125,7 @@ export function Footer() {
             <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
               Términos de Uso
             </Link>
-            <Link href="/cookies" className="text-gray-400 hover:text-white text-sm transition-colors">
-              Cookies
-            </Link>
+            <CookieSettingsButton variant="link" className="text-gray-400 hover:text-white text-sm transition-colors" />
           </div>
         </div>
       </div>

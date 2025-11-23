@@ -1,5 +1,6 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
 import type { UserRole } from '@/types';
 
@@ -51,19 +52,92 @@ export const authOptions = {
         }
       },
     }),
-    // Add other providers like GoogleProvider, FacebookProvider here
-    // GoogleProvider({
-    //   clientId: process.env.GOOGLE_CLIENT_ID!,
-    //   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    // }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code'
+        }
+      }
+    }),
   ],
   callbacks: {
-  async jwt({ token, user }: { token: any; user?: any }) {
+    async signIn({ user, account, profile }) {
+      // Si es autenticación con Google, crear/actualizar usuario en backend
+      if (account?.provider === 'google') {
+        try {
+          const backendUrl = process.env.NODE_ENV === 'development'
+            ? 'http://localhost:4000'
+            : (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '/api');
+
+          // Llamar al backend para crear/obtener usuario
+          const response = await fetch(`${backendUrl}/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              googleId: account.providerAccountId,
+              email: user.email,
+              name: user.name,
+              image: user.image
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Agregar datos del backend al user object
+            user.id = data.user.id.toString();
+            user.role = data.user.role;
+            (user as any).backendToken = data.token;
+            (user as any).backendTokenExpires = Date.now() + 15 * 60 * 1000;
+          } else {
+            console.error('Error en autenticación Google con backend:', await response.text());
+            return false; // Rechazar el sign in si falla
+          }
+        } catch (error) {
+          console.error('Error en signIn callback para Google:', error);
+          return false;
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }: { token: any; user?: any; account?: any }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
         if ((user as any).backendToken) token.backendToken = (user as any).backendToken;
         if ((user as any).backendTokenExpires) token.backendTokenExpires = (user as any).backendTokenExpires;
+      }
+      
+      // Si es login con Google y no tenemos backendToken, intentar obtenerlo
+      if (account?.provider === 'google' && !token.backendToken) {
+        try {
+          const backendUrl = process.env.NODE_ENV === 'development'
+            ? 'http://localhost:4000'
+            : (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '/api');
+          
+          const response = await fetch(`${backendUrl}/auth/google`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              googleId: account.providerAccountId,
+              email: token.email,
+              name: token.name
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            token.backendToken = data.token;
+            token.backendTokenExpires = Date.now() + 15 * 60 * 1000;
+            token.id = data.user.id.toString();
+            token.role = data.user.role;
+          }
+        } catch (error) {
+          console.error('Error obteniendo backend token para Google:', error);
+        }
       }
 
       // If token exists and not expired, return

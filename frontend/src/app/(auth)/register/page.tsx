@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useToast } from '@/contexts/ToastContext';
+import { ArrowLeft, User, Mail, Lock, Eye, EyeOff, Waves } from 'lucide-react';
+import { useNotifications } from '@/hooks/useNotifications';
+import { GoogleAuthButton } from '@/components/auth/GoogleAuthButton';
 
 type UserRole = 'STUDENT' | 'INSTRUCTOR' | 'SCHOOL_ADMIN';
 
@@ -13,13 +15,15 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<UserRole>('STUDENT');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [countdown, setCountdown] = useState(9);
   const router = useRouter();
-  const { showSuccess, showError } = useToast();
+  const { notifySuccess, error: showErrorToast, handleError } = useNotifications();
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const getDashboardPath = (userRole: string) => {
@@ -51,73 +55,94 @@ export default function RegisterPage() {
     setSuccess(null);
     setIsRedirecting(false);
     setCountdown(9);
+    setIsLoading(true);
 
-    // Post to the frontend API proxy so client-side calls are routed correctly
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, email, password, role }),
-    });
-
-    let data: any = null;
     try {
-      data = await response.json();
-    } catch (e) {
-      // response was not JSON — read as text
-      const txt = await response.text();
-      data = { message: txt };
-    }
+      // Post to the frontend API proxy so client-side calls are routed correctly
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, role }),
+      });
 
-    if (!response.ok) {
-      const errorMessage = data?.message || 'Error al registrar usuario';
-      setError(errorMessage);
-      showError('Error de registro', errorMessage);
-    } else {
-      const successMessage = '¡Registro exitoso! Serás redirigido en breve...';
-      setSuccess(successMessage);
-      showSuccess('¡Registro exitoso!', 'Tu cuenta ha sido creada correctamente. Redirigiendo...', 9000);
-      setIsRedirecting(true);
-
-      // Intentar iniciar sesión automáticamente
+      let data: any = null;
       try {
-        const loginResult = await signIn('credentials', {
-          redirect: false,
-          email,
-          password,
-        });
+        data = await response.json();
+      } catch (e) {
+        // response was not JSON — read as text
+        const txt = await response.text();
+        data = { message: txt };
+      }
 
-        if (loginResult?.ok) {
-          // Obtener la sesión para determinar el rol
-          try {
-            const sessionResponse = await fetch('/api/auth/session');
-            const session = await sessionResponse.json();
-            
-            const dashboardPath = getDashboardPath(session?.user?.role || role);
-            
-            // Limpiar intervalo anterior si existe
-            if (countdownIntervalRef.current) {
-              clearInterval(countdownIntervalRef.current);
-            }
-            
-            // Esperar 9 segundos antes de redirigir
-            setCountdown(9);
-            let remainingSeconds = 9;
-            countdownIntervalRef.current = setInterval(() => {
-              remainingSeconds--;
-              setCountdown(remainingSeconds);
-              if (remainingSeconds <= 0) {
-                if (countdownIntervalRef.current) {
-                  clearInterval(countdownIntervalRef.current);
-                  countdownIntervalRef.current = null;
-                }
-                router.push(dashboardPath);
+      if (!response.ok) {
+        const errorMessage = data?.message || 'Error al registrar usuario';
+        setError(errorMessage);
+        showErrorToast(errorMessage);
+      } else {
+        const successMessage = '¡Registro exitoso! Serás redirigido en breve...';
+        setSuccess(successMessage);
+        notifySuccess('¡Registro exitoso!', 'Tu cuenta ha sido creada correctamente. Redirigiendo...');
+        setIsRedirecting(true);
+
+        // Intentar iniciar sesión automáticamente
+        try {
+          const loginResult = await signIn('credentials', {
+            redirect: false,
+            email,
+            password,
+          });
+
+          if (loginResult?.ok) {
+            // Obtener la sesión para determinar el rol
+            try {
+              const sessionResponse = await fetch('/api/auth/session');
+              const session = await sessionResponse.json();
+              
+              const dashboardPath = getDashboardPath(session?.user?.role || role);
+              
+              // Limpiar intervalo anterior si existe
+              if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
               }
-            }, 1000);
-          } catch (sessionError) {
-            console.error('Error obteniendo sesión:', sessionError);
-            // Si falla, redirigir al login después de 9 segundos
+              
+              // Esperar 9 segundos antes de redirigir
+              setCountdown(9);
+              let remainingSeconds = 9;
+              countdownIntervalRef.current = setInterval(() => {
+                remainingSeconds--;
+                setCountdown(remainingSeconds);
+                if (remainingSeconds <= 0) {
+                  if (countdownIntervalRef.current) {
+                    clearInterval(countdownIntervalRef.current);
+                    countdownIntervalRef.current = null;
+                  }
+                  router.push(dashboardPath);
+                }
+              }, 1000);
+            } catch (sessionError) {
+              console.error('Error obteniendo sesión:', sessionError);
+              // Si falla, redirigir al login después de 9 segundos
+              if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+              }
+              setCountdown(9);
+              let remainingSeconds = 9;
+              countdownIntervalRef.current = setInterval(() => {
+                remainingSeconds--;
+                setCountdown(remainingSeconds);
+                if (remainingSeconds <= 0) {
+                  if (countdownIntervalRef.current) {
+                    clearInterval(countdownIntervalRef.current);
+                    countdownIntervalRef.current = null;
+                  }
+                  router.push('/login');
+                }
+              }, 1000);
+            }
+          } else {
+            // Si el login automático falla, redirigir al login después de 9 segundos
             if (countdownIntervalRef.current) {
               clearInterval(countdownIntervalRef.current);
             }
@@ -135,8 +160,9 @@ export default function RegisterPage() {
               }
             }, 1000);
           }
-        } else {
-          // Si el login automático falla, redirigir al login después de 9 segundos
+        } catch (loginError) {
+          console.error('Error en login automático:', loginError);
+          // Si hay error, redirigir al login después de 9 segundos
           if (countdownIntervalRef.current) {
             clearInterval(countdownIntervalRef.current);
           }
@@ -154,26 +180,11 @@ export default function RegisterPage() {
             }
           }, 1000);
         }
-      } catch (loginError) {
-        console.error('Error en login automático:', loginError);
-        // Si hay error, redirigir al login después de 9 segundos
-        if (countdownIntervalRef.current) {
-          clearInterval(countdownIntervalRef.current);
-        }
-        setCountdown(9);
-        let remainingSeconds = 9;
-        countdownIntervalRef.current = setInterval(() => {
-          remainingSeconds--;
-          setCountdown(remainingSeconds);
-          if (remainingSeconds <= 0) {
-            if (countdownIntervalRef.current) {
-              clearInterval(countdownIntervalRef.current);
-              countdownIntervalRef.current = null;
-            }
-            router.push('/login');
-          }
-        }, 1000);
       }
+    } catch (err) {
+      handleError(err, 'Error al registrar usuario');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -216,17 +227,19 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {/* Botón Volver */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors group"
+        >
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span className="font-medium">Volver al inicio</span>
+        </Link>
+
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 overflow-hidden">
-            <Image 
-              src="/logoclasedesusrf.png" 
-              alt="clasesde.pe" 
-              width={64} 
-              height={64} 
-              className="w-full h-full object-contain"
-              unoptimized
-            />
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-lg">
+            <Waves className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Únete a ClaseDeSurf</h1>
           <p className="text-gray-600">Crea tu cuenta y comienza tu aventura</p>
@@ -235,6 +248,24 @@ export default function RegisterPage() {
         {/* Registration Form */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <form onSubmit={handleSubmit} className="p-8">
+            
+            {/* Google Auth Button */}
+            <div className="mb-6">
+              <GoogleAuthButton 
+                variant="outline"
+                size="md"
+                className="w-full"
+                text="Registrarse con Google"
+              />
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">O completa el formulario</span>
+                </div>
+              </div>
+            </div>
             
             {/* Role Selection */}
             <div className="mb-6">
@@ -279,51 +310,82 @@ export default function RegisterPage() {
             </div>
 
             {/* Personal Information */}
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="name">
                   Nombre Completo
                 </label>
-                <input
-                  type="text"
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Tu nombre completo"
-                  required
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="Tu nombre completo"
+                    required
+                    disabled={isLoading || isRedirecting}
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
-                  Email
+                  Correo Electrónico
                 </label>
-                <input
-                  type="email"
-                  id="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="tu@email.com"
-                  required
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="tu@email.com"
+                    required
+                    disabled={isLoading || isRedirecting}
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="password">
                   Contraseña
                 </label>
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Mínimo 8 caracteres"
-                  required
-                  minLength={8}
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="Mínimo 8 caracteres"
+                    required
+                    minLength={8}
+                    disabled={isLoading || isRedirecting}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">La contraseña debe tener al menos 8 caracteres</p>
               </div>
             </div>
 
@@ -360,14 +422,26 @@ export default function RegisterPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isRedirecting}
+              disabled={isLoading || isRedirecting}
               className={`w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-lg transition-all transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                isRedirecting
+                isLoading || isRedirecting
                   ? 'opacity-50 cursor-not-allowed'
-                  : 'hover:from-blue-700 hover:to-cyan-700 hover:scale-105'
+                  : 'hover:from-blue-700 hover:to-cyan-700 hover:scale-[1.02] active:scale-[0.98]'
               }`}
             >
-              {isRedirecting ? 'Redirigiendo...' : 'Crear Cuenta'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creando cuenta...
+                </span>
+              ) : isRedirecting ? (
+                `Redirigiendo en ${countdown}s...`
+              ) : (
+                'Crear Cuenta'
+              )}
             </button>
 
             {/* Login Link */}

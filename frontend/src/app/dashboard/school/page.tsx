@@ -164,6 +164,17 @@ export default function SchoolDashboardPage() {
       // Try to fetch school associated with current user
       const response = await fetch('/api/schools/my-school', { headers });
       
+      // Handle 401 Unauthorized (token expired)
+      if (response.status === 401) {
+        const errorData = await response.json().catch(() => ({ message: 'Token expired' }));
+        console.error('Token expired or unauthorized:', errorData);
+        
+        // Redirect to login with a message
+        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        router.push('/login?expired=true');
+        return;
+      }
+      
       if (response.status === 404) {
         // No school found for this user
         setSchool(null);
@@ -179,6 +190,15 @@ export default function SchoolDashboardPage() {
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
+          
+          // Check if error message indicates token expiration
+          if (errorMessage.toLowerCase().includes('token expired') || 
+              errorMessage.toLowerCase().includes('token expirado') ||
+              errorMessage.toLowerCase().includes('unauthorized')) {
+            alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            router.push('/login?expired=true');
+            return;
+          }
         } catch {
           // If response is not JSON, use status text
           errorMessage = response.statusText || errorMessage;
@@ -195,6 +215,12 @@ export default function SchoolDashboardPage() {
         const classesData = await classesResponse.json();
         setClasses(classesData);
       } else {
+        // Handle 401 in classes fetch too
+        if (classesResponse.status === 401) {
+          alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+          router.push('/login?expired=true');
+          return;
+        }
         setClasses([]);
       }
 
@@ -204,7 +230,17 @@ export default function SchoolDashboardPage() {
       
     } catch (err) {
       console.error('Error fetching school data:', err);
-      setError(err instanceof Error ? err.message : 'Error loading data');
+      const errorMessage = err instanceof Error ? err.message : 'Error loading data';
+      
+      // Check if error indicates token expiration
+      if (errorMessage.toLowerCase().includes('token expired') || 
+          errorMessage.toLowerCase().includes('unauthorized')) {
+        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        router.push('/login?expired=true');
+        return;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -219,17 +255,43 @@ export default function SchoolDashboardPage() {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
+      // Helper function to check for 401 and redirect
+      const checkAuthAndFetch = async (url: string, options: any): Promise<Response | { ok: false; status: 401 }> => {
+        try {
+          const response = await fetch(url, options);
+          if (response.status === 401) {
+            alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            router.push('/login?expired=true');
+            return { ok: false, status: 401 };
+          }
+          return response;
+        } catch {
+          return { ok: false, status: 500 } as Response;
+        }
+      };
+      
       // Fetch real stats from backend
       const [statsResponse, reservationsResponse, classesResponse] = await Promise.all([
-        fetch('/api/stats/dashboard', { headers }),
-        fetch('/api/reservations', { headers }),
-        fetch(`/api/schools/${schoolData.id}/classes`, { headers })
+        checkAuthAndFetch('/api/stats/dashboard', { headers }),
+        checkAuthAndFetch('/api/reservations', { headers }),
+        checkAuthAndFetch(`/api/schools/${schoolData.id}/classes`, { headers })
       ]);
       
-      if (statsResponse.ok) {
-        const realStats = await statsResponse.json();
-        const reservations = reservationsResponse.ok ? await reservationsResponse.json() : [];
-        const allClasses = classesResponse.ok ? await classesResponse.json() : classes;
+      // If any request returned 401, stop processing
+      if ((statsResponse as any).status === 401 || (reservationsResponse as any).status === 401 || (classesResponse as any).status === 401) {
+        return;
+      }
+      
+      if (statsResponse.ok && 'json' in statsResponse) {
+        const realStats = await (statsResponse as Response).json();
+        const reservationsData = reservationsResponse.ok && 'json' in reservationsResponse 
+          ? await (reservationsResponse as Response).json() 
+          : null;
+        const reservations = Array.isArray(reservationsData) ? reservationsData : [];
+        const classesData = classesResponse.ok && 'json' in classesResponse 
+          ? await (classesResponse as Response).json() 
+          : classes;
+        const allClasses = Array.isArray(classesData) ? classesData : classes;
         
         // Calculate top instructor from reservations
         const instructorCounts: { [key: string]: number } = {};
@@ -406,14 +468,27 @@ export default function SchoolDashboardPage() {
       }
       
       // Fetch real reservations from backend
-      const reservationsResponse = await fetch('/api/reservations', { headers });
+      let reservationsResponse: Response | { ok: false; status: number };
+      try {
+        reservationsResponse = await fetch('/api/reservations', { headers });
+      } catch {
+        reservationsResponse = { ok: false, status: 500 } as Response;
+      }
       
-      if (!reservationsResponse.ok) {
+      // Handle 401 Unauthorized
+      if ((reservationsResponse as any).status === 401) {
+        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        router.push('/login?expired=true');
+        return;
+      }
+      
+      if (!reservationsResponse.ok || !('json' in reservationsResponse)) {
         setRecentActivity([]);
         return;
       }
       
-      const reservations = await reservationsResponse.json();
+      const reservationsData = await (reservationsResponse as Response).json();
+      const reservations = Array.isArray(reservationsData) ? reservationsData : [];
       
       // Convert reservations to activity items
       const activities: RecentActivity[] = reservations

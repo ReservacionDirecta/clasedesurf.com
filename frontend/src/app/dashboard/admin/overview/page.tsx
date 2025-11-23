@@ -65,19 +65,22 @@ export default function AdminOverviewPage() {
       ]);
 
       const [classesData, reservationsData, paymentsData, usersData, schoolsData] = await Promise.all([
-        classesRes.json().catch(() => []),
-        reservationsRes.json().catch(() => []),
-        paymentsRes.json().catch(() => []),
+        classesRes.ok ? classesRes.json().catch(() => []) : [],
+        reservationsRes.ok ? reservationsRes.json().catch(() => []) : [],
+        paymentsRes.ok ? paymentsRes.json().catch(() => []) : [],
         usersRes.ok ? usersRes.json().catch(() => []) : [],
-        schoolsRes.json().catch(() => []),
+        schoolsRes.ok ? schoolsRes.json().catch(() => []) : [],
       ]);
 
+      // Asegurar que todos los datos sean arrays
+      const safeArray = (data: any) => Array.isArray(data) ? data : [];
+      
       setSummary({ 
-        classes: classesData || [], 
-        reservations: reservationsData || [], 
-        payments: paymentsData || [],
-        users: usersData || [],
-        schools: schoolsData || []
+        classes: safeArray(classesData), 
+        reservations: safeArray(reservationsData), 
+        payments: safeArray(paymentsData),
+        users: safeArray(usersData),
+        schools: safeArray(schoolsData)
       });
     } catch (err) {
       console.error('Error fetching overview data:', err);
@@ -88,6 +91,13 @@ export default function AdminOverviewPage() {
 
   // Calculate statistics
   const calculateStats = () => {
+    // Asegurar que todos los datos sean arrays
+    const safeArray = (data: any) => Array.isArray(data) ? data : [];
+    const reservations = safeArray(summary.reservations);
+    const payments = safeArray(summary.payments);
+    const classes = safeArray(summary.classes);
+    const users = safeArray(summary.users);
+    
     const now = new Date();
     const today = new Date(now.setHours(0, 0, 0, 0));
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -107,11 +117,11 @@ export default function AdminOverviewPage() {
       }
     };
 
-    const filteredReservations = summary.reservations.filter((r: any) => 
+    const filteredReservations = reservations.filter((r: any) => 
       filterByTimeRange(r.createdAt || r.class?.date || new Date().toISOString())
     );
 
-    const filteredPayments = summary.payments.filter((p: any) => 
+    const filteredPayments = payments.filter((p: any) => 
       filterByTimeRange(p.createdAt || new Date().toISOString())
     );
 
@@ -127,12 +137,12 @@ export default function AdminOverviewPage() {
       .filter((p: any) => p.status === 'PAID')
       .reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
 
-    const upcomingClasses = summary.classes.filter((c: any) => {
+    const upcomingClasses = classes.filter((c: any) => {
       const classDate = new Date(c.date);
       return classDate >= today;
     });
 
-    const completedClasses = summary.classes.filter((c: any) => {
+    const completedClasses = classes.filter((c: any) => {
       const classDate = new Date(c.date);
       return classDate < today;
     });
@@ -141,16 +151,18 @@ export default function AdminOverviewPage() {
       activeReservations.map((r: any) => r.userId || r.user?.id)
     ).size;
 
-    const averageClassOccupancy = summary.classes.length > 0
-      ? summary.classes.reduce((sum: number, c: any) => {
-          const enrolled = c.reservations?.filter((r: any) => r.status !== 'CANCELED').length || 0;
+    const averageClassOccupancy = classes.length > 0
+      ? classes.reduce((sum: number, c: any) => {
+          const enrolled = Array.isArray(c.reservations) 
+            ? c.reservations.filter((r: any) => r.status !== 'CANCELED').length 
+            : 0;
           const capacity = c.capacity || 1;
           return sum + (enrolled / capacity * 100);
-        }, 0) / summary.classes.length
+        }, 0) / classes.length
       : 0;
 
     return {
-      totalClasses: summary.classes.length,
+      totalClasses: classes.length,
       upcomingClasses: upcomingClasses.length,
       completedClasses: completedClasses.length,
       totalReservations: filteredReservations.length,
@@ -160,8 +172,8 @@ export default function AdminOverviewPage() {
       canceledReservations: filteredReservations.filter((r: any) => r.status === 'CANCELED').length,
       totalRevenue,
       totalStudents,
-      totalUsers: summary.users.length,
-      totalSchools: summary.schools.length,
+      totalUsers: users.length,
+      totalSchools: safeArray(summary.schools).length,
       averageOccupancy: averageClassOccupancy,
       conversionRate: filteredReservations.length > 0
         ? (paidReservations.length / filteredReservations.length) * 100
@@ -221,13 +233,18 @@ export default function AdminOverviewPage() {
     );
   }
 
-  const recentReservations = summary.reservations
+  // Asegurar que los datos sean arrays antes de usar métodos de array
+  const safeArray = (data: any) => Array.isArray(data) ? data : [];
+  const reservations = safeArray(summary.reservations);
+  const classes = safeArray(summary.classes);
+  
+  const recentReservations = reservations
     .sort((a: any, b: any) => 
       new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
     )
     .slice(0, 10);
 
-  const upcomingClasses = summary.classes
+  const upcomingClasses = classes
     .filter((c: any) => new Date(c.date) >= new Date())
     .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 5);

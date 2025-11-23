@@ -362,7 +362,7 @@ export default function NewClassPage() {
 
             <div>
               <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                Precio (USD) *
+                Precio (PEN) *
               </label>
               <input
                 type="number"

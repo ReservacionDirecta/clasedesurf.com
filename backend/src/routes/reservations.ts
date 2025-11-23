@@ -129,6 +129,46 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   }
 });
 
+// Admin-only: GET /reservations/all - list all reservations
+// IMPORTANT: This route must be defined BEFORE /:id to avoid "all" being interpreted as an ID
+router.get('/all', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest, res) => {
+  try {
+    console.log('[GET /reservations/all] User ID:', req.userId, 'Role:', req.role);
+    const all = await prisma.reservation.findMany({ 
+      include: { 
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
+          }
+        }, 
+        class: { 
+          include: { 
+            school: {
+              select: {
+                id: true,
+                name: true,
+                location: true
+              }
+            } 
+          } 
+        },
+        payment: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    console.log('[GET /reservations/all] Returning', all.length, 'reservations');
+    res.json(all);
+  } catch (err) {
+    console.error('[GET /reservations/all] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // GET /reservations/:id - get single reservation details
 router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req: AuthRequest, res) => {
   try {
@@ -293,15 +333,3 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
 });
 
 export default router;
-
-// Admin-only: GET /reservations/all - list all reservations
-// (mounted as same router; client should call /reservations/all)
-router.get('/all', requireAuth, requireRole(['ADMIN']), async (_req: AuthRequest, res) => {
-  try {
-    const all = await prisma.reservation.findMany({ include: { user: true, class: true } });
-    res.json(all);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});

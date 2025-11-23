@@ -794,7 +794,7 @@ export default function AdminClassesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Precio (USD) *</label>
+                  <label className="block text-sm font-medium mb-1">Precio (PEN) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -992,7 +992,7 @@ export default function AdminClassesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Precio (USD) *</label>
+                  <label className="block text-sm font-medium mb-1">Precio (PEN) *</label>
                   <input
                     type="number"
                     step="0.01"
