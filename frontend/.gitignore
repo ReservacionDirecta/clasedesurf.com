@@ -38,3 +38,7 @@ next-env.d.ts
 
 # prisma
 /prisma/migrations/
+
+# uploaded images (keep directory structure but ignore files)
+/public/uploads/
+!/public/uploads/.gitkeep

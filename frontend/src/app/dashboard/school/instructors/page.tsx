@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -8,18 +10,19 @@ import SimpleInstructorForm from '@/components/forms/SimpleInstructorForm';
 import Image from 'next/image';
 import InstructorForm from '@/components/forms/InstructorForm';
 
-const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
-
+// Use API proxy routes instead of direct backend URLs
+// This avoids issues with environment variables during build
 const buildBackendUrl = (path: string): string => {
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
 
+  // Use relative API routes
   if (path.startsWith('/')) {
-    return `${backendBaseUrl}${path}`;
+    return `/api${path}`;
   }
 
-  return `${backendBaseUrl}/${path}`;
+  return `/api/${path}`;
 };
 
 interface Instructor {

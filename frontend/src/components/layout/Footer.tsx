@@ -123,7 +123,7 @@ export function Footer() {
               Política de Privacidad
             </Link>
             <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors">
-              Términos de Uso
+              Condiciones del Servicio
             </Link>
             <CookieSettingsButton variant="link" className="text-gray-400 hover:text-white text-sm transition-colors" />
           </div>

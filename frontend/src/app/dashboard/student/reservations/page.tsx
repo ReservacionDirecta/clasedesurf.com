@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -36,6 +38,7 @@ interface StudentReservation {
     level: string;
     location: string;
     instructor: string;
+    images?: string[];
   };
   payment?: {
     id: number;
@@ -75,12 +78,7 @@ export default function StudentReservations() {
       
       const token = (session as any)?.backendToken;
       
-      // Debug logging
-      console.log('Session:', session);
-      console.log('Token exists:', !!token);
-      
       if (!token) {
-        console.error('No backend token found in session');
         setReservations([]);
         setLoading(false);
         return;
@@ -90,7 +88,6 @@ export default function StudentReservations() {
         'Authorization': `Bearer ${token}`
       };
 
-      // Fetch real reservations from backend
       const reservationsRes = await fetch('/api/reservations', { headers });
 
       if (!reservationsRes.ok) {
@@ -99,7 +96,6 @@ export default function StudentReservations() {
 
       const reservationsData = await reservationsRes.json();
 
-      // Process reservations to match the expected format
       const processedReservations: StudentReservation[] = reservationsData.map((r: any) => ({
         id: r.id,
         classId: r.classId,
@@ -118,7 +114,8 @@ export default function StudentReservations() {
           price: Number(r.class?.price) || 0,
           level: r.class?.level || 'BEGINNER',
           location: r.class?.location || 'Por definir',
-          instructor: r.class?.instructor || 'Instructor'
+          instructor: r.class?.instructor || 'Instructor',
+          images: r.class?.images || []
         },
         payment: r.payment ? {
           id: r.payment.id,
@@ -130,43 +127,6 @@ export default function StudentReservations() {
       }));
 
       setReservations(processedReservations);
-      setLoading(false);
-
-      // Fallback to mock data if no real data
-      if (processedReservations.length === 0) {
-        const mockReservations: StudentReservation[] = [
-        {
-          id: 1,
-          classId: 25,
-          status: 'CONFIRMED',
-          specialRequest: 'Primera vez surfeando, necesito ayuda extra',
-          createdAt: '2025-01-10T10:00:00.000Z',
-          updatedAt: '2025-01-10T10:00:00.000Z',
-          class: {
-            id: 25,
-            title: 'Iniciación en Miraflores',
-            description: 'Clase perfecta para principiantes',
-            date: '2025-01-15T13:00:00.000Z',
-            startTime: '13:00',
-            endTime: '15:00',
-            duration: 120,
-            price: 25,
-            level: 'BEGINNER',
-            location: 'Playa Makaha, Miraflores',
-            instructor: 'Carlos Mendoza'
-          },
-          payment: {
-            id: 1,
-            amount: 25,
-            status: 'PAID',
-            paymentMethod: 'credit_card',
-            paidAt: '2025-01-10T15:30:00.000Z'
-          }
-        }
-      ];
-
-        setReservations(mockReservations);
-      }
     } catch (error) {
       console.error('Error fetching reservations:', error);
     } finally {
@@ -174,22 +134,108 @@ export default function StudentReservations() {
     }
   };
 
-  if (status === 'loading' || loading) {
+  // Helper to cancel a reservation
+  const cancelReservation = async (reservationId: number) => {
+    try {
+      const token = (session as any)?.backendToken;
+      const res = await fetch(`/api/reservations/${reservationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'CANCELED' })
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Error al cancelar reserva: ${err.message || res.statusText}`);
+        return;
+      }
+      fetchReservations();
+    } catch (e) {
+      console.error('Cancel error', e);
+      alert('Error inesperado al cancelar la reserva');
+    }
+  };
+
+  // Render reservation cards
+  const renderReservations = () => {
+    if (reservations.length === 0) {
+      return <p className="text-gray-600">No tienes reservas.</p>;
+    }
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando tus reservas...</p>
-        </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {reservations.map((r) => {
+          const canCancel = r.status !== 'CANCELED' && (!r.payment || r.payment.status !== 'PAID');
+          return (
+            <div key={r.id} className="bg-white rounded-lg shadow overflow-hidden flex flex-col justify-between">
+              {/* Class Image */}
+              <div className="h-40 w-full bg-gray-200 relative">
+                {r.class.images && r.class.images.length > 0 ? (
+                  <img 
+                    src={r.class.images[0]} 
+                    alt={r.class.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image';
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+                    <span className="text-xs">Sin imagen</span>
+                  </div>
+                )}
+                <div className="absolute top-2 right-2 px-2 py-1 bg-white/90 rounded text-xs font-bold shadow-sm">
+                  {r.status}
+                </div>
+              </div>
+              
+              <div className="p-4 flex-grow">
+                <h3 className="text-xl font-semibold mb-2 line-clamp-1">{r.class.title}</h3>
+                <p className="text-gray-700 mb-2 text-sm line-clamp-2">{r.class.description}</p>
+                
+                <div className="space-y-1 text-sm text-gray-600">
+                  <p className="flex items-center">
+                    <span className="font-medium mr-2">Fecha:</span> 
+                    {new Date(r.class.date).toLocaleDateString()}
+                  </p>
+                  <p className="flex items-center">
+                    <span className="font-medium mr-2">Hora:</span> 
+                    {r.class.startTime} - {r.class.endTime}
+                  </p>
+                  {r.payment && (
+                    <p className="flex items-center mt-2 pt-2 border-t border-gray-100">
+                      <span className="font-medium mr-2">Pago:</span>
+                      <span className={r.payment.status === 'PAID' ? 'text-green-600 font-medium' : 'text-orange-600'}>
+                        {r.payment.status}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="px-4 pb-4">
+                {canCancel && (
+                  <button
+                    onClick={() => cancelReservation(r.id)}
+                    className="mt-4 w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded transition"
+                  >
+                    Cancelar reserva
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Mis Reservas</h1>
-        {/* Contenido de reservas aquí */}
+        {renderReservations()}
       </div>
     </div>
   );

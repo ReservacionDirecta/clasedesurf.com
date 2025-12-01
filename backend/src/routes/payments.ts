@@ -13,7 +13,7 @@ const router = express.Router();
 router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    const { reservationId, amount, paymentMethod, transactionId, voucherImage, voucherNotes, status } = req.body;
+    const { reservationId, amount, paymentMethod, transactionId, voucherImage, voucherNotes, status, discountCodeId, discountAmount, originalAmount } = req.body;
     
     console.log('[POST /payments] Request body:', {
       reservationId,
@@ -62,25 +62,76 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
 
     console.log('[POST /payments] Creating payment with status:', paymentStatus);
 
-    const payment = await prisma.payment.create({
-      data: {
+    // Si hay un código de descuento, validar
+    let discountCode = null;
+    if (discountCodeId) {
+      discountCode = await prisma.discountCode.findUnique({
+        where: { id: Number(discountCodeId) }
+      });
+
+      if (!discountCode) {
+        return res.status(400).json({ message: 'Código de descuento no encontrado' });
+      }
+
+      // Verificar que el código aún sea válido
+      const now = new Date();
+      if (!discountCode.isActive || 
+          now < discountCode.validFrom || 
+          now > discountCode.validTo ||
+          (discountCode.maxUses !== null && discountCode.usedCount >= discountCode.maxUses)) {
+        return res.status(400).json({ message: 'El código de descuento ya no es válido' });
+      }
+    }
+
+    const payment = await prisma.$transaction(async (tx) => {
+      // Crear el pago
+      const paymentData: any = {
         reservation: { connect: { id: reservationId } },
-        amount,
-        status: paymentStatus as any, // Type assertion for enum
+        amount: originalAmount ? originalAmount - (discountAmount || 0) : amount,
+        status: paymentStatus as any,
         paymentMethod: paymentMethod || 'manual',
-        transactionId: transactionId || null,
-        voucherImage: truncatedVoucherImage || null,
-        voucherNotes: voucherNotes || null,
-        paidAt: paymentStatus === 'PAID' ? new Date() : null
-      },
-      include: {
-        reservation: {
-          include: {
-            user: true,
-            class: true
+        transactionId: transactionId || undefined,
+        voucherImage: truncatedVoucherImage || undefined,
+        voucherNotes: voucherNotes || undefined,
+        paidAt: paymentStatus === 'PAID' ? new Date() : undefined,
+      };
+
+      // Solo agregar campos de descuento si existen
+      if (discountCodeId) {
+        paymentData.discountCodeId = Number(discountCodeId);
+      }
+      if (discountAmount) {
+        paymentData.discountAmount = discountAmount;
+      }
+      if (originalAmount) {
+        paymentData.originalAmount = originalAmount;
+      }
+
+      const newPayment = await tx.payment.create({
+        data: paymentData,
+        include: {
+          reservation: {
+            include: {
+              user: true,
+              class: true
+            }
           }
         }
+      });
+
+      // Si hay código de descuento, incrementar el contador de usos
+      if (discountCodeId && discountCode) {
+        await tx.discountCode.update({
+          where: { id: Number(discountCodeId) },
+          data: {
+            usedCount: {
+              increment: 1
+            }
+          }
+        });
       }
+
+      return newPayment;
     });
 
     // Update reservation status only if payment is PAID
@@ -107,7 +158,8 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
           paymentMethod: paymentMethodEnum,
           metadata: {
             paymentId: payment.id.toString(),
-            reservationId: payment.reservationId.toString()
+            reservationId: payment.reservationId.toString(),
+            discountCodeId: discountCodeId?.toString() || null
           }
         }, provider);
 

@@ -267,7 +267,7 @@ router.post('/', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN
 // POST /classes/bulk - create multiple classes at once
 router.post('/bulk', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateBody)(classes_1.createBulkClassesSchema), async (req, res) => {
     try {
-        const { baseData, schoolId, occurrences } = req.body;
+        const { baseData, schoolId, occurrences, beachId } = req.body;
         if (!occurrences || occurrences.length === 0) {
             return res.status(400).json({ message: 'No occurrences provided' });
         }
@@ -317,7 +317,8 @@ router.post('/bulk', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_A
                         level: baseData.level,
                         instructor: baseData.instructor ?? null,
                         images: baseData.images || [],
-                        school: { connect: { id: Number(finalSchoolId) } }
+                        school: { connect: { id: Number(finalSchoolId) } },
+                        ...(beachId && { beach: { connect: { id: Number(beachId) } } })
                     }
                 });
                 results.push(created);
@@ -369,23 +370,79 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
 router.delete('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN']), resolve_school_1.default, (0, validation_1.validateParams)(classes_1.classIdSchema), async (req, res) => {
     try {
         const { id } = req.params;
+        const classId = Number(id);
+        console.log('[DELETE /classes/:id] Attempting to delete class:', classId);
+        console.log('[DELETE /classes/:id] User role:', req.role, 'User ID:', req.userId);
+        // Find the class first - Get ALL reservations to check their status
+        const existing = await prisma_1.default.class.findUnique({
+            where: { id: classId },
+            include: {
+                reservations: {
+                    select: {
+                        id: true,
+                        status: true
+                    }
+                }
+            }
+        });
+        if (!existing) {
+            console.log('[DELETE /classes/:id] Class not found:', classId);
+            return res.status(404).json({ message: 'Class not found' });
+        }
         // If SCHOOL_ADMIN, verify ownership
         if (req.role === 'SCHOOL_ADMIN') {
-            if (!req.schoolId)
+            if (!req.schoolId) {
+                console.log('[DELETE /classes/:id] No school found for SCHOOL_ADMIN');
                 return res.status(404).json({ message: 'No school found for this user' });
-            const existing = await prisma_1.default.class.findUnique({ where: { id: Number(id) } });
-            if (!existing)
-                return res.status(404).json({ message: 'Class not found' });
+            }
             if (existing.schoolId !== req.schoolId) {
+                console.log('[DELETE /classes/:id] School mismatch. Class school:', existing.schoolId, 'User school:', req.schoolId);
                 return res.status(403).json({ message: 'You can only delete classes from your school' });
             }
         }
-        await prisma_1.default.class.delete({ where: { id: Number(id) } });
-        res.json({ message: 'Deleted' });
+        // Check if class has active reservations (not CANCELED)
+        const allReservations = existing.reservations || [];
+        const activeReservations = allReservations.filter(r => r.status !== 'CANCELED');
+        console.log('[DELETE /classes/:id] Total reservations:', allReservations.length);
+        console.log('[DELETE /classes/:id] Active reservations:', activeReservations.length);
+        console.log('[DELETE /classes/:id] Reservation statuses:', allReservations.map(r => ({ id: r.id, status: r.status })));
+        if (activeReservations.length > 0) {
+            console.log('[DELETE /classes/:id] Class has active reservations:', activeReservations.length);
+            const statusCounts = activeReservations.reduce((acc, r) => {
+                acc[r.status] = (acc[r.status] || 0) + 1;
+                return acc;
+            }, {});
+            console.log('[DELETE /classes/:id] Active reservation status breakdown:', statusCounts);
+            return res.status(400).json({
+                message: `No se puede eliminar la clase porque tiene ${activeReservations.length} reserva(s) activa(s). Debes cancelar las reservas primero.`,
+                reservationsCount: activeReservations.length,
+                statusBreakdown: statusCounts
+            });
+        }
+        // Delete the class
+        await prisma_1.default.class.delete({ where: { id: classId } });
+        console.log('[DELETE /classes/:id] Class deleted successfully:', classId);
+        res.json({ message: 'Clase eliminada exitosamente' });
     }
     catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+        console.error('[DELETE /classes/:id] Error:', err);
+        console.error('[DELETE /classes/:id] Error name:', err?.name);
+        console.error('[DELETE /classes/:id] Error message:', err?.message);
+        console.error('[DELETE /classes/:id] Error code:', err?.code);
+        // Handle Prisma foreign key constraint errors
+        if (err?.code === 'P2003' || err?.message?.includes('Foreign key constraint')) {
+            return res.status(400).json({
+                message: 'No se puede eliminar la clase porque tiene reservas o pagos asociados. Debes eliminar o cancelar las reservas primero.'
+            });
+        }
+        // Handle Prisma record not found errors
+        if (err?.code === 'P2025') {
+            return res.status(404).json({ message: 'Clase no encontrada' });
+        }
+        res.status(500).json({
+            message: 'Error interno del servidor',
+            error: process.env.NODE_ENV === 'development' ? err?.message : undefined
+        });
     }
 });
 exports.default = router;

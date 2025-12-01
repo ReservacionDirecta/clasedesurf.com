@@ -19,7 +19,8 @@ import {
     CreditCard,
     FileText,
     MoreHorizontal,
-    X
+    X,
+    Tag
 } from 'lucide-react';
 
 interface NavItem {
@@ -38,6 +39,7 @@ const navigationItems: NavItem[] = [
     { name: 'Classes', href: '/dashboard/admin/classes', icon: Waves, roles: ['ADMIN'] },
     { name: 'Reservations', href: '/dashboard/admin/reservations', icon: Calendar, roles: ['ADMIN'] },
     { name: 'Payments', href: '/dashboard/admin/payments', icon: CreditCard, roles: ['ADMIN'] },
+    { name: 'Descuentos', href: '/dashboard/admin/discounts', icon: Tag, roles: ['ADMIN'] },
     { name: 'Reports', href: '/dashboard/admin/reports', icon: FileText, roles: ['ADMIN'] },
     { name: 'Settings', href: '/dashboard/admin/settings', icon: Settings, roles: ['ADMIN'] },
 

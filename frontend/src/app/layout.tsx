@@ -6,6 +6,7 @@ import Providers from './providers'
 import { NavigationWrapper } from '@/components/layout/NavigationWrapper'
 import CookieBanner from '@/components/cookies/CookieBanner'
 import CookiePreferences from '@/components/cookies/CookiePreferences'
+import { ExchangeRateInitializer } from '@/components/currency/ExchangeRateInitializer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -102,6 +103,7 @@ export default function RootLayout({
           }}
         />
         <Providers>
+          <ExchangeRateInitializer />
           <NavigationWrapper>
             {children}
           </NavigationWrapper>

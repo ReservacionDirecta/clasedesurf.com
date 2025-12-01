@@ -162,6 +162,46 @@ router.get('/', auth_1.default, resolve_school_1.default, async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+// Admin-only: GET /reservations/all - list all reservations
+// IMPORTANT: This route must be defined BEFORE /:id to avoid "all" being interpreted as an ID
+router.get('/all', auth_1.default, (0, auth_1.requireRole)(['ADMIN']), async (req, res) => {
+    try {
+        console.log('[GET /reservations/all] User ID:', req.userId, 'Role:', req.role);
+        const all = await prisma_1.default.reservation.findMany({
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true
+                    }
+                },
+                class: {
+                    include: {
+                        school: {
+                            select: {
+                                id: true,
+                                name: true,
+                                location: true
+                            }
+                        }
+                    }
+                },
+                payment: true
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+        console.log('[GET /reservations/all] Returning', all.length, 'reservations');
+        res.json(all);
+    }
+    catch (err) {
+        console.error('[GET /reservations/all] Error:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 // GET /reservations/:id - get single reservation details
 router.get('/:id', auth_1.default, (0, validation_1.validateParams)(reservations_1.reservationIdSchema), async (req, res) => {
     try {
@@ -273,6 +313,11 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
                 return res.status(403).json({ message: 'Students can only cancel reservations' });
             }
         }
+        // Normalize status to uppercase to ensure consistency
+        if (updateData.status) {
+            updateData.status = updateData.status.toUpperCase();
+            console.log('[PUT /reservations/:id] Normalized status:', updateData.status);
+        }
         // Update reservation
         const updatedReservation = await prisma_1.default.reservation.update({
             where: { id: Number(id) },
@@ -314,15 +359,3 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
     }
 });
 exports.default = router;
-// Admin-only: GET /reservations/all - list all reservations
-// (mounted as same router; client should call /reservations/all)
-router.get('/all', auth_1.default, (0, auth_1.requireRole)(['ADMIN']), async (_req, res) => {
-    try {
-        const all = await prisma_1.default.reservation.findMany({ include: { user: true, class: true } });
-        res.json(all);
-    }
-    catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-});

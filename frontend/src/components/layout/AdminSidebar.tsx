@@ -19,7 +19,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
-  Eye
+  Eye,
+  Tag
 } from 'lucide-react';
 
 export function AdminSidebar() {
@@ -90,6 +91,7 @@ export function AdminSidebar() {
     { name: 'Classes', href: '/dashboard/admin/classes', icon: Waves, description: 'Gestionar clases' },
     { name: 'Reservations', href: '/dashboard/admin/reservations', icon: Calendar, description: 'Ver reservas' },
     { name: 'Payments', href: '/dashboard/admin/payments', icon: CreditCard, description: 'Ver pagos' },
+    { name: 'Descuentos', href: '/dashboard/admin/discounts', icon: Tag, description: 'Códigos de descuento' },
     { name: 'Reports', href: '/dashboard/admin/reports', icon: FileText, description: 'Ver reportes' },
     { name: 'Settings', href: '/dashboard/admin/settings', icon: Settings, description: 'Configuración' },
   ];

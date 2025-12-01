@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -8,14 +10,14 @@ import CreateSchoolForm from '@/components/school/CreateSchoolForm';
 import AdvancedStats from '@/components/school/AdvancedStats';
 import RecentActivity from '@/components/school/RecentActivity';
 import ClassesCalendarWidget from '@/components/school/ClassesCalendarWidget';
-import { 
-  Calendar, 
-  Users, 
-  BookOpen, 
-  DollarSign, 
-  TrendingUp, 
-  Star, 
-  Clock, 
+import {
+  Calendar,
+  Users,
+  BookOpen,
+  DollarSign,
+  TrendingUp,
+  Star,
+  Clock,
   MapPin,
   Phone,
   Mail,
@@ -115,7 +117,7 @@ interface RecentActivity {
 export default function SchoolDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  
+
   const [school, setSchool] = useState<School | null>(null);
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -127,7 +129,7 @@ export default function SchoolDashboardPage() {
 
   useEffect(() => {
     if (status === 'loading') return;
-    
+
     if (!session) {
       router.push('/login');
       return;
@@ -153,28 +155,28 @@ export default function SchoolDashboardPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get authentication token
       const token = (session as any)?.backendToken;
       const headers: any = {};
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       // Try to fetch school associated with current user
       const response = await fetch('/api/schools/my-school', { headers });
-      
+
       // Handle 401 Unauthorized (token expired)
       if (response.status === 401) {
         const errorData = await response.json().catch(() => ({ message: 'Token expired' }));
         console.error('Token expired or unauthorized:', errorData);
-        
+
         // Redirect to login with a message
         alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         router.push('/login?expired=true');
         return;
       }
-      
+
       if (response.status === 404) {
         // No school found for this user
         setSchool(null);
@@ -183,18 +185,18 @@ export default function SchoolDashboardPage() {
         setRecentActivity([]);
         return;
       }
-      
+
       if (!response.ok) {
         // Try to get error message from backend
         let errorMessage = 'Failed to fetch school data';
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
-          
+
           // Check if error message indicates token expiration
-          if (errorMessage.toLowerCase().includes('token expired') || 
-              errorMessage.toLowerCase().includes('token expirado') ||
-              errorMessage.toLowerCase().includes('unauthorized')) {
+          if (errorMessage.toLowerCase().includes('token expired') ||
+            errorMessage.toLowerCase().includes('token expirado') ||
+            errorMessage.toLowerCase().includes('unauthorized')) {
             alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
             router.push('/login?expired=true');
             return;
@@ -205,10 +207,10 @@ export default function SchoolDashboardPage() {
         }
         throw new Error(errorMessage);
       }
-      
+
       const schoolData = await response.json();
       setSchool(schoolData);
-      
+
       // Fetch classes for this school
       const classesResponse = await fetch(`/api/schools/${schoolData.id}/classes`, { headers });
       if (classesResponse.ok) {
@@ -227,19 +229,19 @@ export default function SchoolDashboardPage() {
       // Generate real stats and activity data from API
       generateMockStats(schoolData);
       generateMockActivity();
-      
+
     } catch (err) {
       console.error('Error fetching school data:', err);
       const errorMessage = err instanceof Error ? err.message : 'Error loading data';
-      
+
       // Check if error indicates token expiration
-      if (errorMessage.toLowerCase().includes('token expired') || 
-          errorMessage.toLowerCase().includes('unauthorized')) {
+      if (errorMessage.toLowerCase().includes('token expired') ||
+        errorMessage.toLowerCase().includes('unauthorized')) {
         alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         router.push('/login?expired=true');
         return;
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -254,7 +256,7 @@ export default function SchoolDashboardPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       // Helper function to check for 401 and redirect
       const checkAuthAndFetch = async (url: string, options: any): Promise<Response | { ok: false; status: 401 }> => {
         try {
@@ -269,30 +271,30 @@ export default function SchoolDashboardPage() {
           return { ok: false, status: 500 } as Response;
         }
       };
-      
+
       // Fetch real stats from backend
       const [statsResponse, reservationsResponse, classesResponse] = await Promise.all([
         checkAuthAndFetch('/api/stats/dashboard', { headers }),
         checkAuthAndFetch('/api/reservations', { headers }),
         checkAuthAndFetch(`/api/schools/${schoolData.id}/classes`, { headers })
       ]);
-      
+
       // If any request returned 401, stop processing
       if ((statsResponse as any).status === 401 || (reservationsResponse as any).status === 401 || (classesResponse as any).status === 401) {
         return;
       }
-      
+
       if (statsResponse.ok && 'json' in statsResponse) {
         const realStats = await (statsResponse as Response).json();
-        const reservationsData = reservationsResponse.ok && 'json' in reservationsResponse 
-          ? await (reservationsResponse as Response).json() 
+        const reservationsData = reservationsResponse.ok && 'json' in reservationsResponse
+          ? await (reservationsResponse as Response).json()
           : null;
         const reservations = Array.isArray(reservationsData) ? reservationsData : [];
-        const classesData = classesResponse.ok && 'json' in classesResponse 
-          ? await (classesResponse as Response).json() 
+        const classesData = classesResponse.ok && 'json' in classesResponse
+          ? await (classesResponse as Response).json()
           : classes;
         const allClasses = Array.isArray(classesData) ? classesData : classes;
-        
+
         // Calculate top instructor from reservations
         const instructorCounts: { [key: string]: number } = {};
         reservations.forEach((res: any) => {
@@ -304,7 +306,7 @@ export default function SchoolDashboardPage() {
         const topInstructor = Object.keys(instructorCounts).length > 0
           ? Object.entries(instructorCounts).sort((a, b) => b[1] - a[1])[0][0]
           : '-';
-        
+
         // Calculate popular level from reservations
         const levelCounts: { [key: string]: number } = {};
         reservations.forEach((res: any) => {
@@ -322,7 +324,7 @@ export default function SchoolDashboardPage() {
           'ADVANCED': 'Avanzado'
         };
         const popularLevel = popularLevelKey ? (levelMap[popularLevelKey] || popularLevelKey) : '-';
-        
+
         // Calculate peak hours from class dates
         const hourCounts: { [key: number]: number } = {};
         allClasses.forEach((cls: any) => {
@@ -339,13 +341,13 @@ export default function SchoolDashboardPage() {
         const peakHours = peakHour !== null
           ? `${String(peakHour).padStart(2, '0')}:00 - ${String((peakHour + 2) % 24).padStart(2, '0')}:00`
           : '-';
-        
+
         // Calculate growth percentages (comparing current month with previous month)
         const now = new Date();
         const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
         const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-        
+
         // Revenue growth
         const currentMonthRevenue = realStats.monthlyRevenue || 0;
         const previousMonthPayments = reservations
@@ -358,7 +360,7 @@ export default function SchoolDashboardPage() {
         const revenueGrowth = previousMonthPayments > 0
           ? Math.round(((currentMonthRevenue - previousMonthPayments) / previousMonthPayments) * 100)
           : 0;
-        
+
         // Student growth
         const currentMonthStudents = realStats.newStudentsThisMonth || 0;
         const previousMonthStudents = reservations
@@ -371,7 +373,7 @@ export default function SchoolDashboardPage() {
         const studentGrowth = previousMonthStudents > 0
           ? Math.round(((currentMonthStudents - previousMonthStudents) / previousMonthStudents) * 100)
           : 0;
-        
+
         // Class growth
         const currentMonthClasses = allClasses.filter((cls: any) => {
           if (!cls.createdAt) return false;
@@ -386,21 +388,21 @@ export default function SchoolDashboardPage() {
         const classGrowth = previousMonthClasses > 0
           ? Math.round(((currentMonthClasses - previousMonthClasses) / previousMonthClasses) * 100)
           : 0;
-        
+
         // Calculate level distribution from reservations
         const totalReservationsByLevel = Object.values(levelCounts).reduce((sum, count) => sum + count, 0);
         const levelDistribution = {
-          BEGINNER: totalReservationsByLevel > 0 
-            ? Math.round((levelCounts['BEGINNER'] || 0) / totalReservationsByLevel * 100) 
+          BEGINNER: totalReservationsByLevel > 0
+            ? Math.round((levelCounts['BEGINNER'] || 0) / totalReservationsByLevel * 100)
             : 0,
-          INTERMEDIATE: totalReservationsByLevel > 0 
-            ? Math.round((levelCounts['INTERMEDIATE'] || 0) / totalReservationsByLevel * 100) 
+          INTERMEDIATE: totalReservationsByLevel > 0
+            ? Math.round((levelCounts['INTERMEDIATE'] || 0) / totalReservationsByLevel * 100)
             : 0,
-          ADVANCED: totalReservationsByLevel > 0 
-            ? Math.round((levelCounts['ADVANCED'] || 0) / totalReservationsByLevel * 100) 
+          ADVANCED: totalReservationsByLevel > 0
+            ? Math.round((levelCounts['ADVANCED'] || 0) / totalReservationsByLevel * 100)
             : 0
         };
-        
+
         setStats({
           ...realStats,
           topInstructor,
@@ -466,7 +468,7 @@ export default function SchoolDashboardPage() {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      
+
       // Fetch real reservations from backend
       let reservationsResponse: Response | { ok: false; status: number };
       try {
@@ -474,22 +476,22 @@ export default function SchoolDashboardPage() {
       } catch {
         reservationsResponse = { ok: false, status: 500 } as Response;
       }
-      
+
       // Handle 401 Unauthorized
       if ((reservationsResponse as any).status === 401) {
         alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         router.push('/login?expired=true');
         return;
       }
-      
+
       if (!reservationsResponse.ok || !('json' in reservationsResponse)) {
         setRecentActivity([]);
         return;
       }
-      
+
       const reservationsData = await (reservationsResponse as Response).json();
       const reservations = Array.isArray(reservationsData) ? reservationsData : [];
-      
+
       // Convert reservations to activity items
       const activities: RecentActivity[] = reservations
         .slice(0, 20) // Get last 20 reservations
@@ -499,13 +501,13 @@ export default function SchoolDashboardPage() {
           const instructorName = reservation.class?.instructor?.name || 'Instructor';
           const participants = reservation.participants?.length || 1;
           const amount = reservation.payment?.amount ? Number(reservation.payment.amount) : undefined;
-          
+
           // Determine activity type and status
           let type: 'reservation' | 'payment' | 'class' | 'instructor' | 'student' = 'reservation';
           let status: 'success' | 'warning' | 'error' | 'info' = 'success';
           let title = 'Nueva Reserva';
           let description = `${studentName} reservó ${className}`;
-          
+
           if (reservation.status === 'CANCELED') {
             type = 'reservation';
             status = 'error';
@@ -522,7 +524,7 @@ export default function SchoolDashboardPage() {
             title = 'Pago Pendiente';
             description = `Pago pendiente de ${studentName} por ${className}`;
           }
-          
+
           return {
             id: reservation.id || index + 1,
             type,
@@ -543,7 +545,7 @@ export default function SchoolDashboardPage() {
           // Sort by timestamp, most recent first
           return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
         });
-      
+
       setRecentActivity(activities);
     } catch (error) {
       console.error('Error fetching activity:', error);
@@ -599,7 +601,7 @@ export default function SchoolDashboardPage() {
   // Show create form if no school exists or user wants to create one
   if (showCreateForm || (!school && !loading)) {
     return (
-      <CreateSchoolForm 
+      <CreateSchoolForm
         onSchoolCreated={handleSchoolCreated}
         onCancel={school ? () => setShowCreateForm(false) : undefined}
       />
@@ -612,121 +614,146 @@ export default function SchoolDashboardPage() {
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow p-4 sm:p-6 text-white">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div className="mb-4 md:mb-0">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">¡Bienvenido, {session?.user?.name}! 🏄‍♂️</h1>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 flex items-center gap-2">
+                  <span className="truncate">¡Bienvenido, {session?.user?.name}!</span>
+                  <span className="flex-shrink-0">🏄‍♂️</span>
+                </h1>
                 <p className="text-blue-100 mb-3 text-sm sm:text-base">Gestiona tu escuela de surf desde aquí</p>
-                <div className="flex items-center text-blue-100">
+                <div className="flex items-center text-blue-100 min-w-0">
                   <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
                   <span className="text-sm sm:text-base truncate">{school?.name || 'Tu Escuela de Surf'}</span>
                 </div>
               </div>
-              <div className="text-center">
+              <div className="text-center md:text-right flex-shrink-0">
                 <div className="text-3xl sm:text-4xl font-bold mb-1">{classes.length}</div>
-                <div className="text-blue-200 text-xs sm:text-sm">Clases Activas</div>
+                <div className="text-blue-200 text-xs sm:text-sm whitespace-nowrap">Clases Activas</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
-            <div className="flex items-center">
-              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
-              <div className="ml-2 sm:ml-4 min-w-0">
-                <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Instructores</h3>
-                <p className="text-lg sm:text-2xl md:text-3xl font-bold text-blue-600">{stats?.totalInstructors ?? 0}</p>
+        {/* Stats Grid & Quick Actions Combined - Mobile Horizontal Scroll */}
+        <div className="flex overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8 snap-x snap-mandatory no-scrollbar">
+          <Link
+            href="/dashboard/school/instructors"
+            className="min-w-[85vw] sm:min-w-0 snap-center bg-white rounded-xl shadow-sm hover:shadow-md p-4 sm:p-6 transition-all duration-200 border border-gray-100 group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Users className="w-16 h-16 text-blue-600 transform rotate-12" />
+            </div>
+            <div className="flex items-center relative z-10">
+              <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors shadow-sm">
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-700">Instructores</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">{stats?.totalInstructors ?? 0}</p>
+                  <span className="text-xs text-gray-500 font-medium hidden sm:inline-block">Activos</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5"></span>
+                  Gestionar equipo
+                </p>
+              </div>
+              <div className="ml-2 sm:hidden">
+                <ChevronRight className="w-5 h-5 text-gray-300" />
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
-            <div className="flex items-center">
-              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" />
-              <div className="ml-2 sm:ml-4 min-w-0">
-                <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Estudiantes</h3>
-                <p className="text-lg sm:text-2xl md:text-3xl font-bold text-green-600">{stats?.totalStudents ?? 0}</p>
+          <Link
+            href="/dashboard/school/students"
+            className="min-w-[85vw] sm:min-w-0 snap-center bg-white rounded-xl shadow-sm hover:shadow-md p-4 sm:p-6 transition-all duration-200 border border-gray-100 group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Users className="w-16 h-16 text-green-600 transform rotate-12" />
+            </div>
+            <div className="flex items-center relative z-10">
+              <div className="p-3 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors shadow-sm">
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" />
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-green-700">Estudiantes</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl sm:text-3xl font-bold text-green-600">{stats?.totalStudents ?? 0}</p>
+                  <span className="text-xs text-gray-500 font-medium hidden sm:inline-block">Total</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
+                  Ver base de datos
+                </p>
+              </div>
+              <div className="ml-2 sm:hidden">
+                <ChevronRight className="w-5 h-5 text-gray-300" />
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
-            <div className="flex items-center">
-              <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 flex-shrink-0" />
-              <div className="ml-2 sm:ml-4 min-w-0">
-                <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Ingresos</h3>
-                <p className="text-lg sm:text-2xl md:text-3xl font-bold text-yellow-600">S/. {stats?.monthlyRevenue?.toFixed(0) ?? '0'}</p>
+          <Link
+            href="/dashboard/school/payments"
+            className="min-w-[85vw] sm:min-w-0 snap-center bg-white rounded-xl shadow-sm hover:shadow-md p-4 sm:p-6 transition-all duration-200 border border-gray-100 group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <DollarSign className="w-16 h-16 text-yellow-600 transform rotate-12" />
+            </div>
+            <div className="flex items-center relative z-10">
+              <div className="p-3 bg-yellow-50 rounded-xl group-hover:bg-yellow-100 transition-colors shadow-sm">
+                <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 flex-shrink-0" />
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-yellow-700">Ingresos</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl sm:text-3xl font-bold text-yellow-600">S/. {stats?.monthlyRevenue?.toFixed(0) ?? '0'}</p>
+                  <span className="text-xs text-gray-500 font-medium hidden sm:inline-block">Mes actual</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-1.5"></span>
+                  Gestionar pagos
+                </p>
+              </div>
+              <div className="ml-2 sm:hidden">
+                <ChevronRight className="w-5 h-5 text-gray-300" />
               </div>
             </div>
-          </div>
+          </Link>
 
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
-            <div className="flex items-center">
-              <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 flex-shrink-0" />
-              <div className="ml-2 sm:ml-4 min-w-0">
-                <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Ocupación</h3>
-                <p className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-600">{stats?.averageOccupancy ?? 0}%</p>
+          <Link
+            href="/dashboard/school/classes"
+            className="min-w-[85vw] sm:min-w-0 snap-center bg-white rounded-xl shadow-sm hover:shadow-md p-4 sm:p-6 transition-all duration-200 border border-gray-100 group relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Calendar className="w-16 h-16 text-purple-600 transform rotate-12" />
+            </div>
+            <div className="flex items-center relative z-10">
+              <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors shadow-sm">
+                <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 flex-shrink-0" />
+              </div>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-purple-700">Clases</h3>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl sm:text-3xl font-bold text-purple-600">{stats?.totalClasses ?? 0}</p>
+                  <span className="text-xs text-gray-500 font-medium hidden sm:inline-block">Activas</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 flex items-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500 mr-1.5"></span>
+                  Ocupación: {stats?.averageOccupancy ?? 0}%
+                </p>
+              </div>
+              <div className="ml-2 sm:hidden">
+                <ChevronRight className="w-5 h-5 text-gray-300" />
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Acciones Rápidas</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <Link
-              href="/dashboard/school/classes"
-              className="flex flex-col sm:flex-row items-center p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group"
-            >
-              <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 mb-2 sm:mb-0 sm:mr-4 flex-shrink-0" />
-              <div className="text-center sm:text-left min-w-0">
-                <div className="font-semibold text-gray-900 group-hover:text-blue-900 text-sm sm:text-base truncate">Gestionar Clases</div>
-                <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">Crear y administrar clases</div>
-              </div>
-            </Link>
-
-            <Link
-              href="/dashboard/school/instructors"
-              className="flex flex-col sm:flex-row items-center p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors group"
-            >
-              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 mb-2 sm:mb-0 sm:mr-4 flex-shrink-0" />
-              <div className="text-center sm:text-left min-w-0">
-                <div className="font-semibold text-gray-900 group-hover:text-green-900 text-sm sm:text-base truncate">Instructores</div>
-                <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">Administrar equipo</div>
-              </div>
-            </Link>
-
-            <Link
-              href="/dashboard/school/students"
-              className="flex flex-col sm:flex-row items-center p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors group"
-            >
-              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 mb-2 sm:mb-0 sm:mr-4 flex-shrink-0" />
-              <div className="text-center sm:text-left min-w-0">
-                <div className="font-semibold text-gray-900 group-hover:text-purple-900 text-sm sm:text-base truncate">Estudiantes</div>
-                <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">Ver base de datos</div>
-              </div>
-            </Link>
-
-            <Link
-              href="/dashboard/school/payments"
-              className="flex flex-col sm:flex-row items-center p-3 sm:p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors group"
-            >
-              <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 mb-2 sm:mb-0 sm:mr-4 flex-shrink-0" />
-              <div className="text-center sm:text-left min-w-0">
-                <div className="font-semibold text-gray-900 group-hover:text-yellow-900 text-sm sm:text-base truncate">Pagos</div>
-                <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">Gestionar transacciones</div>
-              </div>
-            </Link>
-          </div>
+          </Link>
         </div>
 
         {/* Advanced Statistics Dashboard */}
         {stats && (
           <div className="mb-8">
-            <AdvancedStats 
-              stats={stats} 
+            <AdvancedStats
+              stats={stats}
               timeframe={selectedTimeframe}
               onTimeframeChange={setSelectedTimeframe}
             />
@@ -737,14 +764,14 @@ export default function SchoolDashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
           {/* Calendar Widget - Mobile First */}
           <div className="lg:col-span-2 order-2 lg:order-1">
-            <ClassesCalendarWidget 
+            <ClassesCalendarWidget
               classes={classes.map(cls => ({
                 id: cls.id,
                 title: cls.title,
                 date: cls.date,
-                time: new Date(cls.date).toLocaleTimeString('es-ES', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
+                time: new Date(cls.date).toLocaleTimeString('es-ES', {
+                  hour: '2-digit',
+                  minute: '2-digit'
                 }),
                 capacity: cls.capacity,
                 enrolled: cls.capacity - (cls.availableSpots || 0),

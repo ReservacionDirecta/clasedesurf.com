@@ -27,6 +27,19 @@ exports.createPaymentSchema = zod_1.z.object({
         .nullable()
         .optional(),
     status: zod_1.z.enum(['UNPAID', 'PENDING', 'PAID', 'REFUNDED'])
+        .optional(),
+    discountCodeId: zod_1.z.number()
+        .int('Discount code ID must be a whole number')
+        .min(1, 'Invalid discount code ID')
+        .nullable()
+        .optional(),
+    discountAmount: zod_1.z.number()
+        .min(0, 'Discount amount must be non-negative')
+        .nullable()
+        .optional(),
+    originalAmount: zod_1.z.number()
+        .min(0, 'Original amount must be non-negative')
+        .nullable()
         .optional()
 });
 // Schema for updating a payment

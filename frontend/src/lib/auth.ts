@@ -65,7 +65,7 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: { user: any; account: any; profile?: any }) {
       // Si es autenticación con Google, crear/actualizar usuario en backend
       if (account?.provider === 'google') {
         try {

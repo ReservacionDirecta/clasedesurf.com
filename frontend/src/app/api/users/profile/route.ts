@@ -5,8 +5,22 @@ const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 async function proxy(req: Request) {
   // Build backend URL by stripping the /api prefix
-  const url = new URL(req.url);
-  const path = url.pathname.replace('/api', ''); // /api/users/profile -> /users/profile
+  // Extract pathname safely without using new URL() during prerender
+  let path = '';
+  try {
+    if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
+      const url = new URL(req.url);
+      path = url.pathname.replace('/api', '');
+    } else {
+      // For relative URLs, extract pathname manually
+      const urlPath = req.url.split('?')[0]; // Remove query string
+      path = urlPath.replace('/api', '');
+    }
+  } catch (e) {
+    // If URL parsing fails, extract pathname manually
+    const urlPath = req.url.split('?')[0];
+    path = urlPath.replace('/api', '');
+  }
   const backendUrl = `${BACKEND}${path}`;
 
   try {

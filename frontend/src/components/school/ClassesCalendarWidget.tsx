@@ -277,7 +277,7 @@ export default function ClassesCalendarWidget({ classes, onClassClick }: Classes
                                   </div>
                                 ) : (
                                   <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-[8px] font-bold text-gray-500">
-                                    {cls.instructor.name.charAt(0)}
+                                    {cls.instructor.name?.charAt(0) || '?'}
                                   </div>
                                 )}
                               </div>

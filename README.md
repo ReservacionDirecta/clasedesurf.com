@@ -553,6 +553,14 @@ Abre una interfaz visual en `http://localhost:5555`
 - `GET /payments/:reservationId` - Obtener estado de pago
 - `POST /payments/confirm` - Confirmar pago (admin)
 
+#### Códigos de Descuento
+- `GET /discount-codes` - Listar códigos de descuento (admin/school_admin)
+- `GET /discount-codes/:id` - Obtener código específico
+- `POST /discount-codes` - Crear código de descuento
+- `PUT /discount-codes/:id` - Actualizar código
+- `DELETE /discount-codes/:id` - Eliminar código
+- `POST /discount-codes/validate` - Validar y calcular descuento (público)
+
 #### Payouts (Admin)
 - `GET /payouts` - Listar payouts
 - `POST /payouts/generate` - Generar payouts
@@ -686,6 +694,8 @@ gantt
 - ✅ Sistema básico de reservas
 - ✅ Dashboard administrativo
 - ✅ Pagos básicos (sin gateway)
+- ✅ Sistema de códigos de descuento completo
+- ✅ Moneda base PEN con conversión a USD
 
 #### v1.1 - Core Features (En Progreso) 🚧
 - 🚧 Listado y filtrado de clases
@@ -720,10 +730,39 @@ gantt
 - 🔮 Marketplace multi-escuela
 - 🔮 Analytics avanzados
 
+## 🎟️ Sistema de Códigos de Descuento
+
+La plataforma incluye un sistema completo de códigos de descuento que permite:
+
+- **Crear códigos promocionales** con porcentaje de descuento variable (0-100%)
+- **Configurar período de validez** (fechas de inicio y fin)
+- **Establecer límite de usos** (opcional o ilimitado)
+- **Códigos globales** (admin) o **específicos por escuela** (school_admin)
+- **Aplicar códigos** durante el proceso de reserva
+- **Cálculo automático** del descuento y precio final
+
+### Documentación
+
+- **[Sistema de Códigos de Descuento](./SISTEMA_CODIGOS_DESCUENTO.md)** - Documentación completa del sistema
+- **[Verificación](./VERIFICACION_CODIGOS_DESCUENTO.md)** - Checklist de verificación
+
+### Uso Rápido
+
+**Para Administradores:**
+1. Acceder a `/dashboard/admin/discount-codes`
+2. Crear nuevo código con porcentaje, fechas y límite de usos
+3. Los usuarios podrán aplicar el código al reservar
+
+**Para Usuarios:**
+1. Durante el proceso de reserva, en el paso 3
+2. Ingresar el código de descuento
+3. Click en "Aplicar" para validar
+4. El descuento se aplica automáticamente al precio final
+
 ## 📞 Soporte
 
 Para soporte o preguntas, contactar al equipo de desarrollo.
 
 ---
 
-**Última actualización:** Octubre 2024
+**Última actualización:** Diciembre 2024

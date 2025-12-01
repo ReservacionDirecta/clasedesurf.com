@@ -82,7 +82,7 @@ export default function CookieBanner() {
                   className="text-sm sm:text-base text-gray-600 leading-relaxed"
                 >
                   Utilizamos cookies para mejorar tu experiencia, analizar el tráfico del sitio y personalizar el contenido. 
-                  Al hacer clic en "Aceptar todas", aceptas nuestro uso de cookies. Puedes gestionar tus preferencias en cualquier momento.
+                  Al hacer clic en &quot;Aceptar todas&quot;, aceptas nuestro uso de cookies. Puedes gestionar tus preferencias en cualquier momento.
                   <a
                     href="/privacy"
                     className="text-blue-600 hover:text-blue-700 underline ml-1"

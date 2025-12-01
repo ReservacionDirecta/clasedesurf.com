@@ -17,6 +17,7 @@ import studentsRouter from './routes/students';
 import statsRouter from './routes/stats';
 import beachesRouter from './routes/beaches';
 import notesRouter from './routes/notes';
+import discountCodesRouter from './routes/discountCodes';
 import { whatsappService } from './services/whatsapp.service';
 import prisma from './prisma';
 const app = express();
@@ -77,6 +78,7 @@ app.use('/students', studentsRouter);
 app.use('/stats', statsRouter);
 app.use('/beaches', beachesRouter);
 app.use('/notes', notesRouter);
+app.use('/discount-codes', discountCodesRouter);
 
 app.get('/', (_req, res) => res.json({ 
   message: 'Backend API running', 

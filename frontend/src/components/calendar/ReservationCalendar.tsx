@@ -150,9 +150,9 @@ export default function ReservationCalendar({
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('es-PE', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PEN' // Moneda base: soles peruanos
     }).format(amount);
   };
 

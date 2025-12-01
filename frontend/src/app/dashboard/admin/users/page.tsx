@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -12,10 +14,12 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import UserForm from '@/components/forms/UserForm';
 import DataTable, { Column } from '@/components/tables/DataTable';
 import { User } from '@/types';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function UsersManagementPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const { makeRequest } = useApiCall();
 
@@ -38,15 +42,15 @@ export default function UsersManagementPage() {
       fetchUsers();
 
       if (action === 'create') {
-        alert('Usuario creado exitosamente');
+        showSuccess('¡Usuario creado!', 'El usuario se creó correctamente');
       } else if (action === 'update') {
-        alert('Usuario actualizado exitosamente');
+        showSuccess('¡Usuario actualizado!', 'Los cambios se guardaron correctamente');
       } else if (action === 'delete') {
-        alert('Usuario eliminado exitosamente');
+        showSuccess('¡Usuario eliminado!', 'El usuario fue eliminado correctamente');
       }
     },
     onError: (error) => {
-      alert(`Error: ${error}`);
+      showError('Error', error);
     }
   });
 
@@ -125,9 +129,8 @@ export default function UsersManagementPage() {
       key: 'canSwim',
       label: '¿Sabe nadar?',
       render: (item) => (
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          item.canSwim ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${item.canSwim ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
           {item.canSwim ? 'Sí' : 'No'}
         </span>
       )

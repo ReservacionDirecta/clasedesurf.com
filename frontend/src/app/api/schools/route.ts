@@ -7,14 +7,21 @@ export async function GET(req: Request) {
     console.log('Schools proxy GET called');
     console.log('BACKEND URL:', BACKEND);
     
+    const authHeader = req.headers.get('authorization');
+    
+    const headers: any = {
+      'Content-Type': 'application/json'
+    };
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+    
     const backendUrl = `${BACKEND}/schools`;
     console.log('Fetching from:', backendUrl);
     
     const res = await fetch(backendUrl, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers
     });
     
     console.log('Backend response status:', res.status);

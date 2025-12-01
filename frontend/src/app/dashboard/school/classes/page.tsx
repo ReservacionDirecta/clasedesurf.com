@@ -1,10 +1,13 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X } from 'lucide-react';
 import { SchoolContextBanner } from '@/components/school/SchoolContextBanner';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Class {
   id: number;
@@ -39,6 +42,7 @@ interface School {
 export default function ClassesManagementPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [classes, setClasses] = useState<Class[]>([]);
   const [school, setSchool] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,13 +135,13 @@ export default function ClassesManagementPage() {
       if (response.ok) {
         await fetchClasses();
         setShowCreateModal(false);
-        alert('Clase creada exitosamente');
+        showSuccess('¡Clase creada!', 'La clase se creó correctamente');
       } else {
         throw new Error('Error al crear la clase');
       }
     } catch (error) {
       console.error('Error creating class:', error);
-      alert('Error al crear la clase');
+      showError('Error al crear', 'No se pudo crear la clase');
     }
   };
 
@@ -161,13 +165,13 @@ export default function ClassesManagementPage() {
         await fetchClasses();
         setShowEditModal(false);
         setSelectedClass(null);
-        alert('Clase actualizada exitosamente');
+        showSuccess('¡Actualizada!', 'La clase se actualizó correctamente');
       } else {
         throw new Error('Error al actualizar la clase');
       }
     } catch (error) {
       console.error('Error updating class:', error);
-      alert('Error al actualizar la clase');
+      showError('Error al actualizar', error instanceof Error ? error.message : 'No se pudo actualizar la clase');
     }
   };
 
@@ -195,14 +199,21 @@ export default function ClassesManagementPage() {
         await fetchClasses();
         setShowDeleteModal(false);
         setSelectedClass(null);
-        alert('Clase eliminada exitosamente');
+        showSuccess('Clase eliminada', 'La clase fue eliminada correctamente');
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Error al eliminar la clase' }));
-        throw new Error(errorData.message || 'Error al eliminar la clase');
+        
+        // Si hay reservas activas, mostrar mensaje específico
+        let errorMessage = errorData.message || 'Error al eliminar la clase';
+        if (errorData.reservationsCount) {
+          errorMessage = `No se puede eliminar la clase porque tiene ${errorData.reservationsCount} reserva(s) activa(s). Debes cancelar las reservas primero.`;
+        }
+        
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error deleting class:', error);
-      alert(error instanceof Error ? error.message : 'Error al eliminar la clase');
+      showError('Error al eliminar', error instanceof Error ? error.message : 'Error al eliminar la clase');
     }
   };
 
@@ -357,8 +368,8 @@ export default function ClassesManagementPage() {
             <button
               onClick={() => setFilter('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Todas ({(classes || []).length})
@@ -366,8 +377,8 @@ export default function ClassesManagementPage() {
             <button
               onClick={() => setFilter('upcoming')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'upcoming'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Próximas ({(classes || []).filter(c => c.status === 'upcoming').length})
@@ -375,8 +386,8 @@ export default function ClassesManagementPage() {
             <button
               onClick={() => setFilter('completed')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'completed'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Completadas ({(classes || []).filter(c => c.status === 'completed').length})
@@ -384,8 +395,8 @@ export default function ClassesManagementPage() {
             <button
               onClick={() => setFilter('cancelled')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'cancelled'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-red-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               Canceladas ({(classes || []).filter(c => c.status === 'cancelled').length})
@@ -435,47 +446,47 @@ export default function ClassesManagementPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between">
+                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="text-lg font-semibold text-green-600">
                       S/. {cls.price}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                       <button
                         onClick={() => router.push(`/dashboard/school/classes/${cls.id}`)}
-                        className="flex items-center px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="flex items-center justify-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
                       >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Ver Detalles
+                        <Eye className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">Ver Detalles</span>
                       </button>
                       <button
                         onClick={() => router.push(`/classes/${cls.id}`)}
-                        className="flex items-center px-3 py-1 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        className="flex items-center justify-center px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors text-sm"
                       >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Vista Pública
+                        <Eye className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">Vista Pública</span>
                       </button>
                       <button
                         onClick={() => {
                           setSelectedClass(cls);
                           setShowEditModal(true);
                         }}
-                        className="flex items-center px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        className="flex items-center justify-center px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
                         title={(cls.reservations?.length ?? 0) > 0 ? 'Editar detalles limitados (hay reservas activas)' : 'Editar clase'}
                       >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Editar
+                        <Edit className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">Editar</span>
                       </button>
-                        <button
-                          onClick={() => {
-                            setSelectedClass(cls);
-                            setShowDeleteModal(true);
-                          }}
-                          className="flex items-center px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      <button
+                        onClick={() => {
+                          setSelectedClass(cls);
+                          setShowDeleteModal(true);
+                        }}
+                        className="flex items-center justify-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
                         title="Eliminar clase permanentemente"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                        Eliminar
-                        </button>
+                      >
+                        <Trash2 className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">Eliminar</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -559,7 +570,7 @@ export default function ClassesManagementPage() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
+
               <div className="mb-4">
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
                   <p className="text-sm text-red-800 font-medium mb-2">⚠️ Esta acción es permanente</p>
@@ -567,23 +578,23 @@ export default function ClassesManagementPage() {
                     La clase &quot;{selectedClass.title}&quot; será eliminada permanentemente y no se podrá recuperar.
                   </p>
                 </div>
-                
+
                 {(selectedClass.reservations?.length ?? 0) > 0 && (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
                     <p className="text-sm text-yellow-800 font-medium">
                       Esta clase tiene {(selectedClass.reservations?.length ?? 0)} reserva(s) activa(s).
-              </p>
+                    </p>
                     <p className="text-xs text-yellow-700 mt-1">
                       Al eliminar la clase, las reservas asociadas también se verán afectadas.
                     </p>
                   </div>
                 )}
-                
+
                 <p className="text-gray-700 text-sm">
                   ¿Estás seguro de que deseas eliminar esta clase?
                 </p>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => {

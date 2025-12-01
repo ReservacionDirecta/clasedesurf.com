@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -77,6 +77,8 @@ interface ReservationDetails {
   payment?: {
     id: number;
     amount: number;
+    originalAmount?: number;
+    discountAmount?: number;
     status: string;
     paymentMethod?: string;
     transactionId?: string;
@@ -85,19 +87,23 @@ interface ReservationDetails {
     paidAt?: string;
     createdAt: string;
     updatedAt: string;
+    discountCode?: {
+      id: number;
+      code: string;
+    };
   };
 }
 
 const tips = [
   {
     icon: Waves,
-    title: 'Preparación',
+    title: 'PreparaciÃ³n',
     content: 'Llega 15 minutos antes de la clase para tener tiempo de prepararte y conocer al instructor.'
   },
   {
     icon: Award,
     title: 'Seguridad',
-    content: 'Asegúrate de usar protector solar y traje de neopreno si el agua está fría. El instructor te guiará sobre el equipo necesario.'
+    content: 'AsegÃºrate de usar protector solar y traje de neopreno si el agua estÃ¡ frÃ­a. El instructor te guiarÃ¡ sobre el equipo necesario.'
   },
   {
     icon: Award,
@@ -107,7 +113,7 @@ const tips = [
   {
     icon: Lightbulb,
     title: 'Consejos',
-    content: 'Escucha atentamente las instrucciones del instructor. La seguridad es lo más importante en el surf.'
+    content: 'Escucha atentamente las instrucciones del instructor. La seguridad es lo mÃ¡s importante en el surf.'
   }
 ];
 
@@ -187,7 +193,7 @@ function ReservationDetailsContent() {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
       PENDING: {
-        label: 'Pendiente de Confirmación',
+        label: 'Pendiente de ConfirmaciÃ³n',
         className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
         icon: AlertCircle
       },
@@ -231,7 +237,7 @@ function ReservationDetailsContent() {
         className: 'bg-red-100 text-red-800'
       },
       PENDING: {
-        label: 'Pendiente de Verificación',
+        label: 'Pendiente de VerificaciÃ³n',
         className: 'bg-yellow-100 text-yellow-800'
       },
       PAID: {
@@ -256,7 +262,7 @@ function ReservationDetailsContent() {
   const getPaymentMethodLabel = (method?: string) => {
     const methods: Record<string, string> = {
       transfer: 'Transferencia Bancaria',
-      deposit: 'Depósito Bancario',
+      deposit: 'DepÃ³sito Bancario',
       yape: 'Yape',
       payment_link: 'Link de Pago',
       cash: 'Efectivo'
@@ -301,9 +307,21 @@ function ReservationDetailsContent() {
     );
   }
 
-  const participantsData = reservation.participants
-    ? (Array.isArray(reservation.participants) ? reservation.participants : JSON.parse(reservation.participants))
-    : [];
+  if (!reservation) {
+    return null;
+  }
+
+  let participantsData = [];
+  try {
+    if (reservation.participants) {
+      participantsData = Array.isArray(reservation.participants)
+        ? reservation.participants
+        : JSON.parse(reservation.participants);
+    }
+  } catch (e) {
+    console.error('Error parsing participants:', e);
+    participantsData = [];
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -360,7 +378,7 @@ function ReservationDetailsContent() {
 
             {/* Class Information */}
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Información de la Clase</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">InformaciÃ³n de la Clase</h2>
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{reservation.class.title}</h3>
@@ -421,7 +439,7 @@ function ReservationDetailsContent() {
                         {participant.age && (
                           <div>
                             <span className="text-gray-600">Edad:</span>
-                            <p className="font-medium text-gray-900">{participant.age} años</p>
+                            <p className="font-medium text-gray-900">{participant.age} aÃ±os</p>
                           </div>
                         )}
                         {participant.height && (
@@ -438,17 +456,17 @@ function ReservationDetailsContent() {
                         )}
                         <div>
                           <span className="text-gray-600">Sabe nadar:</span>
-                          <p className="font-medium text-gray-900">{participant.canSwim ? 'Sí' : 'No'}</p>
+                          <p className="font-medium text-gray-900">{participant.canSwim ? 'SÃ­' : 'No'}</p>
                         </div>
                         {participant.swimmingLevel && (
                           <div>
-                            <span className="text-gray-600">Nivel de natación:</span>
+                            <span className="text-gray-600">Nivel de nataciÃ³n:</span>
                             <p className="font-medium text-gray-900 capitalize">{participant.swimmingLevel.toLowerCase()}</p>
                           </div>
                         )}
                         <div>
                           <span className="text-gray-600">Ha surfeado antes:</span>
-                          <p className="font-medium text-gray-900">{participant.hasSurfedBefore ? 'Sí' : 'No'}</p>
+                          <p className="font-medium text-gray-900">{participant.hasSurfedBefore ? 'SÃ­' : 'No'}</p>
                         </div>
                         {participant.injuries && (
                           <div className="md:col-span-3">
@@ -468,6 +486,7 @@ function ReservationDetailsContent() {
                 </div>
               </div>
             )}
+
 
             {/* Payment History */}
             {reservation.payment && (
@@ -493,71 +512,102 @@ function ReservationDetailsContent() {
                       </div>
                       {getPaymentStatusBadge(reservation.payment.status)}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Monto</p>
-                        <p className="text-lg font-bold text-gray-900">
-                          {formatDualCurrency(reservation.payment.amount).pen}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Método de Pago</p>
-                        <p className="font-medium text-gray-900">
-                          {getPaymentMethodLabel(reservation.payment.paymentMethod)}
-                        </p>
-                      </div>
-                      {reservation.payment.transactionId && (
-                        <div>
-                          <p className="text-sm text-gray-600">Número de Operación</p>
-                          <p className="font-medium text-gray-900 font-mono">
-                            {reservation.payment.transactionId}
-                          </p>
-                        </div>
-                      )}
-                      {reservation.payment.paidAt && (
-                        <div>
-                          <p className="text-sm text-gray-600">Fecha de Pago</p>
-                          <p className="font-medium text-gray-900">
-                            {new Date(reservation.payment.paidAt).toLocaleDateString('es-ES', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                        </div>
-                      )}
-                      {reservation.payment.voucherNotes && (
-                        <div className="md:col-span-2">
-                          <p className="text-sm text-gray-600">Notas</p>
-                          <p className="font-medium text-gray-900">{reservation.payment.voucherNotes}</p>
-                        </div>
-                      )}
-                      {reservation.payment.voucherImage && (
-                        <div className="md:col-span-2">
-                          <p className="text-sm text-gray-600 mb-2">Comprobante de Pago</p>
-                          <div className="relative w-full h-64 border border-gray-200 rounded-lg overflow-hidden">
-                            <Image
-                              src={reservation.payment.voucherImage}
-                              alt="Comprobante de pago"
-                              fill
-                              className="object-contain"
-                            />
+                    <div className="space-y-4 mt-4">
+                      {reservation.payment.originalAmount && reservation.payment.originalAmount !== reservation.payment.amount && (
+                        <div className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div className="flex justify-between items-center text-sm mb-2">
+                            <span className="text-gray-600">Precio Original:</span>
+                            <span className="font-medium text-gray-900 line-through">{formatDualCurrency(reservation.payment.originalAmount).pen}</span>
+                          </div>
+                          {reservation.payment.discountAmount && reservation.payment.discountAmount > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2">
+                              <span className="text-green-600 font-medium flex items-center gap-1">
+                                <span>Descuento</span>
+                                {reservation.payment.discountCode?.code && (
+                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                    {reservation.payment.discountCode.code}
+                                  </span>
+                                )}
+                                :
+                              </span>
+                              <span className="font-semibold text-green-600">-{formatDualCurrency(reservation.payment.discountAmount).pen}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                            <span className="font-medium text-gray-700">Total Pagado:</span>
+                            <span className="text-gray-900 text-lg font-bold">{formatDualCurrency(reservation.payment.amount).pen}</span>
                           </div>
                         </div>
                       )}
+                      {(!reservation.payment.originalAmount || reservation.payment.originalAmount === reservation.payment.amount) && (
+                        <div>
+                          <p className="text-sm text-gray-600">Monto</p>
+                          <p className="text-lg font-bold text-gray-900">
+                            {formatDualCurrency(reservation.payment.amount).pen}
+                          </p>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Método de Pago</p>
+                          <p className="font-medium text-gray-900">
+                            {getPaymentMethodLabel(reservation.payment.paymentMethod)}
+                          </p>
+                        </div>
+                        {reservation.payment.transactionId && (
+                          <div>
+                            <p className="text-sm text-gray-600">Número de Operación</p>
+                            <p className="font-medium text-gray-900 font-mono">
+                              {reservation.payment.transactionId}
+                            </p>
+                          </div>
+                        )}
+                        {reservation.payment.paidAt && (
+                          <div>
+                            <p className="text-sm text-gray-600">Fecha de Pago</p>
+                            <p className="font-medium text-gray-900">
+                              {new Date(reservation.payment.paidAt).toLocaleDateString('es-ES', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        )}
+                        {reservation.payment.voucherNotes && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-gray-600">Notas</p>
+                            <p className="font-medium text-gray-900">{reservation.payment.voucherNotes}</p>
+                          </div>
+                        )}
+                        {reservation.payment.voucherImage && (
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-gray-600 mb-2">Comprobante de Pago</p>
+                            <div className="relative w-full h-64 border border-gray-200 rounded-lg overflow-hidden">
+                              <Image
+                                src={reservation.payment.voucherImage}
+                                alt="Comprobante de pago"
+                                fill
+                                className="object-contain"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
+
             {/* School Information */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
                 <Building2 className="w-6 h-6 mr-2" />
-                Información de la Escuela
+                InformaciÃ³n de la Escuela
               </h2>
               <div className="space-y-4">
                 {reservation.class.school.logo && (
@@ -625,7 +675,7 @@ function ReservationDetailsContent() {
                   <div className="flex items-center text-gray-600">
                     <Star className="w-5 h-5 mr-2 text-yellow-500" />
                     <span>
-                      {reservation.class.school.rating.toFixed(1)} ({reservation.class.school.totalReviews} reseñas)
+                      {reservation.class.school.rating.toFixed(1)} ({reservation.class.school.totalReviews} reseÃ±as)
                     </span>
                   </div>
                 </div>

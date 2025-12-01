@@ -13,6 +13,13 @@ export interface ApiClass {
   instructor: string | null;
   images?: string[];  // Array de URLs de imágenes
   schoolId: number;
+  beachId?: number | null;
+  beach?: {
+    id: number;
+    name: string;
+    location: string | null;
+    description: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
   availableSpots: number;
@@ -216,11 +223,15 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
     endTime: new Date(new Date(apiClass.date).getTime() + apiClass.duration * 60000),
     duration: apiClass.duration,
     capacity: apiClass.capacity,
-    price: apiClass.price,
-    currency: 'USD',
+    price: apiClass.price, // Precio en PEN (soles peruanos) - moneda base
+    currency: 'PEN',
     level: apiClass.level,
     type: classType,
     location: apiClass.school.location || 'Lima, Perú',
+    beach: apiClass.beach ? {
+      name: apiClass.beach.name,
+      location: apiClass.beach.location || apiClass.school.location || 'Lima, Perú'
+    } : undefined,
     instructorName: instructorName,
     includesBoard: true,
     includesWetsuit: true,

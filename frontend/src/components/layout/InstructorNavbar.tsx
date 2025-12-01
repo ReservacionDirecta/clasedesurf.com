@@ -5,17 +5,18 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { 
-  Home, 
-  User, 
-  BookOpen, 
-  Users, 
+import {
+  Home,
+  User,
+  BookOpen,
+  Users,
   DollarSign,
-  LogOut, 
-  Menu, 
+  LogOut,
+  Menu,
   X,
   ChevronRight,
-  Waves
+  Waves,
+  Tag
 } from 'lucide-react';
 
 export default function InstructorNavbar() {
@@ -30,13 +31,13 @@ export default function InstructorNavbar() {
   useEffect(() => {
     const loadProfile = async () => {
       if (!session) return;
-      
+
       try {
         const token = (session as any)?.backendToken;
         const res = await fetch('/api/users/profile', {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        
+
         if (res.ok) {
           const data = await res.json();
           setProfilePhoto(data.profilePhoto || null);
@@ -45,7 +46,7 @@ export default function InstructorNavbar() {
         console.error('Error loading profile:', error);
       }
     };
-    
+
     loadProfile();
   }, [session]);
 
@@ -61,42 +62,48 @@ export default function InstructorNavbar() {
     } else {
       document.body.style.overflow = 'unset';
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [mobileMenuOpen]);
 
   const navigation = [
-    { 
-      name: 'Dashboard', 
-      href: '/dashboard/instructor', 
+    {
+      name: 'Dashboard',
+      href: '/dashboard/instructor',
       icon: Home,
       description: 'Panel principal'
     },
-    { 
-      name: 'Mi Perfil', 
-      href: '/dashboard/instructor/profile', 
+    {
+      name: 'Mi Perfil',
+      href: '/dashboard/instructor/profile',
       icon: User,
       description: 'Ver y editar perfil'
     },
-    { 
-      name: 'Mis Clases', 
-      href: '/dashboard/instructor/classes', 
+    {
+      name: 'Mis Clases',
+      href: '/dashboard/instructor/classes',
       icon: BookOpen,
       description: 'Gestionar clases'
     },
-    { 
-      name: 'Estudiantes', 
-      href: '/dashboard/instructor/students', 
+    {
+      name: 'Estudiantes',
+      href: '/dashboard/instructor/students',
       icon: Users,
       description: 'Ver estudiantes'
     },
-    { 
-      name: 'Ganancias', 
-      href: '/dashboard/instructor/earnings', 
+    {
+      name: 'Ganancias',
+      href: '/dashboard/instructor/earnings',
       icon: DollarSign,
       description: 'Ver ganancias'
+    },
+    {
+      name: 'Descuentos',
+      href: '/dashboard/instructor/discounts',
+      icon: Tag,
+      description: 'Códigos de descuento'
     },
   ];
 
@@ -110,8 +117,8 @@ export default function InstructorNavbar() {
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
-      await signOut({ 
-        redirect: false 
+      await signOut({
+        redirect: false
       });
       // Redirección manual para evitar problemas con NEXTAUTH_URL
       router.push('/login');
@@ -160,20 +167,18 @@ export default function InstructorNavbar() {
               {navigation.map((item) => {
                 const IconComponent = item.icon;
                 const active = isActive(item.href);
-                
+
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`group flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                      active
+                    className={`group flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${active
                         ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 shadow-sm'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
-                    <IconComponent className={`w-5 h-5 transition-transform duration-200 ${
-                      active ? 'scale-110' : 'group-hover:scale-110'
-                    }`} />
+                    <IconComponent className={`w-5 h-5 transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-110'
+                      }`} />
                     <span>{item.name}</span>
                   </Link>
                 );
@@ -188,7 +193,7 @@ export default function InstructorNavbar() {
                   <p className="text-sm font-medium text-gray-900">{session?.user?.name}</p>
                   <p className="text-xs text-gray-500">Instructor</p>
                 </div>
-                
+
                 {/* User Avatar */}
                 <div className="relative group">
                   <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-green-100 group-hover:ring-green-300 transition-all duration-200">
@@ -241,24 +246,21 @@ export default function InstructorNavbar() {
       </nav>
 
       {/* Mobile Slide-out Menu */}
-      <div className={`lg:hidden fixed inset-0 z-50 transition-opacity duration-300 ${
-        mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-      }`}>
+      <div className={`lg:hidden fixed inset-0 z-50 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}>
         {/* Backdrop */}
-        <div 
-          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-            mobileMenuOpen ? 'opacity-50' : 'opacity-0'
-          }`}
+        <div
+          className={`absolute inset-0 bg-black transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-50' : 'opacity-0'
+            }`}
           onClick={() => setMobileMenuOpen(false)}
         />
-        
+
         {/* Slide-out Panel */}
-        <div className={`absolute top-0 right-0 bottom-0 w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${
-          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`} style={{
-          paddingTop: 'env(safe-area-inset-top, 0px)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
-        }}>
+        <div className={`absolute top-0 right-0 bottom-0 w-full max-w-sm bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          }`} style={{
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+          }}>
           {/* Header */}
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-3 flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
@@ -272,7 +274,7 @@ export default function InstructorNavbar() {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            
+
             {/* User Profile in Menu */}
             <Link
               href="/dashboard/instructor/profile"
@@ -311,7 +313,7 @@ export default function InstructorNavbar() {
               <ChevronRight className="w-3 h-3 text-white/60 flex-shrink-0" />
             </Link>
           </div>
-          
+
           {/* Navigation Links - Scrollable */}
           <div className="flex-1 overflow-y-auto overscroll-contain p-1.5 space-y-0.5 no-scrollbar" style={{
             WebkitOverflowScrolling: 'touch'
@@ -319,25 +321,23 @@ export default function InstructorNavbar() {
             {navigation.map((item) => {
               const IconComponent = item.icon;
               const active = isActive(item.href);
-              
+
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`group flex items-center justify-between p-2 rounded-lg transition-all duration-200 ${
-                    active
+                  className={`group flex items-center justify-between p-2 rounded-lg transition-all duration-200 ${active
                       ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 shadow-sm'
                       : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                  }`}
+                    }`}
                   style={{ touchAction: 'manipulation' }}
                 >
                   <div className="flex items-center space-x-2 min-w-0 flex-1">
-                    <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${
-                      active 
-                        ? 'bg-green-100 text-green-700' 
+                    <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${active
+                        ? 'bg-green-100 text-green-700'
                         : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-                    }`}>
+                      }`}>
                       <IconComponent className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -345,14 +345,13 @@ export default function InstructorNavbar() {
                       <p className="text-[10px] text-gray-500 truncate">{item.description}</p>
                     </div>
                   </div>
-                  <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0 ${
-                    active ? 'text-green-700' : 'text-gray-400 group-hover:translate-x-1'
-                  }`} />
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0 ${active ? 'text-green-700' : 'text-gray-400 group-hover:translate-x-1'
+                    }`} />
                 </Link>
               );
             })}
           </div>
-          
+
           {/* Logout Button */}
           <div className="p-2 border-t border-gray-200 bg-gray-50 flex-shrink-0" style={{
             paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'

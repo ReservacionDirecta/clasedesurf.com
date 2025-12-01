@@ -1,17 +1,19 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { 
-  Calendar, 
-  Users, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  Eye, 
-  Search, 
-  Filter, 
+import {
+  Calendar,
+  Users,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Eye,
+  Search,
+  Filter,
   Clock,
   Edit,
   CreditCard,
@@ -26,6 +28,7 @@ import {
   Trash2,
   CheckCircle2
 } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Reservation {
   id: number;
@@ -57,14 +60,21 @@ interface Reservation {
   payment?: {
     id: number;
     amount: number;
+    originalAmount?: number;
+    discountAmount?: number;
     status: string;
     paymentMethod?: string;
+    discountCode?: {
+      id: number;
+      code: string;
+    };
   };
 }
 
 export default function SchoolReservations() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -74,7 +84,7 @@ export default function SchoolReservations() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  
+
   // Edit form state
   const [editForm, setEditForm] = useState({
     specialRequest: '',
@@ -151,7 +161,7 @@ export default function SchoolReservations() {
 
       if (response.ok) {
         await fetchReservations();
-        alert(`Reserva ${getStatusLabel(newStatus).toLowerCase()} exitosamente`);
+        showSuccess('¡Actualizada!', `Reserva ${getStatusLabel(newStatus).toLowerCase()} exitosamente`);
         if (showDetailModal) {
           setShowDetailModal(false);
         }
@@ -161,7 +171,7 @@ export default function SchoolReservations() {
       }
     } catch (error) {
       console.error('Error updating reservation:', error);
-      alert(error instanceof Error ? error.message : 'Error al actualizar la reserva');
+      showError('Error al actualizar', error instanceof Error ? error.message : 'Error al actualizar la reserva');
     } finally {
       setActionLoading(false);
     }
@@ -198,7 +208,7 @@ export default function SchoolReservations() {
 
       if (response.ok) {
         await fetchReservations();
-        alert('Reserva actualizada exitosamente');
+        showSuccess('¡Reserva actualizada!', 'Los cambios se guardaron correctamente');
         setShowEditModal(false);
         setShowDetailModal(false);
       } else {
@@ -207,7 +217,7 @@ export default function SchoolReservations() {
       }
     } catch (error) {
       console.error('Error updating reservation:', error);
-      alert(error instanceof Error ? error.message : 'Error al actualizar la reserva');
+      showError('Error al actualizar', error instanceof Error ? error.message : 'Error al actualizar la reserva');
     } finally {
       setActionLoading(false);
     }
@@ -249,7 +259,7 @@ export default function SchoolReservations() {
 
       if (response.ok) {
         await fetchReservations();
-        alert('Información de pago actualizada exitosamente');
+        showSuccess('¡Pago actualizado!', 'La información de pago se guardó correctamente');
         setShowPaymentModal(false);
         setShowDetailModal(false);
       } else {
@@ -258,7 +268,7 @@ export default function SchoolReservations() {
       }
     } catch (error) {
       console.error('Error updating payment:', error);
-      alert(error instanceof Error ? error.message : 'Error al actualizar el pago');
+      showError('Error al actualizar pago', error instanceof Error ? error.message : 'Error al actualizar el pago');
     } finally {
       setActionLoading(false);
     }
@@ -511,11 +521,10 @@ export default function SchoolReservations() {
                             <span className="ml-1">{getStatusLabel(reservation.status)}</span>
                           </span>
                           {reservation.payment && (
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${
-                              reservation.payment.status === 'PAID' 
-                                ? 'bg-green-100 text-green-800 border-green-300' 
-                                : 'bg-red-100 text-red-800 border-red-300'
-                            }`}>
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${reservation.payment.status === 'PAID'
+                              ? 'bg-green-100 text-green-800 border-green-300'
+                              : 'bg-red-100 text-red-800 border-red-300'
+                              }`}>
                               {reservation.payment.status === 'PAID' ? 'Pagado' : 'Sin pagar'}
                             </span>
                           )}
@@ -749,34 +758,63 @@ export default function SchoolReservations() {
                       <CreditCard className="w-4 h-4 mr-2" />
                       Información de Pago
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-700">Monto:</span>
-                        <p className="text-gray-900 text-lg font-semibold">{formatCurrency(selectedReservation.payment.amount)}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Estado:</span>
-                        <div className="mt-1">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${
-                            selectedReservation.payment.status === 'PAID' 
-                              ? 'bg-green-100 text-green-800 border-green-300' 
-                              : 'bg-red-100 text-red-800 border-red-300'
-                          }`}>
-                            {selectedReservation.payment.status === 'PAID' ? 'Pagado' : 'Sin pagar'}
-                          </span>
-                        </div>
-                      </div>
-                      {selectedReservation.payment.paymentMethod && (
-                        <div>
-                          <span className="font-medium text-gray-700">Método:</span>
-                          <p className="text-gray-900">
-                            {selectedReservation.payment.paymentMethod === 'credit_card' ? 'Tarjeta de Crédito' :
-                              selectedReservation.payment.paymentMethod === 'cash' ? 'Efectivo' : 
-                              selectedReservation.payment.paymentMethod === 'transfer' ? 'Transferencia' :
-                              selectedReservation.payment.paymentMethod}
-                          </p>
+                    <div className="space-y-3">
+                      {selectedReservation.payment.originalAmount && selectedReservation.payment.originalAmount !== selectedReservation.payment.amount && (
+                        <div className="bg-white p-3 rounded-lg border border-gray-200">
+                          <div className="flex justify-between items-center text-sm mb-2">
+                            <span className="text-gray-600">Precio Original:</span>
+                            <span className="font-medium text-gray-900 line-through">{formatCurrency(selectedReservation.payment.originalAmount)}</span>
+                          </div>
+                          {selectedReservation.payment.discountAmount && selectedReservation.payment.discountAmount > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2">
+                              <span className="text-green-600 font-medium flex items-center gap-1">
+                                <span>Descuento</span>
+                                {selectedReservation.payment.discountCode && (
+                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                    {selectedReservation.payment.discountCode.code}
+                                  </span>
+                                )}
+                                :
+                              </span>
+                              <span className="font-semibold text-green-600">-{formatCurrency(selectedReservation.payment.discountAmount)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                            <span className="font-medium text-gray-700">Total a Pagar:</span>
+                            <span className="text-gray-900 text-lg font-bold">{formatCurrency(selectedReservation.payment.amount)}</span>
+                          </div>
                         </div>
                       )}
+                      {(!selectedReservation.payment.originalAmount || selectedReservation.payment.originalAmount === selectedReservation.payment.amount) && (
+                        <div>
+                          <span className="font-medium text-gray-700">Monto:</span>
+                          <p className="text-gray-900 text-lg font-semibold">{formatCurrency(selectedReservation.payment.amount)}</p>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-700">Estado:</span>
+                          <div className="mt-1">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${selectedReservation.payment.status === 'PAID'
+                              ? 'bg-green-100 text-green-800 border-green-300'
+                              : 'bg-red-100 text-red-800 border-red-300'
+                              }`}>
+                              {selectedReservation.payment.status === 'PAID' ? 'Pagado' : 'Sin pagar'}
+                            </span>
+                          </div>
+                        </div>
+                        {selectedReservation.payment.paymentMethod && (
+                          <div>
+                            <span className="font-medium text-gray-700">Método:</span>
+                            <p className="text-gray-900">
+                              {selectedReservation.payment.paymentMethod === 'credit_card' ? 'Tarjeta de Crédito' :
+                                selectedReservation.payment.paymentMethod === 'cash' ? 'Efectivo' :
+                                  selectedReservation.payment.paymentMethod === 'transfer' ? 'Transferencia' :
+                                    selectedReservation.payment.paymentMethod}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -965,10 +1003,31 @@ export default function SchoolReservations() {
                   </select>
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <strong>Precio de la clase:</strong> {formatCurrency(selectedReservation.class.price)}
-                  </p>
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-2">
+                  {selectedReservation.payment?.originalAmount && selectedReservation.payment.originalAmount !== selectedReservation.payment.amount ? (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-blue-800">Precio Original:</span>
+                        <span className="font-medium text-blue-900 line-through">{formatCurrency(selectedReservation.payment.originalAmount)}</span>
+                      </div>
+                      {selectedReservation.payment.discountAmount && selectedReservation.payment.discountAmount > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-green-700 font-medium">
+                            Descuento {selectedReservation.payment.discountCode && `(${selectedReservation.payment.discountCode.code})`}:
+                          </span>
+                          <span className="font-semibold text-green-700">-{formatCurrency(selectedReservation.payment.discountAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm pt-2 border-t border-blue-300">
+                        <span className="text-blue-900 font-bold">Total a Pagar:</span>
+                        <span className="font-bold text-blue-900">{formatCurrency(selectedReservation.payment.amount)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm text-blue-800">
+                      <strong>Precio de la clase:</strong> {formatCurrency(selectedReservation.class.price)}
+                    </p>
+                  )}
                 </div>
               </div>
 

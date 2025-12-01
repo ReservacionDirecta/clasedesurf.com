@@ -1,4 +1,6 @@
-'use client';
+﻿'use client';
+
+export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
@@ -34,11 +36,17 @@ interface Reservation {
   payment?: {
     id: number;
     amount: number;
+    originalAmount?: number;
+    discountAmount?: number;
     status: string;
     paymentMethod: string;
     voucherImage?: string;
     voucherNotes?: string;
     paidAt?: string;
+    discountCode?: {
+      id: number;
+      code: string;
+    };
   };
 }
 
@@ -68,8 +76,8 @@ export default function ReservationsPage() {
   // Removed auto-refresh on visibility/focus change to preserve user state
 
   const handleCancelReservation = async (reservationId: number) => {
-    // Confirmar cancelación
-    if (!confirm('¿Estás seguro de que deseas cancelar esta reserva? Esta acción no se puede deshacer.')) {
+    // Confirmar cancelaciÃ³n
+    if (!confirm('Â¿EstÃ¡s seguro de que deseas cancelar esta reserva? Esta acciÃ³n no se puede deshacer.')) {
       return;
     }
 
@@ -105,7 +113,7 @@ export default function ReservationsPage() {
       alert('Reserva cancelada exitosamente');
     } catch (error) {
       console.error('Error al cancelar reserva:', error);
-      alert(error instanceof Error ? error.message : 'Error al cancelar la reserva. Por favor, inténtalo de nuevo.');
+      alert(error instanceof Error ? error.message : 'Error al cancelar la reserva. Por favor, intÃ©ntalo de nuevo.');
       setLoading(false);
     }
   };
@@ -135,7 +143,7 @@ export default function ReservationsPage() {
 
       const data = await response.json();
       console.log('[Reservations] Raw data from API:', data);
-      // Asegurar que los datos de payment estén incluidos
+      // Asegurar que los datos de payment estÃ©n incluidos
       const processedData = data.map((res: any) => {
         if (!res.class) {
           console.warn('[Reservations] Reservation without class data:', res);
@@ -291,17 +299,17 @@ export default function ReservationsPage() {
           <button
             onClick={() => setFilter('upcoming')}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${filter === 'upcoming'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
           >
-            Próximas
+            PrÃ³ximas
           </button>
           <button
             onClick={() => setFilter('past')}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${filter === 'past'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
           >
             Pasadas
@@ -309,8 +317,8 @@ export default function ReservationsPage() {
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${filter === 'all'
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50'
+              ? 'bg-blue-600 text-white'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
           >
             Todas
@@ -344,9 +352,9 @@ export default function ReservationsPage() {
               No hay reservas
             </h3>
             <p className="mt-2 text-gray-500">
-              {filter === 'upcoming' && 'No tienes clases próximas reservadas.'}
+              {filter === 'upcoming' && 'No tienes clases prÃ³ximas reservadas.'}
               {filter === 'past' && 'No tienes clases pasadas.'}
-              {filter === 'all' && 'Aún no has reservado ninguna clase.'}
+              {filter === 'all' && 'AÃºn no has reservado ninguna clase.'}
             </p>
             <button
               onClick={() => router.push('/classes')}
@@ -459,8 +467,8 @@ export default function ReservationsPage() {
                           setShowPaymentModal(true);
                         }}
                         className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors ${reservation.payment?.status === 'PAID'
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-green-600 text-white hover:bg-green-700'
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-green-600 text-white hover:bg-green-700'
                           }`}
                       >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -529,10 +537,10 @@ export default function ReservationsPage() {
 
               {/* Class Information */}
               <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Información de la Clase</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">InformaciÃ³n de la Clase</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">Título</p>
+                    <p className="text-sm text-gray-600">TÃ­tulo</p>
                     <p className="text-lg font-medium text-gray-900">{selectedReservation.class.title}</p>
                   </div>
                   <div>
@@ -571,7 +579,7 @@ export default function ReservationsPage() {
                 </div>
                 {selectedReservation.class.description && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-600 mb-2">Descripción</p>
+                    <p className="text-sm text-gray-600 mb-2">DescripciÃ³n</p>
                     <p className="text-gray-900">{selectedReservation.class.description}</p>
                   </div>
                 )}
@@ -611,41 +619,71 @@ export default function ReservationsPage() {
               {/* Payment Information */}
               {selectedReservation.payment && (
                 <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Información de Pago</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Estado del Pago</p>
-                      <p className={`text-lg font-medium ${selectedReservation.payment.status === 'PAID' ? 'text-green-600' : 'text-yellow-600'
-                        }`}>
-                        {selectedReservation.payment.status === 'PAID' ? 'Pagado' : 'Pendiente'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Monto</p>
-                      {(() => {
-                        const prices = formatDualCurrency(selectedReservation.payment.amount);
-                        return (
-                          <div>
-                            <p className="text-lg font-bold text-gray-900">{prices.pen}</p>
-                            <p className="text-xs text-gray-500">{prices.usd}</p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">InformaciÃ³n de Pago</h3>
+                  <div className="space-y-4">
+                    {selectedReservation.payment.originalAmount && selectedReservation.payment.originalAmount !== selectedReservation.payment.amount && (
+                      <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <div className="flex justify-between items-center text-sm mb-2">
+                          <span className="text-gray-600">Precio Original:</span>
+                          <span className="font-medium text-gray-900 line-through">{formatDualCurrency(selectedReservation.payment.originalAmount).pen}</span>
+                        </div>
+                        {selectedReservation.payment.discountAmount && selectedReservation.payment.discountAmount > 0 && (
+                          <div className="flex justify-between items-center text-sm mb-2">
+                            <span className="text-green-600 font-medium flex items-center gap-1">
+                              <span>Descuento</span>
+                              {selectedReservation.payment.discountCode?.code && (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                  {selectedReservation.payment.discountCode.code}
+                                </span>
+                              )}
+                              :
+                            </span>
+                            <span className="font-semibold text-green-600">-{formatDualCurrency(selectedReservation.payment.discountAmount).pen}</span>
                           </div>
-                        );
-                      })()}
-                    </div>
-                    {selectedReservation.payment.paymentMethod && (
-                      <div>
-                        <p className="text-sm text-gray-600">Método de Pago</p>
-                        <p className="text-lg font-medium text-gray-900">{selectedReservation.payment.paymentMethod}</p>
+                        )}
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                          <span className="font-medium text-gray-700">Total Pagado:</span>
+                          <span className="text-gray-900 text-lg font-bold">{formatDualCurrency(selectedReservation.payment.amount).pen}</span>
+                        </div>
                       </div>
                     )}
-                    {selectedReservation.payment.paidAt && (
+                    {(!selectedReservation.payment.originalAmount || selectedReservation.payment.originalAmount === selectedReservation.payment.amount) && (
                       <div>
-                        <p className="text-sm text-gray-600">Fecha de Pago</p>
-                        <p className="text-lg font-medium text-gray-900">
-                          {new Date(selectedReservation.payment.paidAt).toLocaleDateString('es-ES')}
+                        <p className="text-sm text-gray-600">Monto</p>
+                        {(() => {
+                          const prices = formatDualCurrency(selectedReservation.payment.amount);
+                          return (
+                            <div>
+                              <p className="text-lg font-bold text-gray-900">{prices.pen}</p>
+                              <p className="text-xs text-gray-500">{prices.usd}</p>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600">Estado del Pago</p>
+                        <p className={`text-lg font-medium ${selectedReservation.payment.status === 'PAID' ? 'text-green-600' : 'text-yellow-600'
+                          }`}>
+                          {selectedReservation.payment.status === 'PAID' ? 'Pagado' : 'Pendiente'}
                         </p>
                       </div>
-                    )}
+                      {selectedReservation.payment.paymentMethod && (
+                        <div>
+                          <p className="text-sm text-gray-600">MÃ©todo de Pago</p>
+                          <p className="text-lg font-medium text-gray-900">{selectedReservation.payment.paymentMethod}</p>
+                        </div>
+                      )}
+                      {selectedReservation.payment.paidAt && (
+                        <div>
+                          <p className="text-sm text-gray-600">Fecha de Pago</p>
+                          <p className="text-lg font-medium text-gray-900">
+                            {new Date(selectedReservation.payment.paidAt).toLocaleDateString('es-ES')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -686,14 +724,14 @@ export default function ReservationsPage() {
         </div>
       )}
 
-      {/* Modal de Pago - Se muestra automáticamente después de hacer click en Pagar */}
+      {/* Modal de Pago - Se muestra automÃ¡ticamente despuÃ©s de hacer click en Pagar */}
       {showPaymentModal && selectedReservation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-t-3xl sm:rounded-lg shadow-xl max-w-3xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
-            {/* Header - Sticky en móvil */}
+            {/* Header - Sticky en mÃ³vil */}
             <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-lg sticky top-0 z-10">
               <h2 className="text-xl sm:text-2xl font-bold">
-                {selectedReservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Métodos de Pago'}
+                {selectedReservation.payment?.status === 'PAID' ? 'Ver Pago' : 'MÃ©todos de Pago'}
               </h2>
               <button
                 onClick={() => {
@@ -714,22 +752,51 @@ export default function ReservationsPage() {
               <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                 <p className="text-sm font-medium text-blue-900">Reserva #{selectedReservation.id}</p>
                 <p className="text-lg font-semibold text-blue-900">{selectedReservation.class.title}</p>
-                <div className="text-sm text-blue-700">
-                  <span className="font-medium">Monto: </span>
-                  {(() => {
-                    const prices = formatDualCurrency(selectedReservation.class.price);
-                    return (
-                      <>
-                        <span className="font-bold">{prices.pen}</span>
-                      </>
-                    );
-                  })()}
+                <div className="space-y-2 mt-2">
+                  {selectedReservation.payment?.originalAmount && selectedReservation.payment.originalAmount !== selectedReservation.payment.amount ? (
+                    <>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-blue-700">Precio Original:</span>
+                        <span className="font-medium text-blue-900 line-through">{formatDualCurrency(selectedReservation.payment.originalAmount).pen}</span>
+                      </div>
+                      {selectedReservation.payment.discountAmount && selectedReservation.payment.discountAmount > 0 && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-green-700 font-medium flex items-center gap-1">
+                            <span>Descuento</span>
+                            {selectedReservation.payment.discountCode && (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                {selectedReservation.payment.discountCode.code}
+                              </span>
+                            )}
+                            :
+                          </span>
+                          <span className="font-semibold text-green-700">-{formatDualCurrency(selectedReservation.payment.discountAmount).pen}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center pt-2 border-t border-blue-300">
+                        <span className="font-medium text-blue-900">Total a Pagar:</span>
+                        <span className="text-blue-900 text-lg font-bold">{formatDualCurrency(selectedReservation.payment.amount).pen}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-blue-700">
+                      <span className="font-medium">Monto: </span>
+                      {(() => {
+                        const prices = formatDualCurrency(selectedReservation.class.price);
+                        return (
+                          <>
+                            <span className="font-bold">{prices.pen}</span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <PaymentUpload
                 reservationId={selectedReservation.id}
-                amount={selectedReservation.class.price}
+                amount={selectedReservation.payment?.amount || selectedReservation.class.price}
                 onPaymentSubmitted={() => {
                   fetchReservations();
                   setShowPaymentModal(false);
@@ -750,3 +817,4 @@ export default function ReservationsPage() {
     </div>
   );
 }
+

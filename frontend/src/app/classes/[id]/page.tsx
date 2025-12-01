@@ -145,6 +145,7 @@ export default function ClassDetailsPage() {
   const fetchClassDetails = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
 
       const token = (session as any)?.backendToken;
       const headers: any = {};
@@ -156,10 +157,18 @@ export default function ClassDetailsPage() {
       const response = await fetch(`/api/classes/${classId}`, { headers });
 
       if (!response.ok) {
-        throw new Error('Error al cargar detalles de la clase');
+        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+        const errorMessage = errorData.message || `Error ${response.status}: ${response.statusText}`;
+        console.error('[Class Details] API Error:', errorMessage, response.status);
+        throw new Error(errorMessage);
       }
 
       const classData = await response.json();
+      
+      if (!classData || !classData.id) {
+        console.error('[Class Details] Invalid data received:', classData);
+        throw new Error('Datos de clase inválidos recibidos del servidor');
+      }
 
       // Calculate start and end times from date and duration
       // The date from backend is a DateTime, so we extract the time from it
@@ -252,93 +261,6 @@ export default function ClassDetailsPage() {
       }
 
       setLoading(false);
-
-      // Fallback to mock data if API fails
-      if (!classData) {
-        const mockClassDetails: ClassDetails = {
-          id: parseInt(classId),
-          title: classId === '1' ? 'Surf para Principiantes' :
-            classId === '2' ? 'Técnicas Avanzadas' :
-              classId === '3' ? 'Longboard Session' : 'Surf Kids',
-          description: classId === '1' ?
-            'Clase perfecta para quienes nunca han surfeado. Aprenderás las técnicas básicas, seguridad en el agua y cómo leer las olas. Incluye teoría en la playa y práctica supervisada en el agua.' :
-            classId === '2' ?
-              'Perfecciona tu técnica con maniobras avanzadas. Aprende cutbacks, bottom turns y cómo generar velocidad. Para surfistas con experiencia básica.' :
-              classId === '3' ?
-                'Sesión especializada en longboard con enfoque en el estilo clásico. Aprende cross-stepping, nose riding y la elegancia del longboard tradicional.' :
-                'Clases especiales para niños de 8-14 años. Ambiente seguro y divertido con instructores especializados en enseñanza infantil.',
-          date: new Date(Date.now() + parseInt(classId) * 86400000).toISOString(),
-          startTime: classId === '1' ? '10:00:00' :
-            classId === '2' ? '14:00:00' :
-              classId === '3' ? '16:00:00' : '11:00:00',
-          endTime: classId === '1' ? '12:00:00' :
-            classId === '2' ? '16:00:00' :
-              classId === '3' ? '18:00:00' : '12:30:00',
-          duration: classId === '1' ? 120 :
-            classId === '2' ? 120 :
-              classId === '3' ? 120 : 90,
-          capacity: classId === '1' ? 8 :
-            classId === '2' ? 6 :
-              classId === '3' ? 10 : 10,
-          enrolled: classId === '1' ? 6 :
-            classId === '2' ? 4 :
-              classId === '3' ? 8 : 7,
-          price: classId === '1' ? 80 :
-            classId === '2' ? 120 :
-              classId === '3' ? 100 : 60,
-          level: classId === '1' ? 'BEGINNER' :
-            classId === '2' ? 'ADVANCED' :
-              classId === '3' ? 'INTERMEDIATE' : 'BEGINNER',
-          location: classId === '1' ? 'Playa Makaha, Miraflores' :
-            classId === '2' ? 'Playa Waikiki, San Bartolo' :
-              classId === '3' ? 'La Herradura, Chorrillos' : 'Playa Redondo, Callao',
-          status: 'ACTIVE',
-          instructor: {
-            id: 1,
-            name: 'Gabriel Barrera',
-            bio: 'Instructor profesional con más de 8 años de experiencia. Especialista en enseñanza para principiantes y técnicas avanzadas.',
-            rating: 4.9,
-            totalReviews: 47,
-            yearsExperience: 8,
-            specialties: ['Surf para principiantes', 'Técnicas avanzadas', 'Longboard', 'Seguridad en el agua'],
-            profileImage: undefined
-          },
-          school: {
-            id: 1,
-            name: 'Escuela de Surf Lima',
-            location: 'Lima, Perú',
-            phone: '+51 987 654 321',
-            email: 'info@escuelasurflima.com',
-            rating: 4.8,
-            totalReviews: 156
-          },
-          reservations: [
-            {
-              id: 1,
-              userId: 1,
-              status: 'CONFIRMED',
-              specialRequest: 'Primera vez surfeando',
-              createdAt: new Date().toISOString(),
-              user: { id: 1, name: 'Ana García', email: 'ana@email.com' }
-            },
-            {
-              id: 2,
-              userId: 2,
-              status: 'PENDING',
-              createdAt: new Date().toISOString(),
-              user: { id: 2, name: 'Carlos López', email: 'carlos@email.com' }
-            }
-          ]
-        };
-
-        setClassDetails(mockClassDetails);
-
-        // Verificar si el usuario actual tiene una reserva
-        if (session?.user) {
-          const userRes = mockClassDetails.reservations.find(r => r.user.email === session.user.email);
-          setUserReservation(userRes);
-        }
-      }
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar detalles');

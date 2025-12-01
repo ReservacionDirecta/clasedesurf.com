@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { 
+import {
   Home,
   Waves,
   Users,
@@ -15,7 +15,8 @@ import {
   LogOut,
   ChevronRight,
   GraduationCap,
-  ChevronLeft
+  ChevronLeft,
+  Tag
 } from 'lucide-react';
 
 export function SchoolSidebar() {
@@ -42,13 +43,13 @@ export function SchoolSidebar() {
   useEffect(() => {
     const loadProfile = async () => {
       if (!session) return;
-      
+
       try {
         const token = (session as any)?.backendToken;
         const res = await fetch('/api/users/profile', {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        
+
         if (res.ok) {
           const data = await res.json();
           setProfilePhoto(data.profilePhoto || null);
@@ -57,51 +58,57 @@ export function SchoolSidebar() {
         console.error('Error loading profile:', error);
       }
     };
-    
+
     loadProfile();
   }, [session]);
 
 
   const navigation = [
-    { 
-      name: 'Dashboard', 
-      href: '/dashboard/school', 
+    {
+      name: 'Dashboard',
+      href: '/dashboard/school',
       icon: Home,
       description: 'Panel principal'
     },
-    { 
-      name: 'Clases', 
-      href: '/dashboard/school/classes', 
+    {
+      name: 'Clases',
+      href: '/dashboard/school/classes',
       icon: Waves,
       description: 'Gestionar clases'
     },
-    { 
-      name: 'Instructores', 
-      href: '/dashboard/school/instructors', 
+    {
+      name: 'Instructores',
+      href: '/dashboard/school/instructors',
       icon: GraduationCap,
       description: 'Gestionar instructores'
     },
-    { 
-      name: 'Estudiantes', 
-      href: '/dashboard/school/students', 
+    {
+      name: 'Estudiantes',
+      href: '/dashboard/school/students',
       icon: Users,
       description: 'Ver estudiantes'
     },
-    { 
-      name: 'Reservas', 
-      href: '/dashboard/school/reservations', 
+    {
+      name: 'Reservas',
+      href: '/dashboard/school/reservations',
       icon: Calendar,
       description: 'Gestionar reservas'
     },
-    { 
-      name: 'Pagos', 
-      href: '/dashboard/school/payments', 
+    {
+      name: 'Pagos',
+      href: '/dashboard/school/payments',
       icon: CreditCard,
       description: 'Ver pagos'
     },
-    { 
-      name: 'Perfil', 
-      href: '/dashboard/school/profile', 
+    {
+      name: 'Descuentos',
+      href: '/dashboard/school/discounts',
+      icon: Tag,
+      description: 'Códigos de descuento'
+    },
+    {
+      name: 'Perfil',
+      href: '/dashboard/school/profile',
       icon: Settings,
       description: 'Configuración'
     },
@@ -117,8 +124,8 @@ export function SchoolSidebar() {
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
-      await signOut({ 
-        redirect: false 
+      await signOut({
+        redirect: false
       });
       // Redirección manual para evitar problemas con NEXTAUTH_URL
       router.push('/login');
@@ -145,17 +152,17 @@ export function SchoolSidebar() {
   return (
     <>
       {/* Sidebar - Solo visible en desktop (lg y superior) */}
-      <aside 
+      <aside
         id="school-sidebar"
         className={`
-          hidden lg:block fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-40
+          hidden lg:flex lg:flex-col fixed top-0 left-0 h-full bg-white border-r border-gray-200 shadow-lg z-40
           transition-all duration-300 ease-in-out
           ${isCollapsed ? 'w-20' : 'w-64'}
         `}
         data-collapsed={isCollapsed}
       >
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
           {!isCollapsed && (
             <Link href="/dashboard/school" className="flex items-center space-x-3 group">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
@@ -176,7 +183,7 @@ export function SchoolSidebar() {
               </div>
             </Link>
           )}
-          
+
           {/* Collapse Button - Desktop Only */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -191,13 +198,13 @@ export function SchoolSidebar() {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4">
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 overflow-y-auto py-4 min-h-0">
           <div className="space-y-1 px-2">
             {navigation.map((item) => {
               const IconComponent = item.icon;
               const active = isActive(item.href);
-              
+
               return (
                 <Link
                   key={item.name}
@@ -212,9 +219,8 @@ export function SchoolSidebar() {
                   `}
                   title={isCollapsed ? item.name : ''}
                 >
-                  <IconComponent className={`w-5 h-5 transition-transform duration-200 ${
-                    active ? 'scale-110' : 'group-hover:scale-110'
-                  } ${isCollapsed ? '' : 'mr-3'}`} />
+                  <IconComponent className={`w-5 h-5 transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-110'
+                    } ${isCollapsed ? '' : 'mr-3'}`} />
                   {!isCollapsed && (
                     <>
                       <span className="flex-1">{item.name}</span>
@@ -228,7 +234,7 @@ export function SchoolSidebar() {
         </nav>
 
         {/* User Profile Section */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 p-4 flex-shrink-0">
           <Link
             href="/dashboard/school/profile"
             className={`

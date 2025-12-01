@@ -1,24 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { formatDualCurrency, getCurrentExchangeRate } from '@/lib/currency'
+import { formatDualCurrency, getCurrentExchangeRateSync } from '@/lib/currency'
 
 interface PriceDisplayProps {
-  usdPrice: number
+  penPrice: number // Precio en soles peruanos (moneda base)
   className?: string
   showBothCurrencies?: boolean
   size?: 'sm' | 'md' | 'lg'
 }
 
 export function PriceDisplay({ 
-  usdPrice, 
+  penPrice, 
   className = '', 
   showBothCurrencies = true,
   size = 'md' 
 }: PriceDisplayProps) {
   const [primaryCurrency, setPrimaryCurrency] = useState<'USD' | 'PEN'>('PEN')
-  const prices = formatDualCurrency(usdPrice)
-  const rate = getCurrentExchangeRate()
+  const prices = formatDualCurrency(penPrice)
+  const rate = getCurrentExchangeRateSync()
 
   const sizeClasses = {
     sm: 'text-lg',
@@ -82,8 +82,8 @@ export function PriceDisplay({
   )
 }
 
-export function SimplePriceDisplay({ usdPrice, className = '' }: { usdPrice: number, className?: string }) {
-  const prices = formatDualCurrency(usdPrice)
+export function SimplePriceDisplay({ penPrice, className = '' }: { penPrice: number, className?: string }) {
+  const prices = formatDualCurrency(penPrice)
   
   return (
     <div className={className}>

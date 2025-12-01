@@ -13,7 +13,7 @@ const router = express.Router();
 router.post('/', requireAuth, validateBody(createReservationSchema), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    const { classId, specialRequest, participants } = req.body;
+    const { classId, specialRequest, participants, discountCodeId, discountAmount } = req.body;
     if (!userId) return res.status(401).json({ message: 'User not authenticated' });
 
     // Determinar el número de participantes según el tipo de datos recibidos
@@ -42,6 +42,14 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
         return { ok: false, reason: 'Not enough spots available' };
       }
 
+      // Calcular precio original (precio de la clase * número de participantes)
+      const originalAmount = (cls.price || 0) * requested;
+      
+      // Calcular precio final con descuento
+      const finalDiscountAmount = discountAmount && discountAmount > 0 ? Number(discountAmount) : 0;
+      const finalAmount = originalAmount - finalDiscountAmount;
+
+      // Crear la reserva
       const reservation = await tx.reservation.create({
         data: {
           user: { connect: { id: Number(userId) } },
@@ -49,7 +57,32 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
           specialRequest: specialRequest || null,
           participants: participantsData,  // Guardar datos de participantes como JSON
           status: 'PENDING'
-        },
+        }
+      });
+
+      // Crear el pago con información del descuento
+      const paymentData: any = {
+        reservation: { connect: { id: reservation.id } },
+        amount: finalAmount,
+        originalAmount: originalAmount,
+        status: 'UNPAID'
+      };
+
+      // Solo agregar campos de descuento si existen
+      if (discountCodeId) {
+        paymentData.discountCodeId = Number(discountCodeId);
+      }
+      if (finalDiscountAmount > 0) {
+        paymentData.discountAmount = finalDiscountAmount;
+      }
+
+      const payment = await tx.payment.create({
+        data: paymentData
+      });
+
+      // Retornar la reserva con toda la información
+      const reservationWithDetails = await tx.reservation.findUnique({
+        where: { id: reservation.id },
         include: {
           user: {
             select: {
@@ -70,10 +103,15 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
               }
             }
           },
-          payment: true
+          payment: {
+            include: {
+              discountCode: true
+            }
+          }
         }
       });
-      return { ok: true, reservation };
+
+      return { ok: true, reservation: reservationWithDetails };
     });
 
     if (!result) return res.status(500).json({ message: 'Reservation failed' });
@@ -115,7 +153,11 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
             } 
           } 
         },
-        payment: true
+        payment: {
+          include: {
+            discountCode: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -155,7 +197,11 @@ router.get('/all', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest,
             } 
           } 
         },
-        payment: true
+        payment: {
+          include: {
+            discountCode: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -213,7 +259,11 @@ router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req:
             // instructor is a String field, not a relation
           }
         },
-        payment: true
+        payment: {
+          include: {
+            discountCode: true
+          }
+        }
       }
     });
 
@@ -290,6 +340,12 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
       }
     }
     
+    // Normalize status to uppercase to ensure consistency
+    if (updateData.status) {
+      updateData.status = updateData.status.toUpperCase();
+      console.log('[PUT /reservations/:id] Normalized status:', updateData.status);
+    }
+    
     // Update reservation
     const updatedReservation = await prisma.reservation.update({
       where: { id: Number(id) },
@@ -314,7 +370,11 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
             }
           }
         },
-        payment: true
+        payment: {
+          include: {
+            discountCode: true
+          }
+        }
       }
     });
     

@@ -25,6 +25,19 @@ export const createPaymentSchema = z.object({
     .nullable()
     .optional(),
   status: z.enum(['UNPAID', 'PENDING', 'PAID', 'REFUNDED'])
+    .optional(),
+  discountCodeId: z.number()
+    .int('Discount code ID must be a whole number')
+    .min(1, 'Invalid discount code ID')
+    .nullable()
+    .optional(),
+  discountAmount: z.number()
+    .min(0, 'Discount amount must be non-negative')
+    .nullable()
+    .optional(),
+  originalAmount: z.number()
+    .min(0, 'Original amount must be non-negative')
+    .nullable()
     .optional()
 });
 

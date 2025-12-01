@@ -1,15 +1,19 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { User, Mail, Phone, Star, Award, BookOpen, Calendar, Camera, Upload, Edit, Save, X } from 'lucide-react';
 import AvatarSelector, { AvatarDisplay } from '@/components/avatar/AvatarSelector';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function InstructorProfile() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [instructorData, setInstructorData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -121,12 +125,12 @@ export default function InstructorProfile() {
         });
       }
 
-    setIsEditing(false);
+      setIsEditing(false);
       fetchInstructorProfile(); // Reload to get updated data
-    alert('Perfil actualizado exitosamente');
+      showSuccess('¡Perfil actualizado!', 'Los cambios se guardaron correctamente');
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Error al guardar el perfil');
+      showError('Error al guardar', 'No se pudo actualizar el perfil');
     }
   };
 
@@ -163,9 +167,9 @@ export default function InstructorProfile() {
               <div className="text-center">
                 {/* Avatar Section */}
                 <div className="relative inline-block mb-6">
-                  <AvatarDisplay 
-                    avatarId={selectedAvatar || instructorData?.avatar} 
-                    role="INSTRUCTOR" 
+                  <AvatarDisplay
+                    avatarId={selectedAvatar || instructorData?.avatar}
+                    role="INSTRUCTOR"
                     size="xl"
                     className="mx-auto shadow-lg"
                   />
@@ -173,7 +177,7 @@ export default function InstructorProfile() {
 
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">{instructorData?.name}</h2>
                 <p className="text-gray-600 mb-4">{instructorData?.school}</p>
-                
+
                 {/* Rating */}
                 <div className="flex items-center justify-center mb-4">
                   <div className="flex items-center bg-yellow-50 px-3 py-2 rounded-full">
@@ -197,11 +201,10 @@ export default function InstructorProfile() {
                 <div className="space-y-2">
                   <button
                     onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
-                    className={`w-full flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
-                      isEditing 
-                        ? 'bg-green-600 text-white hover:bg-green-700' 
+                    className={`w-full flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${isEditing
+                        ? 'bg-green-600 text-white hover:bg-green-700'
                         : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
+                      }`}
                   >
                     {isEditing ? (
                       <>
@@ -215,7 +218,7 @@ export default function InstructorProfile() {
                       </>
                     )}
                   </button>
-                  
+
                   {isEditing && (
                     <button
                       onClick={() => {
@@ -247,7 +250,7 @@ export default function InstructorProfile() {
                 />
               </div>
             )}
-            
+
             {/* Personal Information */}
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
@@ -385,7 +388,7 @@ export default function InstructorProfile() {
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Navegación Rápida</h3>
               <div className="grid grid-cols-1 gap-3">
-                <button 
+                <button
                   onClick={() => router.push('/dashboard/instructor')}
                   className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-blue-50 transition-colors border border-blue-200"
                 >
@@ -395,8 +398,8 @@ export default function InstructorProfile() {
                   </div>
                   <span className="text-blue-600">→</span>
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => router.push('/dashboard/instructor/classes')}
                   className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-green-50 transition-colors border border-green-200"
                 >
@@ -406,8 +409,8 @@ export default function InstructorProfile() {
                   </div>
                   <span className="text-green-600">→</span>
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => router.push('/dashboard/instructor/students')}
                   className="flex items-center justify-between p-3 bg-white rounded-lg hover:bg-purple-50 transition-colors border border-purple-200"
                 >

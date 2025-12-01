@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PaymentVoucherModal } from '@/components/payments/PaymentVoucherModal';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Reservation {
   id: number;
@@ -27,6 +28,8 @@ interface Reservation {
   payment?: {
     id: number;
     amount: number;
+    originalAmount?: number;
+    discountAmount?: number;
     status: string;
     paymentMethod?: string;
     transactionId?: string;
@@ -34,6 +37,10 @@ interface Reservation {
     voucherNotes?: string;
     paidAt?: string;
     createdAt: string;
+    discountCode?: {
+      id: number;
+      code: string;
+    };
   };
 }
 
@@ -55,6 +62,7 @@ export default function ClassReservationsPage() {
   const router = useRouter();
   const params = useParams();
   const classId = params?.id as string;
+  const { showSuccess, showError } = useToast();
 
   const [classData, setClassData] = useState<ClassData | null>(null);
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -155,12 +163,13 @@ export default function ClassReservationsPage() {
       await fetchClassAndReservations();
 
       // Show success message
-      alert(`Reserva ${newStatus === 'CONFIRMED' ? 'confirmada' : newStatus === 'CANCELED' ? 'cancelada' : 'actualizada'} exitosamente`);
+      const statusText = newStatus === 'CONFIRMED' ? 'confirmada' : newStatus === 'CANCELED' ? 'cancelada' : 'actualizada';
+      showSuccess('¡Reserva actualizada!', `Reserva ${statusText} exitosamente`);
     } catch (err) {
       console.error('[School] Error updating reservation:', err);
       const errorMessage = err instanceof Error ? err.message : 'Error al actualizar la reserva';
       setError(errorMessage);
-      alert(`Error: ${errorMessage}`);
+      showError('Error al actualizar', errorMessage);
     } finally {
       setUpdating(null);
     }
@@ -731,6 +740,39 @@ export default function ClassReservationsPage() {
                 </div>
                 {selectedReservation.payment ? (
                   <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="space-y-4">
+                      {selectedReservation.payment.originalAmount && selectedReservation.payment.originalAmount !== selectedReservation.payment.amount && (
+                        <div className="bg-white p-3 rounded-lg border border-gray-200">
+                          <div className="flex justify-between items-center text-sm mb-2">
+                            <span className="text-gray-600">Precio Original:</span>
+                            <span className="font-medium text-gray-900 line-through">${selectedReservation.payment.originalAmount.toFixed(2)}</span>
+                          </div>
+                          {selectedReservation.payment.discountAmount && selectedReservation.payment.discountAmount > 0 && (
+                            <div className="flex justify-between items-center text-sm mb-2">
+                              <span className="text-green-600 font-medium flex items-center gap-1">
+                                <span>Descuento</span>
+                                {selectedReservation.payment.discountCode && (
+                                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">
+                                    {selectedReservation.payment.discountCode.code}
+                                  </span>
+                                )}
+                                :
+                              </span>
+                              <span className="font-semibold text-green-600">-${selectedReservation.payment.discountAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                            <span className="font-medium text-gray-700">Total:</span>
+                            <span className="text-gray-900 text-lg font-bold">${selectedReservation.payment.amount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      )}
+                      {(!selectedReservation.payment.originalAmount || selectedReservation.payment.originalAmount === selectedReservation.payment.amount) && selectedReservation.payment?.amount && (
+                        <div>
+                          <p className="text-sm text-gray-500">Monto</p>
+                          <p className="text-lg font-bold text-gray-900">${selectedReservation.payment.amount.toFixed(2)}</p>
+                        </div>
+                      )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-gray-500">Estado del Pago</p>
@@ -738,12 +780,6 @@ export default function ClassReservationsPage() {
                           {getStatusLabel(selectedReservation.payment?.status || 'UNPAID')}
                         </span>
                       </div>
-                      {selectedReservation.payment?.amount && (
-                        <div>
-                          <p className="text-sm text-gray-500">Monto</p>
-                          <p className="text-lg font-bold text-gray-900">${selectedReservation.payment.amount}</p>
-                        </div>
-                      )}
                       {selectedReservation.payment?.paymentMethod && (
                         <div>
                           <p className="text-sm text-gray-500">Método de Pago</p>
@@ -880,6 +916,7 @@ export default function ClassReservationsPage() {
                           </div>
                         )}
                       </div>
+                    </div>
                     </div>
                   </div>
                 ) : (

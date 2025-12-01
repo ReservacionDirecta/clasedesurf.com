@@ -25,6 +25,7 @@ import {
   CreditCard,
   FileText,
   Settings,
+  Tag,
   // Instructor icons
   BookOpen,
   DollarSign,
@@ -58,6 +59,7 @@ const roleNavigationMap: Record<Exclude<RoleOption, undefined>, { href: string; 
     { href: "/dashboard/admin/classes", icon: Waves, label: "Clases" },
     { href: "/dashboard/admin/reservations", icon: Calendar, label: "Reservas" },
     { href: "/dashboard/admin/payments", icon: CreditCard, label: "Pagos" },
+    { href: "/dashboard/admin/discounts", icon: Tag, label: "Descuentos" },
     { href: "/dashboard/admin/reports", icon: FileText, label: "Reportes" },
     { href: "/dashboard/admin/settings", icon: Settings, label: "Configuración" },
   ],

@@ -1,19 +1,22 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Calendar, 
-  Clock, 
-  Users, 
-  DollarSign, 
-  MapPin, 
-  Edit, 
-  Trash2, 
+import { formatCurrency } from '@/lib/currency';
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  Clock,
+  Users,
+  DollarSign,
+  MapPin,
+  Edit,
+  Trash2,
   Eye,
   School,
   TrendingUp,
@@ -24,6 +27,7 @@ import {
   Image as ImageIcon,
   X
 } from 'lucide-react';
+import { useToast } from '@/contexts/ToastContext';
 
 interface Class {
   id: number;
@@ -73,26 +77,27 @@ interface Beach {
 export default function AdminClassesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
 
   const [classes, setClasses] = useState<Class[]>([]);
   const [filteredClasses, setFilteredClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [schools, setSchools] = useState<School[]>([]);
   const [beaches, setBeaches] = useState<Beach[]>([]);
-  
+
   // UI States
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  
+
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [filterSchool, setFilterSchool] = useState<string>('all');
   const [filterLevel, setFilterLevel] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'upcoming' | 'completed' | 'past'>('all');
-  
+
   // Form Data
   const [formData, setFormData] = useState({
     title: '',
@@ -107,7 +112,7 @@ export default function AdminClassesPage() {
     beachId: '',
     images: [] as string[]
   });
-  
+
   // Image URL input state
   const [newImageUrl, setNewImageUrl] = useState('');
 
@@ -139,13 +144,13 @@ export default function AdminClassesPage() {
       ]);
 
       if (!classesRes.ok || !schoolsRes.ok) throw new Error('Failed to fetch data');
-      
+
       const [classesData, schoolsData, beachesData] = await Promise.all([
         classesRes.json(),
         schoolsRes.json(),
         beachesRes.ok ? beachesRes.json() : Promise.resolve([])
       ]);
-      
+
       setClasses(classesData || []);
       setSchools(schoolsData || []);
       setBeaches(beachesData || []);
@@ -162,7 +167,7 @@ export default function AdminClassesPage() {
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(cls => 
+      filtered = filtered.filter(cls =>
         cls.title.toLowerCase().includes(query) ||
         cls.description?.toLowerCase().includes(query) ||
         cls.school?.name.toLowerCase().includes(query) ||
@@ -250,13 +255,14 @@ export default function AdminClassesPage() {
         const errorData = await res.json().catch(() => ({ message: 'Error desconocido' }));
         throw new Error(errorData.message || 'Failed to create class');
       }
-      
+
       await fetchData();
       resetForm();
       setShowCreateModal(false);
+      showSuccess('¡Clase creada!', 'La clase se creó correctamente');
     } catch (err: any) {
       console.error('Error al crear clase:', err);
-      alert(err.message || 'Error al crear la clase');
+      showError('Error al crear', err.message || 'No se pudo crear la clase');
     }
   };
 
@@ -310,20 +316,21 @@ export default function AdminClassesPage() {
         const errorData = await res.json().catch(() => ({ message: 'Error desconocido' }));
         throw new Error(errorData.message || 'Failed to update class');
       }
-      
+
       await fetchData();
       resetForm();
       setShowEditModal(false);
       setSelectedClass(null);
+      showSuccess('¡Clase actualizada!', 'Los cambios se guardaron correctamente');
     } catch (err: any) {
       console.error('Error al actualizar clase:', err);
-      alert(err.message || 'Error al actualizar la clase');
+      showError('Error al actualizar', err.message || 'No se pudo actualizar la clase');
     }
   };
 
   const handleDeleteClass = async () => {
     if (!selectedClass) return;
-    
+
     try {
       const token = (session as any)?.backendToken;
       const headers: any = {};
@@ -334,14 +341,30 @@ export default function AdminClassesPage() {
         headers
       });
 
-      if (!res.ok) throw new Error('Failed to delete class');
-      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Error desconocido' }));
+        const errorMessage = errorData.message || 'No se pudo eliminar la clase';
+        
+        // Si hay reservas activas, mostrar mensaje específico
+        if (errorData.reservationsCount) {
+          showError(
+            'No se puede eliminar', 
+            `La clase tiene ${errorData.reservationsCount} reserva(s) activa(s). Debes cancelar las reservas primero.`
+          );
+        } else {
+          showError('Error al eliminar', errorMessage);
+        }
+        return;
+      }
+
       await fetchData();
       setShowDeleteModal(false);
       setSelectedClass(null);
+      showSuccess('¡Clase eliminada!', 'La clase fue eliminada correctamente');
     } catch (err) {
-      console.error(err);
-      alert('Error al eliminar la clase');
+      console.error('Error deleting class:', err);
+      const errorMessage = err instanceof Error ? err.message : 'No se pudo eliminar la clase';
+      showError('Error al eliminar', errorMessage);
     }
   };
 
@@ -361,7 +384,7 @@ export default function AdminClassesPage() {
     });
     setNewImageUrl('');
   };
-  
+
   const addImageUrl = () => {
     if (newImageUrl.trim() && formData.images.length < 5) {
       setFormData({
@@ -371,7 +394,7 @@ export default function AdminClassesPage() {
       setNewImageUrl('');
     }
   };
-  
+
   const removeImageUrl = (index: number) => {
     setFormData({
       ...formData,
@@ -415,8 +438,8 @@ export default function AdminClassesPage() {
     completed: classes.filter(c => new Date(c.date) < new Date()).length,
     totalRevenue: classes.reduce((sum, c) => sum + (c.paymentInfo?.totalRevenue || 0), 0),
     totalReservations: classes.reduce((sum, c) => sum + (c.paymentInfo?.totalReservations || 0), 0),
-    averageOccupancy: classes.length > 0 
-      ? classes.reduce((sum, c) => sum + (c.paymentInfo?.occupancyRate || 0), 0) / classes.length 
+    averageOccupancy: classes.length > 0
+      ? classes.reduce((sum, c) => sum + (c.paymentInfo?.occupancyRate || 0), 0) / classes.length
       : 0
   };
 
@@ -578,31 +601,28 @@ export default function AdminClassesPage() {
           <div className="flex flex-wrap gap-2 mt-4">
             <button
               onClick={() => setFilterStatus('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterStatus === 'all'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'all'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Todas
             </button>
             <button
               onClick={() => setFilterStatus('upcoming')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterStatus === 'upcoming'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'upcoming'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Próximas
             </button>
             <button
               onClick={() => setFilterStatus('completed')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                filterStatus === 'completed'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === 'completed'
                   ? 'bg-gray-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+                }`}
             >
               Completadas
             </button>
@@ -615,7 +635,7 @@ export default function AdminClassesPage() {
             filteredClasses.map((cls) => {
               const isUpcoming = new Date(cls.date) > new Date();
               const occupancy = cls.paymentInfo?.occupancyRate || 0;
-              
+
               return (
                 <div key={cls.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -743,7 +763,7 @@ export default function AdminClassesPage() {
                     type="text"
                     required
                     value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -752,7 +772,7 @@ export default function AdminClassesPage() {
                   <select
                     required
                     value={formData.schoolId}
-                    onChange={(e) => setFormData({...formData, schoolId: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, schoolId: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Seleccionar escuela</option>
@@ -767,7 +787,7 @@ export default function AdminClassesPage() {
                     type="datetime-local"
                     required
                     value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -778,7 +798,7 @@ export default function AdminClassesPage() {
                     required
                     min="30"
                     value={formData.duration}
-                    onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -789,7 +809,7 @@ export default function AdminClassesPage() {
                     required
                     min="1"
                     value={formData.capacity}
-                    onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -801,7 +821,7 @@ export default function AdminClassesPage() {
                     required
                     min="0"
                     value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -809,7 +829,7 @@ export default function AdminClassesPage() {
                   <label className="block text-sm font-medium mb-1">Nivel *</label>
                   <select
                     value={formData.level}
-                    onChange={(e) => setFormData({...formData, level: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="BEGINNER">Principiante</option>
@@ -822,7 +842,7 @@ export default function AdminClassesPage() {
                   <input
                     type="text"
                     value={formData.instructor}
-                    onChange={(e) => setFormData({...formData, instructor: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="Nombre del instructor (opcional)"
                   />
@@ -831,7 +851,7 @@ export default function AdminClassesPage() {
                   <label className="block text-sm font-medium mb-1">Playa</label>
                   <select
                     value={formData.beachId}
-                    onChange={(e) => setFormData({...formData, beachId: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, beachId: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Seleccionar playa (opcional)</option>
@@ -844,7 +864,7 @@ export default function AdminClassesPage() {
                   <label className="block text-sm font-medium mb-1">Descripción</label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     rows={3}
                   />
@@ -860,7 +880,7 @@ export default function AdminClassesPage() {
                           onChange={(e) => {
                             const newImages = [...formData.images];
                             newImages[index] = e.target.value;
-                            setFormData({...formData, images: newImages});
+                            setFormData({ ...formData, images: newImages });
                           }}
                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                           placeholder="URL de la imagen"
@@ -941,7 +961,7 @@ export default function AdminClassesPage() {
                     type="text"
                     required
                     value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -950,7 +970,7 @@ export default function AdminClassesPage() {
                   <select
                     required
                     value={formData.schoolId}
-                    onChange={(e) => setFormData({...formData, schoolId: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, schoolId: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Seleccionar escuela</option>
@@ -965,7 +985,7 @@ export default function AdminClassesPage() {
                     type="datetime-local"
                     required
                     value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -976,7 +996,7 @@ export default function AdminClassesPage() {
                     required
                     min="30"
                     value={formData.duration}
-                    onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -987,7 +1007,7 @@ export default function AdminClassesPage() {
                     required
                     min="1"
                     value={formData.capacity}
-                    onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -999,7 +1019,7 @@ export default function AdminClassesPage() {
                     required
                     min="0"
                     value={formData.price}
-                    onChange={(e) => setFormData({...formData, price: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -1007,7 +1027,7 @@ export default function AdminClassesPage() {
                   <label className="block text-sm font-medium mb-1">Nivel *</label>
                   <select
                     value={formData.level}
-                    onChange={(e) => setFormData({...formData, level: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="BEGINNER">Principiante</option>
@@ -1020,7 +1040,7 @@ export default function AdminClassesPage() {
                   <input
                     type="text"
                     value={formData.instructor}
-                    onChange={(e) => setFormData({...formData, instructor: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="Nombre del instructor (opcional)"
                   />
@@ -1029,7 +1049,7 @@ export default function AdminClassesPage() {
                   <label className="block text-sm font-medium mb-1">Playa</label>
                   <select
                     value={formData.beachId}
-                    onChange={(e) => setFormData({...formData, beachId: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, beachId: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Seleccionar playa (opcional)</option>
@@ -1042,7 +1062,7 @@ export default function AdminClassesPage() {
                   <label className="block text-sm font-medium mb-1">Descripción</label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     rows={3}
                   />
@@ -1058,7 +1078,7 @@ export default function AdminClassesPage() {
                           onChange={(e) => {
                             const newImages = [...formData.images];
                             newImages[index] = e.target.value;
-                            setFormData({...formData, images: newImages});
+                            setFormData({ ...formData, images: newImages });
                           }}
                           className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                           placeholder="URL de la imagen"
@@ -1139,6 +1159,26 @@ export default function AdminClassesPage() {
                     <p className="text-gray-600 mt-2">{selectedClass.description}</p>
                   )}
                 </div>
+                {/* Image rendering logic for the class card in the view modal */}
+                <div className="h-48 w-full bg-gray-200 relative rounded-lg overflow-hidden">
+                  {selectedClass.images && selectedClass.images.length > 0 ? (
+                    <img 
+                      src={selectedClass.images[0]} 
+                      alt={selectedClass.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://placehold.co/600x400?text=No+Image';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <ImageIcon className="h-12 w-12" />
+                    </div>
+                  )}
+                  <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${getLevelColor(selectedClass.level)}`}>
+                    {selectedClass.level}
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-sm font-medium text-gray-600">Escuela:</span>
@@ -1158,7 +1198,7 @@ export default function AdminClassesPage() {
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-600">Precio:</span>
-                    <p className="text-gray-900">${selectedClass.price} USD</p>
+                    <p className="text-gray-900">{formatCurrency(selectedClass.price, 'PEN')}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-600">Nivel:</span>
@@ -1233,7 +1273,7 @@ export default function AdminClassesPage() {
             <div className="p-6">
               <h2 className="text-xl font-bold mb-4">Confirmar Eliminación</h2>
               <p className="text-gray-600 mb-6">
-                ¿Estás seguro de que deseas eliminar la clase <strong>&quot;{selectedClass.title}&quot;</strong>? 
+                ¿Estás seguro de que deseas eliminar la clase <strong>&quot;{selectedClass.title}&quot;</strong>?
                 Esta acción no se puede deshacer.
               </p>
               <div className="flex justify-end gap-3">

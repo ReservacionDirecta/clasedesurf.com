@@ -13,7 +13,8 @@ export async function GET(req: Request) {
       headers['Authorization'] = authHeader;
     }
 
-    const url = new URL(req.url);
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const url = new URL(req.url, baseUrl);
     const searchParams = url.search;
     const backendUrl = `${BACKEND}/users${searchParams}`;
     

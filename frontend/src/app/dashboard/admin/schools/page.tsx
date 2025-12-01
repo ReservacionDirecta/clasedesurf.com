@@ -1,13 +1,17 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function AdminSchoolsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
 
   const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,8 +38,8 @@ export default function AdminSchoolsPage() {
         const headers: any = {};
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  // Using API proxy routes instead of direct backend calls
-  const res = await fetch('/api/schools', { headers });
+        // Using API proxy routes instead of direct backend calls
+        const res = await fetch('/api/schools', { headers });
         if (!res.ok) throw new Error('Failed to fetch schools');
         const data = await res.json();
         setSchools(data);
@@ -64,12 +68,12 @@ export default function AdminSchoolsPage() {
       });
 
       if (!res.ok) throw new Error('Failed to create school');
-      
+
       // Refresh schools list
       const schoolsRes = await fetch('/api/schools', { headers: { Authorization: `Bearer ${token}` } });
       const schoolsData = await schoolsRes.json();
       setSchools(schoolsData);
-      
+
       // Reset form
       setFormData({
         name: '',
@@ -79,9 +83,10 @@ export default function AdminSchoolsPage() {
         email: ''
       });
       setShowCreateForm(false);
+      showSuccess('¡Escuela creada!', 'La escuela se creó correctamente');
     } catch (err) {
       console.error(err);
-      alert('Failed to create school');
+      showError('Error al crear', 'No se pudo crear la escuela');
     }
   };
 
@@ -110,7 +115,7 @@ export default function AdminSchoolsPage() {
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full p-2 border rounded"
                 />
               </div>
@@ -120,7 +125,7 @@ export default function AdminSchoolsPage() {
                   type="text"
                   required
                   value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   className="w-full p-2 border rounded"
                 />
               </div>
@@ -129,7 +134,7 @@ export default function AdminSchoolsPage() {
                 <input
                   type="tel"
                   value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="w-full p-2 border rounded"
                 />
               </div>
@@ -138,7 +143,7 @@ export default function AdminSchoolsPage() {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full p-2 border rounded"
                 />
               </div>
@@ -146,7 +151,7 @@ export default function AdminSchoolsPage() {
                 <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full p-2 border rounded"
                   rows={3}
                 />
@@ -187,8 +192,8 @@ export default function AdminSchoolsPage() {
                     </div>
                   </div>
                   <div className="ml-4">
-                    <Link 
-                      href={`/dashboard/admin/schools/${s.id}`} 
+                    <Link
+                      href={`/dashboard/admin/schools/${s.id}`}
                       className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
                     >
                       View / Edit

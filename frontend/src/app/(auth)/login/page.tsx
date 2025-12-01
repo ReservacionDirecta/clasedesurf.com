@@ -48,8 +48,7 @@ function LoginForm() {
         showErrorToast(errorMessage);
       } else if (result?.ok) {
         // Check for callbackUrl
-        const params = new URLSearchParams(window.location.search);
-        const callbackUrl = params.get('callbackUrl');
+        const callbackUrl = searchParams?.get('callbackUrl');
 
         if (callbackUrl) {
           router.push(callbackUrl);

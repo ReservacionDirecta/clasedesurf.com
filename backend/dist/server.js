@@ -20,6 +20,8 @@ const instructor_classes_1 = __importDefault(require("./routes/instructor-classe
 const students_1 = __importDefault(require("./routes/students"));
 const stats_1 = __importDefault(require("./routes/stats"));
 const beaches_1 = __importDefault(require("./routes/beaches"));
+const notes_1 = __importDefault(require("./routes/notes"));
+const discountCodes_1 = __importDefault(require("./routes/discountCodes"));
 const whatsapp_service_1 = require("./services/whatsapp.service");
 const prisma_1 = __importDefault(require("./prisma"));
 const app = (0, express_1.default)();
@@ -75,6 +77,8 @@ app.use('/instructor', instructor_classes_1.default);
 app.use('/students', students_1.default);
 app.use('/stats', stats_1.default);
 app.use('/beaches', beaches_1.default);
+app.use('/notes', notes_1.default);
+app.use('/discount-codes', discountCodes_1.default);
 app.get('/', (_req, res) => res.json({
     message: 'Backend API running',
     timestamp: new Date().toISOString(),
@@ -101,10 +105,27 @@ app.get('/db-test', async (req, res) => {
     try {
         const schoolCount = await prisma_1.default.school.count();
         const schools = await prisma_1.default.school.findMany({ take: 2 });
+        // Test CalendarNote model
+        let calendarNoteCount = 0;
+        let calendarNoteError = null;
+        let calendarNoteAvailable = false;
+        try {
+            // Try to access the model
+            calendarNoteCount = await prisma_1.default.calendarNote?.count() || 0;
+            calendarNoteAvailable = true;
+        }
+        catch (err) {
+            calendarNoteError = err?.message;
+            console.error('CalendarNote test error:', err);
+        }
         res.json({
             message: 'Database connection working',
             schoolCount,
             schools,
+            calendarNoteCount,
+            calendarNoteAvailable,
+            calendarNoteError,
+            prismaModels: Object.keys(prisma_1.default).filter(key => !key.startsWith('$') && !key.startsWith('_')),
             timestamp: new Date().toISOString()
         });
     }

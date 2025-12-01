@@ -23,6 +23,10 @@ interface ClassData {
   level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT'
   type: 'GROUP' | 'PRIVATE' | 'SEMI_PRIVATE' | 'INTENSIVE' | 'KIDS'
   location?: string
+  beach?: {
+    name: string
+    location?: string
+  }
   instructorName?: string
   includesBoard: boolean
   includesWetsuit: boolean
@@ -206,6 +210,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               className="object-cover transition-transform duration-300 hover:scale-105"
               priority={priority}
               loading={priority ? undefined : 'lazy'}
+              unoptimized={classData.images[0]?.startsWith('/api/') || classData.images[0]?.includes('cdninstagram.com') || classData.images[0]?.includes('instagram.com') || false}
             />
             {/* Image counter badge */}
             <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
@@ -213,14 +218,20 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
             </div>
           </div>
         ) : (
-          <Image
-            src={getClassImage(classData.type, classData.level)}
-            alt={`Clase de ${classData.title}`}
-            fill
-            className="object-cover transition-transform duration-300 hover:scale-105"
-            priority={priority}
-            loading={priority ? undefined : 'lazy'}
-          />
+          (() => {
+            const imageSrc = getClassImage(classData.type, classData.level);
+            return (
+              <Image
+                src={imageSrc}
+                alt={`Clase de ${classData.title}`}
+                fill
+                className="object-cover transition-transform duration-300 hover:scale-105"
+                priority={priority}
+                loading={priority ? undefined : 'lazy'}
+                unoptimized={imageSrc?.startsWith('/api/') || imageSrc?.includes('cdninstagram.com') || imageSrc?.includes('instagram.com') || false}
+              />
+            );
+          })()
         )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
@@ -323,14 +334,19 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
             </div>
           </div>
 
-          {/* Location */}
-          {classData.location && (
+          {/* Location - Muestra nombre de playa y ubicación */}
+          {(classData.beach || classData.location) && (
             <div className="flex items-center text-xs sm:text-sm text-gray-600 min-w-0">
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span className="font-medium truncate">{classData.location}</span>
+              <span className="font-medium truncate">
+                {classData.beach 
+                  ? `${classData.beach.name}${classData.beach.location ? ` - ${classData.beach.location}` : classData.location ? ` - ${classData.location}` : ''}`
+                  : classData.location
+                }
+              </span>
             </div>
           )}
 

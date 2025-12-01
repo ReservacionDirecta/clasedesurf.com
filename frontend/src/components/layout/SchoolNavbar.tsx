@@ -17,7 +17,8 @@ import {
   X,
   ChevronRight,
   GraduationCap,
-  User
+  User,
+  Tag
 } from 'lucide-react';
 
 export function SchoolNavbar() {
@@ -107,6 +108,12 @@ export function SchoolNavbar() {
       description: 'Ver pagos'
     },
     {
+      name: 'Descuentos',
+      href: '/dashboard/school/discounts',
+      icon: Tag,
+      description: 'Códigos de descuento'
+    },
+    {
       name: 'Perfil',
       href: '/dashboard/school/profile',
       icon: Settings,
@@ -169,8 +176,8 @@ export function SchoolNavbar() {
               </Link>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex lg:items-center lg:space-x-2">
+            {/* Desktop Navigation - Scrollable */}
+            <div className="hidden lg:flex lg:items-center lg:space-x-1 lg:overflow-x-auto lg:flex-1 lg:max-w-2xl scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
               {navigation.map((item) => {
                 const IconComponent = item.icon;
                 const active = isActive(item.href);
@@ -179,14 +186,14 @@ export function SchoolNavbar() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`group flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${active
-                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    className={`group flex items-center space-x-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${active
+                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                   >
-                    <IconComponent className={`w-5 h-5 transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-110'
+                    <IconComponent className={`w-4 h-4 transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-110'
                       }`} />
-                    <span>{item.name}</span>
+                    <span className="text-xs">{item.name}</span>
                   </Link>
                 );
               })}
@@ -335,15 +342,15 @@ export function SchoolNavbar() {
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`group flex items-center justify-between p-2 rounded-lg transition-all duration-200 ${active
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
-                      : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
+                    : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
                     }`}
                   style={{ touchAction: 'manipulation' }}
                 >
                   <div className="flex items-center space-x-2 min-w-0 flex-1">
                     <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${active
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
                       }`}>
                       <IconComponent className="w-3.5 h-3.5" />
                     </div>

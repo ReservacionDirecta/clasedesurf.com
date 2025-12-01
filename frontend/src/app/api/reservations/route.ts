@@ -21,8 +21,24 @@ export async function GET(req: NextRequest) {
       'Authorization': `Bearer ${token}`
     };
 
-    const url = new URL(req.url);
-    const searchParams = url.search;
+    // Extract search params safely without using new URL() during prerender
+    let searchParams = '';
+    try {
+      if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
+        const url = new URL(req.url);
+        searchParams = url.search;
+      } else {
+        const questionMarkIndex = req.url.indexOf('?');
+        if (questionMarkIndex !== -1) {
+          searchParams = req.url.substring(questionMarkIndex);
+        }
+      }
+    } catch (e) {
+      const questionMarkIndex = req.url.indexOf('?');
+      if (questionMarkIndex !== -1) {
+        searchParams = req.url.substring(questionMarkIndex);
+      }
+    }
     const backendUrl = `${BACKEND}/reservations${searchParams}`;
     
     const response = await fetch(backendUrl, {

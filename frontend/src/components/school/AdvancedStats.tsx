@@ -1,17 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  BookOpen, 
-  DollarSign, 
+import {
   Star,
-  Calendar,
-  Clock,
   Target,
-  Award,
   Activity,
   BarChart3,
   PieChart
@@ -59,97 +51,8 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
     return () => clearTimeout(timer);
   }, [stats]);
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    change, 
-    icon: Icon, 
-    color, 
-    prefix = '', 
-    suffix = '',
-    trend = 'up'
-  }: {
-    title: string;
-    value: number | string;
-    change?: number;
-    icon: any;
-    color: string;
-    prefix?: string;
-    suffix?: string;
-    trend?: 'up' | 'down' | 'neutral';
-  }) => (
-    <div className={`bg-gradient-to-br ${color} rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 text-white transform hover:scale-105 transition-all duration-200`}>
-      <div className="flex items-center justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-1 sm:space-x-2 mb-2">
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5 opacity-80 flex-shrink-0" />
-            <span className="text-xs sm:text-sm font-medium opacity-90 truncate">{title}</span>
-          </div>
-          <p className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 leading-tight">
-            {prefix}{typeof value === 'number' ? value.toLocaleString() : value}{suffix}
-          </p>
-          {change !== undefined && (
-            <div className="flex items-center space-x-1">
-              {trend === 'up' ? (
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              ) : trend === 'down' ? (
-                <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              ) : (
-                <Activity className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-              )}
-              <span className="text-xs sm:text-sm opacity-90">
-                {change > 0 ? '+' : ''}{change}%
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="bg-white bg-opacity-20 rounded-full p-2 sm:p-3 flex-shrink-0 ml-2">
-          <Icon className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-8">
-      {/* Main Stats Grid - Mobile Optimized */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        <StatCard
-          title="Clases Activas"
-          value={animatedStats.totalClasses}
-          change={stats.classGrowth}
-          icon={BookOpen}
-          color="from-blue-500 to-blue-600"
-          trend={stats.classGrowth && stats.classGrowth > 0 ? "up" : stats.classGrowth && stats.classGrowth < 0 ? "down" : "neutral"}
-        />
-        
-        <StatCard
-          title="Instructores"
-          value={animatedStats.totalInstructors}
-          icon={Users}
-          color="from-purple-500 to-purple-600"
-        />
-        
-        <StatCard
-          title="Estudiantes"
-          value={animatedStats.totalStudents}
-          change={stats.studentGrowth}
-          icon={Users}
-          color="from-green-500 to-green-600"
-          trend={stats.studentGrowth && stats.studentGrowth > 0 ? "up" : stats.studentGrowth && stats.studentGrowth < 0 ? "down" : "neutral"}
-        />
-        
-        <StatCard
-          title={`Ingresos (${timeframe === 'week' ? 'Semana' : timeframe === 'month' ? 'Mes' : 'Año'})`}
-          value={animatedStats.monthlyRevenue}
-          change={stats.revenueGrowth}
-          icon={DollarSign}
-          color="from-yellow-500 to-orange-500"
-          prefix="S/. "
-          trend={stats.revenueGrowth && stats.revenueGrowth > 0 ? "up" : stats.revenueGrowth && stats.revenueGrowth < 0 ? "down" : "neutral"}
-        />
-      </div>
-
       {/* Secondary Stats Grid - Mobile Optimized */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="bg-white rounded-lg sm:rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100">
@@ -165,7 +68,7 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
               <span className="text-xs sm:text-sm text-gray-500">Meta: 85%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
-              <div 
+              <div
                 className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 sm:h-3 rounded-full transition-all duration-1000"
                 style={{ width: `${animatedStats.averageOccupancy}%` }}
               ></div>
@@ -188,13 +91,12 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
               </span>
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                      i < Math.floor(animatedStats.averageRating) 
-                        ? 'text-yellow-400 fill-current' 
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 sm:w-5 sm:h-5 ${i < Math.floor(animatedStats.averageRating)
+                        ? 'text-yellow-400 fill-current'
                         : 'text-gray-300'
-                    }`} 
+                      }`}
                   />
                 ))}
               </div>
@@ -250,7 +152,7 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
                 {stats.topInstructor || '-'}
               </span>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                 <div className="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
@@ -260,7 +162,7 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
                 {stats.popularLevel || '-'}
               </span>
             </div>
-            
+
             <div className="flex items-center justify-between p-3 sm:p-4 bg-purple-50 rounded-lg border border-purple-200">
               <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
                 <div className="w-3 h-3 bg-purple-500 rounded-full flex-shrink-0"></div>
@@ -287,13 +189,13 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-green-500 h-2 rounded-full transition-all duration-1000" 
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all duration-1000"
                   style={{ width: `${stats.levelDistribution?.BEGINNER || 0}%` }}
                 ></div>
               </div>
             </div>
-            
+
             <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-gray-600">Intermedio</span>
@@ -302,13 +204,13 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-1000" 
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
                   style={{ width: `${stats.levelDistribution?.INTERMEDIATE || 0}%` }}
                 ></div>
               </div>
             </div>
-            
+
             <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs sm:text-sm text-gray-600">Avanzado</span>
@@ -317,8 +219,8 @@ export default function AdvancedStats({ stats, timeframe, onTimeframeChange }: A
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-purple-500 h-2 rounded-full transition-all duration-1000" 
+                <div
+                  className="bg-purple-500 h-2 rounded-full transition-all duration-1000"
                   style={{ width: `${stats.levelDistribution?.ADVANCED || 0}%` }}
                 ></div>
               </div>

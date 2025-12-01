@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useMemo, useState } from 'react'
 import { MobileBottomNav } from '@/components/navigation/MobileBottomNav'
 import SchoolCard from '@/components/schools/school-card'

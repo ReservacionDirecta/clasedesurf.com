@@ -166,4 +166,97 @@ router.post('/logout', async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+// POST /auth/google - Authenticate or register with Google
+router.post('/google', rateLimiter_1.authLimiter, async (req, res) => {
+    try {
+        const { googleId, email, name, image } = req.body;
+        if (!googleId || !email) {
+            return res.status(400).json({ message: 'Google ID and email are required' });
+        }
+        // Buscar usuario existente por email o googleId
+        let user = await prisma_1.default.user.findFirst({
+            where: {
+                OR: [
+                    { email },
+                    // En el futuro, cuando agreguemos googleId al schema:
+                    // { googleId }
+                ]
+            }
+        });
+        if (user) {
+            // Usuario existe, actualizar información si es necesario
+            // y generar token
+            const accessToken = signAccessToken(user);
+            const refreshToken = generateRefreshToken();
+            // Guardar refresh token
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30);
+            await prisma_1.default.refreshToken.create({
+                data: {
+                    tokenHash: refreshToken,
+                    userId: user.id,
+                    expiresAt
+                }
+            });
+            setRefreshCookie(res, refreshToken);
+            return res.json({
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role
+                },
+                token: accessToken
+            });
+        }
+        else {
+            // Usuario no existe, crear nuevo usuario
+            // Generar password aleatorio (no se usará, pero es requerido por el schema)
+            const randomPassword = crypto_1.default.randomBytes(32).toString('hex');
+            const hashed = await bcryptjs_1.default.hash(randomPassword, 10);
+            user = await prisma_1.default.user.create({
+                data: {
+                    email,
+                    name: name || email.split('@')[0],
+                    password: hashed, // Password no se usará para login con Google
+                    role: 'STUDENT' // Rol por defecto
+                }
+            });
+            // Crear perfil de estudiante
+            await prisma_1.default.student.create({
+                data: {
+                    userId: user.id,
+                    level: 'BEGINNER'
+                }
+            });
+            const accessToken = signAccessToken(user);
+            const refreshToken = generateRefreshToken();
+            // Guardar refresh token
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 30);
+            await prisma_1.default.refreshToken.create({
+                data: {
+                    tokenHash: refreshToken,
+                    userId: user.id,
+                    expiresAt
+                }
+            });
+            setRefreshCookie(res, refreshToken);
+            return res.status(201).json({
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role
+                },
+                token: accessToken
+            });
+        }
+    }
+    catch (err) {
+        console.error('[auth] POST /google error:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        res.status(500).json({ message: errorMessage });
+    }
+});
 exports.default = router;

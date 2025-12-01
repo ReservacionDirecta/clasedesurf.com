@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -17,7 +19,7 @@ export default function AdminSettingsPage() {
     siteDescription: 'Professional surf school booking platform',
     contactEmail: 'admin@surfschool.com',
     supportPhone: '+51 999 123 456',
-    defaultCurrency: 'USD',
+    defaultCurrency: 'PEN', // Moneda base: soles peruanos
     timezone: 'America/Lima',
     maintenanceMode: false,
     allowRegistrations: true,

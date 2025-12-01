@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url);
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const { searchParams } = new URL(req.url, baseUrl);
     const date = searchParams.get('date');
 
     const headers: any = {

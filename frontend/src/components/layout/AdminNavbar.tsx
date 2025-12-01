@@ -20,7 +20,8 @@ import {
   X,
   ChevronRight,
   Globe,
-  Eye
+  Eye,
+  Tag
 } from 'lucide-react';
 
 export function AdminNavbar() {
@@ -37,13 +38,13 @@ export function AdminNavbar() {
   useEffect(() => {
     const loadProfile = async () => {
       if (!session) return;
-      
+
       try {
         const token = (session as any)?.backendToken;
         const res = await fetch('/api/users/profile', {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
-        
+
         if (res.ok) {
           const data = await res.json();
           setProfilePhoto(data.profilePhoto || null);
@@ -52,7 +53,7 @@ export function AdminNavbar() {
         console.error('Error loading profile:', error);
       }
     };
-    
+
     loadProfile();
   }, [session]);
 
@@ -68,7 +69,7 @@ export function AdminNavbar() {
     } else {
       document.body.style.overflow = 'unset';
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -96,6 +97,7 @@ export function AdminNavbar() {
     { name: 'Classes', href: '/dashboard/admin/classes', icon: Waves, description: 'Gestionar clases' },
     { name: 'Reservations', href: '/dashboard/admin/reservations', icon: Calendar, description: 'Ver reservas' },
     { name: 'Payments', href: '/dashboard/admin/payments', icon: CreditCard, description: 'Ver pagos' },
+    { name: 'Descuentos', href: '/dashboard/admin/discounts', icon: Tag, description: 'Códigos de descuento' },
     { name: 'Reports', href: '/dashboard/admin/reports', icon: FileText, description: 'Ver reportes' },
     { name: 'Settings', href: '/dashboard/admin/settings', icon: Settings, description: 'Configuración' },
   ];
@@ -120,8 +122,8 @@ export function AdminNavbar() {
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
-      await signOut({ 
-        redirect: false 
+      await signOut({
+        redirect: false
       });
       // Redirección manual para evitar problemas con NEXTAUTH_URL
       router.push('/login');
@@ -169,16 +171,15 @@ export function AdminNavbar() {
               {navigation.slice(0, 5).map((item) => {
                 const IconComponent = item.icon;
                 const active = isActive(item.href);
-                
+
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${
-                      active
-                        ? 'text-[#FF3366] bg-white/10'
-                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] transition-colors'
-                    }`}
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${active
+                      ? 'text-[#FF3366] bg-white/10'
+                      : 'text-[#F6F7F8]/80 hover:text-[#FF3366] transition-colors'
+                      }`}
                   >
                     <IconComponent className="w-4 h-4 flex-shrink-0" />
                     <span className="text-sm font-medium">{item.name}</span>
@@ -226,16 +227,15 @@ export function AdminNavbar() {
       </header>
 
       {/* Mobile Menu */}
-      <div className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-        mobileMenuOpen ? 'max-h-[calc(100vh-64px)] opacity-100' : 'max-h-0 opacity-0'
-      }`}>
-        <div className="border-t border-white/10 bg-[#011627]/95 backdrop-blur-sm" style={{ 
+      <div className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'max-h-[calc(100vh-64px)] opacity-100' : 'max-h-0 opacity-0'
+        }`}>
+        <div className="border-t border-white/10 bg-[#011627]/95 backdrop-blur-sm" style={{
           maxHeight: 'calc(100vh - 64px)',
           display: 'flex',
           flexDirection: 'column'
         }}>
           {/* Scrollable Menu Container */}
-          <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar" style={{ 
+          <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar" style={{
             WebkitOverflowScrolling: 'touch',
             maxHeight: 'calc(100vh - 64px - 80px)', // Header height - logout button height
             paddingBottom: 'env(safe-area-inset-bottom, 0px)'
@@ -244,78 +244,75 @@ export function AdminNavbar() {
               {navigation.map((item) => {
                 const IconComponent = item.icon;
                 const active = isActive(item.href);
-                
+
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`group flex items-center justify-between px-2.5 py-2 rounded-lg transition-all duration-200 ${
-                      active
-                        ? 'bg-white/10 text-[#FF3366] shadow-sm'
-                        : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
-                    }`}
+                    className={`group flex items-center justify-between px-2.5 py-2 rounded-lg transition-all duration-200 ${active
+                      ? 'bg-white/10 text-[#FF3366] shadow-sm'
+                      : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
+                      }`}
                   >
                     <div className="flex items-center space-x-2 min-w-0 flex-1">
-                      <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${
-                        active
-                          ? 'bg-[#FF3366]/20 text-[#FF3366]'
-                          : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
-                      }`}>
+                      <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${active
+                        ? 'bg-[#FF3366]/20 text-[#FF3366]'
+                        : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
+                        }`}>
                         <IconComponent className="w-4 h-4" />
                       </div>
                       <span className="font-medium text-sm truncate">{item.name}</span>
                     </div>
-                    <ChevronRight className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${
-                      active
-                        ? 'text-[#FF3366]'
-                        : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
-                    }`} />
+                    <ChevronRight className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${active
+                      ? 'text-[#FF3366]'
+                      : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
+                      }`} />
                   </Link>
                 );
               })}
             </nav>
           </div>
-              
-              {/* User Profile & Logout Section - Fixed at bottom */}
-              <div className="flex flex-col space-y-2 pt-2 mt-2 border-t border-white/10 bg-[#011627]/95 flex-shrink-0" style={{ 
-                paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
-              }}>
-                <div className="flex items-center space-x-2.5 px-3 py-2.5 bg-white/5 rounded-lg backdrop-blur-sm">
-                  <div className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    <Image
-                      src="/logoclasedesusrf.png"
-                      alt="clasesde.pe"
-                      width={32}
-                      height={32}
-                      className="w-full h-full object-contain"
-                      unoptimized
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-white truncate">
-                      {session?.user?.name || 'Super Admin'}
-                    </p>
-                    <p className="text-[10px] text-[#F6F7F8]/60 truncate">
-                      {session?.user?.email}
-                    </p>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={handleSignOut}
-                  disabled={isSigningOut}
-                  className="flex items-center justify-center space-x-2 w-full px-3 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 border border-white/20 text-sm font-medium"
-                >
-                  <LogOut className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">
-                    {isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
-                  </span>
-                </button>
+
+          {/* User Profile & Logout Section - Fixed at bottom */}
+          <div className="flex flex-col space-y-2 pt-2 mt-2 border-t border-white/10 bg-[#011627]/95 flex-shrink-0" style={{
+            paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
+          }}>
+            <div className="flex items-center space-x-2.5 px-3 py-2.5 bg-white/5 rounded-lg backdrop-blur-sm">
+              <div className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <Image
+                  src="/logoclasedesusrf.png"
+                  alt="clasesde.pe"
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-contain"
+                  unoptimized
+                />
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-white truncate">
+                  {session?.user?.name || 'Super Admin'}
+                </p>
+                <p className="text-[10px] text-[#F6F7F8]/60 truncate">
+                  {session?.user?.email}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className="flex items-center justify-center space-x-2 w-full px-3 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 border border-white/20 text-sm font-medium"
+            >
+              <LogOut className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">
+                {isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
-      
+
       <style jsx global>{`
         .scrollbar-hide {
           -ms-overflow-style: none;

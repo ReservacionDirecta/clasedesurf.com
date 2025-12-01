@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -37,7 +39,7 @@ const mockClasses = [
     duration: 120,
     capacity: 8,
     price: 25,
-    currency: 'USD',
+    currency: 'PEN', // Moneda base: soles peruanos
     level: 'BEGINNER' as const,
     type: 'GROUP' as const,
     location: 'Playa Makaha, Miraflores',

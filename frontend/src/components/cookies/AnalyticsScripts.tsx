@@ -30,10 +30,13 @@ export default function AnalyticsScripts() {
 
     // Inicializar gtag si no existe
     if (typeof window !== 'undefined' && !window.gtag) {
-      window.dataLayer = window.dataLayer || [];
-      function gtag(...args: any[]) {
-        window.dataLayer.push(args);
+      if (!window.dataLayer) {
+        window.dataLayer = [];
       }
+      const dataLayer = window.dataLayer;
+      const gtag = (...args: any[]) => {
+        dataLayer.push(args);
+      };
       window.gtag = gtag;
       gtag('js', new Date());
       gtag('config', GA_MEASUREMENT_ID, {
@@ -69,8 +72,12 @@ export default function AnalyticsScripts() {
         'https://connect.facebook.net/en_US/fbevents.js'
       );
       
-      window.fbq('init', FACEBOOK_PIXEL_ID);
-      window.fbq('track', 'PageView');
+      // Esperar a que fbq esté disponible
+      const fbqFn = window.fbq as ((...args: any[]) => void) | undefined;
+      if (fbqFn) {
+        fbqFn('init', FACEBOOK_PIXEL_ID);
+        fbqFn('track', 'PageView');
+      }
     }
   }, [canLoadMarketing]);
 

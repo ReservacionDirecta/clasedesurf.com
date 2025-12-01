@@ -109,7 +109,18 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
         errorData = { message: errorText || 'Error desconocido del servidor' };
       }
       console.error('[DELETE /api/classes/:id] Backend error:', errorData);
-      return NextResponse.json(errorData, { status: response.status });
+      console.error('[DELETE /api/classes/:id] Error status:', response.status);
+      console.error('[DELETE /api/classes/:id] Error text:', errorText);
+      
+      // Preserve the error message from backend, especially for 400 errors
+      return NextResponse.json(
+        { 
+          message: errorData.message || 'Error al eliminar la clase',
+          reservationsCount: errorData.reservationsCount,
+          ...errorData
+        }, 
+        { status: response.status }
+      );
     }
 
     const data = await response.json();

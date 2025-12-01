@@ -29,21 +29,21 @@ const optionalAuth = (req: AuthRequest, res: any, next: any) => {
 router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   try {
     const { date, level, type, minPrice, maxPrice, schoolId, locality } = req.query;
-    
+
     // Build filter object
     const where: any = {};
-    
+
     // Apply multi-tenant filtering if authenticated
     if (req.userId && req.role) {
       const multiTenantWhere = await buildMultiTenantWhere(req, 'class');
       Object.assign(where, multiTenantWhere);
     }
-    
+
     // Filter by schoolId if provided (and not already filtered by multi-tenant)
     if (schoolId && !where.schoolId) {
       where.schoolId = Number(schoolId);
     }
-    
+
     // Filter by locality (school location)
     if (locality && typeof locality === 'string') {
       // If we already have a school filter, merge it
@@ -61,39 +61,39 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         };
       }
     }
-    
+
     // Filter by date (exact date match)
     if (date && typeof date === 'string') {
       const filterDate = new Date(date);
       const startOfDay = new Date(filterDate.setHours(0, 0, 0, 0));
       const endOfDay = new Date(filterDate.setHours(23, 59, 59, 999));
-      
+
       where.date = {
         gte: startOfDay,
         lte: endOfDay
       };
     }
-    
+
     // Filter by level
     if (level && typeof level === 'string') {
       where.level = level.toUpperCase();
     }
-    
+
     // Filter by type
     if (type && typeof type === 'string') {
       where.type = type.toUpperCase();
     }
-    
+
     // Filter by price range
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) where.price.gte = Number(minPrice);
       if (maxPrice) where.price.lte = Number(maxPrice);
     }
-    
-    const classes = await prisma.class.findMany({ 
+
+    const classes = await prisma.class.findMany({
       where,
-      include: { 
+      include: {
         school: {
           select: {
             id: true,
@@ -123,10 +123,10 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
             user: true
           }
         }
-      }, 
-      orderBy: { date: 'asc' } 
+      },
+      orderBy: { date: 'asc' }
     });
-    
+
     // Calculate payment info and available spots for each class
     const classesWithInfo = classes.map(cls => {
       const activeReservations = cls.reservations.filter(r => r.status !== 'CANCELED');
@@ -135,10 +135,10 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       const totalRevenue = cls.reservations
         .filter(r => r.payment?.status === 'PAID')
         .reduce((sum, r) => sum + (r.payment?.amount || 0), 0);
-      
+
       // Calculate available spots
       const availableSpots = cls.capacity - totalReservations;
-      
+
       return {
         ...cls,
         availableSpots: Math.max(0, availableSpots), // Ensure non-negative
@@ -150,13 +150,13 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         }
       };
     });
-    
+
     res.json(classesWithInfo);
   } catch (err: any) {
     console.error('[GET /classes] Error:', err);
     console.error('[GET /classes] Error message:', err?.message);
     console.error('[GET /classes] Error stack:', err?.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Internal server error',
       error: process.env.NODE_ENV === 'development' ? err?.message : undefined
     });
@@ -167,7 +167,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
 router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
-    
+
     const classData = await prisma.class.findUnique({
       where: { id: Number(id) },
       include: {
@@ -186,14 +186,14 @@ router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: Auth
         }
       }
     });
-    
+
     if (!classData) {
       return res.status(404).json({ message: 'Class not found' });
     }
-    
+
     // Filter active reservations
     const activeReservations = classData.reservations.filter(r => r.status !== 'CANCELED');
-    
+
     res.json({
       ...classData,
       reservations: activeReservations
@@ -208,9 +208,9 @@ router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: Auth
 router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createClassSchema), async (req: AuthRequest, res) => {
   try {
     const { title, description, date, duration, capacity, price, level, instructor, images, schoolId, studentDetails, beachId } = req.body;
-    
+
     console.log('📝 Creando clase con datos:', { title, description, date, duration, capacity, price, level, instructor, studentDetails, beachId });
-    
+
     const classDate = new Date(date);
 
     // Determine final schoolId
@@ -238,6 +238,25 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
         ...(beachId && { beach: { connect: { id: Number(beachId) } } })
       }
     });
+
+    // Normalize images paths if needed
+    if (images && Array.isArray(images)) {
+      const normalizedImages = images.map((img: string) => {
+        if (!img.startsWith('http') && !img.startsWith('/')) {
+          return `/uploads/${img}`;
+        }
+        return img;
+      });
+
+      // Update with normalized images if any change
+      if (JSON.stringify(normalizedImages) !== JSON.stringify(images)) {
+        await prisma.class.update({
+          where: { id: newClass.id },
+          data: { images: normalizedImages }
+        });
+        newClass.images = normalizedImages;
+      }
+    }
 
     console.log('✅ Clase creada exitosamente:', newClass.id);
     res.status(201).json(newClass);
@@ -347,7 +366,17 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
     const { images, ...restData } = data;
     const updateData: any = { ...restData };
     if (images !== undefined) {
-      updateData.images = images;
+      // Normalize images paths
+      if (Array.isArray(images)) {
+        updateData.images = images.map((img: string) => {
+          if (!img.startsWith('http') && !img.startsWith('/')) {
+            return `/uploads/${img}`;
+          }
+          return img;
+        });
+      } else {
+        updateData.images = images;
+      }
     }
 
     const updated = await prisma.class.update({ where: { id: Number(id) }, data: updateData });
@@ -363,20 +392,15 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resol
   try {
     const { id } = req.params as any;
     const classId = Number(id);
-    
+
     console.log('[DELETE /classes/:id] Attempting to delete class:', classId);
     console.log('[DELETE /classes/:id] User role:', req.role, 'User ID:', req.userId);
-    
-    // Find the class first
-    const existing = await prisma.class.findUnique({ 
+
+    // Find the class first - Get ALL reservations to check their status
+    const existing = await prisma.class.findUnique({
       where: { id: classId },
       include: {
         reservations: {
-          where: {
-            status: {
-              not: 'CANCELED'
-            }
-          },
           select: {
             id: true,
             status: true
@@ -384,12 +408,12 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resol
         }
       }
     });
-    
+
     if (!existing) {
       console.log('[DELETE /classes/:id] Class not found:', classId);
       return res.status(404).json({ message: 'Class not found' });
     }
-    
+
     // If SCHOOL_ADMIN, verify ownership
     if (req.role === 'SCHOOL_ADMIN') {
       if (!req.schoolId) {
@@ -401,17 +425,37 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resol
         return res.status(403).json({ message: 'You can only delete classes from your school' });
       }
     }
-    
-    // Check if class has active reservations
-    const activeReservations = existing.reservations || [];
+
+    // Check if class has active reservations (not CANCELED)
+    const allReservations = existing.reservations || [];
+    const activeReservations = allReservations.filter(r => r.status !== 'CANCELED');
+
+    console.log('[DELETE /classes/:id] Total reservations:', allReservations.length);
+    console.log('[DELETE /classes/:id] Active reservations:', activeReservations.length);
+    console.log('[DELETE /classes/:id] Reservation statuses:', allReservations.map(r => ({ id: r.id, status: r.status })));
+
     if (activeReservations.length > 0) {
       console.log('[DELETE /classes/:id] Class has active reservations:', activeReservations.length);
-      return res.status(400).json({ 
+      const statusCounts = activeReservations.reduce((acc: any, r) => {
+        acc[r.status] = (acc[r.status] || 0) + 1;
+        return acc;
+      }, {});
+      console.log('[DELETE /classes/:id] Active reservation status breakdown:', statusCounts);
+
+      return res.status(400).json({
         message: `No se puede eliminar la clase porque tiene ${activeReservations.length} reserva(s) activa(s). Debes cancelar las reservas primero.`,
-        reservationsCount: activeReservations.length
+        reservationsCount: activeReservations.length,
+        statusBreakdown: statusCounts
       });
     }
-    
+
+    // If there are no active reservations, also delete canceled reservations to satisfy FK constraints
+    await prisma.reservation.deleteMany({
+      where: {
+        classId: classId,
+        status: 'CANCELED'
+      }
+    });
     // Delete the class
     await prisma.class.delete({ where: { id: classId } });
     console.log('[DELETE /classes/:id] Class deleted successfully:', classId);
@@ -421,20 +465,20 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resol
     console.error('[DELETE /classes/:id] Error name:', err?.name);
     console.error('[DELETE /classes/:id] Error message:', err?.message);
     console.error('[DELETE /classes/:id] Error code:', err?.code);
-    
+
     // Handle Prisma foreign key constraint errors
     if (err?.code === 'P2003' || err?.message?.includes('Foreign key constraint')) {
-      return res.status(400).json({ 
-        message: 'No se puede eliminar la clase porque tiene reservas o pagos asociados. Debes eliminar o cancelar las reservas primero.' 
+      return res.status(400).json({
+        message: 'No se puede eliminar la clase porque tiene reservas o pagos asociados. Debes eliminar o cancelar las reservas primero.'
       });
     }
-    
+
     // Handle Prisma record not found errors
     if (err?.code === 'P2025') {
       return res.status(404).json({ message: 'Clase no encontrada' });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       message: 'Error interno del servidor',
       error: process.env.NODE_ENV === 'development' ? err?.message : undefined
     });

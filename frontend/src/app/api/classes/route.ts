@@ -12,8 +12,26 @@ export async function GET(req: Request) {
     const authHeader = req.headers.get('authorization');
     console.log('🔑 Authorization header presente:', !!authHeader);
     
-    const url = new URL(req.url);
-    const searchParams = url.search;
+    // Extract search params safely without using new URL() during prerender
+    let searchParams = '';
+    try {
+      if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
+        const url = new URL(req.url);
+        searchParams = url.search;
+      } else {
+        // For relative URLs, extract search params manually
+        const questionMarkIndex = req.url.indexOf('?');
+        if (questionMarkIndex !== -1) {
+          searchParams = req.url.substring(questionMarkIndex);
+        }
+      }
+    } catch (e) {
+      // If URL parsing fails, try to extract search params manually
+      const questionMarkIndex = req.url.indexOf('?');
+      if (questionMarkIndex !== -1) {
+        searchParams = req.url.substring(questionMarkIndex);
+      }
+    }
     const backendUrl = `${BACKEND}/classes${searchParams}`;
     console.log('Fetching from:', backendUrl);
     

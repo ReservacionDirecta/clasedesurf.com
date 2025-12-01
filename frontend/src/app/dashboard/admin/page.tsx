@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -124,6 +126,14 @@ export default function AdminDashboardPage() {
       icon: '💳',
       color: 'from-emerald-500 to-emerald-600',
       stats: `${stats.paidReservations} paid`
+    },
+    {
+      title: 'Discount Codes',
+      description: 'Create and manage discount codes',
+      href: '/dashboard/admin/discounts',
+      icon: '🏷️',
+      color: 'from-pink-500 to-pink-600',
+      stats: 'Manage promotions'
     },
     {
       title: 'Reports & Analytics',

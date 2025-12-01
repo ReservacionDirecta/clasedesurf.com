@@ -1,11 +1,15 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Clock, Users, Plus, StickyNote, X, BookOpen } from 'lucide-react';
 import ClassForm from '@/components/forms/ClassForm';
 import { Class } from '@/types';
+import { formatCurrency } from '@/lib/currency';
+import { useToast } from '@/contexts/ToastContext';
 
 interface CalendarEvent {
   id: number;
@@ -24,6 +28,7 @@ interface CalendarEvent {
 export default function SchoolCalendar() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true); // Solo para carga inicial
@@ -46,7 +51,7 @@ export default function SchoolCalendar() {
     try {
       // Solo mostrar loading si se solicita explícitamente (carga inicial)
       if (showLoading) {
-        setLoading(true);
+      setLoading(true);
       }
 
       const schoolResponse = await fetch('/api/schools/my-school');
@@ -128,7 +133,7 @@ export default function SchoolCalendar() {
 
       setEvents([...calendarEvents, ...noteEvents]);
       if (showLoading) {
-        setLoading(false);
+      setLoading(false);
         setIsInitialLoad(false);
       }
     } catch (error) {
@@ -153,9 +158,9 @@ export default function SchoolCalendar() {
       router.push('/dashboard/student/profile');
       return;
     }
-    
+
     const currentUserId = session.user?.id?.toString() || null;
-    
+
     // Solo recargar eventos si el usuario realmente cambió (nueva sesión)
     // No recargar si es el mismo usuario (solo refresco de pestaña)
     if (lastUserId.current !== currentUserId) {
@@ -201,10 +206,11 @@ export default function SchoolCalendar() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        showError('Error al crear clase', errorData.message || 'No se pudo crear la clase');
         return;
       }
 
+      showSuccess('¡Clase creada!', 'La clase se creó correctamente');
       await fetchEvents(false); // Actualización silenciosa
       setShowCreateModal(false);
       setShowQuickModal(null);
@@ -212,6 +218,7 @@ export default function SchoolCalendar() {
       setSelectedDate(null);
     } catch (error) {
       console.error('Error creating class:', error);
+      showError('Error', 'No se pudo crear la clase');
     } finally {
       setIsCreating(false);
     }
@@ -237,17 +244,18 @@ export default function SchoolCalendar() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        showError('Error al crear nota', errorData.message || 'No se pudo crear la nota');
         return;
       }
 
+      showSuccess('¡Nota creada!', 'La nota se agregó al calendario');
       await fetchEvents(false); // Actualización silenciosa
       setShowQuickModal(null);
       setSelectedTimeSlot(null);
       setSelectedDate(null);
     } catch (error) {
       console.error('Error creating note:', error);
-      alert('Error al crear la nota. Por favor, intenta de nuevo.');
+      showError('Error', 'No se pudo crear la nota');
     }
   };
 
@@ -271,29 +279,30 @@ export default function SchoolCalendar() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        showError('Error al actualizar', errorData.message || 'No se pudo actualizar la nota');
         return;
       }
 
+      showSuccess('¡Nota actualizada!', 'Los cambios se guardaron correctamente');
       await fetchEvents(false); // Actualización silenciosa
       setShowNoteModal(false);
       setSelectedNote(null);
       setIsEditingNote(false);
     } catch (error) {
       console.error('Error updating note:', error);
-      alert('Error al actualizar la nota. Por favor, intenta de nuevo.');
+      showError('Error', 'No se pudo actualizar la nota');
     }
   };
 
   const handleDeleteNote = async (noteId: number) => {
     if (isDeletingNote) return; // Prevenir múltiples clicks
-    
+
     if (!confirm('¿Estás seguro de que deseas eliminar esta nota?')) {
       return;
     }
 
     setIsDeletingNote(true);
-    
+
     try {
       const response = await fetch(`/api/notes/${noteId}`, {
         method: 'DELETE',
@@ -301,11 +310,12 @@ export default function SchoolCalendar() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        showError('Error al eliminar', errorData.message || 'No se pudo eliminar la nota');
         // No cerrar el modal si hay error, para que el usuario pueda intentar de nuevo
         return;
       }
 
+      showSuccess('¡Nota eliminada!', 'La nota fue eliminada correctamente');
       // Cerrar el modal solo si la eliminación fue exitosa
       setShowNoteModal(false);
       setSelectedNote(null);
@@ -317,7 +327,7 @@ export default function SchoolCalendar() {
       });
     } catch (error) {
       console.error('Error deleting note:', error);
-      alert('Error al eliminar la nota. Por favor, intenta de nuevo.');
+      showError('Error', 'No se pudo eliminar la nota');
       // No cerrar el modal si hay error de red
     } finally {
       setIsDeletingNote(false);
@@ -329,18 +339,18 @@ export default function SchoolCalendar() {
       // Obtener clases disponibles para la fecha y hora seleccionada
       const schoolResponse = await fetch('/api/schools/my-school');
       if (!schoolResponse.ok) return;
-      
+
       const school = await schoolResponse.json();
       const dateString = selectedDate?.toISOString().split('T')[0];
       const [hours, minutes] = selectedTime.split(':').map(Number);
-      
+
       // Buscar clases en esa fecha
       const classesResponse = await fetch(`/api/schools/${school.id}/classes`);
       if (classesResponse.ok) {
         const allClasses = await classesResponse.json();
         const selectedDateTime = new Date(selectedDate!);
         selectedDateTime.setHours(hours, minutes, 0, 0);
-        
+
         // Filtrar clases que coincidan con la fecha/hora
         const matchingClasses = allClasses.filter((cls: any) => {
           const classDate = new Date(cls.date);
@@ -348,10 +358,10 @@ export default function SchoolCalendar() {
           classTime.setHours(classDate.getHours(), classDate.getMinutes(), 0, 0);
           return classTime.getTime() === selectedDateTime.getTime();
         });
-        
+
         setAvailableClasses(matchingClasses);
       }
-      
+
       setShowReservationModal(true);
       setShowQuickModal(null);
     } catch (error) {
@@ -359,43 +369,51 @@ export default function SchoolCalendar() {
     }
   };
 
-  const handleCreateReservation = async (classId: number, studentData: any) => {
+  const handleCreateReservation = async (classId: number, studentData: any, discountData?: { codeId: number, amount: number }) => {
     try {
       setIsCreatingReservation(true);
-      
+
+      const body: any = {
+        classId,
+        participants: [
+          {
+            name: studentData.name,
+            email: studentData.email,
+            age: studentData.age,
+            height: studentData.height,
+            weight: studentData.weight,
+            canSwim: studentData.canSwim || false,
+            swimmingLevel: studentData.swimmingLevel || 'BEGINNER',
+            hasSurfedBefore: studentData.hasSurfedBefore || false,
+            injuries: studentData.injuries || '',
+            emergencyContact: studentData.emergencyContact || '',
+            emergencyPhone: studentData.emergencyPhone || '',
+            specialRequest: studentData.specialRequest || ''
+          }
+        ]
+        // El status se maneja en el backend, no se envía desde aquí
+      };
+
+      if (discountData) {
+        body.discountCodeId = discountData.codeId;
+        body.discountAmount = discountData.amount;
+    }
+
       const response = await fetch('/api/reservations', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          classId,
-          participants: [
-            {
-              name: studentData.name,
-              email: studentData.email,
-              age: studentData.age,
-              height: studentData.height,
-              weight: studentData.weight,
-              canSwim: studentData.canSwim || false,
-              swimmingLevel: studentData.swimmingLevel || 'BEGINNER',
-              hasSurfedBefore: studentData.hasSurfedBefore || false,
-              injuries: studentData.injuries || '',
-              emergencyContact: studentData.emergencyContact || '',
-              emergencyPhone: studentData.emergencyPhone || '',
-              specialRequest: studentData.specialRequest || ''
-            }
-          ],
-          status: 'CONFIRMED'
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        alert(`Error: ${errorData.message || 'Error desconocido'}`);
+        showError('Error al crear reserva', errorData.message || 'No se pudo crear la reserva');
         return;
       }
 
+      showSuccess('¡Reserva creada!', 'La reserva se registró correctamente');
       await fetchEvents(false); // Actualización silenciosa
       setShowReservationModal(false);
       setSelectedTimeSlot(null);
@@ -403,7 +421,7 @@ export default function SchoolCalendar() {
       setAvailableClasses([]);
     } catch (error) {
       console.error('Error creating reservation:', error);
-      alert('Error al crear la reserva. Por favor, intenta de nuevo.');
+      showError('Error', 'No se pudo crear la reserva');
     } finally {
       setIsCreatingReservation(false);
     }
@@ -413,18 +431,18 @@ export default function SchoolCalendar() {
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
-    
+
     // Primer día del mes
     const firstDay = new Date(year, month, 1);
     // Último día del mes
     const lastDay = new Date(year, month + 1, 0);
-    
+
     // Día de la semana del primer día (0 = domingo, 6 = sábado)
     const startingDayOfWeek = firstDay.getDay();
     const daysInMonth = lastDay.getDate();
-    
+
     const days = [];
-    
+
     // Días del mes anterior para completar la primera semana
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
@@ -433,7 +451,7 @@ export default function SchoolCalendar() {
         isCurrentMonth: false
       });
     }
-    
+
     // Días del mes actual
     for (let day = 1; day <= daysInMonth; day++) {
       days.push({
@@ -441,7 +459,7 @@ export default function SchoolCalendar() {
         isCurrentMonth: true
       });
     }
-    
+
     // Días del mes siguiente para completar la última semana
     const remainingDays = 42 - days.length; // 6 semanas * 7 días
     for (let day = 1; day <= remainingDays; day++) {
@@ -450,7 +468,7 @@ export default function SchoolCalendar() {
         isCurrentMonth: false
       });
     }
-    
+
     return days;
   };
 
@@ -476,15 +494,15 @@ export default function SchoolCalendar() {
     const startMinutes = timeToMinutes(event.startTime);
     const endMinutes = event.endTime ? timeToMinutes(event.endTime) : startMinutes + 60;
     const duration = endMinutes - startMinutes;
-    
+
     // Día de 6:00 AM a 10:00 PM = 16 horas = 960 minutos
     const dayStart = 6 * 60; // 6:00 AM
     const dayEnd = 22 * 60; // 10:00 PM
     const dayDuration = dayEnd - dayStart;
-    
+
     const top = ((startMinutes - dayStart) / dayDuration) * 100;
     const height = (duration / dayDuration) * 100;
-    
+
     return { top: Math.max(0, top), height: Math.min(100, height) };
   };
 
@@ -537,16 +555,16 @@ export default function SchoolCalendar() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
-      {/* Header */}
+        {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="px-4 py-4 md:px-6">
           <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => router.push('/dashboard/school')}
+          <button
+            onClick={() => router.push('/dashboard/school')}
               className="text-blue-600 hover:text-blue-800 text-sm md:text-base"
-            >
+          >
               ← Volver
-            </button>
+          </button>
             <button
               onClick={() => setShowCreateModal(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm md:text-base"
@@ -554,83 +572,81 @@ export default function SchoolCalendar() {
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Nueva Clase</span>
             </button>
-          </div>
-          
+        </div>
+
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Calendario</h1>
-          
+
           {/* Navegación */}
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigateMonth('prev')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+                  <button
+                    onClick={() => navigateMonth('prev')}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
             <h2 className="text-lg md:text-xl font-semibold text-gray-900">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </h2>
-            <button
-              onClick={() => navigateMonth('next')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
+                    {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                  </h2>
+                  <button
+                    onClick={() => navigateMonth('next')}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+                </div>
+              </div>
 
       {/* Calendario */}
       <div className="px-4 md:px-6 py-6">
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {/* Días de la semana */}
+                {/* Días de la semana */}
           <div className="grid grid-cols-7 border-b border-gray-200">
-            {dayNames.map(day => (
+                  {dayNames.map(day => (
               <div key={day} className="p-3 text-center text-xs md:text-sm font-semibold text-gray-600 bg-gray-50">
-                {day}
-              </div>
-            ))}
-          </div>
+                      {day}
+                    </div>
+                  ))}
+                </div>
 
-          {/* Días del mes */}
+                {/* Días del mes */}
           <div className="grid grid-cols-7">
             {days.map((day, index) => {
-              const dayEvents = getEventsForDate(day.date);
+                    const dayEvents = getEventsForDate(day.date);
               const dayDate = new Date(day.date);
               dayDate.setHours(0, 0, 0, 0);
               const isToday = dayDate.getTime() === today.getTime();
               const isSelected = selectedDate && dayDate.getTime() === selectedDate.getTime();
 
-              return (
-                <div
-                  key={index}
-                  className={`relative min-h-[120px] md:min-h-[180px] p-2 border-r border-b border-gray-100 ${
-                    !day.isCurrentMonth ? 'bg-gray-50 opacity-50' : 'bg-white'
-                  } ${isToday ? 'bg-blue-50' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
-                >
-                  <div 
+                    return (
+                      <div
+                        key={index}
+                  className={`relative min-h-[120px] md:min-h-[180px] p-2 border-r border-b border-gray-100 ${!day.isCurrentMonth ? 'bg-gray-50 opacity-50' : 'bg-white'
+                    } ${isToday ? 'bg-blue-50' : ''} ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+                      >
+                  <div
                     onClick={() => {
                       setSelectedDate(day.date);
                       setSelectedTimeSlot({ date: day.date, hour: 9, minute: 0 });
                       setSelectedTime('09:00');
                       setShowQuickModal(null); // Abrir selector de tipo
                     }}
-                    className={`text-sm md:text-base font-medium mb-2 cursor-pointer hover:bg-gray-100 rounded px-1 ${
-                      isToday ? 'text-blue-600 font-bold' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-                    }`}
+                    className={`text-sm md:text-base font-medium mb-2 cursor-pointer hover:bg-gray-100 rounded px-1 ${isToday ? 'text-blue-600 font-bold' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                      }`}
                   >
-                    {day.date.getDate()}
-                  </div>
-                  
+                          {day.date.getDate()}
+                        </div>
+
                   {/* Bloques de tiempo para eventos */}
                   <div className="relative space-y-0.5">
                     {dayEvents.map(event => {
                       const position = getEventPosition(event);
                       const [hours, minutes] = event.startTime.split(':').map(Number);
                       const timeLabel = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-                      
+
                       return (
-                        <div
-                          key={event.id}
+                            <div
+                              key={event.id}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (event.type === 'class') {
@@ -658,14 +674,14 @@ export default function SchoolCalendar() {
                               {event.type === 'class' && event.enrolled !== undefined && (
                                 <div className="text-[8px] opacity-75">
                                   {event.enrolled}/{event.capacity || '∞'}
-                                </div>
-                              )}
                             </div>
-                          </div>
+                          )}
+                            </div>
                         </div>
-                      );
-                    })}
-                    
+                      </div>
+                    );
+                  })}
+
                     {/* Botón para agregar evento rápido - siempre visible */}
                     <button
                       onClick={(e) => {
@@ -675,21 +691,20 @@ export default function SchoolCalendar() {
                         setSelectedTime('09:00');
                         setShowQuickModal(null);
                       }}
-                      className={`w-full text-[10px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded p-1 transition-colors flex items-center justify-center gap-1 ${
-                        dayEvents.length > 0 ? 'mt-1 border border-dashed border-gray-300' : ''
-                      }`}
+                      className={`w-full text-[10px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded p-1 transition-colors flex items-center justify-center gap-1 ${dayEvents.length > 0 ? 'mt-1 border border-dashed border-gray-300' : ''
+                        }`}
                     >
                       <Plus className="w-3 h-3" />
                       <span>Agregar</span>
                     </button>
-                  </div>
                 </div>
+              </div>
               );
             })}
+            </div>
           </div>
-        </div>
 
-      </div>
+                      </div>
 
       {/* Modal crear clase completa */}
       {showCreateModal && (
@@ -703,17 +718,17 @@ export default function SchoolCalendar() {
               >
                 <X className="w-5 h-5" />
               </button>
-            </div>
+                        </div>
             <div className="p-4 md:p-6">
               <ClassForm
                 onSubmit={handleCreateClass}
                 onCancel={() => setShowCreateModal(false)}
                 isLoading={isCreating}
               />
-            </div>
-          </div>
-        </div>
-      )}
+                          </div>
+                          </div>
+                </div>
+              )}
 
       {/* Modal de selección de tipo */}
       {selectedDate && selectedTimeSlot && !showQuickModal && (
@@ -722,11 +737,11 @@ export default function SchoolCalendar() {
             <div className="p-4 border-b border-gray-200 flex justify-between items-center">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedDate.toLocaleDateString('es-ES', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {selectedDate.toLocaleDateString('es-ES', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </h3>
                 <div className="mt-2">
@@ -741,8 +756,8 @@ export default function SchoolCalendar() {
                     }}
                     className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                   />
-                </div>
-              </div>
+                      </div>
+                        </div>
               <button
                 onClick={() => {
                   setSelectedDate(null);
@@ -752,7 +767,7 @@ export default function SchoolCalendar() {
               >
                 <X className="w-5 h-5" />
               </button>
-            </div>
+                        </div>
             <div className="p-6">
               <p className="text-sm text-gray-600 mb-4">¿Qué deseas agregar a las {selectedTime}?</p>
               <div className="grid grid-cols-1 gap-3">
@@ -762,11 +777,11 @@ export default function SchoolCalendar() {
                 >
                   <div className="p-2 bg-blue-600 rounded-lg">
                     <BookOpen className="w-5 h-5 text-white" />
-                  </div>
+                          </div>
                   <div>
                     <div className="font-semibold text-gray-900">Nueva Clase</div>
                     <div className="text-sm text-gray-600">Crear una nueva clase de surf</div>
-                  </div>
+                      </div>
                 </button>
                 <button
                   onClick={() => setShowQuickModal('note')}
@@ -774,11 +789,11 @@ export default function SchoolCalendar() {
                 >
                   <div className="p-2 bg-yellow-600 rounded-lg">
                     <StickyNote className="w-5 h-5 text-white" />
-                  </div>
+                    </div>
                   <div>
                     <div className="font-semibold text-gray-900">Nueva Nota</div>
                     <div className="text-sm text-gray-600">Agregar una nota o recordatorio</div>
-                  </div>
+                </div>
                 </button>
                 <button
                   onClick={handleOpenReservationModal}
@@ -786,16 +801,16 @@ export default function SchoolCalendar() {
                 >
                   <div className="p-2 bg-green-600 rounded-lg">
                     <Users className="w-5 h-5 text-white" />
-                  </div>
+            </div>
                   <div>
                     <div className="font-semibold text-gray-900">Nueva Reserva</div>
                     <div className="text-sm text-gray-600">Registrar reserva de alumno</div>
-                  </div>
+                </div>
                 </button>
+                </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
       )}
 
       {/* Modal rápido de formulario */}
@@ -823,14 +838,14 @@ export default function SchoolCalendar() {
                   selectedDate={selectedTimeSlot.date}
                   selectedHour={selectedTimeSlot.hour}
                   selectedMinute={selectedTimeSlot.minute}
-                  onSubmit={handleCreateClass}
+                onSubmit={handleCreateClass}
                   onCancel={() => {
                     setShowQuickModal(null);
                     setSelectedTimeSlot(null);
                     setSelectedDate(null);
                   }}
-                  isLoading={isCreating}
-                />
+                isLoading={isCreating}
+              />
               ) : (
                 <QuickNoteForm
                   selectedDate={selectedTimeSlot.date}
@@ -845,9 +860,9 @@ export default function SchoolCalendar() {
                 />
               )}
             </div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Modal de ver/editar/eliminar nota */}
       {showNoteModal && selectedNote && selectedNote.noteId && (
@@ -925,18 +940,18 @@ function NoteViewEditModal({ note, isEditing, isDeleting = false, onEdit, onSave
       <div className="bg-white rounded-xl w-full max-w-md">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900">
               {isEditing ? 'Editar Nota' : 'Ver Nota'}
-            </h3>
+                </h3>
             <p className="text-sm text-gray-500 mt-1">{formattedDate}</p>
           </div>
-          <button
+                <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
+                  className="text-gray-400 hover:text-gray-600"
+                >
             <X className="w-5 h-5" />
-          </button>
-        </div>
+                </button>
+              </div>
 
         {isEditing ? (
           <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -1000,17 +1015,17 @@ function NoteViewEditModal({ note, isEditing, isDeleting = false, onEdit, onSave
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Hora</label>
               <p className="text-sm text-gray-900">{time}</p>
-            </div>
+                      </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Título</label>
               <p className="text-base text-gray-900 font-medium">{note.title}</p>
-            </div>
+                        </div>
             {note.content && (
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Contenido</label>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{note.content}</p>
-              </div>
-            )}
+                          </div>
+                        )}
             <div className="flex gap-2 pt-4 border-t border-gray-200">
               <button
                 onClick={onEdit}
@@ -1027,8 +1042,8 @@ function NoteViewEditModal({ note, isEditing, isDeleting = false, onEdit, onSave
                 {isDeleting ? 'Eliminando...' : 'Eliminar'}
               </button>
             </div>
-          </div>
-        )}
+                          </div>
+                        )}
       </div>
     </div>
   );
@@ -1050,7 +1065,7 @@ function QuickClassForm({ selectedDate, selectedHour, selectedMinute, onSubmit, 
     const [hours, minutes] = time.split(':').map(Number);
     const dateTime = new Date(selectedDate);
     dateTime.setHours(hours, minutes, 0, 0);
-    
+
     onSubmit({
       ...formData,
       date: dateTime.toISOString(),
@@ -1136,22 +1151,26 @@ interface ReservationModalProps {
   selectedTime: string;
   availableClasses: any[];
   onCreateClass: () => void;
-  onCreateReservation: (classId: number, studentData: any) => void;
+  onCreateReservation: (classId: number, studentData: any, discountData?: { codeId: number, amount: number }) => void;
   onCancel: () => void;
   isLoading: boolean;
 }
 
-function ReservationModal({ 
-  selectedDate, 
-  selectedTime, 
-  availableClasses, 
-  onCreateClass, 
-  onCreateReservation, 
-  onCancel, 
-  isLoading 
+function ReservationModal({
+  selectedDate,
+  selectedTime,
+  availableClasses,
+  onCreateClass,
+  onCreateReservation,
+  onCancel,
+  isLoading
 }: ReservationModalProps) {
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [showStudentForm, setShowStudentForm] = useState(false);
+  const [discountCodes, setDiscountCodes] = useState<any[]>([]);
+  const [selectedDiscountId, setSelectedDiscountId] = useState<string>("");
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [finalPrice, setFinalPrice] = useState(0);
   const [studentData, setStudentData] = useState({
     name: '',
     email: '',
@@ -1167,15 +1186,119 @@ function ReservationModal({
     specialRequest: ''
   });
 
+  useEffect(() => {
+    // Fetch available discount codes
+    const fetchDiscountCodes = async () => {
+      try {
+        const response = await fetch('/api/discount-codes');
+        if (response.ok) {
+          const data = await response.json();
+          // Filter active codes
+          const activeCodes = data.filter((code: any) => code.isActive);
+          setDiscountCodes(activeCodes);
+        }
+      } catch (error) {
+        console.error('Error fetching discount codes:', error);
+      }
+    };
+
+    fetchDiscountCodes();
+  }, []);
+
   const handleClassSelect = (classId: number) => {
     setSelectedClassId(classId);
     setShowStudentForm(true);
+    // Reset discount when changing class
+    setSelectedDiscountId("");
+    setDiscountAmount(0);
+
+    const selectedClass = availableClasses.find(c => c.id === classId);
+    if (selectedClass) {
+      setFinalPrice(selectedClass.price || 0);
+    }
   };
+
+  // Recalcular precio cuando cambia la clase seleccionada o el código de descuento
+  useEffect(() => {
+    if (selectedClassId && showStudentForm) {
+      const selectedClass = availableClasses.find(c => c.id === selectedClassId);
+      if (selectedClass) {
+        const originalPrice = selectedClass.price || 0;
+        if (selectedDiscountId) {
+          const code = discountCodes.find(c => c.id.toString() === selectedDiscountId);
+          if (code) {
+            const discount = (originalPrice * code.discountPercentage) / 100;
+            setDiscountAmount(discount);
+            setFinalPrice(Math.max(0, originalPrice - discount));
+          } else {
+            setDiscountAmount(0);
+            setFinalPrice(originalPrice);
+          }
+        } else {
+          setDiscountAmount(0);
+          setFinalPrice(originalPrice);
+        }
+      }
+    }
+  }, [selectedClassId, selectedDiscountId, discountCodes, availableClasses, showStudentForm]);
+
+  const handleDiscountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const codeId = e.target.value;
+    setSelectedDiscountId(codeId);
+
+    const selectedClass = availableClasses.find(c => c.id === selectedClassId);
+    if (!selectedClass) return;
+
+    if (!codeId) {
+      setDiscountAmount(0);
+      setFinalPrice(selectedClass.price || 0);
+      return;
+    }
+
+    const code = discountCodes.find(c => c.id.toString() === codeId);
+    if (code) {
+      const originalPrice = selectedClass.price || 0;
+      // Calcular descuento basado en el porcentaje
+      const discount = (originalPrice * code.discountPercentage) / 100;
+      setDiscountAmount(discount);
+      // Asegurar que el precio final no sea negativo
+      setFinalPrice(Math.max(0, originalPrice - discount));
+    }
+  };
+
+  // Recalcular precio cuando cambia la clase seleccionada
+  useEffect(() => {
+    if (selectedClassId && showStudentForm) {
+      const selectedClass = availableClasses.find(c => c.id === selectedClassId);
+      if (selectedClass) {
+        const originalPrice = selectedClass.price || 0;
+        if (selectedDiscountId) {
+          const code = discountCodes.find(c => c.id.toString() === selectedDiscountId);
+          if (code) {
+            const discount = (originalPrice * code.discountPercentage) / 100;
+            setDiscountAmount(discount);
+            setFinalPrice(Math.max(0, originalPrice - discount));
+          } else {
+            setDiscountAmount(0);
+            setFinalPrice(originalPrice);
+          }
+        } else {
+          setDiscountAmount(0);
+          setFinalPrice(originalPrice);
+        }
+      }
+    }
+  }, [selectedClassId, selectedDiscountId, discountCodes, availableClasses, showStudentForm]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedClassId) {
-      onCreateReservation(selectedClassId, studentData);
+      const discountData = selectedDiscountId ? {
+        codeId: parseInt(selectedDiscountId),
+        amount: discountAmount
+      } : undefined;
+
+      onCreateReservation(selectedClassId, studentData, discountData);
     }
   };
 
@@ -1224,7 +1347,7 @@ function ReservationModal({
                         >
                           <div className="font-semibold text-gray-900">{cls.title}</div>
                           <div className="text-sm text-gray-600 mt-1">
-                            {startTime} - {cls.duration || 120} min | ${cls.price || 0} | Capacidad: {cls.capacity || 10}
+                            {startTime} - {cls.duration || 120} min | {formatCurrency(cls.price || 0, 'PEN')} | Capacidad: {cls.capacity || 10}
                           </div>
                         </button>
                       );
@@ -1239,24 +1362,24 @@ function ReservationModal({
                     >
                       Crear Nueva Clase
                     </button>
-                  </div>
-                )}
-              </div>
+                          </div>
+                        )}
+                      </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="mb-4 pb-4 border-b border-gray-200">
-                <button
+                          <button
                   type="button"
-                  onClick={() => {
+                            onClick={() => {
                     setShowStudentForm(false);
                     setSelectedClassId(null);
-                  }}
+                            }}
                   className="text-blue-600 hover:text-blue-800 text-sm"
-                >
+                          >
                   ← Volver a seleccionar clase
-                </button>
-              </div>
+                          </button>
+                        </div>
 
               <h4 className="text-md font-semibold text-gray-900 mb-4">Información del Alumno</h4>
 
@@ -1270,7 +1393,7 @@ function ReservationModal({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                     required
                   />
-                </div>
+                    </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <input
@@ -1384,6 +1507,44 @@ function ReservationModal({
                 />
               </div>
 
+              {/* Discount Code Section */}
+              <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg border border-gray-200 mt-4">
+                <h5 className="text-sm font-semibold text-gray-900 mb-3">Descuentos y Pago</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Código de Descuento</label>
+                    <select
+                      value={selectedDiscountId}
+                      onChange={handleDiscountChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="">Sin descuento</option>
+                      {discountCodes.map((code) => (
+                        <option key={code.id} value={code.id}>
+                          {code.code} ({code.discountPercentage}% OFF)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col justify-end">
+                    <div className="flex justify-between items-center text-sm mb-1">
+                      <span className="text-gray-600">Precio Original:</span>
+                      <span className="font-medium">{formatCurrency(availableClasses.find(c => c.id === selectedClassId)?.price || 0, 'PEN')}</span>
+                    </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between items-center text-sm mb-1 text-green-600">
+                        <span>Descuento:</span>
+                        <span>- {formatCurrency(discountAmount, 'PEN')}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center text-lg font-bold border-t border-gray-300 pt-2 mt-1">
+                      <span>Total a Pagar:</span>
+                      <span className="text-blue-600">{formatCurrency(finalPrice, 'PEN')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex gap-2 pt-4">
                 <button
                   type="button"
@@ -1402,9 +1563,9 @@ function ReservationModal({
               </div>
             </form>
           )}
-        </div>
+            </div>
+          </div>
       </div>
-    </div>
   );
 }
 
@@ -1431,7 +1592,7 @@ function QuickNoteForm({ selectedDate, selectedHour, selectedMinute, onSubmit, o
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500"
           required
         />
-      </div>
+    </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
         <input
