@@ -44,7 +44,7 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
 
       // Calcular precio original (precio de la clase * número de participantes)
       const originalAmount = (cls.price || 0) * requested;
-      
+
       // Calcular precio final con descuento
       const finalDiscountAmount = discountAmount && discountAmount > 0 ? Number(discountAmount) : 0;
       const finalAmount = originalAmount - finalDiscountAmount;
@@ -130,10 +130,10 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
     // Build where clause with multi-tenant filtering
     const where = await buildMultiTenantWhere(req, 'reservation');
-    
-    const reservations = await prisma.reservation.findMany({ 
+
+    const reservations = await prisma.reservation.findMany({
       where,
-      include: { 
+      include: {
         user: {
           select: {
             id: true,
@@ -141,17 +141,17 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
             email: true,
             phone: true
           }
-        }, 
-        class: { 
-          include: { 
+        },
+        class: {
+          include: {
             school: {
               select: {
                 id: true,
                 name: true,
                 location: true
               }
-            } 
-          } 
+            }
+          }
         },
         payment: {
           include: {
@@ -163,7 +163,7 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
         createdAt: 'desc'
       }
     });
-    
+
     res.json(reservations);
   } catch (err) {
     console.error('[GET /reservations] Error:', err);
@@ -176,8 +176,8 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
 router.get('/all', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest, res) => {
   try {
     console.log('[GET /reservations/all] User ID:', req.userId, 'Role:', req.role);
-    const all = await prisma.reservation.findMany({ 
-      include: { 
+    const all = await prisma.reservation.findMany({
+      include: {
         user: {
           select: {
             id: true,
@@ -185,17 +185,17 @@ router.get('/all', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest,
             email: true,
             phone: true
           }
-        }, 
-        class: { 
-          include: { 
+        },
+        class: {
+          include: {
             school: {
               select: {
                 id: true,
                 name: true,
                 location: true
               }
-            } 
-          } 
+            }
+          }
         },
         payment: {
           include: {
@@ -220,7 +220,7 @@ router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req:
   try {
     const { id } = req.params as any;
     const userId = req.userId;
-    
+
     if (!userId) return res.status(401).json({ message: 'User not authenticated' });
 
     const reservation = await prisma.reservation.findUnique({
@@ -297,28 +297,28 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
   try {
     const { id } = req.params as any;
     const updateData = req.body;
-    
+
     // Find reservation
-    const reservation = await prisma.reservation.findUnique({ 
+    const reservation = await prisma.reservation.findUnique({
       where: { id: Number(id) },
-      include: { 
-        class: { 
-          include: { 
+      include: {
+        class: {
+          include: {
             school: {
               select: {
                 id: true,
                 name: true
               }
-            } 
-          } 
-        } 
+            }
+          }
+        }
       }
     });
-    
+
     if (!reservation) {
       return res.status(404).json({ message: 'Reservation not found' });
     }
-    
+
     // Multi-tenant check: SCHOOL_ADMIN can only update reservations from their school
     if (req.role === 'SCHOOL_ADMIN') {
       if (!req.schoolId) {
@@ -328,7 +328,7 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
         return res.status(403).json({ message: 'You can only update reservations from your school' });
       }
     }
-    
+
     // STUDENT can only update their own reservations
     if (req.role === 'STUDENT') {
       if (reservation.userId !== Number(req.userId)) {
@@ -339,13 +339,13 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
         return res.status(403).json({ message: 'Students can only cancel reservations' });
       }
     }
-    
+
     // Normalize status to uppercase to ensure consistency
     if (updateData.status) {
       updateData.status = updateData.status.toUpperCase();
       console.log('[PUT /reservations/:id] Normalized status:', updateData.status);
     }
-    
+
     // Update reservation
     const updatedReservation = await prisma.reservation.update({
       where: { id: Number(id) },
@@ -377,18 +377,98 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
         }
       }
     });
-    
+
     console.log('[PUT /reservations/:id] Reservation updated:', {
       id: updatedReservation.id,
       status: updatedReservation.status,
       userId: updatedReservation.userId,
       classId: updatedReservation.classId
     });
-    
+
     res.json(updatedReservation);
   } catch (err) {
     console.error('[PUT /reservations/:id] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// DELETE /reservations/:id - delete reservation (ADMIN only)
+router.delete('/:id', requireAuth, requireRole(['ADMIN']), validateParams(reservationIdSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as any;
+    const reservationId = Number(id);
+
+    console.log('[DELETE /reservations/:id] Attempting to delete reservation:', reservationId);
+    console.log('[DELETE /reservations/:id] User role:', req.role, 'User ID:', req.userId);
+
+    // Find the reservation first
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: {
+        payment: true,
+        class: {
+          select: {
+            id: true,
+            title: true,
+            schoolId: true
+          }
+        }
+      }
+    });
+
+    if (!reservation) {
+      console.log('[DELETE /reservations/:id] Reservation not found:', reservationId);
+      return res.status(404).json({ message: 'Reservation not found' });
+    }
+
+    console.log('[DELETE /reservations/:id] Found reservation:', {
+      id: reservation.id,
+      userId: reservation.userId,
+      classId: reservation.classId,
+      status: reservation.status,
+      hasPayment: !!reservation.payment
+    });
+
+    // Delete related payment first (if exists) to satisfy foreign key constraints
+    if (reservation.payment) {
+      console.log('[DELETE /reservations/:id] Deleting related payment:', reservation.payment.id);
+      await prisma.payment.delete({
+        where: { id: reservation.payment.id }
+      });
+    }
+
+    // Delete the reservation
+    await prisma.reservation.delete({
+      where: { id: reservationId }
+    });
+
+    console.log('[DELETE /reservations/:id] Reservation deleted successfully:', reservationId);
+    res.json({
+      message: 'Reserva eliminada exitosamente',
+      deletedReservationId: reservationId
+    });
+  } catch (err: any) {
+    console.error('[DELETE /reservations/:id] Error:', err);
+    console.error('[DELETE /reservations/:id] Error name:', err?.name);
+    console.error('[DELETE /reservations/:id] Error message:', err?.message);
+    console.error('[DELETE /reservations/:id] Error code:', err?.code);
+
+    // Handle Prisma foreign key constraint errors
+    if (err?.code === 'P2003' || err?.message?.includes('Foreign key constraint')) {
+      return res.status(400).json({
+        message: 'No se puede eliminar la reserva porque tiene datos relacionados. Por favor, contacta al administrador.'
+      });
+    }
+
+    // Handle Prisma record not found errors
+    if (err?.code === 'P2025') {
+      return res.status(404).json({ message: 'Reserva no encontrada' });
+    }
+
+    res.status(500).json({
+      message: 'Error interno del servidor',
+      error: process.env.NODE_ENV === 'development' ? err?.message : undefined
+    });
   }
 });
 

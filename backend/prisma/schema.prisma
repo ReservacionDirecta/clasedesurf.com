@@ -24,6 +24,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   profilePhoto  String?
+  avatar        String?        // Predefined avatar identifier (e.g., 'wave1', 'surf1')
   instructor    Instructor?
   refreshTokens RefreshToken[]
   reservations  Reservation[]

@@ -39,8 +39,7 @@ export const createClassSchema = z.object({
     .max(100, 'Instructor name must be less than 100 characters')
     .nullable()
     .optional(),
-  images: z.array(z.string().url('Each image must be a valid URL'))
-    .min(1, 'At least one image is required')
+  images: z.array(z.string())
     .max(5, 'Maximum 5 images allowed')
     .optional(),
   schoolId: z.number()
@@ -123,8 +122,7 @@ export const updateClassSchema = z.object({
     .max(100, 'Instructor name must be less than 100 characters')
     .nullable()
     .optional(),
-  images: z.array(z.string().url('Each image must be a valid URL'))
-    .min(1, 'At least one image is required')
+  images: z.array(z.string())
     .max(5, 'Maximum 5 images allowed')
     .optional(),
   schoolId: z.number()

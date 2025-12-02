@@ -18,6 +18,7 @@ import statsRouter from './routes/stats';
 import beachesRouter from './routes/beaches';
 import notesRouter from './routes/notes';
 import discountCodesRouter from './routes/discountCodes';
+import imagesRouter from './routes/images';
 import { whatsappService } from './services/whatsapp.service';
 import prisma from './prisma';
 const app = express();
@@ -46,7 +47,7 @@ const corsOptions = {
 
     // Permitir requests sin origin (como Postman, aplicaciones móviles, etc.)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -79,17 +80,18 @@ app.use('/stats', statsRouter);
 app.use('/beaches', beachesRouter);
 app.use('/notes', notesRouter);
 app.use('/discount-codes', discountCodesRouter);
+app.use('/images', imagesRouter);
 
-app.get('/', (_req, res) => res.json({ 
-  message: 'Backend API running', 
+app.get('/', (_req, res) => res.json({
+  message: 'Backend API running',
   timestamp: new Date().toISOString(),
   version: '1.0.0',
   environment: process.env.NODE_ENV || 'development'
 }));
 
 // Health check endpoint
-app.get('/health', (_req, res) => res.json({ 
-  status: 'healthy', 
+app.get('/health', (_req, res) => res.json({
+  status: 'healthy',
   timestamp: new Date().toISOString(),
   uptime: process.uptime(),
   memory: process.memoryUsage()
@@ -110,7 +112,7 @@ app.get('/db-test', async (req, res) => {
   try {
     const schoolCount = await prisma.school.count();
     const schools = await prisma.school.findMany({ take: 2 });
-    
+
     // Test CalendarNote model
     let calendarNoteCount = 0;
     let calendarNoteError = null;
@@ -123,10 +125,10 @@ app.get('/db-test', async (req, res) => {
       calendarNoteError = err?.message;
       console.error('CalendarNote test error:', err);
     }
-    
-    res.json({ 
-      message: 'Database connection working', 
-      schoolCount, 
+
+    res.json({
+      message: 'Database connection working',
+      schoolCount,
       schools,
       calendarNoteCount,
       calendarNoteAvailable,
@@ -136,8 +138,8 @@ app.get('/db-test', async (req, res) => {
     });
   } catch (error) {
     console.error('Database test error:', error);
-    res.status(500).json({ 
-      message: 'Database connection failed', 
+    res.status(500).json({
+      message: 'Database connection failed',
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });

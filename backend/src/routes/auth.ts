@@ -25,32 +25,32 @@ function generateRefreshToken() {
 function setRefreshCookie(res: express.Response, token: string, maxAgeSeconds = 60 * 60 * 24 * 30) {
   // httpOnly, secure in production, strict sameSite
   const isProduction = process.env.NODE_ENV === 'production';
-  res.cookie('refreshToken', token, { 
-    httpOnly: true, 
-    secure: isProduction, 
-    maxAge: maxAgeSeconds * 1000, 
-    sameSite: 'strict' 
+  res.cookie('refreshToken', token, {
+    httpOnly: true,
+    secure: isProduction,
+    maxAge: maxAgeSeconds * 1000,
+    sameSite: 'strict'
   });
 }
 
 // POST /auth/register
 router.post('/register', authLimiter, validateBody(registerSchema), async (req, res) => {
   try {
-  // registration request
-  // console.log('[auth] POST /register body ->', req.body);
+    // registration request
+    // console.log('[auth] POST /register body ->', req.body);
     const { name, email, password, role } = req.body;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(400).json({ message: 'Email already in use' });
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({ 
-      data: { 
-        name: name || '', 
-        email, 
+    const user = await prisma.user.create({
+      data: {
+        name: name || '',
+        email,
         password: hashed,
         role: role || 'STUDENT' // Default to STUDENT if no role provided
-      } 
+      }
     });
     const accessToken = signAccessToken(user);
 
@@ -64,7 +64,7 @@ router.post('/register', authLimiter, validateBody(registerSchema), async (req, 
     const { password: _p, ...safe } = user as any;
     res.status(201).json({ user: safe, token: accessToken });
   } catch (err) {
-  console.error('[auth] POST /register error', (err as any)?.stack || err);
+    console.error('[auth] POST /register error', (err as any)?.stack || err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -72,12 +72,12 @@ router.post('/register', authLimiter, validateBody(registerSchema), async (req, 
 // POST /auth/login
 router.post('/login', authLimiter, validateBody(loginSchema), async (req, res) => {
   try {
-  // login request
+    // login request
     const { email, password } = req.body;
 
-    const user = await prisma.user.findUnique({ 
+    const user = await prisma.user.findUnique({
       where: { email },
-      include: { 
+      include: {
         instructor: {
           include: {
             school: true
@@ -102,7 +102,7 @@ router.post('/login', authLimiter, validateBody(loginSchema), async (req, res) =
     const { password: _p, ...safe } = user as any;
     res.json({ user: safe, token: accessToken });
   } catch (err) {
-  console.error('[auth] POST /login error', (err as any)?.stack || err);
+    console.error('[auth] POST /login error', (err as any)?.stack || err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -131,13 +131,13 @@ router.post('/refresh', async (req, res) => {
 
     // issue new access token
     const accessToken = signAccessToken(user);
-  // rotate refresh token: delete old, create new
-  await prisma.refreshToken.delete({ where: { id: matched.id } });
-  const newRaw = generateRefreshToken();
-  const newHash = await bcrypt.hash(newRaw, 10);
-  const expiresAt2 = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
-  await prisma.refreshToken.create({ data: { tokenHash: newHash, user: { connect: { id: user.id } }, expiresAt: expiresAt2 } });
-  setRefreshCookie(res, newRaw);
+    // rotate refresh token: delete old, create new
+    await prisma.refreshToken.delete({ where: { id: matched.id } });
+    const newRaw = generateRefreshToken();
+    const newHash = await bcrypt.hash(newRaw, 10);
+    const expiresAt2 = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+    await prisma.refreshToken.create({ data: { tokenHash: newHash, user: { connect: { id: user.id } }, expiresAt: expiresAt2 } });
+    setRefreshCookie(res, newRaw);
 
     res.json({ token: accessToken });
   } catch (err) {
@@ -176,7 +176,7 @@ router.post('/logout', async (req, res) => {
 // POST /auth/google - Authenticate or register with Google
 router.post('/google', authLimiter, async (req, res) => {
   try {
-    const { googleId, email, name, image } = req.body;
+    const { googleId, email, name, image, role } = req.body;
 
     if (!googleId || !email) {
       return res.status(400).json({ message: 'Google ID and email are required' });
@@ -198,11 +198,11 @@ router.post('/google', authLimiter, async (req, res) => {
       // y generar token
       const accessToken = signAccessToken(user);
       const refreshToken = generateRefreshToken();
-      
+
       // Guardar refresh token
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
-      
+
       await prisma.refreshToken.create({
         data: {
           tokenHash: refreshToken,
@@ -228,30 +228,36 @@ router.post('/google', authLimiter, async (req, res) => {
       const randomPassword = crypto.randomBytes(32).toString('hex');
       const hashed = await bcrypt.hash(randomPassword, 10);
 
+      // Validar rol
+      const validRoles = ['STUDENT', 'INSTRUCTOR', 'SCHOOL_ADMIN', 'ADMIN'];
+      const userRole = (role && validRoles.includes(role)) ? role : 'STUDENT';
+
       user = await prisma.user.create({
         data: {
           email,
           name: name || email.split('@')[0],
           password: hashed, // Password no se usará para login con Google
-          role: 'STUDENT' // Rol por defecto
+          role: userRole
         }
       });
 
-      // Crear perfil de estudiante
-      await prisma.student.create({
-        data: {
-          userId: user.id,
-          level: 'BEGINNER'
-        }
-      });
+      // Crear perfil de estudiante solo si el rol es STUDENT
+      if (userRole === 'STUDENT') {
+        await prisma.student.create({
+          data: {
+            userId: user.id,
+            level: 'BEGINNER'
+          }
+        });
+      }
 
       const accessToken = signAccessToken(user);
       const refreshToken = generateRefreshToken();
-      
+
       // Guardar refresh token
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
-      
+
       await prisma.refreshToken.create({
         data: {
           tokenHash: refreshToken,
