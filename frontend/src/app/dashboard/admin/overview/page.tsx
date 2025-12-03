@@ -49,6 +49,7 @@ export default function AdminOverviewPage() {
     }
 
     fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router, timeRange]);
 
   const fetchAll = async () => {

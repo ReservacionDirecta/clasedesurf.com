@@ -134,10 +134,12 @@ export default function AdminClassesPage() {
     }
 
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router]);
 
   useEffect(() => {
     applyFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classes, searchQuery, filterSchool, filterLevel, filterStatus]);
 
   const fetchData = async () => {

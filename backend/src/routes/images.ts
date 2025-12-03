@@ -49,15 +49,16 @@ router.get('/library', requireAuth, async (req: AuthRequest, res) => {
         // Determine school ID based on user role
         if (user.role === 'SCHOOL_ADMIN' || user.role === 'INSTRUCTOR') {
             schoolId = user.instructor?.schoolId || null;
-        }
 
-        if (!schoolId) {
-            return res.status(403).json({ message: 'No school associated with this user' });
+            if (!schoolId) {
+                return res.status(403).json({ message: 'No school associated with this user' });
+            }
         }
+        // ADMIN (super admin) can see all images from all schools
 
-        // Get all classes from this school and extract unique images
+        // Get all classes (filtered by school if not super admin) and extract unique images
         const classes = await prisma.class.findMany({
-            where: { schoolId },
+            where: schoolId ? { schoolId } : {}, // Super admin sees all
             select: {
                 id: true,
                 title: true,

@@ -10,7 +10,30 @@ const router = express.Router();
 // GET /schools - list schools
 router.get('/', async (req, res) => {
   try {
-    const schools = await prisma.school.findMany({ 
+    // Check for auth header manually to determine if admin
+    const authHeader = req.headers.authorization;
+    let isAdmin = false;
+
+    if (authHeader) {
+      try {
+        const token = authHeader.split(' ')[1];
+      } catch (e) { }
+    }
+
+    const { status } = req.query;
+    const where: any = {};
+
+    if (status) {
+      where.status = status;
+    } else {
+      // Default behavior: If no status requested, return APPROVED only?
+      // Or return all and let frontend filter?
+      // Better: Return APPROVED by default. Admin can request 'status=PENDING' or 'status=ALL'
+      // where.status = 'APPROVED'; // Uncomment this when ready to enforce
+    }
+
+    const schools = await prisma.school.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -30,16 +53,14 @@ router.get('/', async (req, res) => {
         rating: true,
         totalReviews: true,
         createdAt: true,
-        updatedAt: true
-        // Excluir reviews explícitamente para evitar errores si la migración falló
+        updatedAt: true,
+        status: true // Include status
       }
     });
     res.json(schools);
   } catch (err: any) {
     console.error('[GET /schools] Error:', err);
-    console.error('[GET /schools] Error message:', err?.message);
-    console.error('[GET /schools] Error stack:', err?.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Internal server error',
       error: process.env.NODE_ENV === 'development' ? err?.message : undefined
     });
@@ -53,7 +74,7 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
     const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    
+
     if (!user || user.role !== 'SCHOOL_ADMIN') {
       return res.status(403).json({ message: 'Only school admins can access this endpoint' });
     }
@@ -74,11 +95,6 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
             }
           }
         }
-        // Excluir reviews temporalmente para evitar errores si la migración falló
-        // reviews: {
-        //   orderBy: { createdAt: 'desc' },
-        //   take: 10
-        // }
       }
     });
 
@@ -91,7 +107,7 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
     console.error('[GET /schools/my-school] Error:', err);
     console.error('[GET /schools/my-school] Error message:', err?.message);
     console.error('[GET /schools/my-school] Error stack:', err?.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Internal server error',
       error: process.env.NODE_ENV === 'development' ? err?.message : undefined
     });
@@ -132,17 +148,17 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBo
     const userId = req.userId;
     if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
-    const { 
-      name, 
-      location, 
-      description, 
-      phone, 
-      email, 
-      website, 
-      instagram, 
-      facebook, 
-      whatsapp, 
-      address 
+    const {
+      name,
+      location,
+      description,
+      phone,
+      email,
+      website,
+      instagram,
+      facebook,
+      whatsapp,
+      address
     } = req.body;
 
     // Check if user already has a school
@@ -154,12 +170,12 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBo
       return res.status(400).json({ message: 'User already has a school' });
     }
 
-    const created = await prisma.school.create({ 
-      data: { 
-        name, 
-        location, 
-        description: description || null, 
-        phone: phone || null, 
+    const created = await prisma.school.create({
+      data: {
+        name,
+        location,
+        description: description || null,
+        phone: phone || null,
         email: email || null,
         website: website || null,
         instagram: instagram || null,
@@ -167,7 +183,7 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBo
         whatsapp: whatsapp || null,
         address: address || null,
         ownerId: Number(userId)
-      } 
+      }
     });
 
     res.status(201).json(created);
@@ -188,7 +204,7 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
         return res.status(403).json({ message: 'You can only update your own school' });
       }
     }
-    
+
     // Clean data: remove undefined values and handle null properly
     const cleanData: any = {};
     Object.keys(data).forEach(key => {
@@ -196,30 +212,30 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
         cleanData[key] = data[key];
       }
     });
-    
+
     console.log('[PUT /schools/:id] Raw data received:', JSON.stringify(data, null, 2));
     console.log('[PUT /schools/:id] Cleaned data:', JSON.stringify(cleanData, null, 2));
     console.log('[PUT /schools/:id] foundedYear in cleanData:', cleanData.foundedYear, typeof cleanData.foundedYear);
     console.log('[PUT /schools/:id] School ID:', Number(id));
-    
+
     // Log what we're about to send to Prisma
     console.log('[PUT /schools/:id] About to update with Prisma, cleanData keys:', Object.keys(cleanData));
     console.log('[PUT /schools/:id] cleanData.foundedYear before Prisma:', cleanData.foundedYear, typeof cleanData.foundedYear);
-    
-    const updated = await prisma.school.update({ 
-      where: { id: Number(id) }, 
-      data: cleanData 
+
+    const updated = await prisma.school.update({
+      where: { id: Number(id) },
+      data: cleanData
     });
-    
+
     console.log('[PUT /schools/:id] School updated successfully');
     console.log('[PUT /schools/:id] Updated school data from Prisma:', JSON.stringify(updated, null, 2));
     console.log('[PUT /schools/:id] updated.foundedYear:', updated.foundedYear, typeof updated.foundedYear);
-    
+
     // Verify the update by fetching the school again
     const verified = await prisma.school.findUnique({ where: { id: Number(id) } });
     console.log('[PUT /schools/:id] Verified school data from DB:', JSON.stringify(verified, null, 2));
     console.log('[PUT /schools/:id] verified.foundedYear:', verified?.foundedYear, typeof verified?.foundedYear);
-    
+
     res.json(updated);
   } catch (err: any) {
     console.error('[PUT /schools/:id] Error updating school:', err);
@@ -230,7 +246,7 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
       stack: err?.stack
     });
     const errorMessage = err?.message || 'Internal server error';
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Internal server error',
       error: errorMessage,
       code: err?.code,
@@ -239,6 +255,28 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
         meta: err?.meta
       } : undefined
     });
+  }
+});
+
+// PUT /schools/:id/status - update status (requires ADMIN)
+router.put('/:id/status', requireAuth, requireRole(['ADMIN']), validateParams(schoolIdSchema), async (req, res) => {
+  try {
+    const { id } = req.params as any;
+    const { status } = req.body;
+
+    if (!['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const updated = await prisma.school.update({
+      where: { id: Number(id) },
+      data: { status }
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 

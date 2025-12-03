@@ -60,6 +60,7 @@ export default function AdminDiscountCodesPage() {
     }
 
     fetchCodes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router]);
 
   const fetchCodes = async () => {

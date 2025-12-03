@@ -232,12 +232,12 @@ export function AdminNavbar() {
       }`}>
         {/* Backdrop */}
         <div 
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 z-0"
           onClick={() => setMobileMenuOpen(false)}
         />
 
         {/* Menu Panel */}
-        <div className={`absolute top-0 right-0 bottom-0 w-[280px] bg-[#011627] border-l border-white/10 shadow-2xl transition-transform duration-300 flex flex-col ${
+        <div className={`absolute top-0 right-0 bottom-0 w-[280px] bg-[#011627] border-l border-white/10 shadow-2xl transition-transform duration-300 flex flex-col z-10 ${
           mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}>
           {/* Mobile Header */}

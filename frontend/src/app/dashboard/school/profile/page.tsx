@@ -6,7 +6,9 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MapPin, Phone, Mail, Globe, Instagram, Facebook, MessageCircle, Camera, Edit, Save, X } from 'lucide-react';
+import { MapPin, Phone, Mail, Globe, Instagram, Facebook, MessageCircle, Camera, Edit, Save, X, Eye, Upload, ImageIcon } from 'lucide-react';
+import Image from 'next/image';
+import { useToast } from '@/contexts/ToastContext';
 
 interface School {
   id: number;
@@ -30,17 +32,19 @@ interface School {
 export default function SchoolProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   
   const [school, setSchool] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  
+  // Image upload states
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const fetchSchool = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
@@ -62,7 +66,7 @@ export default function SchoolProfilePage() {
       }
     } catch (err) {
       console.error('Error fetching school:', err);
-      setError(err instanceof Error ? err.message : 'Error loading school data');
+      showError('Error', err instanceof Error ? err.message : 'Error loading school data');
     } finally {
       setLoading(false);
     }
@@ -96,8 +100,6 @@ export default function SchoolProfilePage() {
 
     try {
       setSaving(true);
-      setError(null);
-      setSuccess(false);
 
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
@@ -148,36 +150,11 @@ export default function SchoolProfilePage() {
       
       // Update the school state with the response from backend
       setSchool(updatedSchool);
-      setSuccess(true);
+      showSuccess('¡Guardado!', 'Los cambios se guardaron correctamente');
       
-      // Force a refetch from the server to ensure we have the latest data
-      // This ensures we get the data exactly as stored in the database
-      setTimeout(async () => {
-        console.log('[Frontend] Refetching school data from server...');
-        try {
-          const token = (session as any)?.backendToken;
-          const headers: any = { 'Content-Type': 'application/json' };
-          if (token) headers['Authorization'] = `Bearer ${token}`;
-          
-          const res = await fetch('/api/schools/my-school', { 
-            headers,
-            cache: 'no-store' // Prevent caching
-          });
-          if (res.ok) {
-            const freshSchool = await res.json();
-            console.log('[Frontend] Fresh school data from server:', JSON.stringify(freshSchool, null, 2));
-            setSchool(freshSchool);
-          }
-        } catch (err) {
-          console.error('[Frontend] Error refetching school:', err);
-        }
-      }, 100);
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       console.error('Error updating school:', err);
-      setError(err instanceof Error ? err.message : 'Error updating school');
+      showError('Error', err instanceof Error ? err.message : 'Error updating school');
     } finally {
       setSaving(false);
     }
@@ -192,6 +169,98 @@ export default function SchoolProfilePage() {
       console.log('[Frontend] Updated school state:', JSON.stringify(updated, null, 2));
       return updated;
     });
+  };
+
+  const handleImageUpload = async (file: File, type: 'logo' | 'coverImage') => {
+    if (!file.type.startsWith('image/')) {
+      showError('Error', 'Solo se permiten archivos de imagen');
+      return;
+    }
+
+    const setUploading = type === 'logo' ? setUploadingLogo : setUploadingCover;
+    setUploading(true);
+
+    try {
+      const token = (session as any)?.backendToken;
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('folder', 'schools');
+
+      const res = await fetch('/api/images/upload', {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: formDataUpload
+      });
+
+      if (!res.ok) throw new Error('Error en la subida');
+
+      const data = await res.json();
+      handleInputChange(type, data.url);
+      showSuccess('¡Imagen subida!', 'La imagen se subió correctamente');
+    } catch (error) {
+      console.error('Upload error:', error);
+      showError('Error', 'No se pudo subir la imagen');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const renderImageUploadSection = (type: 'logo' | 'coverImage') => {
+    if (!school) return null;
+    
+    const isLogo = type === 'logo';
+    const uploading = isLogo ? uploadingLogo : uploadingCover;
+    const currentImage = school[type];
+    const label = isLogo ? 'Logo de la Escuela' : 'Imagen de Portada';
+    const aspectClass = isLogo ? 'aspect-square' : 'aspect-video';
+
+    return (
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        
+        {currentImage ? (
+          <div className={`relative ${aspectClass} w-full bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200`}>
+            <Image
+              src={currentImage}
+              alt={label}
+              fill
+              className="object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => handleInputChange(type, '')}
+              className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className={`${aspectClass} w-full border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:border-blue-400 transition-colors cursor-pointer bg-gray-50`}>
+            <label className="cursor-pointer flex flex-col items-center justify-center w-full h-full">
+              {uploading ? (
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              ) : (
+                <>
+                  <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                  <span className="text-sm text-gray-600">Click para subir {isLogo ? 'logo' : 'portada'}</span>
+                  <span className="text-xs text-gray-400 mt-1">PNG, JPG, WebP</span>
+                </>
+              )}
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImageUpload(file, type);
+                }}
+                disabled={uploading}
+              />
+            </label>
+          </div>
+        )}
+      </div>
+    );
   };
 
   if (status === 'loading' || loading) {
@@ -216,24 +285,7 @@ export default function SchoolProfilePage() {
     );
   }
 
-  if (error && !school) {
-    return (
-      <div className="min-h-screen bg-gray-100 p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <h2 className="text-xl font-semibold text-red-800 mb-2">Error</h2>
-            <p className="text-red-600 mb-4">{error}</p>
-            <button
-              onClick={fetchSchool}
-              className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Intentar de nuevo
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   if (!school) {
     return (
@@ -258,40 +310,30 @@ export default function SchoolProfilePage() {
               <h1 className="text-3xl font-bold text-gray-900">Perfil de la Escuela</h1>
               <p className="text-gray-600 mt-1">Gestiona la información de tu escuela</p>
             </div>
-            <Link
-              href="/dashboard/school"
-              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg transition-colors"
-            >
-              ← Volver al Dashboard
-            </Link>
+            <div className="flex gap-3">
+              {school && (
+                <Link
+                  href={`/schools/${school.id}`}
+                  target="_blank"
+                  className="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                  Ver cómo me ven
+                </Link>
+              )}
+              <Link
+                href="/dashboard/school"
+                className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg transition-colors"
+              >
+                ← Volver al Dashboard
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto p-8">
-        {/* Success Message */}
-        {success && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <p className="text-green-800 font-medium">Información actualizada correctamente</p>
-            </div>
-          </div>
-        )}
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-red-800 font-medium">{error}</p>
-            </div>
-          </div>
-        )}
 
         {/* School Stats Card */}
         {school && (
@@ -511,33 +553,8 @@ export default function SchoolProfilePage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Imágenes</h2>
             </div>
 
-            <div>
-              <label htmlFor="logo" className="block text-sm font-medium text-gray-700 mb-2">
-                Logo (URL)
-              </label>
-              <input
-                type="url"
-                id="logo"
-                value={school.logo || ''}
-                onChange={(e) => handleInputChange('logo', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://ejemplo.com/logo.jpg"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700 mb-2">
-                Imagen de Portada (URL)
-              </label>
-              <input
-                type="url"
-                id="coverImage"
-                value={school.coverImage || ''}
-                onChange={(e) => handleInputChange('coverImage', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://ejemplo.com/portada.jpg"
-              />
-            </div>
+            {renderImageUploadSection('logo')}
+            {renderImageUploadSection('coverImage')}
           </div>
 
           {/* Submit Button */}

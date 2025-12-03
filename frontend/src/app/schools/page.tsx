@@ -137,49 +137,71 @@ export default function SchoolsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F6F7F8] pb-16">
-        <header className="bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] py-12 sm:py-16">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-4xl text-center text-white">
-              <span className="inline-flex items-center rounded-full bg-white/20 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-[#5DE0D0]">
-                Escuelas verificadas
-              </span>
-              <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-black leading-tight">
-                Encuentra la escuela perfecta para tu progresión
+    <div className="min-h-screen bg-[#F8FAFC]">
+        {/* Hero Section */}
+        <header className="relative overflow-hidden bg-[#011627] py-20 sm:py-24 lg:py-32">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <svg className="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
+            </svg>
+          </div>
+          
+          <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-3xl text-center">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-[#2EC4B6] backdrop-blur-sm mb-6 border border-white/10">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2EC4B6] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2EC4B6]"></span>
+                </span>
+                Escuelas Verificadas
+              </div>
+              
+              <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+                Descubre las mejores<br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2EC4B6] to-[#5DE0D0]">
+                  escuelas de surf
+                </span>
               </h1>
-              <p className="mt-4 text-sm sm:text-base lg:text-lg text-[#E1EDF5]">
-                Conoce academias certificadas que ofrecen experiencias guiadas, coaches expertos y acompañamiento personalizado.
+              
+              <p className="mt-6 text-lg leading-8 text-gray-300">
+                Conecta con academias certificadas, instructores expertos y la comunidad que necesitas para llevar tu surf al siguiente nivel.
               </p>
             </div>
           </div>
         </header>
 
-        <section className="relative -mt-16">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="rounded-3xl bg-white p-6 shadow-xl ring-1 ring-gray-100">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-1 items-center gap-3 rounded-2xl border border-[#CBD5E1] bg-[#F6F7F8] px-4 py-3">
-                  <svg className="h-5 w-5 text-[#2EC4B6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+        {/* Search & Filter Section */}
+        <section className="relative -mt-8 px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto max-w-5xl">
+            <div className="rounded-2xl bg-white p-4 shadow-xl ring-1 ring-black/5 sm:p-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                <div className="relative flex-1">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 21l-4.35-4.35M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
                   <input
                     type="search"
                     value={searchTerm}
                     onChange={handleSearchChange}
-                    placeholder="Buscar por nombre, ciudad o especialidad"
-                    className="w-full bg-transparent text-sm font-medium text-[#011627] placeholder:text-[#7B8896] focus:outline-none"
+                    placeholder="Buscar escuela, ubicación o instructor..."
+                    className="block w-full rounded-xl border-0 bg-gray-50 py-4 pl-11 pr-4 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#2EC4B6] sm:text-sm sm:leading-6 transition-all"
                   />
                 </div>
 
-                <div className="flex flex-col gap-2 sm:w-64">
-                  <label htmlFor="location-filter" className="text-xs font-semibold uppercase tracking-wide text-[#46515F]">
-                    Filtrar por ciudad
-                  </label>
+                <div className="relative md:w-72">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <svg className="h-5 w-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
+                      <circle cx="12" cy="10" r="3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
                   <select
-                    id="location-filter"
                     value={selectedLocation}
                     onChange={handleLocationChange}
-                    className="w-full rounded-2xl border border-[#CBD5E1] bg-white px-4 py-3 text-sm font-semibold text-[#011627] focus:border-[#2EC4B6] focus:outline-none focus:ring-2 focus:ring-[#9DE6DC]"
+                    className="block w-full appearance-none rounded-xl border-0 bg-gray-50 py-4 pl-11 pr-10 text-gray-900 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-inset focus:ring-[#2EC4B6] sm:text-sm sm:leading-6 transition-all cursor-pointer"
                   >
                     <option value="all">Todas las ubicaciones</option>
                     {locations.map((location) => (
@@ -188,46 +210,72 @@ export default function SchoolsPage() {
                       </option>
                     ))}
                   </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                    <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Results Section */}
+        <main className="container mx-auto px-4 py-12 sm:px-6 lg:px-8">
           {error && (
-            <div className="mx-auto mt-10 max-w-4xl rounded-2xl border border-yellow-200 bg-yellow-50 px-6 py-4 text-center text-sm text-yellow-800">
-              {error}
+            <div className="mx-auto mb-8 max-w-4xl rounded-2xl border border-yellow-200 bg-yellow-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">{error}</p>
+                </div>
+              </div>
             </div>
           )}
 
           {loading ? (
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="animate-pulse rounded-3xl bg-white p-6 shadow-lg">
-                  <div className="mb-6 h-40 rounded-2xl bg-gray-200" />
-                  <div className="mb-3 h-4 rounded bg-gray-200" />
-                  <div className="mb-3 h-4 rounded bg-gray-200" />
-                  <div className="h-4 rounded bg-gray-200" />
+                <div key={index} className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-48 rounded-2xl bg-gray-200" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-2/3 rounded bg-gray-200" />
+                      <div className="h-4 w-1/2 rounded bg-gray-200" />
+                    </div>
+                    <div className="h-20 rounded-xl bg-gray-200" />
+                  </div>
                 </div>
               ))}
             </div>
           ) : filteredSchools.length === 0 ? (
-            <div className="mx-auto mt-12 max-w-3xl rounded-3xl border border-[#CBD5E1] bg-white px-8 py-16 text-center shadow-xl">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9FBF7] text-[#2EC4B6]">
-                <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M3 7l9-4 9 4-9 4-9-4Z" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 12l9 4 9-4" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 17l9 4 9-4" strokeLinecap="round" strokeLinejoin="round" />
+            <div className="mx-auto max-w-2xl text-center py-16">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gray-100">
+                <svg className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h2 className="mt-6 text-2xl font-semibold text-[#011627]">No encontramos escuelas con ese criterio</h2>
-              <p className="mt-2 text-sm text-[#46515F]">
-                Ajusta los filtros o explora nuestras escuelas destacadas para descubrir la comunidad surfista perfecta para ti.
+              <h3 className="mt-6 text-xl font-bold text-gray-900">No se encontraron escuelas</h3>
+              <p className="mt-2 text-gray-500">
+                No hay resultados para tu búsqueda. Intenta con otros términos o ubicación.
               </p>
+              <button 
+                onClick={() => {
+                  setSearchTerm('')
+                  setSelectedLocation('all')
+                }}
+                className="mt-6 inline-flex items-center rounded-xl bg-[#011627] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#FF3366] transition-colors"
+              >
+                Limpiar filtros
+              </button>
             </div>
           ) : (
-            <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {filteredSchools.map((school) => (
                 <SchoolCard key={school.id} school={school} />
               ))}

@@ -121,6 +121,7 @@ model School {
   students     Student[]
   notes        CalendarNote[]
   discountCodes DiscountCode[]
+  status       SchoolStatus   @default(PENDING)
 
   @@map("schools")
 }
@@ -238,6 +239,12 @@ enum PaymentStatus {
 enum InstructorRole {
   INSTRUCTOR
   HEAD_COACH
+}
+
+enum SchoolStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model CalendarNote {

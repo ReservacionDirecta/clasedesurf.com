@@ -285,4 +285,75 @@ router.post('/google', authLimiter, async (req, res) => {
   }
 });
 
+// POST /auth/register-school
+router.post('/register-school', authLimiter, async (req, res) => {
+  try {
+    const { schoolName, adminName, email, password, phone, location } = req.body;
+
+    if (!schoolName || !adminName || !email || !password || !location) {
+      return res.status(400).json({ message: 'Todos los campos son requeridos' });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return res.status(400).json({ message: 'El email ya está en uso' });
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    // Transaction to ensure both user and school are created
+    const result = await prisma.$transaction(async (prisma) => {
+      // 1. Create User
+      const user = await prisma.user.create({
+        data: {
+          name: adminName,
+          email,
+          password: hashed,
+          role: 'SCHOOL_ADMIN',
+          phone
+        }
+      });
+
+      // 2. Create School
+      const school = await prisma.school.create({
+        data: {
+          name: schoolName,
+          location,
+          ownerId: user.id,
+          status: 'PENDING', // Explicitly set pending
+          phone
+        }
+      });
+
+      return { user, school };
+    });
+
+    const accessToken = signAccessToken(result.user);
+    const rawRefresh = generateRefreshToken();
+    const refreshHash = await bcrypt.hash(rawRefresh, 10);
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+
+    await prisma.refreshToken.create({
+      data: {
+        tokenHash: refreshHash,
+        user: { connect: { id: result.user.id } },
+        expiresAt
+      }
+    });
+
+    setRefreshCookie(res, rawRefresh);
+
+    const { password: _p, ...safeUser } = result.user as any;
+
+    res.status(201).json({
+      user: safeUser,
+      school: result.school,
+      token: accessToken,
+      message: 'Solicitud de registro enviada exitosamente'
+    });
+
+  } catch (err) {
+    console.error('[auth] POST /register-school error', err);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
 export default router;
