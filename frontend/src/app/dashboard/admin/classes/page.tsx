@@ -25,7 +25,10 @@ import {
   XCircle,
   ListChecks,
   Image as ImageIcon,
-  X
+  X,
+  Upload,
+  Grid,
+  Check
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -115,6 +118,13 @@ export default function AdminClassesPage() {
 
   // Image URL input state
   const [newImageUrl, setNewImageUrl] = useState('');
+  
+  // Image Library State
+  const [showImageLibrary, setShowImageLibrary] = useState(false);
+  const [libraryImages, setLibraryImages] = useState<{url: string, publicId?: string}[]>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -402,6 +412,90 @@ export default function AdminClassesPage() {
     });
   };
 
+  const fetchImageLibrary = async () => {
+    setLoadingImages(true);
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/images/library', { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setLibraryImages(data.images || []);
+      }
+    } catch (error) {
+      console.error('Error fetching image library:', error);
+      showError('Error', 'No se pudieron cargar las imágenes');
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+      showError('Error', 'Solo se permiten archivos de imagen');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const token = (session as any)?.backendToken;
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('folder', 'classes');
+
+      const res = await fetch('/api/images/upload', {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: formDataUpload
+      });
+
+      if (!res.ok) throw new Error('Error en la subida');
+
+      const data = await res.json();
+      
+      // Add to form data
+      if (formData.images.length < 5) {
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, data.url]
+        }));
+        showSuccess('Imagen subida', 'La imagen se ha subido y agregado correctamente');
+      }
+
+      // Refresh library
+      fetchImageLibrary();
+    } catch (error) {
+      console.error('Upload error:', error);
+      showError('Error', 'No se pudo subir la imagen');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files);
+    }
+  };
+
   const openEditModal = (cls: Class) => {
     setSelectedClass(cls);
     setFormData({
@@ -473,6 +567,105 @@ export default function AdminClassesPage() {
       minute: '2-digit'
     });
   };
+
+  const renderImageSection = () => (
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium mb-1">Imágenes (Máximo 5)</label>
+      
+      {/* Drag & Drop Zone */}
+      <div 
+        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+          dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+        }`}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <div className="flex flex-col items-center justify-center space-y-2">
+          <div className="p-3 bg-gray-100 rounded-full">
+            {uploadingImage ? (
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            ) : (
+              <Upload className="w-6 h-6 text-gray-500" />
+            )}
+          </div>
+          <div className="text-sm text-gray-600">
+            <label className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium">
+              <span>Subir imagen</span>
+              <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*"
+                onChange={(e) => handleFileUpload(e.target.files)}
+                disabled={uploadingImage}
+              />
+            </label>
+            <span className="mx-1">o arrastra y suelta</span>
+          </div>
+          <p className="text-xs text-gray-500">PNG, JPG, WebP hasta 5MB</p>
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <span className="text-xs text-gray-400 uppercase">O también</span>
+          <button
+            type="button"
+            onClick={() => {
+              fetchImageLibrary();
+              setShowImageLibrary(true);
+            }}
+            className="flex items-center px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+          >
+            <Grid className="w-4 h-4 mr-2" />
+            Elegir de la biblioteca
+          </button>
+        </div>
+      </div>
+
+      {/* Image Preview List */}
+      {formData.images.length > 0 && (
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {formData.images.map((img, index) => (
+            <div key={index} className="relative group aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+              <img 
+                src={img} 
+                alt={`Preview ${index}`} 
+                className="w-full h-full object-cover" 
+              />
+              <button
+                type="button"
+                onClick={() => removeImageUrl(index)}
+                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* URL Input Fallback */}
+      <div className="mt-4">
+         <div className="flex items-center gap-2">
+           <input
+             type="text"
+             value={newImageUrl}
+             onChange={(e) => setNewImageUrl(e.target.value)}
+             placeholder="O pegar URL directa..."
+             className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
+             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
+           />
+           <button
+             type="button"
+             onClick={addImageUrl}
+             className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+           >
+             <Plus className="w-4 h-4" />
+           </button>
+         </div>
+      </div>
+    </div>
+  );
 
   if (status === 'loading' || loading) {
     return (
@@ -869,57 +1062,7 @@ export default function AdminClassesPage() {
                     rows={3}
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Imágenes (URLs) - Máximo 5</label>
-                  <div className="space-y-2">
-                    {formData.images.map((img, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={img}
-                          onChange={(e) => {
-                            const newImages = [...formData.images];
-                            newImages[index] = e.target.value;
-                            setFormData({ ...formData, images: newImages });
-                          }}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="URL de la imagen"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImageUrl(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                    {formData.images.length < 5 && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={newImageUrl}
-                          onChange={(e) => setNewImageUrl(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addImageUrl();
-                            }
-                          }}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="Agregar URL de imagen"
-                        />
-                        <button
-                          type="button"
-                          onClick={addImageUrl}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {renderImageSection()}
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <button
@@ -1067,57 +1210,7 @@ export default function AdminClassesPage() {
                     rows={3}
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Imágenes (URLs) - Máximo 5</label>
-                  <div className="space-y-2">
-                    {formData.images.map((img, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={img}
-                          onChange={(e) => {
-                            const newImages = [...formData.images];
-                            newImages[index] = e.target.value;
-                            setFormData({ ...formData, images: newImages });
-                          }}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="URL de la imagen"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImageUrl(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                    {formData.images.length < 5 && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={newImageUrl}
-                          onChange={(e) => setNewImageUrl(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              addImageUrl();
-                            }
-                          }}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          placeholder="Agregar URL de imagen"
-                        />
-                        <button
-                          type="button"
-                          onClick={addImageUrl}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {renderImageSection()}
               </div>
               <div className="flex justify-end gap-3 mt-6">
                 <button
@@ -1290,6 +1383,58 @@ export default function AdminClassesPage() {
                   Eliminar
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Library Modal */}
+      {showImageLibrary && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h3 className="text-lg font-bold">Biblioteca de Imágenes</h3>
+              <button onClick={() => setShowImageLibrary(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingImages ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : libraryImages.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No hay imágenes en la biblioteca</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {libraryImages.map((img, idx) => (
+                    <div 
+                      key={idx} 
+                      className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all"
+                      onClick={() => {
+                        if (formData.images.length < 5) {
+                          setFormData(prev => ({ ...prev, images: [...prev.images, img.url] }));
+                          setShowImageLibrary(false);
+                        } else {
+                          showError('Límite alcanzado', 'Máximo 5 imágenes por clase');
+                        }
+                      }}
+                    >
+                      <img src={img.url} alt="Library asset" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                      {formData.images.includes(img.url) && (
+                        <div className="absolute top-2 right-2 bg-blue-600 text-white p-1 rounded-full">
+                          <Check className="w-3 h-3" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

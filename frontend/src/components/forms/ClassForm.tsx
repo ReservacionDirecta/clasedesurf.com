@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Class } from '@/types';
 import { Upload, Link as LinkIcon, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+import ImageLibrary from '@/components/images/ImageLibrary';
 
 interface Instructor {
   id: number;
@@ -41,6 +42,7 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
   const [imageUrl, setImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState('');
+  const [showLibrary, setShowLibrary] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [instructors, setInstructors] = useState<Instructor[]>([]);
@@ -218,6 +220,25 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
+  };
+
+  // Función para seleccionar imagen de la biblioteca
+  const handleSelectFromLibrary = (imageUrl: string) => {
+    if (formData.images.length >= 5) {
+      setImageError('Máximo 5 imágenes permitidas');
+      return;
+    }
+
+    if (formData.images.includes(imageUrl)) {
+      setImageError('Esta imagen ya está seleccionada');
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, imageUrl]
+    }));
+    setImageError('');
   };
 
   return (
@@ -472,6 +493,15 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
               </button>
             </div>
 
+            <button
+              type="button"
+              onClick={() => setShowLibrary(true)}
+              className="w-full flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <ImageIcon className="w-4 h-4 mr-2" />
+              Seleccionar de la biblioteca
+            </button>
+
             {/* Error Message */}
             {imageError && (
               <div className="flex items-center gap-2 text-red-600 text-xs bg-red-50 px-3 py-2 rounded-lg">
@@ -534,6 +564,18 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
           {isLoading ? 'Guardando...' : classData ? 'Actualizar' : 'Crear Clase'}
         </button>
       </div>
+
+      {showLibrary && (
+        <ImageLibrary
+          onSelect={(url) => {
+            handleSelectFromLibrary(url);
+            setShowLibrary(false);
+          }}
+          onClose={() => setShowLibrary(false)}
+          selectedImages={formData.images}
+          maxSelection={5}
+        />
+      )}
     </form>
   );
 }

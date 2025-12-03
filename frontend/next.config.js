@@ -54,6 +54,12 @@ const nextConfig = {
 				hostname: 'clasedesurf.com',
 				pathname: '/**',
 			},
+			// Cloudinary
+			{
+				protocol: 'https',
+				hostname: 'res.cloudinary.com',
+				pathname: '/**',
+			},
 		],
 		// Disable optimization in development for faster builds
 		// In production, optimization is enabled for better performance
@@ -91,7 +97,7 @@ const nextConfig = {
 		// Default backend URL for the browser (public) – resolves to localhost:4000 in dev
 		NEXT_PUBLIC_BACKEND_URL: BACKEND,
 		// Ensure NEXTAUTH_URL is always set for build time
-		NEXTAUTH_URL: process.env.NEXTAUTH_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://clasedesurfcom-production.up.railway.app'),
+		NEXTAUTH_URL: process.env.NEXTAUTH_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://clasedesurf.com'),
 	},
 };
 

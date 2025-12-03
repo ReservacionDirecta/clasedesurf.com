@@ -13,7 +13,7 @@ function signAccessToken(user: any) {
   const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
   console.log('Signing token with JWT_SECRET:', jwtSecret.substring(0, 10) + '...');
   // Use longer expiration for development, shorter for production
-  const expiresIn = process.env.NODE_ENV === 'production' ? '1h' : '2h';
+  const expiresIn = '24h';
   return jwt.sign({ userId: user.id, role: user.role }, jwtSecret, { expiresIn });
 }
 

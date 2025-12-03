@@ -1,29 +1,47 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Chrome } from 'lucide-react';
+import { setCookie, deleteCookie } from '@/lib/cookies';
 
 interface GoogleAuthButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   text?: string;
+  role?: string;
 }
 
 export function GoogleAuthButton({ 
   variant = 'default', 
   size = 'md',
   className = '',
-  text = 'Continuar con Google'
+  text = 'Continuar con Google',
+  role
 }: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
+
+  // Clear registration role cookie if no role is provided (e.g. on login page)
+  // This prevents stale cookies from affecting new user creation via login page
+  useEffect(() => {
+    if (!role) {
+      deleteCookie('registration_role');
+    }
+  }, [role]);
 
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
+      
+      // If a role is specified (registration), save it in a cookie
+      // This allows the server-side auth callback to know which role to assign
+      if (role) {
+        setCookie('registration_role', role, 1); // Expires in 1 day
+      }
+      
       await signIn('google', { 
-        callbackUrl: '/dashboard/student/profile',
+        callbackUrl: '/dashboard',
         redirect: true 
       });
     } catch (error) {

@@ -1,0 +1,6 @@
+﻿
+> clasesde-pe-platform@2.0.0 lint
+> next lint --no-cache
+
+Next.js config - NODE_ENV: production
+Next.js config - BACKEND URL: https://surfschool-backend-production.up.railway.app

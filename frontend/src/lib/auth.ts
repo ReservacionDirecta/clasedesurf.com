@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import bcrypt from 'bcryptjs';
 import type { UserRole } from '@/types';
+import { cookies } from 'next/headers';
 
 // Use same logic as next.config.js - force localhost:4000 in development
 // In server-side code (NextAuth), we need the full URL, not the proxy path
@@ -10,7 +11,13 @@ const BACKEND_URL = process.env.NODE_ENV === 'development'
   ? 'http://localhost:4000'
   : (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '/api');
 
+// Force the correct URL for NextAuth in production
+const NEXTAUTH_URL = process.env.NODE_ENV === 'production'
+  ? 'https://clasedesurf.com'
+  : process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
 export const authOptions = {
+  trustHost: true, // Trust the host header from the proxy
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -44,7 +51,7 @@ export const authOptions = {
             name: user.name,
             role: user.role,
             backendToken: token,
-            backendTokenExpires: Date.now() + 15 * 60 * 1000, // match backend 15m access token
+            backendTokenExpires: Date.now() + 24 * 60 * 60 * 1000, // match backend 24h access token
           };
         } catch (err) {
           console.error('Authorize error calling backend:', err);
@@ -73,6 +80,11 @@ export const authOptions = {
             ? 'http://localhost:4000'
             : (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '/api');
 
+          // Get role from cookie if available (set during registration)
+          const cookieStore = cookies();
+          const roleCookie = cookieStore.get('registration_role');
+          const role = roleCookie?.value;
+
           // Llamar al backend para crear/obtener usuario
           const response = await fetch(`${backendUrl}/auth/google`, {
             method: 'POST',
@@ -81,7 +93,8 @@ export const authOptions = {
               googleId: account.providerAccountId,
               email: user.email,
               name: user.name,
-              image: user.image
+              image: user.image,
+              role: role // Pass the role to the backend
             })
           });
 
@@ -91,7 +104,7 @@ export const authOptions = {
             user.id = data.user.id.toString();
             user.role = data.user.role;
             (user as any).backendToken = data.token;
-            (user as any).backendTokenExpires = Date.now() + 15 * 60 * 1000;
+            (user as any).backendTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
           } else {
             console.error('Error en autenticación Google con backend:', await response.text());
             return false; // Rechazar el sign in si falla
@@ -110,14 +123,14 @@ export const authOptions = {
         if ((user as any).backendToken) token.backendToken = (user as any).backendToken;
         if ((user as any).backendTokenExpires) token.backendTokenExpires = (user as any).backendTokenExpires;
       }
-      
+
       // Si es login con Google y no tenemos backendToken, intentar obtenerlo
       if (account?.provider === 'google' && !token.backendToken) {
         try {
           const backendUrl = process.env.NODE_ENV === 'development'
             ? 'http://localhost:4000'
             : (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '/api');
-          
+
           const response = await fetch(`${backendUrl}/auth/google`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -131,7 +144,7 @@ export const authOptions = {
           if (response.ok) {
             const data = await response.json();
             token.backendToken = data.token;
-            token.backendTokenExpires = Date.now() + 15 * 60 * 1000;
+            token.backendTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
             token.id = data.user.id.toString();
             token.role = data.user.role;
           }
@@ -154,7 +167,7 @@ export const authOptions = {
           const data = await res.json();
           if (data.token) {
             token.backendToken = data.token;
-            token.backendTokenExpires = Date.now() + 15 * 60 * 1000;
+            token.backendTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
           }
         }
       } catch (err) {
@@ -176,6 +189,26 @@ export const authOptions = {
     signIn: '/login',
   },
   secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: 'jwt' as const,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production'
+        ? '__Secure-next-auth.session-token'
+        : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.NODE_ENV === 'production' ? '.clasedesurf.com' : undefined,
+        maxAge: 30 * 24 * 60 * 60 // 30 days
+      }
+    }
+  }
 };
 
 export default NextAuth(authOptions);

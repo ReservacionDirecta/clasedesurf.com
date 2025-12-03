@@ -322,8 +322,8 @@ export default function EditClassPage() {
         title: formData.title,
         description: formData.description,
         date: dateTime.toISOString(),
-        duration: Number(formData.duration),
-        capacity: Number(formData.capacity),
+        duration: parseInt(String(formData.duration), 10),
+        capacity: parseInt(String(formData.capacity), 10),
         price: Number(formData.price),
         level: formData.level,
         instructor: formData.instructor,
@@ -338,7 +338,12 @@ export default function EditClassPage() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to update class');
+        let errorMessage = errorData.message || 'Failed to update class';
+        if (errorData.errors) {
+          const errorDetails = errorData.errors.map((err: any) => `\n- ${err.field}: ${err.message}`).join('');
+          errorMessage += `: ${errorDetails}`;
+        }
+        throw new Error(errorMessage);
       }
 
       showSuccess('¡Clase actualizada!', 'Los cambios se han guardado correctamente');

@@ -97,13 +97,13 @@ interface ReservationDetails {
 const tips = [
   {
     icon: Waves,
-    title: 'PreparaciÃ³n',
+    title: 'Preparación',
     content: 'Llega 15 minutos antes de la clase para tener tiempo de prepararte y conocer al instructor.'
   },
   {
     icon: Award,
     title: 'Seguridad',
-    content: 'AsegÃºrate de usar protector solar y traje de neopreno si el agua estÃ¡ frÃ­a. El instructor te guiarÃ¡ sobre el equipo necesario.'
+    content: 'Asegúrate de usar protector solar y traje de neopreno si el agua está fría. El instructor te guiará sobre el equipo necesario.'
   },
   {
     icon: Award,
@@ -113,7 +113,7 @@ const tips = [
   {
     icon: Lightbulb,
     title: 'Consejos',
-    content: 'Escucha atentamente las instrucciones del instructor. La seguridad es lo mÃ¡s importante en el surf.'
+    content: 'Escucha atentamente las instrucciones del instructor. La seguridad es lo más importante en el surf.'
   }
 ];
 
@@ -378,7 +378,7 @@ function ReservationDetailsContent() {
 
             {/* Class Information */}
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">InformaciÃ³n de la Clase</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Información de la Clase</h2>
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{reservation.class.title}</h3>
@@ -439,7 +439,7 @@ function ReservationDetailsContent() {
                         {participant.age && (
                           <div>
                             <span className="text-gray-600">Edad:</span>
-                            <p className="font-medium text-gray-900">{participant.age} aÃ±os</p>
+                            <p className="font-medium text-gray-900">{participant.age} años</p>
                           </div>
                         )}
                         {participant.height && (
@@ -456,17 +456,17 @@ function ReservationDetailsContent() {
                         )}
                         <div>
                           <span className="text-gray-600">Sabe nadar:</span>
-                          <p className="font-medium text-gray-900">{participant.canSwim ? 'SÃ­' : 'No'}</p>
+                          <p className="font-medium text-gray-900">{participant.canSwim ? 'Sí' : 'No'}</p>
                         </div>
                         {participant.swimmingLevel && (
                           <div>
-                            <span className="text-gray-600">Nivel de nataciÃ³n:</span>
+                            <span className="text-gray-600">Nivel de natación:</span>
                             <p className="font-medium text-gray-900 capitalize">{participant.swimmingLevel.toLowerCase()}</p>
                           </div>
                         )}
                         <div>
                           <span className="text-gray-600">Ha surfeado antes:</span>
-                          <p className="font-medium text-gray-900">{participant.hasSurfedBefore ? 'SÃ­' : 'No'}</p>
+                          <p className="font-medium text-gray-900">{participant.hasSurfedBefore ? 'Sí' : 'No'}</p>
                         </div>
                         {participant.injuries && (
                           <div className="md:col-span-3">
@@ -607,7 +607,7 @@ function ReservationDetailsContent() {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
                 <Building2 className="w-6 h-6 mr-2" />
-                InformaciÃ³n de la Escuela
+                Información de la Escuela
               </h2>
               <div className="space-y-4">
                 {reservation.class.school.logo && (
@@ -675,7 +675,7 @@ function ReservationDetailsContent() {
                   <div className="flex items-center text-gray-600">
                     <Star className="w-5 h-5 mr-2 text-yellow-500" />
                     <span>
-                      {reservation.class.school.rating.toFixed(1)} ({reservation.class.school.totalReviews} reseÃ±as)
+                      {reservation.class.school.rating.toFixed(1)} ({reservation.class.school.totalReviews} reseñas)
                     </span>
                   </div>
                 </div>

@@ -47,6 +47,19 @@ export interface Class {
   school?: School;
   availableSpots?: number;
   images?: string[];
+  paymentInfo?: {
+    totalReservations: number;
+    paidReservations: number;
+    totalRevenue: number;
+    occupancyRate: number;
+  };
+  beach?: {
+    id: number;
+    name: string;
+    location?: string;
+  };
+  beachId?: number;
+  reservations?: any[];
   createdAt?: string | Date;
   updatedAt?: string | Date;
 }

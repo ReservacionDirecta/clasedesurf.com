@@ -226,88 +226,85 @@ export function AdminNavbar() {
         </div>
       </header>
 
-      {/* Mobile Menu */}
-      <div className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${mobileMenuOpen ? 'max-h-[calc(100vh-64px)] opacity-100' : 'max-h-0 opacity-0'
-        }`}>
-        <div className="border-t border-white/10 bg-[#011627]/95 backdrop-blur-sm" style={{
-          maxHeight: 'calc(100vh - 64px)',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* Scrollable Menu Container */}
-          <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar" style={{
-            WebkitOverflowScrolling: 'touch',
-            maxHeight: 'calc(100vh - 64px - 80px)', // Header height - logout button height
-            paddingBottom: 'env(safe-area-inset-bottom, 0px)'
-          }}>
-            <nav className="flex flex-col space-y-1 px-2 py-2">
-              {navigation.map((item) => {
-                const IconComponent = item.icon;
-                const active = isActive(item.href);
+      {/* Mobile Menu Overlay */}
+      <div className={`lg:hidden fixed inset-0 z-[100] transition-all duration-300 ${
+        mobileMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
+      }`}>
+        {/* Backdrop */}
+        <div 
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setMobileMenuOpen(false)}
+        />
 
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`group flex items-center justify-between px-2.5 py-2 rounded-lg transition-all duration-200 ${active
-                      ? 'bg-white/10 text-[#FF3366] shadow-sm'
-                      : 'text-[#F6F7F8]/80 hover:text-[#FF3366] hover:bg-white/5'
-                      }`}
-                  >
-                    <div className="flex items-center space-x-2 min-w-0 flex-1">
-                      <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${active
-                        ? 'bg-[#FF3366]/20 text-[#FF3366]'
-                        : 'bg-white/5 text-[#F6F7F8]/60 group-hover:bg-white/10 group-hover:text-[#FF3366]'
-                        }`}>
-                        <IconComponent className="w-4 h-4" />
-                      </div>
-                      <span className="font-medium text-sm truncate">{item.name}</span>
-                    </div>
-                    <ChevronRight className={`w-4 h-4 transition-transform duration-200 flex-shrink-0 ${active
-                      ? 'text-[#FF3366]'
-                      : 'text-[#F6F7F8]/40 group-hover:translate-x-1'
-                      }`} />
-                  </Link>
-                );
-              })}
-            </nav>
+        {/* Menu Panel */}
+        <div className={`absolute top-0 right-0 bottom-0 w-[280px] bg-[#011627] border-l border-white/10 shadow-2xl transition-transform duration-300 flex flex-col ${
+          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}>
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+            <span className="text-white font-bold text-lg">Menú</span>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 rounded-lg text-[#F6F7F8] hover:bg-white/10 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
 
-          {/* User Profile & Logout Section - Fixed at bottom */}
-          <div className="flex flex-col space-y-2 pt-2 mt-2 border-t border-white/10 bg-[#011627]/95 flex-shrink-0" style={{
-            paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
+          {/* Scrollable Navigation */}
+          <div className="flex-1 overflow-y-auto overscroll-contain py-2 px-3 space-y-1" style={{
+            WebkitOverflowScrolling: 'touch'
           }}>
-            <div className="flex items-center space-x-2.5 px-3 py-2.5 bg-white/5 rounded-lg backdrop-blur-sm">
-              <div className="w-8 h-8 flex items-center justify-center overflow-hidden flex-shrink-0">
-                <Image
-                  src="/logoclasedesusrf.png"
-                  alt="clasesde.pe"
-                  width={32}
-                  height={32}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
+            {navigation.map((item) => {
+              const IconComponent = item.icon;
+              const active = isActive(item.href);
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200 ${
+                    active
+                      ? 'bg-[#FF3366]/10 text-[#FF3366]'
+                      : 'text-[#F6F7F8]/80 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <IconComponent className={`w-5 h-5 ${active ? 'text-[#FF3366]' : 'text-gray-400'}`} />
+                  <span className="font-medium">{item.name}</span>
+                  {active && <ChevronRight className="w-4 h-4 ml-auto" />}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* User Profile & Logout - Fixed Bottom */}
+          <div className="p-4 border-t border-white/10 bg-[#011627] flex-shrink-0 space-y-4" style={{
+            paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 20px))'
+          }}>
+            {/* User Info */}
+            <div className="flex items-center space-x-3 px-3 py-2 bg-white/5 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF3366] to-[#FF3366]/60 flex items-center justify-center text-white font-bold shadow-lg">
+                {getInitials(session?.user?.name)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-white truncate">
-                  {session?.user?.name || 'Super Admin'}
+                <p className="text-sm font-semibold text-white truncate">
+                  {session?.user?.name || 'Admin'}
                 </p>
-                <p className="text-[10px] text-[#F6F7F8]/60 truncate">
+                <p className="text-xs text-gray-400 truncate">
                   {session?.user?.email}
                 </p>
               </div>
             </div>
 
+            {/* Logout Button */}
             <button
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="flex items-center justify-center space-x-2 w-full px-3 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 border border-white/20 text-sm font-medium"
+              className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 border border-white/10 active:scale-95"
             >
-              <LogOut className="w-4 h-4 flex-shrink-0" />
-              <span className="truncate">
-                {isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
-              </span>
+              <LogOut className="w-5 h-5" />
+              <span>{isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}</span>
             </button>
           </div>
         </div>

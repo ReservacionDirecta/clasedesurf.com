@@ -258,6 +258,7 @@ export default function RegisterPage() {
                 size="md"
                 className="w-full"
                 text="Registrarse con Google"
+                role={role}
               />
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">

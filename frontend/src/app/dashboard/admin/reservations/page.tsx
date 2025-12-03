@@ -23,7 +23,8 @@ import {
   MapPin,
   School,
   Eye,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from 'lucide-react';
 
 function AdminReservationsContent() {
@@ -36,6 +37,8 @@ function AdminReservationsContent() {
   const [filter, setFilter] = useState('ALL');
   const [selectedClass, setSelectedClass] = useState<any>(null);
   const classId = searchParams.get('classId');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<any>(null);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -99,6 +102,34 @@ function AdminReservationsContent() {
     } catch (err) {
       console.error(err);
       alert('Error al actualizar el estado de la reserva');
+    }
+  };
+
+  const handleDeleteReservation = async () => {
+    if (!selectedReservation) return;
+
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/reservations/${selectedReservation.id}`, {
+        method: 'DELETE',
+        headers
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Error desconocido' }));
+        throw new Error(errorData.message || 'Failed to delete reservation');
+      }
+
+      setReservations(reservations.filter(r => r.id !== selectedReservation.id));
+      setShowDeleteModal(false);
+      setSelectedReservation(null);
+      alert('Reserva eliminada exitosamente');
+    } catch (err) {
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Error al eliminar la reserva');
     }
   };
 
@@ -421,6 +452,16 @@ function AdminReservationsContent() {
                           <option value="COMPLETED">Completada</option>
                         </select>
                       </div>
+                      <button
+                        onClick={() => {
+                          setSelectedReservation(reservation);
+                          setShowDeleteModal(true);
+                        }}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Eliminar Reserva
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -441,6 +482,41 @@ function AdminReservationsContent() {
           </div>
         )}
       </div>
+
+      {/* Modal de Confirmación de Eliminación */}
+      {showDeleteModal && selectedReservation && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black bg-opacity-50" onClick={() => setShowDeleteModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4 text-gray-900">Confirmar Eliminación</h2>
+              <p className="text-gray-600 mb-6">
+                ¿Estás seguro de que deseas eliminar la reserva <strong>#{selectedReservation.id}</strong>?
+                {selectedReservation.user?.name && (
+                  <span> de <strong>{selectedReservation.user.name}</strong></span>
+                )}
+                ? Esta acción no se puede deshacer.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setSelectedReservation(null);
+                  }}
+                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteReservation}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
