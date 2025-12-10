@@ -1,37 +1,49 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Inicializar Resend solo si hay API key
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'info@clasedesurf.com';
 
 interface EmailOptions {
-    to: string;
-    subject: string;
-    html: string;
+  to: string;
+  subject: string;
+  html: string;
 }
 
 export class EmailService {
-    private static async sendEmail({ to, subject, html }: EmailOptions) {
-        try {
-            const data = await resend.emails.send({
-                from: FROM_EMAIL,
-                to,
-                subject,
-                html,
-            });
-
-            console.log('Email sent successfully:', data);
-            return { success: true, data };
-        } catch (error) {
-            console.error('Error sending email:', error);
-            return { success: false, error };
-        }
+  private static async sendEmail({ to, subject, html }: EmailOptions) {
+    // Si no hay API key configurada, solo loguear y retornar
+    if (!resend) {
+      console.warn('[EmailService] Resend API key not configured. Email not sent:', {
+        to,
+        subject,
+        note: 'Add RESEND_API_KEY to your .env file to enable email sending'
+      });
+      return { success: false, error: 'Email service not configured' };
     }
 
-    // Email de bienvenida al registrarse
-    static async sendWelcomeEmail(to: string, userName: string) {
-        const subject = '¡Bienvenido a Clase de Surf!';
-        const html = `
+    try {
+      const data = await resend.emails.send({
+        from: FROM_EMAIL,
+        to,
+        subject,
+        html,
+      });
+
+      console.log('Email sent successfully:', data);
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error sending email:', error);
+      return { success: false, error };
+    }
+  }
+
+  // Email de bienvenida al registrarse
+  static async sendWelcomeEmail(to: string, userName: string) {
+    const subject = '¡Bienvenido a Clase de Surf!';
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -71,24 +83,24 @@ export class EmailService {
       </html>
     `;
 
-        return this.sendEmail({ to, subject, html });
-    }
+    return this.sendEmail({ to, subject, html });
+  }
 
-    // Email de confirmación de reserva
-    static async sendBookingConfirmation(
-        to: string,
-        userName: string,
-        bookingDetails: {
-            className: string;
-            date: string;
-            time: string;
-            location: string;
-            price: number;
-            bookingId: string;
-        }
-    ) {
-        const subject = `Reserva confirmada - ${bookingDetails.className}`;
-        const html = `
+  // Email de confirmación de reserva
+  static async sendBookingConfirmation(
+    to: string,
+    userName: string,
+    bookingDetails: {
+      className: string;
+      date: string;
+      time: string;
+      location: string;
+      price: number;
+      bookingId: string;
+    }
+  ) {
+    const subject = `Reserva confirmada - ${bookingDetails.className}`;
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -159,22 +171,22 @@ export class EmailService {
       </html>
     `;
 
-        return this.sendEmail({ to, subject, html });
-    }
+    return this.sendEmail({ to, subject, html });
+  }
 
-    // Email de cancelación de reserva
-    static async sendBookingCancellation(
-        to: string,
-        userName: string,
-        bookingDetails: {
-            className: string;
-            date: string;
-            bookingId: string;
-            refundAmount?: number;
-        }
-    ) {
-        const subject = `Reserva cancelada - ${bookingDetails.className}`;
-        const html = `
+  // Email de cancelación de reserva
+  static async sendBookingCancellation(
+    to: string,
+    userName: string,
+    bookingDetails: {
+      className: string;
+      date: string;
+      bookingId: string;
+      refundAmount?: number;
+    }
+  ) {
+    const subject = `Reserva cancelada - ${bookingDetails.className}`;
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -236,23 +248,23 @@ export class EmailService {
       </html>
     `;
 
-        return this.sendEmail({ to, subject, html });
-    }
+    return this.sendEmail({ to, subject, html });
+  }
 
-    // Email de confirmación de pago
-    static async sendPaymentConfirmation(
-        to: string,
-        userName: string,
-        paymentDetails: {
-            amount: number;
-            paymentMethod: string;
-            transactionId: string;
-            bookingId: string;
-            className: string;
-        }
-    ) {
-        const subject = `Pago confirmado - ${paymentDetails.className}`;
-        const html = `
+  // Email de confirmación de pago
+  static async sendPaymentConfirmation(
+    to: string,
+    userName: string,
+    paymentDetails: {
+      amount: number;
+      paymentMethod: string;
+      transactionId: string;
+      bookingId: string;
+      className: string;
+    }
+  ) {
+    const subject = `Pago confirmado - ${paymentDetails.className}`;
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -315,14 +327,14 @@ export class EmailService {
       </html>
     `;
 
-        return this.sendEmail({ to, subject, html });
-    }
+    return this.sendEmail({ to, subject, html });
+  }
 
-    // Email de restablecimiento de contraseña
-    static async sendPasswordResetEmail(to: string, userName: string, resetToken: string) {
-        const resetUrl = `${process.env.FRONTEND_URL || 'https://clasedesurf.com'}/reset-password?token=${resetToken}`;
-        const subject = 'Restablece tu contraseña - Clase de Surf';
-        const html = `
+  // Email de restablecimiento de contraseña
+  static async sendPasswordResetEmail(to: string, userName: string, resetToken: string) {
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://clasedesurf.com'}/reset-password?token=${resetToken}`;
+    const subject = 'Restablece tu contraseña - Clase de Surf';
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -372,22 +384,22 @@ export class EmailService {
       </html>
     `;
 
-        return this.sendEmail({ to, subject, html });
-    }
+    return this.sendEmail({ to, subject, html });
+  }
 
-    // Email de recordatorio de clase (24 horas antes)
-    static async sendClassReminder(
-        to: string,
-        userName: string,
-        classDetails: {
-            className: string;
-            date: string;
-            time: string;
-            location: string;
-        }
-    ) {
-        const subject = `Recordatorio: Tu clase de ${classDetails.className} es mañana`;
-        const html = `
+  // Email de recordatorio de clase (24 horas antes)
+  static async sendClassReminder(
+    to: string,
+    userName: string,
+    classDetails: {
+      className: string;
+      date: string;
+      time: string;
+      location: string;
+    }
+  ) {
+    const subject = `Recordatorio: Tu clase de ${classDetails.className} es mañana`;
+    const html = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -457,6 +469,6 @@ export class EmailService {
       </html>
     `;
 
-        return this.sendEmail({ to, subject, html });
-    }
+    return this.sendEmail({ to, subject, html });
+  }
 }
