@@ -729,11 +729,13 @@ export default function AdminSchoolsPage() {
                     ) : (
                       <>
                         <Link
-                          href={`/dashboard/admin/schools/${school.id}`}
+                          href={`/schools/${school.id}`}
                           className="flex-1 flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
                           <Eye className="w-4 h-4 mr-1" />
-                          Ver
+                          Ver Perfil
                         </Link>
                         <button
                           onClick={() => openEditModal(school)}

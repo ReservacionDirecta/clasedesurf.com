@@ -8,22 +8,21 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     
+    // Este endpoint es público - no requiere autenticación
+    // Las clases de una escuela deben ser visibles para todos
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
-    }
-
-    const token = (session as any).backendToken;
-    if (!token) {
-      return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
-    }
+    const token = session ? (session as any).backendToken : null;
     
     const headers: any = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Content-Type': 'application/json'
     };
+    
+    // Si hay sesión, incluir el token (opcional)
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
-    // Call backend to get school classes
+    // Call backend to get school classes (el backend ya permite acceso público)
     const response = await fetch(`${BACKEND}/schools/${id}/classes`, {
       method: 'GET',
       headers

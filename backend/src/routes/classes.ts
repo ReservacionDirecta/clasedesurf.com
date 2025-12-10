@@ -139,8 +139,25 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       // Calculate available spots
       const availableSpots = cls.capacity - totalReservations;
 
+      // Normalize and filter images - remove empty strings and normalize paths
+      let normalizedImages: string[] = [];
+      if (cls.images && Array.isArray(cls.images)) {
+        normalizedImages = cls.images
+          .filter((img: string) => img && typeof img === 'string' && img.trim() !== '')
+          .map((img: string) => {
+            const trimmedImg = img.trim();
+            // If image is already a full URL (http/https) or starts with /, keep it as is
+            if (trimmedImg.startsWith('http://') || trimmedImg.startsWith('https://') || trimmedImg.startsWith('/')) {
+              return trimmedImg;
+            }
+            // If image doesn't start with http or /, assume it's a relative path
+            return `/uploads/${trimmedImg}`;
+          });
+      }
+
       return {
         ...cls,
+        images: normalizedImages,
         availableSpots: Math.max(0, availableSpots), // Ensure non-negative
         paymentInfo: {
           totalReservations,
@@ -194,8 +211,25 @@ router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: Auth
     // Filter active reservations
     const activeReservations = classData.reservations.filter(r => r.status !== 'CANCELED');
 
+    // Normalize and filter images - remove empty strings and normalize paths
+    let normalizedImages: string[] = [];
+    if (classData.images && Array.isArray(classData.images)) {
+      normalizedImages = classData.images
+        .filter((img: string) => img && typeof img === 'string' && img.trim() !== '')
+        .map((img: string) => {
+          const trimmedImg = img.trim();
+          // If image is already a full URL (http/https) or starts with /, keep it as is
+          if (trimmedImg.startsWith('http://') || trimmedImg.startsWith('https://') || trimmedImg.startsWith('/')) {
+            return trimmedImg;
+          }
+          // If image doesn't start with http or /, assume it's a relative path
+          return `/uploads/${trimmedImg}`;
+        });
+    }
+
     res.json({
       ...classData,
+      images: normalizedImages,
       reservations: activeReservations
     });
   } catch (err) {

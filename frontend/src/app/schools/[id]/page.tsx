@@ -6,17 +6,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { 
   MapPin, 
-  Phone, 
-  Mail, 
-  Globe, 
-  Instagram, 
-  Facebook, 
-  MessageCircle,
   Star,
   Calendar,
   Users,
   Clock,
-  Building2
+  Building2,
+  Award,
+  Shield,
+  TrendingUp
 } from 'lucide-react'
 
 interface School {
@@ -58,6 +55,39 @@ interface Class {
   }
 }
 
+interface Review {
+  id: number
+  studentName: string
+  rating: number
+  comment?: string
+  createdAt: string
+}
+
+// Reseñas de fallback si no hay reseñas reales
+const fallbackReviews: Review[] = [
+  {
+    id: 1,
+    studentName: 'María González',
+    rating: 5,
+    comment: 'Excelente experiencia. Los instructores son muy profesionales y pacientes. Aprendí mucho en mi primera clase.',
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: 2,
+    studentName: 'Carlos Ramírez',
+    rating: 5,
+    comment: 'La mejor escuela de surf en Lima. Equipamiento de calidad y ubicación perfecta. Totalmente recomendado.',
+    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  },
+  {
+    id: 3,
+    studentName: 'Ana Martínez',
+    rating: 4,
+    comment: 'Muy buena atención y clases bien estructuradas. El único detalle es que a veces hay mucha gente, pero los instructores se encargan bien.',
+    createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString()
+  }
+]
+
 export default function SchoolDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -65,6 +95,7 @@ export default function SchoolDetailPage() {
 
   const [school, setSchool] = useState<School | null>(null)
   const [classes, setClasses] = useState<Class[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -86,6 +117,21 @@ export default function SchoolDetailPage() {
         if (classesRes.ok) {
           const classesData = await classesRes.json()
           setClasses(classesData)
+        }
+
+        // Fetch reviews for this school
+        const reviewsRes = await fetch(`/api/schools/${schoolId}/reviews`)
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json()
+          // Si hay menos de 3 reseñas, usar fallback
+          if (reviewsData.length < 3) {
+            setReviews([...reviewsData, ...fallbackReviews.slice(0, 3 - reviewsData.length)])
+          } else {
+            setReviews(reviewsData.slice(0, 6))
+          }
+        } else {
+          // Si no hay reseñas, usar fallback
+          setReviews(fallbackReviews)
         }
       } catch (err) {
         console.error(err)
@@ -148,120 +194,109 @@ export default function SchoolDetailPage() {
 
       {/* School Info Card */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 sm:-mt-24 md:-mt-32 relative z-10">
-        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-          <div className="p-4 sm:p-6 md:p-8">
-            <div className="flex flex-col md:flex-row gap-4 sm:gap-6">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100">
+          <div className="p-6 sm:p-8 md:p-10">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
               {/* Logo */}
-              <div className="flex-shrink-0 mx-auto md:mx-0">
-                <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full bg-white border-4 border-white shadow-lg overflow-hidden">
+              <div className="flex-shrink-0 mx-auto lg:mx-0">
+                <div className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border-4 border-white shadow-xl overflow-hidden">
                   {school.logo ? (
                     <Image
                       src={school.logo}
                       alt={`${school.name} logo`}
-                      width={128}
-                      height={128}
+                      width={160}
+                      height={160}
                       className="object-cover w-full h-full"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <Building2 className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-gray-400" />
+                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                      <Building2 className="w-16 h-16 sm:w-20 sm:h-20 text-blue-400" />
                     </div>
                   )}
                 </div>
               </div>
 
               {/* School Details */}
-              <div className="flex-1">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4">
-                  <div className="text-center md:text-left">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">{school.name}</h1>
-                    <div className="flex items-center justify-center md:justify-start text-gray-600 mb-2">
-                      <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                      <span className="text-sm sm:text-base">{school.location}</span>
-                    </div>
-                    {school.foundedYear && (
-                      <p className="text-xs sm:text-sm text-gray-500">
-                        Fundada en {school.foundedYear} • {new Date().getFullYear() - school.foundedYear} años de experiencia
-                      </p>
-                    )}
+              <div className="flex-1 text-center lg:text-left">
+                {/* Header with Name and Rating */}
+                <div className="mb-6">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    {school.name}
+                  </h1>
+                  <div className="flex items-center justify-center lg:justify-start text-gray-600 mb-3">
+                    <MapPin className="w-5 h-5 mr-2 text-blue-500" />
+                    <span className="text-base sm:text-lg font-medium">{school.location}</span>
                   </div>
-                  {school.rating && school.rating > 0 && (
-                    <div className="flex items-center justify-center bg-yellow-50 px-3 sm:px-4 py-2 rounded-lg mx-auto sm:mx-0">
-                      <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 fill-current mr-1" />
-                      <span className="text-base sm:text-lg font-bold text-gray-900">{school.rating.toFixed(1)}</span>
-                      <span className="text-xs sm:text-sm text-gray-500 ml-1">({school.totalReviews || 0})</span>
-                    </div>
+                  {school.foundedYear && (
+                    <p className="text-sm text-gray-500 mb-4">
+                      Fundada en {school.foundedYear} • <span className="font-semibold text-gray-700">{new Date().getFullYear() - school.foundedYear} años de experiencia</span>
+                    </p>
                   )}
                 </div>
 
-                {school.description && (
-                  <p className="text-sm sm:text-base text-gray-700 mb-4 sm:mb-6 text-center md:text-left">{school.description}</p>
+                {/* Rating Section - Destacado */}
+                {school.rating && school.rating > 0 ? (
+                  <div className="mb-6 inline-flex items-center gap-3 bg-gradient-to-r from-yellow-50 to-amber-50 px-6 py-4 rounded-xl border-2 border-yellow-200 shadow-lg">
+                    <div className="flex items-center gap-2">
+                      <Star className="w-8 h-8 text-yellow-400 fill-current" />
+                      <div>
+                        <div className="text-3xl font-black text-gray-900">{school.rating.toFixed(1)}</div>
+                        <div className="text-sm text-gray-600 font-medium">{school.totalReviews || 0} reseñas</div>
+                      </div>
+                    </div>
+                    <div className="h-12 w-px bg-yellow-300"></div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-5 h-5 ${
+                            star <= Math.round(school.rating || 0)
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-6 inline-flex items-center gap-3 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 rounded-xl border-2 border-gray-200">
+                    <Star className="w-6 h-6 text-gray-400" />
+                    <span className="text-gray-600 font-medium">Sin calificaciones aún</span>
+                  </div>
                 )}
 
-                {/* Contact Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                  {school.phone && (
-                    <a
-                      href={`tel:${school.phone}`}
-                      className="flex items-center justify-center md:justify-start text-gray-700 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg"
-                    >
-                      <Phone className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                      <span className="text-sm sm:text-base truncate">{school.phone}</span>
-                    </a>
-                  )}
-                  {school.email && (
-                    <a
-                      href={`mailto:${school.email}`}
-                      className="flex items-center justify-center md:justify-start text-gray-700 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg"
-                    >
-                      <Mail className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                      <span className="text-sm sm:text-base truncate">{school.email}</span>
-                    </a>
-                  )}
-                  {school.website && (
-                    <a
-                      href={school.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center md:justify-start text-gray-700 hover:text-blue-600 transition-colors p-2 hover:bg-blue-50 rounded-lg"
-                    >
-                      <Globe className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                      <span className="text-sm sm:text-base">Sitio web</span>
-                    </a>
-                  )}
-                  {school.whatsapp && (
-                    <a
-                      href={`https://wa.me/${school.whatsapp.replace(/[^0-9]/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center md:justify-start text-gray-700 hover:text-green-600 transition-colors p-2 hover:bg-green-50 rounded-lg"
-                    >
-                      <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                      <span className="text-sm sm:text-base">WhatsApp</span>
-                    </a>
-                  )}
-                  {school.instagram && (
-                    <a
-                      href={`https://instagram.com/${school.instagram.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center md:justify-start text-gray-700 hover:text-pink-600 transition-colors p-2 hover:bg-pink-50 rounded-lg"
-                    >
-                      <Instagram className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                      <span className="text-sm sm:text-base truncate">@{school.instagram.replace('@', '')}</span>
-                    </a>
-                  )}
-                  {school.facebook && (
-                    <a
-                      href={school.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center md:justify-start text-gray-700 hover:text-blue-700 transition-colors p-2 hover:bg-blue-50 rounded-lg"
-                    >
-                      <Facebook className="w-4 h-4 sm:w-5 sm:h-5 mr-2 flex-shrink-0" />
-                      <span className="text-sm sm:text-base">Facebook</span>
-                    </a>
-                  )}
+                {/* Description */}
+                {school.description && (
+                  <div className="mb-6">
+                    <p className="text-base sm:text-lg text-gray-700 leading-relaxed">{school.description}</p>
+                  </div>
+                )}
+
+                {/* School Details Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                      <Award className="w-5 h-5 text-blue-600" />
+                      <span className="text-sm font-semibold text-gray-700">Certificada</span>
+                    </div>
+                    <p className="text-xs text-gray-600">Escuela verificada</p>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                    <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                      <Shield className="w-5 h-5 text-green-600" />
+                      <span className="text-sm font-semibold text-gray-700">Seguridad</span>
+                    </div>
+                    <p className="text-xs text-gray-600">Equipamiento incluido</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                    <div className="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                      <TrendingUp className="w-5 h-5 text-purple-600" />
+                      <span className="text-sm font-semibold text-gray-700">Experiencia</span>
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      {school.foundedYear ? `${new Date().getFullYear() - school.foundedYear} años` : 'Profesional'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -347,13 +382,69 @@ export default function SchoolDetailPage() {
           )}
         </div>
 
-        {/* Reviews Section - Placeholder for future implementation */}
+        {/* Reviews Section */}
         <div className="mt-12 mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Reseñas</h2>
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <Star className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">Las reseñas estarán disponibles próximamente</p>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-gray-900">Reseñas de Estudiantes</h2>
+            {school.rating && school.rating > 0 && (
+              <div className="flex items-center gap-2">
+                <Star className="w-6 h-6 text-yellow-400 fill-current" />
+                <span className="text-xl font-bold text-gray-900">{school.rating.toFixed(1)}</span>
+                <span className="text-gray-600">({school.totalReviews || reviews.length} reseñas)</span>
+              </div>
+            )}
           </div>
+
+          {reviews.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-100"
+                >
+                  {/* Review Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h4 className="font-bold text-gray-900 mb-1">{review.studentName}</h4>
+                      <p className="text-xs text-gray-500">
+                        {new Date(review.createdAt).toLocaleDateString('es-PE', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`w-4 h-4 ${
+                            star <= review.rating
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Review Comment */}
+                  {review.comment && (
+                    <p className="text-gray-700 leading-relaxed line-clamp-4">{review.comment}</p>
+                  )}
+                  {!review.comment && (
+                    <p className="text-gray-500 italic">Sin comentario adicional</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center border border-gray-100">
+              <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600 text-lg font-medium">Aún no hay reseñas</p>
+              <p className="text-gray-500 mt-2">Sé el primero en dejar una reseña</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

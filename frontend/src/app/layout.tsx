@@ -36,52 +36,100 @@ export default function RootLayout({
             __html: `
               // Protección contra errores de scripts externos (como share-modal.js)
               (function() {
-                // Interceptar errores antes de que se propaguen
+                'use strict';
+                
+                // Interceptar errores ANTES de que se ejecuten los scripts
                 const originalAddEventListener = EventTarget.prototype.addEventListener;
+                
+                // Sobrescribir addEventListener para prevenir errores con null
                 EventTarget.prototype.addEventListener = function(type, listener, options) {
                   try {
-                    // Verificar si this es null o undefined antes de llamar
+                    // Verificar si this es null o undefined
                     if (this === null || this === undefined) {
-                      console.warn('Intento de addEventListener en objeto null/undefined ignorado');
-                      return;
+                      return; // Silenciosamente ignorar
                     }
                     // Verificar si this es un objeto válido
-                    if (typeof this !== 'object') {
-                      console.warn('Intento de addEventListener en tipo inválido ignorado');
-                      return;
+                    if (typeof this !== 'object' && typeof this !== 'function') {
+                      return; // Silenciosamente ignorar
                     }
+                    // Intentar llamar al método original
                     return originalAddEventListener.call(this, type, listener, options);
                   } catch (e) {
-                    // Silenciar errores relacionados con addEventListener
-                    const errorMsg = e?.message || String(e || '');
-                    if (errorMsg.includes('addEventListener') || 
-                        errorMsg.includes('null') || 
-                        errorMsg.includes('Cannot read properties')) {
-                      console.warn('Error en addEventListener capturado y silenciado:', errorMsg);
+                    // Silenciar todos los errores relacionados con addEventListener
                       return;
                     }
-                    // Re-lanzar otros errores
-                    throw e;
+                };
+                
+                // Interceptar querySelector y querySelectorAll para prevenir errores
+                const originalQuerySelector = Document.prototype.querySelector;
+                const originalQuerySelectorAll = Document.prototype.querySelectorAll;
+                
+                // Proteger querySelector
+                Document.prototype.querySelector = function(selector) {
+                  try {
+                    return originalQuerySelector.call(this, selector);
+                  } catch (e) {
+                    return null;
                   }
                 };
+                
+                // Proteger querySelectorAll
+                Document.prototype.querySelectorAll = function(selector) {
+                  try {
+                    return originalQuerySelectorAll.call(this, selector);
+                  } catch (e) {
+                    return [];
+                  }
+                };
+                
+                // También proteger en Element
+                if (Element.prototype.querySelector) {
+                  const originalElementQuerySelector = Element.prototype.querySelector;
+                  Element.prototype.querySelector = function(selector) {
+                    try {
+                      return originalElementQuerySelector.call(this, selector);
+                    } catch (e) {
+                      return null;
+                    }
+                  };
+                }
+                
+                if (Element.prototype.querySelectorAll) {
+                  const originalElementQuerySelectorAll = Element.prototype.querySelectorAll;
+                  Element.prototype.querySelectorAll = function(selector) {
+                    try {
+                      return originalElementQuerySelectorAll.call(this, selector);
+                    } catch (e) {
+                      return [];
+                    }
+                  };
+                }
                 
                 // Manejar errores globales de forma más agresiva
                 const errorHandler = function(e) {
                   const errorMessage = e.message || '';
-                  const errorSource = e.filename || e.source || '';
+                  const errorSource = e.filename || e.source || e.target?.src || '';
                   const errorStack = e.error?.stack || '';
                   
                   // Verificar si el error está relacionado con share-modal o addEventListener null
-                  if (errorMessage.includes('share-modal') || 
+                  const isShareModalError = 
+                    errorMessage.includes('share-modal') || 
                       errorSource.includes('share-modal') ||
-                      errorStack.includes('share-modal') ||
-                      (errorMessage.includes('addEventListener') && (errorMessage.includes('null') || errorMessage.includes('Cannot read properties'))) ||
-                      (errorMessage.includes('Cannot read properties') && errorMessage.includes('addEventListener'))) {
+                    errorStack.includes('share-modal');
+                  
+                  const isAddEventListenerError = 
+                    (errorMessage.includes('addEventListener') && 
+                     (errorMessage.includes('null') || 
+                      errorMessage.includes('Cannot read properties') ||
+                      errorMessage.includes('undefined'))) ||
+                    (errorMessage.includes('Cannot read properties') && 
+                     errorMessage.includes('addEventListener'));
+                  
+                  if (isShareModalError || isAddEventListenerError) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
-                    console.warn('Error de script externo capturado y silenciado:', errorMessage);
-                    return true;
+                    return true; // Prevenir que el error se propague
                   }
                 };
                 
@@ -94,10 +142,21 @@ export default function RootLayout({
                   if (reason.includes('share-modal') || 
                       reason.includes('addEventListener')) {
                     e.preventDefault();
-                    console.warn('Promise rejection de script externo ignorada:', reason);
                     return true;
                   }
                 });
+                
+                // Interceptar console.error para filtrar estos errores específicos
+                const originalConsoleError = console.error;
+                console.error = function(...args) {
+                  const message = args.join(' ');
+                  if (message.includes('share-modal') && 
+                      (message.includes('addEventListener') || 
+                       message.includes('Cannot read properties'))) {
+                    return; // No mostrar este error en consola
+                  }
+                  return originalConsoleError.apply(console, args);
+                };
               })();
             `,
           }}

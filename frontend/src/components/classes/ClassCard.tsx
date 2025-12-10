@@ -200,7 +200,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-gray-200">
       {/* Image Gallery */}
       <div className="relative h-44 sm:h-52 overflow-hidden">
-        {classData.images && classData.images.length > 1 ? (
+        {classData.images && classData.images.length > 0 && classData.images[0] && classData.images[0].trim() !== '' ? (
           <div className="relative w-full h-full">
             {/* Main image */}
             <Image
@@ -210,12 +210,61 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               className="object-cover transition-transform duration-300 hover:scale-105"
               priority={priority}
               loading={priority ? undefined : 'lazy'}
-              unoptimized={classData.images[0]?.startsWith('/api/') || classData.images[0]?.includes('cdninstagram.com') || classData.images[0]?.includes('instagram.com') || false}
+              unoptimized={(() => {
+                const imgUrl = classData.images[0];
+                if (!imgUrl) return false;
+                
+                // URLs relativas que empiezan con /api/ necesitan unoptimized
+                if (imgUrl.startsWith('/api/')) return true;
+                
+                // URLs externas (http/https) - verificar si están en dominios permitidos
+                if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
+                  try {
+                    const url = new URL(imgUrl);
+                    const hostname = url.hostname;
+                    
+                    // Dominios permitidos en next.config.js
+                    const allowedDomains = [
+                      'images.unsplash.com',
+                      'plus.unsplash.com',
+                      'ui-avatars.com',
+                      'cdninstagram.com',
+                      'instagram.com',
+                      'clasedesurf.com',
+                      'res.cloudinary.com'
+                    ];
+                    
+                    // Verificar si el dominio está permitido
+                    const isAllowed = allowedDomains.some(domain => 
+                      hostname === domain || hostname.endsWith('.' + domain)
+                    );
+                    
+                    // Si no está permitido, usar unoptimized
+                    return !isAllowed;
+                  } catch {
+                    // Si no se puede parsear la URL, usar unoptimized por seguridad
+                    return true;
+                  }
+                }
+                
+                // Para otras URLs (relativas locales), no usar unoptimized
+                return false;
+              })()}
+              onError={(e) => {
+                // Si la imagen falla, usar imagen por defecto
+                const target = e.target as HTMLImageElement;
+                const fallbackSrc = getClassImage(classData.type, classData.level);
+                if (target.src !== fallbackSrc) {
+                  target.src = fallbackSrc;
+                }
+              }}
             />
-            {/* Image counter badge */}
+            {/* Image counter badge - solo mostrar si hay más de 1 imagen */}
+            {classData.images.length > 1 && (
             <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
               {classData.images.length} imágenes
             </div>
+            )}
           </div>
         ) : (
           (() => {

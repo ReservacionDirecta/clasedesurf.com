@@ -215,13 +215,28 @@ router.get('/all', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest,
   }
 });
 
-// GET /reservations/:id - get single reservation details
-router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req: AuthRequest, res) => {
+// Middleware opcional de autenticación para endpoints públicos
+const optionalAuth = (req: AuthRequest, res: any, next: any) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    try {
+      const jwt = require('jsonwebtoken');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-key-for-development-only') as any;
+      req.userId = decoded.userId;
+      req.role = decoded.role;
+    } catch (err) {
+      // Invalid token, but we don't fail - just continue without auth
+    }
+  }
+  next();
+};
+
+// GET /reservations/:id - get single reservation details (public endpoint)
+router.get('/:id', optionalAuth, validateParams(reservationIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
     const userId = req.userId;
-
-    if (!userId) return res.status(401).json({ message: 'User not authenticated' });
 
     const reservation = await prisma.reservation.findUnique({
       where: { id: Number(id) },
@@ -271,19 +286,23 @@ router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req:
       return res.status(404).json({ message: 'Reservation not found' });
     }
 
-    // Multi-tenant check: users can only see their own reservations unless they're admin/school_admin
-    if (req.role !== 'ADMIN' && req.role !== 'SCHOOL_ADMIN') {
-      if (reservation.userId !== Number(userId)) {
-        return res.status(403).json({ message: 'You can only view your own reservations' });
+    // Si hay autenticación, aplicar reglas de multi-tenant
+    if (userId) {
+      // Multi-tenant check: users can only see their own reservations unless they're admin/school_admin
+      if (req.role !== 'ADMIN' && req.role !== 'SCHOOL_ADMIN') {
+        if (reservation.userId !== Number(userId)) {
+          return res.status(403).json({ message: 'You can only view your own reservations' });
+        }
       }
-    }
 
-    // SCHOOL_ADMIN can only see reservations from their school
-    if (req.role === 'SCHOOL_ADMIN' && req.schoolId) {
-      if (reservation.class.schoolId !== req.schoolId) {
-        return res.status(403).json({ message: 'You can only view reservations from your school' });
+      // SCHOOL_ADMIN can only see reservations from their school
+      if (req.role === 'SCHOOL_ADMIN' && req.schoolId) {
+        if (reservation.class.schoolId !== req.schoolId) {
+          return res.status(403).json({ message: 'You can only view reservations from your school' });
+        }
       }
     }
+    // Si no hay autenticación, permitir acceso público (útil para confirmaciones de reserva)
 
     res.json(reservation);
   } catch (err) {

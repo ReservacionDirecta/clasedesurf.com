@@ -142,6 +142,22 @@ router.get('/:id/classes', validateParams(schoolIdSchema), async (req, res) => {
   }
 });
 
+// GET /schools/:id/reviews - get reviews for a specific school (public endpoint)
+router.get('/:id/reviews', validateParams(schoolIdSchema), async (req, res) => {
+  try {
+    const { id } = req.params as any;
+    const reviews = await prisma.schoolReview.findMany({
+      where: { schoolId: Number(id) },
+      orderBy: { createdAt: 'desc' },
+      take: 6
+    });
+    res.json(reviews);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // POST /schools - create (requires ADMIN or SCHOOL_ADMIN)
 router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), validateBody(createSchoolSchema), async (req: AuthRequest, res) => {
   try {

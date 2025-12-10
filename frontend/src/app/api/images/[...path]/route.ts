@@ -18,12 +18,21 @@ export async function GET(
   try {
     const imagePath = params.path.join('/');
     
+    // La ruta viene como "uploads/classes/filename.webp"
+    // Necesitamos construir la ruta correcta en public/
+    // Si la ruta ya incluye "uploads", usarla directamente, sino agregarla
+    let relativePath = imagePath;
+    if (!imagePath.startsWith('uploads/')) {
+      // Si no empieza con uploads, asumir que es una ruta relativa a uploads
+      relativePath = `uploads/${imagePath}`;
+    }
+    
     // Construir la ruta completa del archivo
-    const filePath = join(process.cwd(), 'public', imagePath);
+    const filePath = join(process.cwd(), 'public', relativePath);
     
     // Verificar que el archivo existe
     if (!existsSync(filePath)) {
-      console.warn(`[Image Serve] File not found: ${filePath}`);
+      console.warn(`[Image Serve] File not found: ${filePath} (from path: ${imagePath})`);
       return new NextResponse('Image not found', { status: 404 });
     }
     
