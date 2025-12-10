@@ -22,6 +22,7 @@ const stats_1 = __importDefault(require("./routes/stats"));
 const beaches_1 = __importDefault(require("./routes/beaches"));
 const notes_1 = __importDefault(require("./routes/notes"));
 const discountCodes_1 = __importDefault(require("./routes/discountCodes"));
+const images_1 = __importDefault(require("./routes/images"));
 const whatsapp_service_1 = require("./services/whatsapp.service");
 const prisma_1 = __importDefault(require("./prisma"));
 const app = (0, express_1.default)();
@@ -79,6 +80,7 @@ app.use('/stats', stats_1.default);
 app.use('/beaches', beaches_1.default);
 app.use('/notes', notes_1.default);
 app.use('/discount-codes', discountCodes_1.default);
+app.use('/images', images_1.default);
 app.get('/', (_req, res) => res.json({
     message: 'Backend API running',
     timestamp: new Date().toISOString(),

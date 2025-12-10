@@ -50,7 +50,15 @@ exports.createReservationSchema = zod_1.z.object({
             .max(10, 'Maximum 10 participants allowed')
     ])
         .optional()
-        .default(1)
+        .default(1),
+    discountCodeId: zod_1.z.number()
+        .int('Discount code ID must be a whole number')
+        .optional()
+        .nullable(),
+    discountAmount: zod_1.z.number()
+        .min(0, 'Discount amount must be positive')
+        .optional()
+        .nullable()
 });
 // Schema for updating reservation status (admin only)
 exports.updateReservationSchema = zod_1.z.object({

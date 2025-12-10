@@ -43,6 +43,7 @@ const validation_1 = require("../middleware/validation");
 const payments_1 = require("../validations/payments");
 const resolve_school_1 = __importDefault(require("../middleware/resolve-school"));
 const PaymentService_1 = require("../services/payments/PaymentService");
+const email_service_1 = require("../services/email.service");
 const router = express_1.default.Router();
 // POST /payments - create a payment record (requires auth)
 router.post('/', auth_1.default, (0, validation_1.validateBody)(payments_1.createPaymentSchema), async (req, res) => {
@@ -196,6 +197,18 @@ router.post('/', auth_1.default, (0, validation_1.validateBody)(payments_1.creat
                 // Si falla el intent, continuar con el pago manual
                 console.warn('[POST /payments] Error creando payment intent, continuando con pago manual:', intentError);
             }
+        }
+        // Enviar email de confirmación de pago si el pago fue creado con estado PAID
+        if (paymentStatus === 'PAID' && payment.reservation) {
+            email_service_1.EmailService.sendPaymentConfirmation(payment.reservation.user.email, payment.reservation.user.name || 'Usuario', {
+                amount: payment.amount,
+                paymentMethod: payment.paymentMethod || 'Manual',
+                transactionId: payment.transactionId || payment.id.toString(),
+                bookingId: payment.reservationId.toString(),
+                className: payment.reservation.class.title
+            }).catch(err => {
+                console.error('Error sending payment confirmation email:', err);
+            });
         }
         res.status(201).json(payment);
     }
@@ -398,6 +411,18 @@ router.put('/:id', auth_1.default, resolve_school_1.default, (0, validation_1.va
             where: { id: payment.reservationId },
             data: { status: reservationStatus }
         });
+        // Enviar email de confirmación de pago si el estado cambió a PAID
+        if (updateData.status === 'PAID' && payment.status !== 'PAID' && updatedPayment.reservation) {
+            email_service_1.EmailService.sendPaymentConfirmation(updatedPayment.reservation.user.email, updatedPayment.reservation.user.name || 'Usuario', {
+                amount: updatedPayment.amount,
+                paymentMethod: updatedPayment.paymentMethod || 'Manual',
+                transactionId: updatedPayment.transactionId || updatedPayment.id.toString(),
+                bookingId: updatedPayment.reservationId.toString(),
+                className: updatedPayment.reservation.class.title
+            }).catch(err => {
+                console.error('Error sending payment confirmation email:', err);
+            });
+        }
         res.json(updatedPayment);
     }
     catch (err) {

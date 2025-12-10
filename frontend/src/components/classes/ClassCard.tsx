@@ -64,21 +64,21 @@ interface ClassCardProps {
 export function ClassCard({ classData, onSelect, priority = false }: ClassCardProps) {
   const router = useRouter()
   const [showDetails, setShowDetails] = useState(false)
-  
+
   const handleReserveClick = () => {
     // Redirigir directamente a la página de detalles de la clase
     router.push(`/classes/${classData.id}`)
   }
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('es-ES', { 
+    return date.toLocaleDateString('es-ES', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -139,17 +139,17 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
     if (classData.images && classData.images.length > 0) {
       return classData.images[0]
     }
-    
+
     // Si hay imagen personalizada, usarla solo si es de surf
     if (classData.classImage && classData.classImage.includes('surf')) {
       return classData.classImage
     }
-    
+
     // Priorizar imagen específica de la playa de Lima para surf
     if (classData.location) {
       return getBeachImage(classData.location, 'surf', level)
     }
-    
+
     // Fallback a imagen de surf por tipo de clase (siempre surf en Lima)
     return getClassTypeImage(type)
   }
@@ -213,16 +213,16 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               unoptimized={(() => {
                 const imgUrl = classData.images[0];
                 if (!imgUrl) return false;
-                
+
                 // URLs relativas que empiezan con /api/ necesitan unoptimized
                 if (imgUrl.startsWith('/api/')) return true;
-                
+
                 // URLs externas (http/https) - verificar si están en dominios permitidos
                 if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
                   try {
                     const url = new URL(imgUrl);
                     const hostname = url.hostname;
-                    
+
                     // Dominios permitidos en next.config.js
                     const allowedDomains = [
                       'images.unsplash.com',
@@ -233,12 +233,12 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
                       'clasedesurf.com',
                       'res.cloudinary.com'
                     ];
-                    
+
                     // Verificar si el dominio está permitido
-                    const isAllowed = allowedDomains.some(domain => 
+                    const isAllowed = allowedDomains.some(domain =>
                       hostname === domain || hostname.endsWith('.' + domain)
                     );
-                    
+
                     // Si no está permitido, usar unoptimized
                     return !isAllowed;
                   } catch {
@@ -246,7 +246,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
                     return true;
                   }
                 }
-                
+
                 // Para otras URLs (relativas locales), no usar unoptimized
                 return false;
               })()}
@@ -261,9 +261,9 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
             />
             {/* Image counter badge - solo mostrar si hay más de 1 imagen */}
             {classData.images.length > 1 && (
-            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-              {classData.images.length} imágenes
-            </div>
+              <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                {classData.images.length} imágenes
+              </div>
             )}
           </div>
         ) : (
@@ -284,7 +284,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
         )}
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
-        
+
         {/* Top badges */}
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
           <span className={`${getLevelColor(classData.level)} px-3 py-1 rounded-full text-xs font-bold shadow-sm`}>
@@ -362,7 +362,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
         <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2 line-clamp-1">
           {classData.title}
         </h3>
-        
+
         {/* Description */}
         <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 leading-relaxed">
           {classData.description}
@@ -372,7 +372,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
         <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
           {/* Date and time */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center text-xs sm:text-sm text-gray-600 min-w-0 flex-1">
+            <div className="flex flex-col min-w-0 flex-1">
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
@@ -391,7 +391,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               <span className="font-medium truncate">
-                {classData.beach 
+                {classData.beach
                   ? `${classData.beach.name}${classData.beach.location ? ` - ${classData.beach.location}` : classData.location ? ` - ${classData.location}` : ''}`
                   : classData.location
                 }
@@ -437,11 +437,10 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
 
         {/* Action Button */}
         <button
-          className={`w-full py-2.5 sm:py-3 px-4 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 touch-target-lg ${
-            classData.availableSpots && classData.availableSpots > 0 
-              ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-md hover:shadow-lg active:scale-95' 
+          className={`w-full py-2.5 sm:py-3 px-4 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 touch-target-lg ${classData.availableSpots && classData.availableSpots > 0
+              ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-md hover:shadow-lg active:scale-95'
               : 'bg-gray-100 active:bg-gray-200 text-gray-600 border border-gray-300 active:scale-95'
-          }`}
+            }`}
           onClick={handleReserveClick}
           disabled={!classData.availableSpots || classData.availableSpots === 0}
           style={{ touchAction: 'manipulation' }}
@@ -455,10 +454,10 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
           className="w-full mt-3 py-2 text-xs text-gray-500 hover:text-gray-700 transition-colors duration-200 flex items-center justify-center"
         >
           <span className="mr-1">{showDetails ? 'Menos detalles' : 'Más detalles'}</span>
-          <svg 
+          <svg
             className={`w-3 h-3 transition-transform duration-200 ${showDetails ? 'rotate-180' : ''}`}
-            fill="none" 
-            stroke="currentColor" 
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -496,7 +495,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
                   </span>
                 </div>
                 <p className="text-sm text-gray-700 leading-relaxed">
-                  {classData.school.description || 
+                  {classData.school.description ||
                     `Escuela de surf especializada en ${getLevelLabel(classData.level).toLowerCase()} con instructores certificados y equipamiento de primera calidad.`
                   }
                 </p>
@@ -542,7 +541,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
                   <p className="text-xs text-gray-600 mb-2">{classData.instructor.experience}</p>
                   <div className="flex flex-wrap gap-1">
                     {classData.instructor.specialties.map((specialty, index) => (
-                      <span 
+                      <span
                         key={index}
                         className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium"
                       >

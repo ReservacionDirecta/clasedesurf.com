@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { validateBody } from '../middleware/validation';
 import { registerSchema, loginSchema } from '../validations/auth';
 import { authLimiter } from '../middleware/rateLimiter';
+import { EmailService } from '../services/email.service';
 
 const router = express.Router();
 
@@ -60,6 +61,12 @@ router.post('/register', authLimiter, validateBody(registerSchema), async (req, 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
     await prisma.refreshToken.create({ data: { tokenHash: refreshHash, user: { connect: { id: user.id } }, expiresAt } });
     setRefreshCookie(res, rawRefresh);
+
+    // Enviar email de bienvenida
+    EmailService.sendWelcomeEmail(user.email, user.name || 'Usuario').catch(err => {
+      console.error('Error sending welcome email:', err);
+      // No bloqueamos el registro si falla el email
+    });
 
     const { password: _p, ...safe } = user as any;
     res.status(201).json({ user: safe, token: accessToken });
@@ -268,6 +275,11 @@ router.post('/google', authLimiter, async (req, res) => {
 
       setRefreshCookie(res, refreshToken);
 
+      // Enviar email de bienvenida para nuevos usuarios
+      EmailService.sendWelcomeEmail(user.email, user.name || 'Usuario').catch(err => {
+        console.error('Error sending welcome email:', err);
+      });
+
       return res.status(201).json({
         user: {
           id: user.id,
@@ -340,6 +352,11 @@ router.post('/register-school', authLimiter, async (req, res) => {
     });
 
     setRefreshCookie(res, rawRefresh);
+
+    // Enviar email de bienvenida
+    EmailService.sendWelcomeEmail(result.user.email, result.user.name || 'Usuario').catch(err => {
+      console.error('Error sending welcome email:', err);
+    });
 
     const { password: _p, ...safeUser } = result.user as any;
 

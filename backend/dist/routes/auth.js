@@ -11,12 +11,13 @@ const crypto_1 = __importDefault(require("crypto"));
 const validation_1 = require("../middleware/validation");
 const auth_1 = require("../validations/auth");
 const rateLimiter_1 = require("../middleware/rateLimiter");
+const email_service_1 = require("../services/email.service");
 const router = express_1.default.Router();
 function signAccessToken(user) {
     const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
     console.log('Signing token with JWT_SECRET:', jwtSecret.substring(0, 10) + '...');
     // Use longer expiration for development, shorter for production
-    const expiresIn = process.env.NODE_ENV === 'production' ? '1h' : '2h';
+    const expiresIn = '24h';
     return jsonwebtoken_1.default.sign({ userId: user.id, role: user.role }, jwtSecret, { expiresIn });
 }
 function generateRefreshToken() {
@@ -58,6 +59,11 @@ router.post('/register', rateLimiter_1.authLimiter, (0, validation_1.validateBod
         const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
         await prisma_1.default.refreshToken.create({ data: { tokenHash: refreshHash, user: { connect: { id: user.id } }, expiresAt } });
         setRefreshCookie(res, rawRefresh);
+        // Enviar email de bienvenida
+        email_service_1.EmailService.sendWelcomeEmail(user.email, user.name || 'Usuario').catch(err => {
+            console.error('Error sending welcome email:', err);
+            // No bloqueamos el registro si falla el email
+        });
         const { password: _p, ...safe } = user;
         res.status(201).json({ user: safe, token: accessToken });
     }
@@ -169,7 +175,7 @@ router.post('/logout', async (req, res) => {
 // POST /auth/google - Authenticate or register with Google
 router.post('/google', rateLimiter_1.authLimiter, async (req, res) => {
     try {
-        const { googleId, email, name, image } = req.body;
+        const { googleId, email, name, image, role } = req.body;
         if (!googleId || !email) {
             return res.status(400).json({ message: 'Google ID and email are required' });
         }
@@ -214,21 +220,26 @@ router.post('/google', rateLimiter_1.authLimiter, async (req, res) => {
             // Generar password aleatorio (no se usará, pero es requerido por el schema)
             const randomPassword = crypto_1.default.randomBytes(32).toString('hex');
             const hashed = await bcryptjs_1.default.hash(randomPassword, 10);
+            // Validar rol
+            const validRoles = ['STUDENT', 'INSTRUCTOR', 'SCHOOL_ADMIN', 'ADMIN'];
+            const userRole = (role && validRoles.includes(role)) ? role : 'STUDENT';
             user = await prisma_1.default.user.create({
                 data: {
                     email,
                     name: name || email.split('@')[0],
                     password: hashed, // Password no se usará para login con Google
-                    role: 'STUDENT' // Rol por defecto
+                    role: userRole
                 }
             });
-            // Crear perfil de estudiante
-            await prisma_1.default.student.create({
-                data: {
-                    userId: user.id,
-                    level: 'BEGINNER'
-                }
-            });
+            // Crear perfil de estudiante solo si el rol es STUDENT
+            if (userRole === 'STUDENT') {
+                await prisma_1.default.student.create({
+                    data: {
+                        userId: user.id,
+                        level: 'BEGINNER'
+                    }
+                });
+            }
             const accessToken = signAccessToken(user);
             const refreshToken = generateRefreshToken();
             // Guardar refresh token
@@ -242,6 +253,10 @@ router.post('/google', rateLimiter_1.authLimiter, async (req, res) => {
                 }
             });
             setRefreshCookie(res, refreshToken);
+            // Enviar email de bienvenida para nuevos usuarios
+            email_service_1.EmailService.sendWelcomeEmail(user.email, user.name || 'Usuario').catch(err => {
+                console.error('Error sending welcome email:', err);
+            });
             return res.status(201).json({
                 user: {
                     id: user.id,
@@ -257,6 +272,70 @@ router.post('/google', rateLimiter_1.authLimiter, async (req, res) => {
         console.error('[auth] POST /google error:', err);
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         res.status(500).json({ message: errorMessage });
+    }
+});
+// POST /auth/register-school
+router.post('/register-school', rateLimiter_1.authLimiter, async (req, res) => {
+    try {
+        const { schoolName, adminName, email, password, phone, location } = req.body;
+        if (!schoolName || !adminName || !email || !password || !location) {
+            return res.status(400).json({ message: 'Todos los campos son requeridos' });
+        }
+        const existing = await prisma_1.default.user.findUnique({ where: { email } });
+        if (existing)
+            return res.status(400).json({ message: 'El email ya está en uso' });
+        const hashed = await bcryptjs_1.default.hash(password, 10);
+        // Transaction to ensure both user and school are created
+        const result = await prisma_1.default.$transaction(async (prisma) => {
+            // 1. Create User
+            const user = await prisma.user.create({
+                data: {
+                    name: adminName,
+                    email,
+                    password: hashed,
+                    role: 'SCHOOL_ADMIN',
+                    phone
+                }
+            });
+            // 2. Create School
+            const school = await prisma.school.create({
+                data: {
+                    name: schoolName,
+                    location,
+                    ownerId: user.id,
+                    status: 'PENDING', // Explicitly set pending
+                    phone
+                }
+            });
+            return { user, school };
+        });
+        const accessToken = signAccessToken(result.user);
+        const rawRefresh = generateRefreshToken();
+        const refreshHash = await bcryptjs_1.default.hash(rawRefresh, 10);
+        const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+        await prisma_1.default.refreshToken.create({
+            data: {
+                tokenHash: refreshHash,
+                user: { connect: { id: result.user.id } },
+                expiresAt
+            }
+        });
+        setRefreshCookie(res, rawRefresh);
+        // Enviar email de bienvenida
+        email_service_1.EmailService.sendWelcomeEmail(result.user.email, result.user.name || 'Usuario').catch(err => {
+            console.error('Error sending welcome email:', err);
+        });
+        const { password: _p, ...safeUser } = result.user;
+        res.status(201).json({
+            user: safeUser,
+            school: result.school,
+            token: accessToken,
+            message: 'Solicitud de registro enviada exitosamente'
+        });
+    }
+    catch (err) {
+        console.error('[auth] POST /register-school error', err);
+        res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
 exports.default = router;

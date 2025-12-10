@@ -165,8 +165,24 @@ router.get('/', optionalAuth, async (req, res) => {
                 .reduce((sum, r) => sum + (r.payment?.amount || 0), 0);
             // Calculate available spots
             const availableSpots = cls.capacity - totalReservations;
+            // Normalize and filter images - remove empty strings and normalize paths
+            let normalizedImages = [];
+            if (cls.images && Array.isArray(cls.images)) {
+                normalizedImages = cls.images
+                    .filter((img) => img && typeof img === 'string' && img.trim() !== '')
+                    .map((img) => {
+                    const trimmedImg = img.trim();
+                    // If image is already a full URL (http/https) or starts with /, keep it as is
+                    if (trimmedImg.startsWith('http://') || trimmedImg.startsWith('https://') || trimmedImg.startsWith('/')) {
+                        return trimmedImg;
+                    }
+                    // If image doesn't start with http or /, assume it's a relative path
+                    return `/uploads/${trimmedImg}`;
+                });
+            }
             return {
                 ...cls,
+                images: normalizedImages,
                 availableSpots: Math.max(0, availableSpots), // Ensure non-negative
                 paymentInfo: {
                     totalReservations,
@@ -215,8 +231,24 @@ router.get('/:id', optionalAuth, (0, validation_1.validateParams)(classes_1.clas
         }
         // Filter active reservations
         const activeReservations = classData.reservations.filter(r => r.status !== 'CANCELED');
+        // Normalize and filter images - remove empty strings and normalize paths
+        let normalizedImages = [];
+        if (classData.images && Array.isArray(classData.images)) {
+            normalizedImages = classData.images
+                .filter((img) => img && typeof img === 'string' && img.trim() !== '')
+                .map((img) => {
+                const trimmedImg = img.trim();
+                // If image is already a full URL (http/https) or starts with /, keep it as is
+                if (trimmedImg.startsWith('http://') || trimmedImg.startsWith('https://') || trimmedImg.startsWith('/')) {
+                    return trimmedImg;
+                }
+                // If image doesn't start with http or /, assume it's a relative path
+                return `/uploads/${trimmedImg}`;
+            });
+        }
         res.json({
             ...classData,
+            images: normalizedImages,
             reservations: activeReservations
         });
     }
@@ -256,6 +288,23 @@ router.post('/', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADMIN
                 ...(beachId && { beach: { connect: { id: Number(beachId) } } })
             }
         });
+        // Normalize images paths if needed
+        if (images && Array.isArray(images)) {
+            const normalizedImages = images.map((img) => {
+                if (!img.startsWith('http') && !img.startsWith('/')) {
+                    return `/uploads/${img}`;
+                }
+                return img;
+            });
+            // Update with normalized images if any change
+            if (JSON.stringify(normalizedImages) !== JSON.stringify(images)) {
+                await prisma_1.default.class.update({
+                    where: { id: newClass.id },
+                    data: { images: normalizedImages }
+                });
+                newClass.images = normalizedImages;
+            }
+        }
         console.log('✅ Clase creada exitosamente:', newClass.id);
         res.status(201).json(newClass);
     }
@@ -356,7 +405,18 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
         const { images, ...restData } = data;
         const updateData = { ...restData };
         if (images !== undefined) {
-            updateData.images = images;
+            // Normalize images paths
+            if (Array.isArray(images)) {
+                updateData.images = images.map((img) => {
+                    if (!img.startsWith('http') && !img.startsWith('/')) {
+                        return `/uploads/${img}`;
+                    }
+                    return img;
+                });
+            }
+            else {
+                updateData.images = images;
+            }
         }
         const updated = await prisma_1.default.class.update({ where: { id: Number(id) }, data: updateData });
         res.json(updated);
@@ -419,6 +479,13 @@ router.delete('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_
                 statusBreakdown: statusCounts
             });
         }
+        // If there are no active reservations, also delete canceled reservations to satisfy FK constraints
+        await prisma_1.default.reservation.deleteMany({
+            where: {
+                classId: classId,
+                status: 'CANCELED'
+            }
+        });
         // Delete the class
         await prisma_1.default.class.delete({ where: { id: classId } });
         console.log('[DELETE /classes/:id] Class deleted successfully:', classId);

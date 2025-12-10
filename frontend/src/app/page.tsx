@@ -13,12 +13,12 @@ import { BookingModal } from '@/components/booking/BookingModal'
 import { Hero } from '@/components/layout/Hero'
 import { Footer } from '@/components/layout/Footer'
 import { MarketplaceStats } from '@/components/marketplace/MarketplaceStats'
-import { 
-  SearchIcon, 
-  SurferIcon, 
-  StarIcon, 
-  ShieldIcon, 
-  LightningIcon, 
+import {
+  SearchIcon,
+  SurferIcon,
+  StarIcon,
+  ShieldIcon,
+  LightningIcon,
   TrophyIcon,
   CheckIcon,
   LockIcon,
@@ -32,7 +32,7 @@ const mockClasses = [
   {
     id: '1',
     title: 'Iniciación en Miraflores',
-    description: 'Aprende surf en la icónica Playa Makaha de Miraflores. Olas perfectas para principiantes con instructores certificados. Incluye teoría básica y práctica segura.',
+    description: 'Aprende surf en la icónica Playa Makaha de Miraflores. Olas perfectas para principiantes con instructores calificados. Incluye teoría básica y práctica segura.',
     date: new Date('2024-12-20T08:00:00'),
     startTime: new Date('2024-12-20T08:00:00'),
     endTime: new Date('2024-12-20T10:00:00'),
@@ -152,14 +152,19 @@ export default function Home() {
     try {
       setLoading(true)
       setError(null)
-      
+
       // Try to fetch from API first
       const apiClasses = await apiService.getClasses()
       const transformedClasses = apiClasses.map(transformApiClassToFrontend)
-      
+        .filter(classItem => {
+          const now = new Date()
+          const classDate = new Date(classItem.startTime || classItem.date)
+          return classDate >= now
+        })
+
       setClasses(transformedClasses)
       setFilteredClasses(transformedClasses)
-      
+
       console.log('✅ Loaded classes from API:', transformedClasses.length)
     } catch (err) {
       console.warn('⚠️ Failed to load from API, using mock data:', err)
@@ -185,7 +190,7 @@ export default function Home() {
   const handleBookingSubmit = async (bookingData: any) => {
     try {
       console.log('Reserva enviada:', bookingData);
-      
+
       // Prepare reservation data
       const reservationData = {
         classId: selectedClass?.id?.toString() || bookingData.classId,
@@ -285,6 +290,12 @@ export default function Home() {
 
       // Apply client-side filters
       transformedClasses = transformedClasses.filter(classItem => {
+        // Filter out past classes
+        const now = new Date()
+        const classDate = new Date(classItem.startTime || classItem.date)
+        if (classDate < now) {
+          return false
+        }
         if (!matchesDateFilter(classItem)) {
           return false
         }
@@ -294,30 +305,36 @@ export default function Home() {
         if (locationFilter && !classItem.location?.includes(locationFilter)) {
           return false
         }
-        
+
         // Filter by type (client-side)
         if (newFilters.type && classItem.type !== newFilters.type) {
           return false
         }
-        
+
         // Filter by rating (client-side)
         if (newFilters.rating && classItem.school.rating < newFilters.rating) {
           return false
         }
-        
+
         // Filter by verified schools (client-side)
         if (newFilters.verified && !classItem.school.verified) {
           return false
         }
-        
+
         return true
       })
-      
+
       setFilteredClasses(transformedClasses)
     } catch (err) {
       console.error('Error applying filters:', err)
       // Fallback to client-side filtering with current classes
       const filtered = classes.filter(classItem => {
+        // Filter out past classes
+        const now = new Date()
+        const classDate = new Date(classItem.startTime || classItem.date)
+        if (classDate < now) {
+          return false
+        }
         if (!matchesDateFilter(classItem)) {
           return false
         }
@@ -327,30 +344,30 @@ export default function Home() {
         if (locationFilter && !classItem.location?.includes(locationFilter)) {
           return false
         }
-        
+
         if (newFilters.level && classItem.level !== newFilters.level) {
           return false
         }
-        
+
         if (newFilters.type && classItem.type !== newFilters.type) {
           return false
         }
-        
+
         if (newFilters.priceRange && (classItem.price < newFilters.priceRange[0] || classItem.price > newFilters.priceRange[1])) {
           return false
         }
-        
+
         if (newFilters.rating && classItem.school.rating < newFilters.rating) {
           return false
         }
-        
+
         if (newFilters.verified && !classItem.school.verified) {
           return false
         }
-        
+
         return true
       })
-      
+
       setFilteredClasses(filtered)
     }
   }
@@ -415,7 +432,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
+
       {/* Sección principal de clases - Mobile Optimized */}
       <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] py-6 sm:py-10">
         {/* Background Wave Pattern */}
@@ -445,14 +462,14 @@ export default function Home() {
               <SearchIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               BÚSQUEDA AVANZADA
             </div>
-            
+
             <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 leading-tight px-2 sm:px-0">
               <span className="text-white">Encuentra tu</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#FF3366] via-[#FF668C] to-[#2EC4B6]">
                 Clase Perfecta
               </span>
             </h2>
-            
+
             <p className="text-sm xs:text-base sm:text-lg lg:text-xl text-[#E1EDF5] max-w-2xl mx-auto leading-relaxed font-medium mb-4 sm:mb-6 px-4 sm:px-0">
               <span className="text-[#5DE0D0] font-bold">Compara academias, precios y horarios.</span>
               <span className="block mt-1">Encuentra la clase ideal para tu nivel y ubicación preferida.</span>
@@ -460,7 +477,7 @@ export default function Home() {
 
             {/* Mobile-Optimized Search Engine */}
             <div className="max-w-5xl mx-auto mb-4 sm:mb-6 px-2 sm:px-0 relative z-10">
-              <AirbnbSearchBar 
+              <AirbnbSearchBar
                 onFilterChange={handleAirbnbFilterChange}
                 onReset={handleAirbnbReset}
               />
@@ -542,8 +559,8 @@ export default function Home() {
             <p className="text-gray-600 mb-4">
               Intenta ajustar los filtros o buscar en otras fechas
             </p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setFilters({})
                 loadClasses()
@@ -561,10 +578,10 @@ export default function Home() {
               <div className="w-16 h-16 bg-[#FFCCD9] rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckIcon className="w-8 h-8 text-[#FF3366]" />
               </div>
-              <h3 className="text-xl font-semibold text-[#011627] mb-2">Instructores Certificados</h3>
+              <h3 className="text-xl font-semibold text-[#011627] mb-2">Instructores Calificados</h3>
               <p className="text-gray-600">Todos nuestros instructores están certificados y tienen años de experiencia.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 bg-[#CCF4EF] rounded-full flex items-center justify-center mx-auto mb-4">
                 <ShieldIcon className="w-8 h-8 text-[#2EC4B6]" />
@@ -572,7 +589,7 @@ export default function Home() {
               <h3 className="text-xl font-semibold text-[#011627] mb-2">Seguridad Garantizada</h3>
               <p className="text-gray-600">Equipamiento de seguridad incluido y protocolos estrictos de seguridad.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 bg-[#D9E8FF] rounded-full flex items-center justify-center mx-auto mb-4">
                 <EquipmentIcon className="w-8 h-8 text-[#2D5BE3]" />

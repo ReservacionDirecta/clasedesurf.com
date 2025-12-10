@@ -46,7 +46,28 @@ const router = express_1.default.Router();
 // GET /schools - list schools
 router.get('/', async (req, res) => {
     try {
+        // Check for auth header manually to determine if admin
+        const authHeader = req.headers.authorization;
+        let isAdmin = false;
+        if (authHeader) {
+            try {
+                const token = authHeader.split(' ')[1];
+            }
+            catch (e) { }
+        }
+        const { status } = req.query;
+        const where = {};
+        if (status) {
+            where.status = status;
+        }
+        else {
+            // Default behavior: If no status requested, return APPROVED only?
+            // Or return all and let frontend filter?
+            // Better: Return APPROVED by default. Admin can request 'status=PENDING' or 'status=ALL'
+            // where.status = 'APPROVED'; // Uncomment this when ready to enforce
+        }
         const schools = await prisma_1.default.school.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
             select: {
                 id: true,
@@ -66,16 +87,14 @@ router.get('/', async (req, res) => {
                 rating: true,
                 totalReviews: true,
                 createdAt: true,
-                updatedAt: true
-                // Excluir reviews explícitamente para evitar errores si la migración falló
+                updatedAt: true,
+                status: true // Include status
             }
         });
         res.json(schools);
     }
     catch (err) {
         console.error('[GET /schools] Error:', err);
-        console.error('[GET /schools] Error message:', err?.message);
-        console.error('[GET /schools] Error stack:', err?.stack);
         res.status(500).json({
             message: 'Internal server error',
             error: process.env.NODE_ENV === 'development' ? err?.message : undefined
@@ -108,11 +127,6 @@ router.get('/my-school', auth_1.default, async (req, res) => {
                         }
                     }
                 }
-                // Excluir reviews temporalmente para evitar errores si la migración falló
-                // reviews: {
-                //   orderBy: { createdAt: 'desc' },
-                //   take: 10
-                // }
             }
         });
         if (!school) {
@@ -153,6 +167,22 @@ router.get('/:id/classes', (0, validation_1.validateParams)(schools_1.schoolIdSc
             orderBy: { date: 'asc' }
         });
         res.json(classes);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+// GET /schools/:id/reviews - get reviews for a specific school (public endpoint)
+router.get('/:id/reviews', (0, validation_1.validateParams)(schools_1.schoolIdSchema), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const reviews = await prisma_1.default.schoolReview.findMany({
+            where: { schoolId: Number(id) },
+            orderBy: { createdAt: 'desc' },
+            take: 6
+        });
+        res.json(reviews);
     }
     catch (err) {
         console.error(err);
@@ -252,6 +282,25 @@ router.put('/:id', auth_1.default, (0, auth_1.requireRole)(['ADMIN', 'SCHOOL_ADM
                 meta: err?.meta
             } : undefined
         });
+    }
+});
+// PUT /schools/:id/status - update status (requires ADMIN)
+router.put('/:id/status', auth_1.default, (0, auth_1.requireRole)(['ADMIN']), (0, validation_1.validateParams)(schools_1.schoolIdSchema), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        if (!['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' });
+        }
+        const updated = await prisma_1.default.school.update({
+            where: { id: Number(id) },
+            data: { status }
+        });
+        res.json(updated);
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 exports.default = router;

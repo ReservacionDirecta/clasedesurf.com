@@ -6,6 +6,7 @@ import { createPaymentSchema, updatePaymentSchema, paymentIdSchema } from '../va
 import resolveSchool from '../middleware/resolve-school';
 import { PaymentService } from '../services/payments/PaymentService';
 import { PaymentProvider, PaymentMethod } from '../services/payments/types';
+import { EmailService } from '../services/email.service';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
   try {
     const userId = req.userId;
     const { reservationId, amount, paymentMethod, transactionId, voucherImage, voucherNotes, status, discountCodeId, discountAmount, originalAmount } = req.body;
-    
+
     console.log('[POST /payments] Request body:', {
       reservationId,
       amount,
@@ -26,17 +27,17 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
     });
 
     // Verify the reservation exists and belongs to user (or user is admin)
-    const reservation = await prisma.reservation.findUnique({ 
+    const reservation = await prisma.reservation.findUnique({
       where: { id: reservationId },
       include: { user: true, class: true }
     });
-    
+
     if (!reservation) return res.status(404).json({ message: 'Reservation not found' });
-    
+
     // Check if user owns the reservation or is admin
     const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
     if (!user) return res.status(401).json({ message: 'User not found' });
-    
+
     if (reservation.userId !== Number(userId) && user.role !== 'ADMIN' && user.role !== 'SCHOOL_ADMIN') {
       return res.status(403).json({ message: 'Forbidden' });
     }
@@ -49,8 +50,8 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
 
     // Determine payment status - if cash, keep as PENDING, otherwise PENDING until verified
     // Ensure status is a valid PaymentStatus enum value
-    const paymentStatus = (status && ['UNPAID', 'PENDING', 'PAID', 'REFUNDED'].includes(status)) 
-      ? status 
+    const paymentStatus = (status && ['UNPAID', 'PENDING', 'PAID', 'REFUNDED'].includes(status))
+      ? status
       : 'PENDING';
 
     // Truncate voucherImage if it's too long (PostgreSQL TEXT has a limit)
@@ -75,10 +76,10 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
 
       // Verificar que el código aún sea válido
       const now = new Date();
-      if (!discountCode.isActive || 
-          now < discountCode.validFrom || 
-          now > discountCode.validTo ||
-          (discountCode.maxUses !== null && discountCode.usedCount >= discountCode.maxUses)) {
+      if (!discountCode.isActive ||
+        now < discountCode.validFrom ||
+        now > discountCode.validTo ||
+        (discountCode.maxUses !== null && discountCode.usedCount >= discountCode.maxUses)) {
         return res.status(400).json({ message: 'El código de descuento ya no es válido' });
       }
     }
@@ -136,16 +137,16 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
 
     // Update reservation status only if payment is PAID
     if (paymentStatus === 'PAID') {
-      await prisma.reservation.update({ 
-        where: { id: reservationId }, 
-        data: { status: 'PAID' } 
+      await prisma.reservation.update({
+        where: { id: reservationId },
+        data: { status: 'PAID' }
       });
     }
 
     // Si el método de pago requiere un intent online, crearlo
     const paymentMethodEnum = paymentMethod as PaymentMethod;
     const requiresOnlineIntent = ['CREDIT_CARD', 'DEBIT_CARD', 'PAYPAL', 'MERCADOPAGO'].includes(paymentMethodEnum);
-    
+
     if (requiresOnlineIntent) {
       try {
         // Intentar crear payment intent con el proveedor apropiado
@@ -182,6 +183,23 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
       }
     }
 
+    // Enviar email de confirmación de pago si el pago fue creado con estado PAID
+    if (paymentStatus === 'PAID' && payment.reservation) {
+      EmailService.sendPaymentConfirmation(
+        payment.reservation.user.email,
+        payment.reservation.user.name || 'Usuario',
+        {
+          amount: payment.amount,
+          paymentMethod: payment.paymentMethod || 'Manual',
+          transactionId: payment.transactionId || payment.id.toString(),
+          bookingId: payment.reservationId.toString(),
+          className: payment.reservation.class.title
+        }
+      ).catch(err => {
+        console.error('Error sending payment confirmation email:', err);
+      });
+    }
+
     res.status(201).json(payment);
   } catch (err) {
     console.error('[POST /payments] Error:', err);
@@ -190,9 +208,9 @@ router.post('/', requireAuth, validateBody(createPaymentSchema), async (req: Aut
       message: errorMessage,
       stack: err instanceof Error ? err.stack : undefined
     });
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Internal server error',
-      error: errorMessage 
+      error: errorMessage
     });
   }
 });
@@ -202,12 +220,12 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
     const { reservationId } = req.query;
-    
+
     const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
     if (!user) return res.status(401).json({ message: 'User not found' });
 
     let whereClause: any = {};
-    
+
     if (reservationId) {
       whereClause.reservationId = Number(reservationId);
       // If not admin, ensure they can only see permitted payments
@@ -227,7 +245,7 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
       }
     }
 
-    const payments = await prisma.payment.findMany({ 
+    const payments = await prisma.payment.findMany({
       where: whereClause,
       include: {
         reservation: {
@@ -243,7 +261,7 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
       },
       orderBy: { createdAt: 'desc' }
     });
-    
+
     res.json(payments);
   } catch (err) {
     console.error(err);
@@ -256,11 +274,11 @@ router.get('/:id', requireAuth, resolveSchool, validateParams(paymentIdSchema), 
   try {
     const { id } = req.params as any;
     const userId = req.userId;
-    
+
     const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
     if (!user) return res.status(401).json({ message: 'User not found' });
 
-    const payment = await prisma.payment.findUnique({ 
+    const payment = await prisma.payment.findUnique({
       where: { id: Number(id) },
       include: {
         reservation: {
@@ -275,9 +293,9 @@ router.get('/:id', requireAuth, resolveSchool, validateParams(paymentIdSchema), 
         }
       }
     });
-    
+
     if (!payment) return res.status(404).json({ message: 'Payment not found' });
-    
+
     // Check access: ADMIN ok; SCHOOL_ADMIN must own the school; otherwise only owner user
     if (user.role === 'ADMIN') {
       return res.json(payment);
@@ -292,7 +310,7 @@ router.get('/:id', requireAuth, resolveSchool, validateParams(paymentIdSchema), 
     if (payment.reservation.userId !== Number(userId)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    
+
     res.json(payment);
   } catch (err) {
     console.error(err);
@@ -305,18 +323,18 @@ router.put('/:id', requireAuth, resolveSchool, validateParams(paymentIdSchema), 
   try {
     const { id } = req.params as any;
     const updateData = req.body;
-    
-    const payment = await prisma.payment.findUnique({ 
+
+    const payment = await prisma.payment.findUnique({
       where: { id: Number(id) },
       include: { reservation: { include: { class: true } } }
     });
-    
+
     if (!payment) return res.status(404).json({ message: 'Payment not found' });
-    
+
     // Check permissions: user can update their own payment, admin/school_admin can update any
     const user = await prisma.user.findUnique({ where: { id: Number(req.userId) } });
     if (!user) return res.status(401).json({ message: 'User not found' });
-    
+
     if (user.role === 'STUDENT') {
       // Students can only update their own payments
       if (payment.reservation.userId !== Number(req.userId)) {
@@ -330,8 +348,8 @@ router.put('/:id', requireAuth, resolveSchool, validateParams(paymentIdSchema), 
         const school = await prisma.school.findFirst({ where: { ownerId: Number(req.userId) } });
         if (!school) {
           console.error(`[PUT /payments/:id] SCHOOL_ADMIN ${req.userId} has no associated school`);
-          return res.status(404).json({ 
-            message: 'No school found for this user. Please ensure your account is properly configured.' 
+          return res.status(404).json({
+            message: 'No school found for this user. Please ensure your account is properly configured.'
           });
         }
         schoolId = school.id;
@@ -345,12 +363,12 @@ router.put('/:id', requireAuth, resolveSchool, validateParams(paymentIdSchema), 
     } else if (user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    
+
     // If status is being changed to PAID, set paidAt
     if (updateData.status === 'PAID' && payment.status !== 'PAID') {
       updateData.paidAt = new Date().toISOString();
     }
-    
+
     // If status is being changed from PAID, clear paidAt
     if (updateData.status && updateData.status !== 'PAID' && payment.status === 'PAID') {
       updateData.paidAt = null;
@@ -382,11 +400,28 @@ router.put('/:id', requireAuth, resolveSchool, validateParams(paymentIdSchema), 
     } else if (updateData.status === 'UNPAID' && payment.reservation.status === 'PAID') {
       reservationStatus = 'CONFIRMED';
     }
-    
+
     await prisma.reservation.update({
       where: { id: payment.reservationId },
       data: { status: reservationStatus }
     });
+
+    // Enviar email de confirmación de pago si el estado cambió a PAID
+    if (updateData.status === 'PAID' && payment.status !== 'PAID' && updatedPayment.reservation) {
+      EmailService.sendPaymentConfirmation(
+        updatedPayment.reservation.user.email,
+        updatedPayment.reservation.user.name || 'Usuario',
+        {
+          amount: updatedPayment.amount,
+          paymentMethod: updatedPayment.paymentMethod || 'Manual',
+          transactionId: updatedPayment.transactionId || updatedPayment.id.toString(),
+          bookingId: updatedPayment.reservationId.toString(),
+          className: updatedPayment.reservation.class.title
+        }
+      ).catch(err => {
+        console.error('Error sending payment confirmation email:', err);
+      });
+    }
 
     res.json(updatedPayment);
   } catch (err) {
@@ -399,18 +434,18 @@ router.put('/:id', requireAuth, resolveSchool, validateParams(paymentIdSchema), 
 router.delete('/:id', requireAuth, requireRole(['ADMIN']), validateParams(paymentIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
-    
-    const payment = await prisma.payment.findUnique({ 
+
+    const payment = await prisma.payment.findUnique({
       where: { id: Number(id) },
       include: { reservation: true }
     });
-    
+
     if (!payment) return res.status(404).json({ message: 'Payment not found' });
-    
+
     // Update payment status to REFUNDED instead of deleting
     const updatedPayment = await prisma.payment.update({
       where: { id: Number(id) },
-      data: { 
+      data: {
         status: 'REFUNDED',
         updatedAt: new Date()
       }
@@ -434,7 +469,7 @@ router.post('/create-intent', requireAuth, validateBody(createPaymentSchema), as
   try {
     const userId = req.userId;
     const { reservationId, amount, paymentMethod, provider } = req.body;
-    
+
     if (!userId) return res.status(401).json({ message: 'User not authenticated' });
 
     // Verify reservation exists

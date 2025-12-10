@@ -6,6 +6,7 @@ import { validateBody, validateParams } from '../middleware/validation';
 import { createReservationSchema, updateReservationSchema, reservationIdSchema } from '../validations/reservations';
 import resolveSchool from '../middleware/resolve-school';
 import { buildMultiTenantWhere } from '../middleware/multi-tenant';
+import { EmailService } from '../services/email.service';
 
 const router = express.Router();
 
@@ -116,6 +117,33 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
 
     if (!result) return res.status(500).json({ message: 'Reservation failed' });
     if (!result.ok) return res.status(400).json({ message: result.reason });
+
+    // Enviar email de confirmación de reserva
+    if (result.reservation && result.reservation.user && result.reservation.class) {
+      const classDate = new Date(result.reservation.class.date);
+      EmailService.sendBookingConfirmation(
+        result.reservation.user.email,
+        result.reservation.user.name || 'Usuario',
+        {
+          className: result.reservation.class.title,
+          date: classDate.toLocaleDateString('es-PE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          time: classDate.toLocaleTimeString('es-PE', {
+            hour: '2-digit',
+            minute: '2-digit'
+          }),
+          location: result.reservation.class.school?.location || 'Por confirmar',
+          price: result.reservation.payment?.amount || result.reservation.class.price || 0,
+          bookingId: result.reservation.id.toString()
+        }
+      ).catch(err => {
+        console.error('Error sending booking confirmation email:', err);
+      });
+    }
 
     res.status(201).json(result.reservation);
   } catch (err: any) {
@@ -403,6 +431,28 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
       userId: updatedReservation.userId,
       classId: updatedReservation.classId
     });
+
+    // Enviar email de cancelación si el estado cambió a CANCELED
+    if (updateData.status === 'CANCELED' && updatedReservation.user && updatedReservation.class) {
+      const classDate = new Date(updatedReservation.class.date);
+      EmailService.sendBookingCancellation(
+        updatedReservation.user.email,
+        updatedReservation.user.name || 'Usuario',
+        {
+          className: updatedReservation.class.title,
+          date: classDate.toLocaleDateString('es-PE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          bookingId: updatedReservation.id.toString(),
+          refundAmount: updatedReservation.payment?.amount
+        }
+      ).catch(err => {
+        console.error('Error sending cancellation email:', err);
+      });
+    }
 
     res.json(updatedReservation);
   } catch (err) {
