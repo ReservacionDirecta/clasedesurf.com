@@ -160,10 +160,69 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
             />
           </div>
 
-          {/* Voucher Image URL */}
+          {/* Voucher Image Upload */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Imagen del Comprobante
+            </label>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+
+                if (!file.type.match(/^image\/(jpeg|jpg|png|webp)$/)) {
+                  setError('Solo se permiten archivos de imagen (JPG, PNG, WebP)');
+                  return;
+                }
+
+                if (file.size > 5 * 1024 * 1024) {
+                  setError('La imagen no debe superar los 5MB');
+                  return;
+                }
+
+                try {
+                  setUploading(true);
+                  setError(null);
+
+                  const data = new FormData();
+                  data.append('file', file);
+                  data.append('folder', 'vouchers');
+
+                  const token = (session as any)?.backendToken;
+                  const headers: any = {};
+                  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                  const res = await fetch('/api/images/upload', {
+                    method: 'POST',
+                    headers,
+                    body: data
+                  });
+
+                  const responseData = await res.json();
+
+                  if (!res.ok) {
+                    throw new Error(responseData.error || 'Error al subir la imagen');
+                  }
+
+                  setFormData(prev => ({ ...prev, voucherImage: responseData.url }));
+                } catch (err: any) {
+                  console.error('Error uploading image:', err);
+                  setError(err.message || 'Error al subir la imagen');
+                } finally {
+                  setUploading(false);
+                }
+              }}
+              disabled={uploading}
+              className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+
+          {/* Voucher Image URL (Fallback) */}
           <div className="mb-4">
             <label htmlFor="voucherImage" className="block text-sm font-medium text-gray-700 mb-2">
-              URL de Imagen del Voucher
+              O pegar URL directa
             </label>
             <input
               type="url"
@@ -173,22 +232,20 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="https://ejemplo.com/voucher.jpg"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Puedes subir la imagen a un servicio como Imgur, Cloudinary, o usar un enlace directo
-            </p>
-
+            
             {/* Preview */}
             {formData.voucherImage && (
               <div className="mt-3">
                 <p className="text-sm font-medium text-gray-700 mb-2">Vista Previa:</p>
-                <div className="relative w-full overflow-hidden rounded-lg border border-gray-300">
+                <div className="relative w-full overflow-hidden rounded-lg border border-gray-300 bg-gray-100">
                   <Image
                     src={formData.voucherImage}
                     alt="Voucher preview"
                     width={600}
                     height={400}
-                    className="h-auto w-full object-contain"
+                    className="h-auto w-full object-contain max-h-[300px]"
                     onError={() => setFormData(prev => ({ ...prev, voucherImage: '' }))}
+                    unoptimized={true} // Add unoptimized to prevent issues with external URLs in some cases
                   />
                 </div>
               </div>

@@ -220,37 +220,7 @@ export default function ClassReservationsPage() {
     }
   };
 
-  const updatePaymentStatus = async (paymentId: number, paymentStatus: string) => {
-    try {
-      setUpdating(paymentId);
 
-      const token = (session as any)?.backendToken;
-      const headers: any = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch(`/api/payments/${paymentId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          status: paymentStatus,
-          paidAt: paymentStatus === 'PAID' ? new Date().toISOString() : null
-        })
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Failed to update payment');
-      }
-
-      await fetchClassAndReservations();
-      setError(null);
-    } catch (err) {
-      console.error('Error updating payment:', err);
-      setError(err instanceof Error ? err.message : 'Error updating payment');
-    } finally {
-      setUpdating(null);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -728,20 +698,17 @@ export default function ClassReservationsPage() {
       {/* Payment Modal */}
       {showPaymentModal && selectedPayment && (
         <PaymentVoucherModal
+          isOpen={showPaymentModal}
           payment={selectedPayment}
           onClose={() => {
             setShowPaymentModal(false);
             setSelectedPayment(null);
           }}
-          onApprove={() => {
-            updatePaymentStatus(selectedPayment.id, 'PAID');
+          onSuccess={() => {
+            fetchClassAndReservations();
             setShowPaymentModal(false);
             setSelectedPayment(null);
-          }}
-          onReject={() => {
-            updatePaymentStatus(selectedPayment.id, 'UNPAID');
-            setShowPaymentModal(false);
-            setSelectedPayment(null);
+            showSuccess('Pago actualizado', 'La información del pago ha sido guardada correctamente.');
           }}
         />
       )}
