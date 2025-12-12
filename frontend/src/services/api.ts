@@ -113,7 +113,7 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -124,11 +124,11 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error(`API request failed for ${endpoint}:`, error);
@@ -139,7 +139,7 @@ class ApiService {
   // Classes API
   async getClasses(filters?: ClassFilters): Promise<ApiClass[]> {
     const params = new URLSearchParams();
-    
+
     if (filters) {
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
@@ -147,10 +147,10 @@ class ApiService {
         }
       });
     }
-    
+
     const queryString = params.toString();
     const endpoint = `/classes${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<ApiClass[]>(endpoint);
   }
 
@@ -187,11 +187,11 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
   // Calculate rating and reviews from school data or use defaults
   const schoolRating = 4.5 + (Math.random() * 0.5); // Random between 4.5-5.0
   const totalReviews = Math.floor(Math.random() * 200) + 50; // Random between 50-250
-  
+
   // Generate instructor info
   const instructorName = apiClass.instructor || 'Instructor Asignado';
   const instructorRating = 4.6 + (Math.random() * 0.4); // Random between 4.6-5.0
-  
+
   // Map class type based on capacity and other factors
   let classType: 'GROUP' | 'PRIVATE' | 'SEMI_PRIVATE' | 'INTENSIVE' | 'KIDS' = 'GROUP';
   if (apiClass.capacity === 1) {
@@ -259,7 +259,7 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
     instructor: {
       name: instructorName,
       rating: Number(instructorRating.toFixed(1)),
-      experience: `${Math.floor(Math.random() * 8) + 3} años de experiencia, Instructor certificado`,
+      experience: `${Math.floor(Math.random() * 8) + 3} años de experiencia, Instructor calificado`,
       specialties: specialties
     },
     images: apiClass.images || [],

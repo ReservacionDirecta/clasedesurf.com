@@ -365,6 +365,16 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
       console.log('[PUT /reservations/:id] Normalized status:', updateData.status);
     }
 
+    // Validate cancellation constraints
+    if (updateData.status === 'CANCELED') {
+      const classDate = new Date(reservation.class.date);
+      const now = new Date();
+
+      if (classDate < now) {
+        return res.status(400).json({ message: 'No se pueden cancelar reservas de clases que ya han pasado' });
+      }
+    }
+
     // Update reservation
     const updatedReservation = await prisma.reservation.update({
       where: { id: Number(id) },

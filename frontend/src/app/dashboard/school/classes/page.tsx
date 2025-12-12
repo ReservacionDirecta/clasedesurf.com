@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X } from 'lucide-react';
+import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X, ListChecks } from 'lucide-react';
 import { SchoolContextBanner } from '@/components/school/SchoolContextBanner';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -48,6 +48,7 @@ export default function ClassesManagementPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'cancelled'>('all');
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -175,11 +176,11 @@ export default function ClassesManagementPage() {
     }
   };
 
-  const handleDeleteClass = async () => {
+  const handleDeleteClass = async (forceDelete = false) => {
     if (!selectedClass) return;
 
     // Confirmación adicional
-    if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente la clase "${selectedClass.title}"?\n\nEsta acción no se puede deshacer.`)) {
+    if (!forceDelete && !confirm(`¿Estás seguro de que deseas eliminar permanentemente la clase "${selectedClass.title}"?\n\nEsta acción no se puede deshacer.`)) {
       return;
     }
 
@@ -190,7 +191,11 @@ export default function ClassesManagementPage() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`/api/classes/${selectedClass.id}`, {
+      const url = forceDelete 
+        ? `/api/classes/${selectedClass.id}?force=true`
+        : `/api/classes/${selectedClass.id}`;
+
+      const response = await fetch(url, {
         method: 'DELETE',
         headers
       });
@@ -203,17 +208,102 @@ export default function ClassesManagementPage() {
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Error al eliminar la clase' }));
         
-        // Si hay reservas activas, mostrar mensaje específico
-        let errorMessage = errorData.message || 'Error al eliminar la clase';
-        if (errorData.reservationsCount) {
-          errorMessage = `No se puede eliminar la clase porque tiene ${errorData.reservationsCount} reserva(s) activa(s). Debes cancelar las reservas primero.`;
+        // Si hay reservas activas y se puede forzar eliminación
+        if (errorData.canForceDelete && errorData.reservationsCount) {
+          const confirmForce = confirm(
+            `Esta clase tiene ${errorData.reservationsCount} reserva(s) activa(s).\n\n` +
+            `¿Deseas FORZAR la eliminación? Esto:\n` +
+            `• Eliminará todas las reservaciones\n` +
+            `• Eliminará todos los pagos asociados\n\n` +
+            `Esta acción NO SE PUEDE DESHACER.`
+          );
+          
+          if (confirmForce) {
+            await handleDeleteClass(true);
+            return;
+          }
         }
         
+        let errorMessage = errorData.message || 'Error al eliminar la clase';
         throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('Error deleting class:', error);
       showError('Error al eliminar', error instanceof Error ? error.message : 'Error al eliminar la clase');
+    }
+  };
+
+  const toggleSelectClass = (classId: number) => {
+    setSelectedClasses(prev => 
+      prev.includes(classId) 
+        ? prev.filter(id => id !== classId)
+        : [...prev, classId]
+    );
+  };
+
+  const handleBulkDelete = async (forceDelete = false) => {
+    if (selectedClasses.length === 0) return;
+    
+    const confirmMessage = forceDelete 
+      ? `⚠️ FORZAR eliminación de ${selectedClasses.length} clase(s).\n\nEsto eliminará todas las reservaciones y pagos asociados.\n\n¿Continuar?`
+      : `¿Estás seguro de eliminar ${selectedClasses.length} clase(s)?\n\nEsta acción no se puede deshacer.`;
+    if (!confirm(confirmMessage)) return;
+
+    const token = (session as any)?.backendToken;
+    const headers: any = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    let hasReservationsCount = 0;
+    const errors: string[] = [];
+
+    for (const classId of selectedClasses) {
+      try {
+        const url = forceDelete 
+          ? `/api/classes/${classId}?force=true`
+          : `/api/classes/${classId}`;
+        const response = await fetch(url, {
+          method: 'DELETE',
+          headers
+        });
+        if (response.ok) {
+          successCount++;
+        } else {
+          const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+          if (errorData.canForceDelete) {
+            hasReservationsCount++;
+          }
+          errorCount++;
+          errors.push(errorData.message || 'Error al eliminar');
+        }
+      } catch (error) {
+        errorCount++;
+        errors.push('Error de conexión');
+      }
+    }
+
+    setSelectedClasses([]);
+    await fetchClasses();
+
+    if (successCount > 0 && errorCount === 0) {
+      showSuccess('Clases eliminadas', `Se eliminaron ${successCount} clase(s) correctamente`);
+    } else if (hasReservationsCount > 0 && !forceDelete) {
+      // Ofrecer forzar eliminación
+      const confirmForce = confirm(
+        `Se eliminaron ${successCount} clase(s), pero ${hasReservationsCount} tiene(n) reservaciones activas.\n\n` +
+        `¿Deseas forzar la eliminación de las clases con reservaciones?`
+      );
+      if (confirmForce) {
+        // Re-seleccionar las clases que fallaron y reintentar con force
+        showError('Info', 'Por favor, selecciona las clases a forzar y usa la función individual de eliminación.');
+      }
+    } else if (successCount > 0 && errorCount > 0) {
+      showError('Eliminación parcial', `Se eliminaron ${successCount} clase(s), pero ${errorCount} fallaron`);
+    } else {
+      showError('Error al eliminar', errors[0] || 'No se pudieron eliminar las clases');
     }
   };
 
@@ -309,13 +399,31 @@ export default function ClassesManagementPage() {
               <h1 className="text-3xl font-bold text-gray-900">Gestión de Clases</h1>
               <p className="text-gray-600 mt-2">Administra las clases de {school?.name || 'tu escuela'}</p>
             </div>
-            <button
-              onClick={() => router.push('/dashboard/school/classes/new')}
-              className="mt-4 sm:mt-0 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Nueva Clase
-            </button>
+            <div className="mt-4 sm:mt-0 flex items-center gap-3">
+              {selectedClasses.length > 0 && (
+                <button
+                  onClick={() => handleBulkDelete()}
+                  className="flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <Trash2 className="w-5 h-5 mr-2" />
+                  Eliminar ({selectedClasses.length})
+                </button>
+              )}
+              <button
+                onClick={() => router.push('/dashboard/school/classes/deleted')}
+                className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                <Trash2 className="w-5 h-5 mr-2" />
+                Papelera
+              </button>
+              <button
+                onClick={() => router.push('/dashboard/school/classes/new')}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Nueva Clase
+              </button>
+            </div>
           </div>
         </div>
 
@@ -407,13 +515,27 @@ export default function ClassesManagementPage() {
         {/* Classes List */}
         <div className="space-y-6">
           {filteredClasses.map((cls) => (
-            <div key={cls.id} className="bg-white rounded-lg shadow p-6">
+            <div 
+              key={cls.id} 
+              className={`bg-white rounded-lg shadow p-6 transition-all ${
+                selectedClasses.includes(cls.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+              }`}
+            >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{cls.title}</h3>
-                      <p className="text-gray-600 mb-3">{cls.description}</p>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedClasses.includes(cls.id)}
+                        onChange={() => toggleSelectClass(cls.id)}
+                        className="mt-1.5 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{cls.title}</h3>
+                        <p className="text-gray-600 mb-3">{cls.description}</p>
+                      </div>
                     </div>
                     <div className="flex gap-2 ml-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(cls.status || 'upcoming')}`}>
@@ -457,6 +579,13 @@ export default function ClassesManagementPage() {
                       >
                         <Eye className="w-4 h-4 mr-1 flex-shrink-0" />
                         <span className="truncate">Ver Detalles</span>
+                      </button>
+                      <button
+                        onClick={() => router.push(`/dashboard/school/classes/${cls.id}/reservations`)}
+                        className="flex items-center justify-center px-3 py-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors text-sm"
+                      >
+                        <ListChecks className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <span className="truncate">Ver Reservas</span>
                       </button>
                       <button
                         onClick={() => router.push(`/classes/${cls.id}`)}
@@ -606,7 +735,7 @@ export default function ClassesManagementPage() {
                   Cancelar
                 </button>
                 <button
-                  onClick={handleDeleteClass}
+                  onClick={() => handleDeleteClass()}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center justify-center"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />

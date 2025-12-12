@@ -28,14 +28,25 @@ import { apiService, transformApiClassToFrontend, type ClassFilters } from '@/se
 import { AirbnbSearchBar, type FilterValues as AirbnbFilterValues } from '@/components/classes/AirbnbSearchBar'
 
 // Datos de ejemplo como fallback
+const getMockDate = () => {
+  const d = new Date()
+  d.setDate(d.getDate() + 2) // 2 días en el futuro
+  d.setHours(8, 0, 0, 0)
+  return d
+}
+
+const mockDate = getMockDate()
+const mockEndTime = new Date(mockDate)
+mockEndTime.setHours(10, 0, 0, 0)
+
 const mockClasses = [
   {
     id: '1',
     title: 'Iniciación en Miraflores',
-    description: 'Aprende surf en la icónica Playa Makaha de Miraflores. Olas perfectas para principiantes con instructores certificados. Incluye teoría básica y práctica segura.',
-    date: new Date('2024-12-20T08:00:00'),
-    startTime: new Date('2024-12-20T08:00:00'),
-    endTime: new Date('2024-12-20T10:00:00'),
+    description: 'Aprende surf en la icónica Playa Makaha de Miraflores. Olas perfectas para principiantes con instructores calificados. Incluye teoría básica y práctica segura.',
+    date: mockDate,
+    startTime: mockDate,
+    endTime: mockEndTime,
     duration: 120,
     capacity: 8,
     price: 25,
@@ -46,7 +57,6 @@ const mockClasses = [
     instructorName: 'Carlos Mendoza',
     includesBoard: true,
     includesWetsuit: true,
-    includesInsurance: true,
     isActive: true,
     isCanceled: false,
     createdAt: new Date(),
@@ -67,7 +77,7 @@ const mockClasses = [
     instructor: {
       name: 'Carlos Mendoza',
       rating: 4.8,
-      experience: '6 años de experiencia, Instructor ISA certificado',
+      experience: '6 años de experiencia, Instructor ISA calificado',
       specialties: ['Iniciación', 'Técnica básica', 'Seguridad acuática']
     },
     classImage: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=crop'
@@ -157,15 +167,22 @@ export default function Home() {
       const apiClasses = await apiService.getClasses()
       const transformedClasses = apiClasses.map(transformApiClassToFrontend)
       
-      setClasses(transformedClasses)
-      setFilteredClasses(transformedClasses)
+      // Filter out past classes - showing only future reservable classes
+      const now = new Date()
+      const futureClasses = transformedClasses.filter(c => c.startTime > now)
+      
+      setClasses(futureClasses)
+      setFilteredClasses(futureClasses)
       
       console.log('✅ Loaded classes from API:', transformedClasses.length)
     } catch (err) {
       console.warn('⚠️ Failed to load from API, using mock data:', err)
       // Fallback to mock data
-      setClasses(mockClasses)
-      setFilteredClasses(mockClasses)
+      const now = new Date()
+      const futureMockClasses = mockClasses.filter(c => c.startTime > now)
+      
+      setClasses(futureMockClasses)
+      setFilteredClasses(futureMockClasses)
       setError('Usando datos de ejemplo. Verifica la conexión con el backend.')
     } finally {
       setLoading(false)
@@ -233,7 +250,8 @@ export default function Home() {
 
     const matchesDateFilter = (classItem: any) => {
       if (!newFilters.date) {
-        return true
+        // If no specific date selected, shows only future classes
+        return classItem.startTime > new Date()
       }
 
       const dateCandidates = [classItem.date, classItem.startTime, classItem.scheduledDate]

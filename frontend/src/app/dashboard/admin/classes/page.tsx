@@ -340,7 +340,7 @@ export default function AdminClassesPage() {
     }
   };
 
-  const handleDeleteClass = async () => {
+  const handleDeleteClass = async (forceDelete = false): Promise<void> => {
     if (!selectedClass) return;
 
     try {
@@ -348,24 +348,36 @@ export default function AdminClassesPage() {
       const headers: any = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`/api/classes/${selectedClass.id}`, {
+      const url = forceDelete 
+        ? `/api/classes/${selectedClass.id}?force=true`
+        : `/api/classes/${selectedClass.id}`;
+
+      const res = await fetch(url, {
         method: 'DELETE',
         headers
       });
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: 'Error desconocido' }));
-        const errorMessage = errorData.message || 'No se pudo eliminar la clase';
         
-        // Si hay reservas activas, mostrar mensaje específico
-        if (errorData.reservationsCount) {
-          showError(
-            'No se puede eliminar', 
-            `La clase tiene ${errorData.reservationsCount} reserva(s) activa(s). Debes cancelar las reservas primero.`
+        // Si hay reservas activas y se puede forzar eliminación
+        if (errorData.canForceDelete && errorData.reservationsCount) {
+          const confirmForce = confirm(
+            `Esta clase tiene ${errorData.reservationsCount} reserva(s) activa(s).\n\n` +
+            `¿Deseas FORZAR la eliminación? Esto:\n` +
+            `• Eliminará todas las reservaciones\n` +
+            `• Eliminará todos los pagos asociados\n\n` +
+            `Esta acción NO SE PUEDE DESHACER.`
           );
-        } else {
-          showError('Error al eliminar', errorMessage);
+          
+          if (confirmForce) {
+            await handleDeleteClass(true);
+            return;
+          }
         }
+        
+        const errorMessage = errorData.message || 'No se pudo eliminar la clase';
+        showError('Error al eliminar', errorMessage);
         return;
       }
 
@@ -1379,7 +1391,7 @@ export default function AdminClassesPage() {
                   Cancelar
                 </button>
                 <button
-                  onClick={handleDeleteClass}
+                  onClick={() => handleDeleteClass()}
                   className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   Eliminar

@@ -38,7 +38,7 @@ router.post('/register', authLimiter, validateBody(registerSchema), async (req, 
   try {
     // registration request
     // console.log('[auth] POST /register body ->', req.body);
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, schoolId } = req.body;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(400).json({ message: 'Email already in use' });
@@ -52,6 +52,17 @@ router.post('/register', authLimiter, validateBody(registerSchema), async (req, 
         role: role || 'STUDENT' // Default to STUDENT if no role provided
       }
     });
+
+    // Create student profile if role is STUDENT
+    if (user.role === 'STUDENT') {
+      await prisma.student.create({
+        data: {
+          userId: user.id,
+          level: 'BEGINNER',
+          schoolId: schoolId || undefined
+        }
+      });
+    }
     const accessToken = signAccessToken(user);
 
     // create refresh token stored hashed in DB

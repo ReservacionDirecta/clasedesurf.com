@@ -150,6 +150,7 @@ model Class {
   schoolId     Int
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
   instructor   String?
   images       String[]
   beachId      Int?

@@ -79,10 +79,9 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('es-ES', { 
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
     })
   }
 
@@ -376,7 +375,9 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="font-medium truncate">{formatTime(classData.startTime)} - {formatTime(classData.endTime)}</span>
+              <span className="font-medium truncate capitalize">
+                {formatDate(classData.date)} • {formatTime(classData.startTime)} - {formatTime(classData.endTime)}
+              </span>
             </div>
             <div className="text-[10px] sm:text-xs text-gray-500 bg-gray-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex-shrink-0 ml-2">
               {classData.duration} min
@@ -404,7 +405,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
             <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <span className="font-medium truncate">{classData.instructorName || 'Instructor certificado'}</span>
+            <span className="font-medium truncate">{classData.instructorName || 'Instructor calificado'}</span>
           </div>
         </div>
 
@@ -421,12 +422,6 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               <div className="flex items-center">
                 <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-500 rounded-full mr-1"></div>
                 <span>Neopreno</span>
-              </div>
-            )}
-            {classData.includesInsurance && (
-              <div className="flex items-center">
-                <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1"></div>
-                <span>Seguro</span>
               </div>
             )}
           </div>

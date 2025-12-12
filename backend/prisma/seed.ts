@@ -1,447 +1,468 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole, ClassLevel, ReservationStatus, InstructorRole, SchoolStatus, PaymentStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Starting database seed...');
+  console.log('🌱 Starting seed...');
 
-  // Clean existing data
-  console.log('🧹 Cleaning existing data...');
+  // Clear existing data
+  console.log('🗑️  Clearing existing data...');
   await prisma.payment.deleteMany();
   await prisma.reservation.deleteMany();
-  await prisma.instructorReview.deleteMany();
-  await prisma.instructor.deleteMany();
-  await prisma.refreshToken.deleteMany();
   await prisma.class.deleteMany();
+  await prisma.discountCode.deleteMany();
+  await prisma.instructorReview.deleteMany();
+  await prisma.schoolReview.deleteMany();
+  await prisma.instructor.deleteMany();
   await prisma.student.deleteMany();
+  await prisma.beach.deleteMany();
+  await prisma.refreshToken.deleteMany();
   await prisma.school.deleteMany();
   await prisma.user.deleteMany();
+
+  console.log('✅ Existing data cleared');
 
   // Hash password for all users
   const hashedPassword = await bcrypt.hash('password123', 10);
 
-  // Create Users
-  console.log('👥 Creating users...');
-  
+  // Create Admin User
+  console.log('👤 Creating admin user...');
   const admin = await prisma.user.create({
     data: {
-      email: 'admin@surfschool.com',
+      email: 'admin@clasedesurf.com',
+      name: 'Administrador Principal',
       password: hashedPassword,
-      name: 'System Administrator',
-      role: 'ADMIN',
-      age: 35,
-      canSwim: true,
-      phone: '+5119876543'
+      role: UserRole.ADMIN,
+      phone: '+51 999 888 777',
+      avatar: 'wave1'
     }
   });
-
-  const schoolAdmin = await prisma.user.create({
-    data: {
-      email: 'schooladmin@surfschool.com',
-      password: hashedPassword,
-      name: 'School Administrator',
-      role: 'SCHOOL_ADMIN',
-      age: 40,
-      canSwim: true,
-      phone: '+5119876544'
-    }
-  });
-
-  const student1 = await prisma.user.create({
-    data: {
-      email: 'student1@surfschool.com',
-      password: hashedPassword,
-      name: 'Alice Johnson',
-      role: 'STUDENT',
-      age: 28,
-      canSwim: true,
-      weight: 65,
-      height: 170,
-      phone: '+5119876545'
-    }
-  });
-
-  const student2 = await prisma.user.create({
-    data: {
-      email: 'student2@surfschool.com',
-      password: hashedPassword,
-      name: 'Bob Williams',
-      role: 'STUDENT',
-      age: 35,
-      canSwim: false,
-      weight: 80,
-      height: 180,
-      phone: '+5119876546'
-    }
-  });
-
-  const testUser = await prisma.user.create({
-    data: {
-      email: 'test@test.com',
-      password: hashedPassword,
-      name: 'Test User',
-      role: 'STUDENT',
-      age: 25,
-      canSwim: true,
-      weight: 70,
-      height: 175,
-      phone: '+5119876547'
-    }
-  });
-
-  console.log('✅ Users created');
+  console.log('✅ Admin created:', admin.email);
 
   // Create Schools
   console.log('🏫 Creating schools...');
-  
-  const limaSurfAcademy = await prisma.school.create({
+  const school1 = await prisma.school.create({
     data: {
-      name: 'Lima Surf Academy',
+      name: 'Surf School Lima',
+      description: 'La mejor escuela de surf en Lima. Clases para todos los niveles con instructores certificados.',
       location: 'Miraflores, Lima',
-      description: 'Pioneering surf school in Lima with over 8 years of experience. We offer professional surf lessons for all levels with certified instructors and top-quality equipment.',
-      email: 'contact@limasurf.com',
-      phone: '+5112345678',
-      website: 'https://limasurf.com',
-      instagram: '@limasurfacademy',
-      facebook: 'LimaSurfAcademy',
-      whatsapp: '+5112345678',
-      address: 'Av. Malecón de la Reserva 610, Miraflores, Lima',
-      ownerId: schoolAdmin.id // Associate school with SCHOOL_ADMIN user
+      phone: '+51 987 654 321',
+      email: 'info@surfschoollima.com',
+      website: 'https://surfschoollima.com',
+      logo: '/uploads/schools/surf-school-lima.jpg',
+      status: SchoolStatus.APPROVED
     }
   });
 
-  const waikikiSurfSchool = await prisma.school.create({
+  const school2 = await prisma.school.create({
     data: {
-      name: 'Waikiki Surf School',
-      location: 'San Bartolo, Lima',
-      description: 'Specializing in intermediate and advanced surf techniques with personalized attention and small groups.',
-      email: 'info@waikikisurf.pe',
-      phone: '+5118765432',
-      website: 'https://waikikisurf.pe',
-      instagram: '@waikikisurf',
-      facebook: 'WaikikiSurfPeru',
-      whatsapp: '+5118765432',
-      address: 'Playa Waikiki, San Bartolo, Lima'
+      name: 'Máncora Surf Academy',
+      description: 'Aprende a surfear en las mejores olas del norte del Perú. Instructores profesionales y ambiente familiar.',
+      location: 'Máncora, Piura',
+      phone: '+51 976 543 210',
+      email: 'contacto@mancorasurf.com',
+      website: 'https://mancorasurf.com',
+      logo: '/uploads/schools/mancora-surf.jpg',
+      status: SchoolStatus.APPROVED
     }
   });
 
-  console.log('✅ Schools created');
+  console.log('✅ Schools created:', school1.name, school2.name);
+
+  // Create School Admins
+  console.log('👨‍💼 Creating school admins...');
+  const schoolAdmin1 = await prisma.user.create({
+    data: {
+      email: 'admin@surfschoollima.com',
+      name: 'Carlos Rodríguez',
+      password: hashedPassword,
+      role: UserRole.SCHOOL_ADMIN,
+      phone: '+51 987 654 321',
+      avatar: 'surf1',
+      instructor: {
+        create: {
+          schoolId: school1.id,
+          bio: 'Director y fundador de Surf School Lima con más de 15 años de experiencia.',
+          yearsExperience: 15,
+          specialties: ['Surf', 'Bodyboard', 'Stand Up Paddle'],
+          certifications: ['ISA Level 2', 'Lifeguard'],
+          rating: 4.9,
+          totalReviews: 45,
+          instructorRole: InstructorRole.HEAD_COACH,
+          isActive: true
+        }
+      }
+    }
+  });
+
+  const schoolAdmin2 = await prisma.user.create({
+    data: {
+      email: 'admin@mancorasurf.com',
+      name: 'María González',
+      password: hashedPassword,
+      role: UserRole.SCHOOL_ADMIN,
+      phone: '+51 976 543 210',
+      avatar: 'wave2',
+      instructor: {
+        create: {
+          schoolId: school2.id,
+          bio: 'Surfista profesional y directora de Máncora Surf Academy.',
+          yearsExperience: 12,
+          specialties: ['Surf Avanzado', 'Competición'],
+          certifications: ['ISA Level 3', 'CPR'],
+          rating: 4.8,
+          totalReviews: 38,
+          instructorRole: InstructorRole.HEAD_COACH,
+          isActive: true
+        }
+      }
+    }
+  });
+
+  console.log('✅ School admins created');
 
   // Create Instructors
-  console.log('👨‍🏫 Creating instructors...');
-  
-  const instructor1User = await prisma.user.create({
+  console.log('🏄 Creating instructors...');
+  const instructor1 = await prisma.user.create({
     data: {
-      email: 'carlos.mendoza@limasurf.com',
+      email: 'juan@surfschoollima.com',
+      name: 'Juan Pérez',
       password: hashedPassword,
-      name: 'Carlos Mendoza',
-      role: 'INSTRUCTOR',
-      age: 32,
-      canSwim: true,
-      phone: '+5119871234'
-    }
-  });
-
-  const instructor1 = await prisma.instructor.create({
-    data: {
-      userId: instructor1User.id,
-      schoolId: limaSurfAcademy.id,
-      bio: 'Instructor certificado ISA con más de 10 años de experiencia enseñando surf. Especializado en técnicas de iniciación y seguridad acuática.',
-      yearsExperience: 10,
-      specialties: ['Iniciación', 'Técnica básica', 'Seguridad acuática'],
-      certifications: ['ISA Level 1', 'Lifeguard', 'First Aid'],
-      rating: 4.8,
-      totalReviews: 45,
-      profileImage: 'https://i.pravatar.cc/150?img=12'
-    }
-  });
-
-  const instructor2User = await prisma.user.create({
-    data: {
-      email: 'ana.rodriguez@limasurf.com',
-      password: hashedPassword,
-      name: 'Ana Rodriguez',
-      role: 'INSTRUCTOR',
-      age: 28,
-      canSwim: true,
-      phone: '+5119871235'
-    }
-  });
-
-  const instructor2 = await prisma.instructor.create({
-    data: {
-      userId: instructor2User.id,
-      schoolId: limaSurfAcademy.id,
-      bio: 'Ex-competidora nacional con pasión por enseñar. Especializada en maniobras avanzadas y preparación para competencias.',
-      yearsExperience: 8,
-      specialties: ['Maniobras avanzadas', 'Lectura de olas', 'Competición'],
-      certifications: ['ISA Level 2', 'Surf Coach', 'Sports Psychology'],
-      rating: 4.9,
-      totalReviews: 38,
-      profileImage: 'https://i.pravatar.cc/150?img=5'
-    }
-  });
-
-  const instructor3User = await prisma.user.create({
-    data: {
-      email: 'miguel.santos@limasurf.com',
-      password: hashedPassword,
-      name: 'Miguel Santos',
-      role: 'INSTRUCTOR',
-      age: 35,
-      canSwim: true,
-      phone: '+5119871236'
-    }
-  });
-
-  const instructor3 = await prisma.instructor.create({
-    data: {
-      userId: instructor3User.id,
-      schoolId: limaSurfAcademy.id,
-      bio: 'Instructor de élite con certificación internacional. Especializado en coaching personalizado y técnicas avanzadas.',
-      yearsExperience: 12,
-      specialties: ['Coaching personalizado', 'Técnica avanzada', 'Mentalidad competitiva'],
-      certifications: ['ISA Level 2', 'Performance Coach', 'Video Analysis'],
-      rating: 5.0,
-      totalReviews: 28,
-      profileImage: 'https://i.pravatar.cc/150?img=8'
-    }
-  });
-
-  // Add reviews for instructors
-  await prisma.instructorReview.createMany({
-    data: [
-      {
-        instructorId: instructor1.id,
-        studentName: 'María García',
-        rating: 5,
-        comment: 'Excelente instructor! Muy paciente y claro en sus explicaciones. Aprendí mucho en mi primera clase.'
-      },
-      {
-        instructorId: instructor1.id,
-        studentName: 'Pedro López',
-        rating: 5,
-        comment: 'Carlos es increíble. Me ayudó a superar mi miedo al agua y ahora puedo surfear con confianza.'
-      },
-      {
-        instructorId: instructor1.id,
-        studentName: 'Laura Martínez',
-        rating: 4,
-        comment: 'Muy buen instructor, recomendado para principiantes.'
-      },
-      {
-        instructorId: instructor2.id,
-        studentName: 'Diego Fernández',
-        rating: 5,
-        comment: 'Ana es una maestra del surf. Sus consejos técnicos me ayudaron a mejorar muchísimo.'
-      },
-      {
-        instructorId: instructor2.id,
-        studentName: 'Sofía Ramírez',
-        rating: 5,
-        comment: 'La mejor instructora que he tenido. Sabe exactamente cómo corregir tu técnica.'
-      },
-      {
-        instructorId: instructor3.id,
-        studentName: 'Roberto Silva',
-        rating: 5,
-        comment: 'Miguel es un profesional de clase mundial. Vale cada centavo de las clases privadas.'
-      },
-      {
-        instructorId: instructor3.id,
-        studentName: 'Carmen Torres',
-        rating: 5,
-        comment: 'Coaching excepcional. Mi nivel mejoró dramáticamente en pocas sesiones.'
+      role: UserRole.INSTRUCTOR,
+      phone: '+51 988 777 666',
+      avatar: 'surf2',
+      instructor: {
+        create: {
+          schoolId: school1.id,
+          bio: 'Instructor certificado especializado en principiantes.',
+          yearsExperience: 5,
+          specialties: ['Surf Principiante', 'Niños'],
+          certifications: ['ISA Level 1', 'First Aid'],
+          rating: 4.7,
+          totalReviews: 28,
+          instructorRole: InstructorRole.INSTRUCTOR,
+          isActive: true
+        }
       }
-    ]
+    }
+  });
+
+  const instructor2 = await prisma.user.create({
+    data: {
+      email: 'ana@mancorasurf.com',
+      name: 'Ana Torres',
+      password: hashedPassword,
+      role: UserRole.INSTRUCTOR,
+      phone: '+51 977 666 555',
+      avatar: 'wave3',
+      instructor: {
+        create: {
+          schoolId: school2.id,
+          bio: 'Instructora con experiencia en surf avanzado y maniobras.',
+          yearsExperience: 8,
+          specialties: ['Surf Avanzado', 'Maniobras'],
+          certifications: ['ISA Level 2', 'Lifeguard'],
+          rating: 4.9,
+          totalReviews: 35,
+          instructorRole: InstructorRole.INSTRUCTOR,
+          isActive: true
+        }
+      }
+    }
   });
 
   console.log('✅ Instructors created');
 
-  // Create Classes
-  console.log('🏄 Creating classes...');
-  
-  const class1 = await prisma.class.create({
+  // Create Students
+  console.log('🎓 Creating students...');
+  const students = [];
+  for (let i = 1; i <= 10; i++) {
+    const student = await prisma.user.create({
+      data: {
+        email: `estudiante${i}@example.com`,
+        name: `Estudiante ${i}`,
+        password: hashedPassword,
+        role: UserRole.STUDENT,
+        phone: `+51 9${String(i).padStart(8, '0')}`,
+        age: 18 + Math.floor(Math.random() * 30),
+        weight: 60 + Math.floor(Math.random() * 30),
+        height: 160 + Math.floor(Math.random() * 30),
+        canSwim: Math.random() > 0.3,
+        avatar: `surf${(i % 3) + 1}`,
+        student: {
+          create: {
+            schoolId: i % 2 === 0 ? school1.id : school2.id,
+            level: i <= 3 ? ClassLevel.BEGINNER : i <= 7 ? ClassLevel.INTERMEDIATE : ClassLevel.ADVANCED,
+            canSwim: Math.random() > 0.3
+          }
+        }
+      }
+    });
+    students.push(student);
+  }
+
+  console.log('✅ Students created:', students.length);
+
+  // Create Beaches
+  console.log('🏖️  Creating beaches...');
+  const beach1 = await prisma.beach.create({
     data: {
-      title: 'Iniciación en Miraflores',
-      description: 'Aprende surf en la icónica Playa Makaha. Clase perfecta para principiantes que quieren dar sus primeros pasos en el surf.',
-      date: new Date('2025-01-15T08:00:00'),
+      name: 'Playa Makaha',
+      location: 'Miraflores, Lima',
+      description: 'Playa ideal para principiantes con olas suaves y constantes.'
+    }
+  });
+
+  const beach2 = await prisma.beach.create({
+    data: {
+      name: 'Playa Waikiki',
+      location: 'Miraflores, Lima',
+      description: 'Playa con olas más grandes, perfecta para nivel intermedio.'
+    }
+  });
+
+  const beach3 = await prisma.beach.create({
+    data: {
+      name: 'Playa Máncora',
+      location: 'Máncora, Piura',
+      description: 'Una de las mejores playas de surf del Perú con olas todo el año.'
+    }
+  });
+
+  console.log('✅ Beaches created');
+
+  // Create Classes
+  console.log('📚 Creating classes...');
+  const now = new Date();
+  const classes = [];
+
+  // School 1 Classes (Lima)
+  for (let i = 0; i < 8; i++) {
+    const classDate = new Date(now);
+    classDate.setDate(classDate.getDate() + i + 1);
+    classDate.setHours(i % 2 === 0 ? 9 : 15, 0, 0, 0);
+
+    const level = i < 3 ? ClassLevel.BEGINNER : i < 6 ? ClassLevel.INTERMEDIATE : ClassLevel.ADVANCED;
+    const price = level === ClassLevel.BEGINNER ? 80 : level === ClassLevel.INTERMEDIATE ? 100 : 120;
+
+    const cls = await prisma.class.create({
+      data: {
+        title: `Clase de Surf ${level === ClassLevel.BEGINNER ? 'Principiante' : level === ClassLevel.INTERMEDIATE ? 'Intermedio' : 'Avanzado'} - ${i % 2 === 0 ? 'Mañana' : 'Tarde'}`,
+        description: `Clase de surf nivel ${level.toLowerCase()} con instructor certificado. Incluye tabla y traje de neopreno.`,
+        date: classDate,
+        duration: 120,
+        capacity: 8,
+        price: price,
+        level: level,
+        schoolId: school1.id,
+        instructor: 'Juan Pérez',
+        beachId: i % 2 === 0 ? beach1.id : beach2.id,
+        images: [
+          '/uploads/classes/surf-class-1.jpg',
+          '/uploads/classes/surf-class-2.jpg'
+        ]
+      }
+    });
+    classes.push(cls);
+  }
+
+  // School 2 Classes (Máncora)
+  for (let i = 0; i < 6; i++) {
+    const classDate = new Date(now);
+    classDate.setDate(classDate.getDate() + i + 2);
+    classDate.setHours(i % 2 === 0 ? 10 : 16, 0, 0, 0);
+
+    const level = i < 2 ? ClassLevel.BEGINNER : i < 4 ? ClassLevel.INTERMEDIATE : ClassLevel.ADVANCED;
+    const price = level === ClassLevel.BEGINNER ? 90 : level === ClassLevel.INTERMEDIATE ? 110 : 130;
+
+    const cls = await prisma.class.create({
+      data: {
+        title: `Surf en Máncora ${level === ClassLevel.BEGINNER ? 'Principiante' : level === ClassLevel.INTERMEDIATE ? 'Intermedio' : 'Avanzado'}`,
+        description: `Aprende surf en las mejores olas del norte. Nivel ${level.toLowerCase()}.`,
+        date: classDate,
+        duration: 150,
+        capacity: 6,
+        price: price,
+        level: level,
+        schoolId: school2.id,
+        instructor: 'Ana Torres',
+        beachId: beach3.id,
+        images: [
+          '/uploads/classes/mancora-1.jpg',
+          '/uploads/classes/mancora-2.jpg'
+        ]
+      }
+    });
+    classes.push(cls);
+  }
+
+  // Create one deleted class
+  const deletedClass = await prisma.class.create({
+    data: {
+      title: 'Clase Cancelada - Mal Tiempo',
+      description: 'Esta clase fue cancelada debido a condiciones climáticas adversas.',
+      date: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
       duration: 120,
       capacity: 8,
-      price: 25,
-      level: 'BEGINNER',
-      instructor: 'Carlos Mendoza',
-      schoolId: limaSurfAcademy.id
+      price: 80,
+      level: ClassLevel.BEGINNER,
+      schoolId: school1.id,
+      instructor: 'Juan Pérez',
+      beachId: beach1.id,
+      deletedAt: new Date(), // Soft deleted
+      images: []
     }
   });
 
-  const class2 = await prisma.class.create({
+  console.log('✅ Classes created:', classes.length + 1);
+
+  // Create Discount Codes
+  console.log('🎟️  Creating discount codes...');
+  const discount1 = await prisma.discountCode.create({
     data: {
-      title: 'Intermedio en San Bartolo',
-      description: 'Perfecciona tu técnica en Playa Waikiki. Para surfistas con experiencia básica que quieren mejorar.',
-      date: new Date('2025-01-16T16:00:00'),
-      duration: 120,
-      capacity: 6,
-      price: 35,
-      level: 'INTERMEDIATE',
-      instructor: 'Maria Rodriguez',
-      schoolId: limaSurfAcademy.id
+      code: 'VERANO2024',
+      description: 'Descuento de verano - 20% off',
+      discountPercentage: 20,
+      validFrom: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+      validTo: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      maxUses: 100,
+      usedCount: 15,
+      schoolId: school1.id
     }
   });
 
-  const class3 = await prisma.class.create({
+  const discount2 = await prisma.discountCode.create({
     data: {
-      title: 'Avanzado en La Herradura',
-      description: 'Para surfistas con experiencia. Técnicas avanzadas y maniobras complejas.',
-      date: new Date('2025-01-17T09:00:00'),
-      duration: 120,
-      capacity: 4,
-      price: 45,
-      level: 'ADVANCED',
-      instructor: 'Juan Perez',
-      schoolId: limaSurfAcademy.id
+      code: 'PRIMERAVEZ',
+      description: 'Descuento para nuevos estudiantes - 30% off',
+      discountPercentage: 30,
+      validFrom: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000),
+      validTo: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      maxUses: 50,
+      usedCount: 8,
+      schoolId: school2.id
     }
   });
 
-  console.log('✅ Classes created');
-  console.log(`   - Class 1 ID: ${class1.id} - ${class1.title}`);
-  console.log(`   - Class 2 ID: ${class2.id} - ${class2.title}`);
-  console.log(`   - Class 3 ID: ${class3.id} - ${class3.title}`);
+  console.log('✅ Discount codes created');
 
-  // Create Reservations
-  console.log('📝 Creating reservations...');
-  
-  // Reservation 1: Alice - Clase 1 (Confirmada y Pagada)
-  const reservation1 = await prisma.reservation.create({
+  // Create Reservations and Payments
+  console.log('📝 Creating reservations and payments...');
+  let reservationCount = 0;
+  let paymentCount = 0;
+
+  for (let i = 0; i < Math.min(classes.length, 6); i++) {
+    const cls = classes[i];
+    const numReservations = Math.floor(Math.random() * 4) + 1; // 1-4 reservations per class
+
+    for (let j = 0; j < numReservations; j++) {
+      const student = students[Math.floor(Math.random() * students.length)];
+      const statuses: ReservationStatus[] = [ReservationStatus.PENDING, ReservationStatus.CONFIRMED, ReservationStatus.CONFIRMED, ReservationStatus.CONFIRMED]; // More confirmed
+      const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+      const reservation = await prisma.reservation.create({
+        data: {
+          userId: student.id,
+          classId: cls.id,
+          status: status,
+          specialRequest: j === 0 ? 'Necesito tabla más grande' : undefined
+        }
+      });
+      reservationCount++;
+
+      // Create payment for reservation
+      const useDiscount = Math.random() > 0.7; // 30% chance of using discount
+      const discount = useDiscount && cls.schoolId === school1.id ? discount1 : useDiscount ? discount2 : null;
+
+      let originalAmount = cls.price;
+      let discountAmount = 0;
+      let finalAmount = originalAmount;
+
+      if (discount) {
+        discountAmount = (originalAmount * discount.discountPercentage) / 100;
+        finalAmount = originalAmount - discountAmount;
+      }
+
+      const paymentStatuses = [PaymentStatus.PENDING, PaymentStatus.PAID, PaymentStatus.PAID, PaymentStatus.PAID]; // More paid
+      const paymentStatus = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
+
+      await prisma.payment.create({
+        data: {
+          reservationId: reservation.id,
+          amount: finalAmount,
+          originalAmount: useDiscount ? originalAmount : undefined,
+          discountAmount: useDiscount ? discountAmount : undefined,
+          status: paymentStatus,
+          paymentMethod: ['transfer', 'yape', 'cash'][Math.floor(Math.random() * 3)],
+          transactionId: paymentStatus === PaymentStatus.PAID ? `TXN${Date.now()}${j}` : undefined,
+          paidAt: paymentStatus === PaymentStatus.PAID ? new Date() : undefined,
+          discountCodeId: discount?.id
+        }
+      });
+      paymentCount++;
+    }
+  }
+
+  console.log('✅ Reservations created:', reservationCount);
+  console.log('✅ Payments created:', paymentCount);
+
+  // Create Reviews
+  console.log('⭐ Creating reviews...');
+  await prisma.schoolReview.create({
     data: {
-      userId: student1.id,
-      classId: class1.id,
-      status: 'CONFIRMED',
-      specialRequest: 'Necesito tabla más grande, tengo experiencia previa en bodyboard'
+      schoolId: school1.id,
+      studentName: 'Pedro Martínez',
+      rating: 5,
+      comment: '¡Excelente escuela! Los instructores son muy profesionales y pacientes.'
     }
   });
 
-  // Reservation 2: Bob - Clase 2 (Pendiente, sin pagar)
-  const reservation2 = await prisma.reservation.create({
+  await prisma.schoolReview.create({
     data: {
-      userId: student2.id,
-      classId: class2.id,
-      status: 'PENDING',
-      specialRequest: 'Primera vez en el agua, necesito atención especial. No sé nadar muy bien.'
+      schoolId: school1.id,
+      studentName: 'Laura Sánchez',
+      rating: 4,
+      comment: 'Muy buena experiencia. Aprendí mucho en poco tiempo.'
     }
   });
 
-  // Reservation 3: Test User - Clase 1 (Confirmada, sin pagar)
-  const reservation3 = await prisma.reservation.create({
-    data: {
-      userId: testUser.id,
-      classId: class1.id,
-      status: 'CONFIRMED',
-      specialRequest: 'Prefiero clases por la mañana temprano'
-    }
+  const schoolAdmin1Instructor = await prisma.instructor.findUnique({
+    where: { userId: schoolAdmin1.id }
   });
 
-  // Reservation 4: Alice - Clase 3 (Pagada)
-  const reservation4 = await prisma.reservation.create({
-    data: {
-      userId: student1.id,
-      classId: class3.id,
-      status: 'PAID',
-      specialRequest: 'Quiero practicar maniobras avanzadas'
-    }
-  });
+  if (schoolAdmin1Instructor) {
+    await prisma.instructorReview.create({
+      data: {
+        instructorId: schoolAdmin1Instructor.id,
+        studentName: 'Roberto García',
+        rating: 5,
+        comment: 'Carlos es un instructor increíble. Muy recomendado.'
+      }
+    });
+  }
 
-  // Reservation 5: Test User - Clase 2 (Cancelada)
-  const reservation5 = await prisma.reservation.create({
-    data: {
-      userId: testUser.id,
-      classId: class2.id,
-      status: 'CANCELED',
-      specialRequest: 'Tuve que cancelar por motivos personales'
-    }
-  });
-
-  console.log('✅ Reservations created');
-
-  // Create Payments
-  console.log('💳 Creating payments...');
-  
-  // Payment 1: Reservation 1 - Pagado con tarjeta
-  await prisma.payment.create({
-    data: {
-      reservationId: reservation1.id,
-      amount: 25,
-      status: 'PAID',
-      paymentMethod: 'credit_card',
-      transactionId: 'txn_cc_001_2025',
-      paidAt: new Date('2025-01-10T10:30:00')
-    }
-  });
-
-  // Payment 2: Reservation 2 - No pagado
-  await prisma.payment.create({
-    data: {
-      reservationId: reservation2.id,
-      amount: 35,
-      status: 'UNPAID',
-      paymentMethod: null,
-      transactionId: null
-    }
-  });
-
-  // Payment 3: Reservation 3 - No pagado
-  await prisma.payment.create({
-    data: {
-      reservationId: reservation3.id,
-      amount: 25,
-      status: 'UNPAID',
-      paymentMethod: null,
-      transactionId: null
-    }
-  });
-
-  // Payment 4: Reservation 4 - Pagado en efectivo
-  await prisma.payment.create({
-    data: {
-      reservationId: reservation4.id,
-      amount: 45,
-      status: 'PAID',
-      paymentMethod: 'cash',
-      transactionId: 'txn_cash_002_2025',
-      paidAt: new Date('2025-01-12T14:00:00')
-    }
-  });
-
-  // Payment 5: Reservation 5 - Reembolsado
-  await prisma.payment.create({
-    data: {
-      reservationId: reservation5.id,
-      amount: 35,
-      status: 'REFUNDED',
-      paymentMethod: 'credit_card',
-      transactionId: 'txn_cc_003_2025_refund',
-      paidAt: new Date('2025-01-11T09:00:00')
-    }
-  });
-
-  console.log('✅ Payments created');
+  console.log('✅ Reviews created');
 
   console.log('\n🎉 Seed completed successfully!');
-  console.log('\n📋 Test Credentials:');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('👨‍💼 Admin:');
-  console.log('   Email: admin@surfschool.com');
-  console.log('   Password: password123');
-  console.log('\n🏫 School Admin:');
-  console.log('   Email: schooladmin@surfschool.com');
-  console.log('   Password: password123');
-  console.log('\n🏄 Students:');
-  console.log('   Email: student1@surfschool.com (Alice - has confirmed reservation)');
-  console.log('   Email: student2@surfschool.com (Bob - has pending reservation)');
-  console.log('   Email: test@test.com (Clean user for testing)');
-  console.log('   Password: password123 (for all)');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+  console.log('\n📊 Summary:');
+  console.log(`   - Users: ${1 + 2 + 2 + students.length} (1 admin, 2 school admins, 2 instructors, ${students.length} students)`);
+  console.log(`   - Schools: 2`);
+  console.log(`   - Beaches: 3`);
+  console.log(`   - Classes: ${classes.length + 1} (${classes.length} active, 1 deleted)`);
+  console.log(`   - Discount Codes: 2`);
+  console.log(`   - Reservations: ${reservationCount}`);
+  console.log(`   - Payments: ${paymentCount}`);
+  console.log(`   - Reviews: 3`);
+  console.log('\n🔑 Login credentials:');
+  console.log('   Admin: admin@clasedesurf.com / password123');
+  console.log('   School 1: admin@surfschoollima.com / password123');
+  console.log('   School 2: admin@mancorasurf.com / password123');
+  console.log('   Instructor 1: juan@surfschoollima.com / password123');
+  console.log('   Instructor 2: ana@mancorasurf.com / password123');
+  console.log('   Students: estudiante1@example.com to estudiante10@example.com / password123');
 }
 
 main()

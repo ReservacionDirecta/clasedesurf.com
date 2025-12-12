@@ -13,7 +13,8 @@ export const registerSchema = z.object({
     .max(100, 'Password must be less than 100 characters'),
   role: z.enum(['STUDENT', 'INSTRUCTOR', 'SCHOOL_ADMIN', 'ADMIN'])
     .optional()
-    .default('STUDENT')
+    .default('STUDENT'),
+  schoolId: z.union([z.number(), z.string().transform(val => Number(val))]).optional()
 });
 
 // Schema for user login

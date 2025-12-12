@@ -27,6 +27,25 @@ export default function RegisterPage() {
   const router = useRouter();
   const { notifySuccess, error: showErrorToast, handleError } = useNotifications();
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [schools, setSchools] = useState<{id: number, name: string}[]>([]);
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>('');
+
+  useEffect(() => {
+    // Cargar lista de escuelas para el selector
+    const fetchSchools = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        const res = await fetch(`${baseUrl}/schools`);
+        if (res.ok) {
+          const data = await res.json();
+          setSchools(data);
+        }
+      } catch (err) {
+        console.error('Error loading schools:', err);
+      }
+    };
+    fetchSchools();
+  }, []);
 
   const getDashboardPath = (userRole: string) => {
     switch (userRole) {
@@ -66,7 +85,13 @@ export default function RegisterPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ 
+          name, 
+          email, 
+          password, 
+          role,
+          schoolId: (role === 'STUDENT' && selectedSchoolId) ? selectedSchoolId : undefined
+        }),
       });
 
       let data: any = null;
@@ -311,6 +336,37 @@ export default function RegisterPage() {
                 ))}
               </div>
             </div>
+
+            {/* School Selection for Students */}
+            {role === 'STUDENT' && schools.length > 0 && (
+              <div className="mb-6 animate-fadeIn">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Escuela Principal (Opcional)
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedSchoolId}
+                    onChange={(e) => setSelectedSchoolId(e.target.value)}
+                    className="block w-full pl-3 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none bg-white"
+                  >
+                    <option value="">Seleccionar escuela...</option>
+                    {schools.map((school) => (
+                      <option key={school.id} value={school.id}>
+                        {school.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Estarás asignado a esta escuela, lo que facilita la gestión de tus clases, pero podrás reservar en cualquier otra escuela de la plataforma.
+                </p>
+              </div>
+            )}
 
             {/* Personal Information */}
             <div className="space-y-5">

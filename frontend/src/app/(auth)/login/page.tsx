@@ -116,41 +116,23 @@ function LoginForm() {
 
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <form onSubmit={handleSubmit} className="p-8">
-            {/* Expired Session Message */}
-            {isExpired && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-yellow-800">
-                    Tu sesión ha expirado
-                  </p>
-                  <p className="text-xs text-yellow-700 mt-1">
-                    Por favor, inicia sesión nuevamente para continuar.
-                  </p>
+          <div className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Expired Session Message */}
+              {isExpired && (
+                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-yellow-800">
+                      Tu sesión ha expirado
+                    </p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      Por favor, inicia sesión nuevamente para continuar.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            {/* Google Auth Button */}
-            <div className="mb-6">
-              <GoogleAuthButton 
-                variant="outline"
-                size="md"
-                className="w-full"
-                text="Continuar con Google"
-              />
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">O continúa con email</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-5">
+              )}
+
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -251,18 +233,38 @@ function LoginForm() {
                   'Iniciar Sesión'
                 )}
               </button>
+            </form>
 
-              {/* Register Link */}
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
-                  ¿No tienes una cuenta?{" "}
-                  <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
-                    Regístrate aquí
-                  </Link>
-                </p>
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">O también puedes</span>
               </div>
             </div>
-          </form>
+
+            {/* Google Auth Button */}
+            <div className="mb-6">
+              <GoogleAuthButton 
+                variant="outline"
+                size="md"
+                className="w-full"
+                text="Continuar con Google"
+              />
+            </div>
+
+            {/* Register Link */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                ¿No tienes una cuenta?{" "}
+                <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+                  Regístrate aquí
+                </Link>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Additional Info */}

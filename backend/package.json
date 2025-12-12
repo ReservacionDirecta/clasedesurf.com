@@ -15,7 +15,7 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "npm run seed"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

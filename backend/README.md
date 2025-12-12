@@ -1,43 +1,70 @@
-# Backend (Express + Prisma)
+# Backend - SurfSchool API
 
-This is a minimal backend scaffold for the SurfSchool project.
+Backend desarrollado en **Express.js** y **TypeScript**, utilizando **Prisma ORM** con **PostgreSQL**.
 
-Environment variables needed:
-- DATABASE_URL (Postgres connection string)
-- PORT (optional, defaults to 4000)
+## 🚀 Características Técnicas
 
-Install & run:
+- **Arquitectura RESTful**: Controladores, rutas y servicios organizados.
+- **Base de Datos**: PostgreSQL con esquema relacional robusto.
+- **ORM**: Prisma para manejo de datos tipado y migraciones.
+- **Autenticación**: JWT (JSON Web Tokens) con sistema de Refresh Tokens.
+- **Validación**: Zod para validación estricta de payloads.
+- **Gestión de Archivos**: Carga de imágenes (Multer) para escuelas y clases.
 
-```powershell
-cd backend; npm install; npm run dev
+## 🛠 Comandos Principales
+
+### Instalación
+```bash
+npm install
 ```
 
-Notes:
-- Authentication is not implemented in this scaffold. For now some endpoints expect `userId` to be provided (query param or body) as a temporary measure.
-- Prisma client expects the schema defined at `backend/prisma/schema.prisma` in this workspace. After installing dependencies run the commands below to generate the client and create the initial migration.
-
-Prisma setup (after installing dependencies):
-
-```powershell
-cd backend
+### Base de Datos
+```bash
+# Generar cliente de Prisma (necesario tras cambios en schema)
 npx prisma generate
-# To create a migration and apply it locally (interactive)
-npx prisma migrate dev --name init
+
+# Crear y aplicar migraciones
+npx prisma migrate dev --name <nombre_migracion>
+
+# Poblar base de datos con datos de prueba
+npm run seed
 ```
 
-If you already have an existing database and want to introspect it, use:
-
-```powershell
-npx prisma db pull
-npx prisma generate
+### Desarrollo
+```bash
+# Iniciar servidor en modo desarrollo (hot-reload)
+npm run dev
 ```
 
-Development helper script
+## 📚 Estructura de API (Endpoints Clave)
 
-There is a small PowerShell helper at `scripts/setup-db.ps1` which runs Prisma generate and migrate for you:
+### Clases (`/api/classes`)
+- `GET /` - Listar clases (con filtros).
+- `POST /` - Crear nueva clase (Admin/SchoolAdmin).
+- `DELETE /:id` - **Soft Delete** (Mueve a papelera).
+- `GET /deleted` - Ver papelera de reciclaje.
+- `POST /:id/restore` - Restaurar clase desde papelera.
+- `POST /:id/duplicate` - Duplicar clase existente (+7 días).
 
-```powershell
-.\scripts\setup-db.ps1
+### Reservas (`/api/reservations`)
+- `GET /` - Listar reservas del usuario o escuela.
+- `POST /` - Crear reserva.
+- `PUT /:id/status` - Cambiar estado (CONFIRMED, CANCELED).
+
+### Pagos (`/api/payments`)
+- `POST /` - Registrar pago/voucher.
+- `PUT /:id` - Validar o rechazar pago.
+
+## 🔄 Soft Delete
+
+Implementamos un sistema de **eliminación suave** para la entidad `Class`.
+- El campo `deletedAt` marca la fecha de eliminación.
+- Las clases eliminadas no aparecen en listados públicos (`GET /`).
+- Se pueden recuperar o duplicar, manteniendo la integridad de reservas pasadas.
+
+## 🧪 Testing
+
+```bash
+# (Pendiente de configuración completa de Jest)
+npm test
 ```
-
-Make sure your `backend/.env` has a correct `DATABASE_URL` before running migrations.

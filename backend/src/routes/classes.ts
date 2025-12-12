@@ -30,8 +30,10 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   try {
     const { date, level, type, minPrice, maxPrice, schoolId, locality } = req.query;
 
-    // Build filter object
-    const where: any = {};
+    // Build filter object - exclude soft-deleted classes by default
+    const where: any = {
+      deletedAt: null
+    };
 
     // Apply multi-tenant filtering if authenticated
     if (req.userId && req.role) {
@@ -468,19 +470,47 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resol
     console.log('[DELETE /classes/:id] Active reservations:', activeReservations.length);
     console.log('[DELETE /classes/:id] Reservation statuses:', allReservations.map(r => ({ id: r.id, status: r.status })));
 
-    if (activeReservations.length > 0) {
-      console.log('[DELETE /classes/:id] Class has active reservations:', activeReservations.length);
-      const statusCounts = activeReservations.reduce((acc: any, r) => {
-        acc[r.status] = (acc[r.status] || 0) + 1;
-        return acc;
-      }, {});
-      console.log('[DELETE /classes/:id] Active reservation status breakdown:', statusCounts);
+    // Check for force delete parameter
+    const forceDelete = req.query.force === 'true';
 
-      return res.status(400).json({
-        message: `No se puede eliminar la clase porque tiene ${activeReservations.length} reserva(s) activa(s). Debes cancelar las reservas primero.`,
-        reservationsCount: activeReservations.length,
-        statusBreakdown: statusCounts
+    if (activeReservations.length > 0) {
+      if (!forceDelete) {
+        console.log('[DELETE /classes/:id] Class has active reservations:', activeReservations.length);
+        const statusCounts = activeReservations.reduce((acc: any, r) => {
+          acc[r.status] = (acc[r.status] || 0) + 1;
+          return acc;
+        }, {});
+        console.log('[DELETE /classes/:id] Active reservation status breakdown:', statusCounts);
+
+        return res.status(400).json({
+          message: `No se puede eliminar la clase porque tiene ${activeReservations.length} reserva(s) activa(s). Debes cancelar las reservas primero o usar eliminación forzada.`,
+          reservationsCount: activeReservations.length,
+          statusBreakdown: statusCounts,
+          canForceDelete: true
+        });
+      }
+
+      // Force delete: First delete payments, then reservations
+      console.log('[DELETE /classes/:id] Force deleting - canceling all reservations first');
+
+      // Get all reservation IDs for this class to delete their payments
+      const reservationIds = allReservations.map(r => r.id);
+
+      // Delete payments first (due to foreign key constraints)
+      await prisma.payment.deleteMany({
+        where: {
+          reservationId: { in: reservationIds }
+        }
       });
+      console.log('[DELETE /classes/:id] Deleted payments for reservations:', reservationIds);
+
+      // Then delete all reservations
+      await prisma.reservation.deleteMany({
+        where: {
+          classId: classId
+        }
+      });
+      console.log('[DELETE /classes/:id] Deleted all reservations for class:', classId);
     }
 
     // If there are no active reservations, also delete canceled reservations to satisfy FK constraints
@@ -490,22 +520,20 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resol
         status: 'CANCELED'
       }
     });
-    // Delete the class
-    await prisma.class.delete({ where: { id: classId } });
-    console.log('[DELETE /classes/:id] Class deleted successfully:', classId);
-    res.json({ message: 'Clase eliminada exitosamente' });
+
+    // Soft delete the class by setting deletedAt timestamp
+    await prisma.class.update({
+      where: { id: classId },
+      data: { deletedAt: new Date() }
+    });
+
+    console.log('[DELETE /classes/:id] Class soft deleted successfully:', classId);
+    res.json({ message: 'Clase eliminada exitosamente. Puedes recuperarla desde la papelera.' });
   } catch (err: any) {
     console.error('[DELETE /classes/:id] Error:', err);
     console.error('[DELETE /classes/:id] Error name:', err?.name);
     console.error('[DELETE /classes/:id] Error message:', err?.message);
     console.error('[DELETE /classes/:id] Error code:', err?.code);
-
-    // Handle Prisma foreign key constraint errors
-    if (err?.code === 'P2003' || err?.message?.includes('Foreign key constraint')) {
-      return res.status(400).json({
-        message: 'No se puede eliminar la clase porque tiene reservas o pagos asociados. Debes eliminar o cancelar las reservas primero.'
-      });
-    }
 
     // Handle Prisma record not found errors
     if (err?.code === 'P2025') {
@@ -516,6 +544,136 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resol
       message: 'Error interno del servidor',
       error: process.env.NODE_ENV === 'development' ? err?.message : undefined
     });
+  }
+});
+
+// GET /classes/deleted - Get deleted classes (ADMIN or SCHOOL_ADMIN)
+router.get('/deleted', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, async (req: AuthRequest, res) => {
+  try {
+    const whereClause: any = {
+      deletedAt: { not: null }
+    };
+
+    // If SCHOOL_ADMIN, only show their school's deleted classes
+    if (req.role === 'SCHOOL_ADMIN' && req.schoolId) {
+      whereClause.schoolId = req.schoolId;
+    }
+
+    const deletedClasses = await prisma.class.findMany({
+      where: whereClause,
+      include: {
+        school: { select: { id: true, name: true } },
+        beach: { select: { id: true, name: true, location: true } },
+        reservations: {
+          select: {
+            id: true,
+            status: true
+          }
+        }
+      },
+      orderBy: { deletedAt: 'desc' }
+    });
+
+    res.json(deletedClasses);
+  } catch (err) {
+    console.error('[GET /classes/deleted] Error:', err);
+    res.status(500).json({ message: 'Error al obtener clases eliminadas' });
+  }
+});
+
+// POST /classes/:id/restore - Restore a deleted class (ADMIN or SCHOOL_ADMIN)
+router.post('/:id/restore', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as any;
+    const classId = Number(id);
+
+    // Find the deleted class
+    const existing = await prisma.class.findUnique({
+      where: { id: classId }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Clase no encontrada' });
+    }
+
+    if (!existing.deletedAt) {
+      return res.status(400).json({ message: 'Esta clase no está eliminada' });
+    }
+
+    // If SCHOOL_ADMIN, verify ownership
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) {
+        return res.status(404).json({ message: 'No school found for this user' });
+      }
+      if (existing.schoolId !== req.schoolId) {
+        return res.status(403).json({ message: 'You can only restore classes from your school' });
+      }
+    }
+
+    // Restore the class
+    const restoredClass = await prisma.class.update({
+      where: { id: classId },
+      data: { deletedAt: null }
+    });
+
+    res.json(restoredClass);
+  } catch (err) {
+    console.error('[POST /classes/:id/restore] Error:', err);
+    res.status(500).json({ message: 'Error al restaurar la clase' });
+  }
+});
+
+// POST /classes/:id/duplicate - Duplicate a class (ADMIN or SCHOOL_ADMIN)
+router.post('/:id/duplicate', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as any;
+    const classId = Number(id);
+
+    // Find the class to duplicate
+    const existing = await prisma.class.findUnique({
+      where: { id: classId }
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: 'Clase no encontrada' });
+    }
+
+    // If SCHOOL_ADMIN, verify ownership
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) {
+        return res.status(404).json({ message: 'No school found for this user' });
+      }
+      if (existing.schoolId !== req.schoolId) {
+        return res.status(403).json({ message: 'You can only duplicate classes from your school' });
+      }
+    }
+
+    // Create duplicate with new date (7 days from original)
+    const originalDate = new Date(existing.date);
+    const newDate = new Date(originalDate);
+    newDate.setDate(newDate.getDate() + 7);
+
+    const duplicatedClass = await prisma.class.create({
+      data: {
+        title: `${existing.title} (Copia)`,
+        description: existing.description,
+        date: newDate,
+        duration: existing.duration,
+        capacity: existing.capacity,
+        price: existing.price,
+        level: existing.level,
+        schoolId: existing.schoolId,
+        instructor: existing.instructor,
+        images: existing.images,
+        beachId: existing.beachId,
+        deletedAt: null
+      }
+    });
+
+    res.json(duplicatedClass);
+  } catch (err) {
+    console.error('[POST /classes/:id/duplicate] Error:', err);
+    res.status(500).json({ message: 'Error al duplicar la clase' });
   }
 });
 

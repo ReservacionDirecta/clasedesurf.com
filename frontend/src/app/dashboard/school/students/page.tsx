@@ -150,7 +150,7 @@ export default function SchoolStudents() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('/api/students', {
+      const response = await fetch('/api/students/create-with-user', {
         method: 'POST',
         headers,
         credentials: 'include',
