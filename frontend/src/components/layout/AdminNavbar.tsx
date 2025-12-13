@@ -21,8 +21,11 @@ import {
   ChevronRight,
   Globe,
   Eye,
-  Tag
+  Tag,
+  Bell
 } from 'lucide-react';
+
+import { notificationService } from '@/services/notificationService';
 
 export function AdminNavbar() {
   const { data: session } = useSession();
@@ -32,12 +35,33 @@ export function AdminNavbar() {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load unread count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (session?.user) {
+        try {
+          const count = await notificationService.getUnreadCount();
+          setUnreadCount(count);
+        } catch (error) {
+          console.error('Error fetching unread count:', error);
+        }
+      }
+    };
+
+    fetchUnreadCount();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [session, pathname]);
 
   // Load profile photo
   useEffect(() => {
     const loadProfile = async () => {
       if (!session) return;
+// ... existing loadProfile logic
 
       try {
         const token = (session as any)?.backendToken;
@@ -91,6 +115,7 @@ export function AdminNavbar() {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard/admin', icon: Home, description: 'Panel principal' },
+    { name: 'Notificaciones', href: '/dashboard/admin/notifications', icon: Bell, description: 'Historial de notificaciones' },
     { name: 'Overview', href: '/dashboard/admin/overview', icon: BarChart3, description: 'Vista general' },
     { name: 'Users', href: '/dashboard/admin/users', icon: Users, description: 'Gestionar usuarios' },
     { name: 'Schools', href: '/dashboard/admin/schools', icon: School, description: 'Gestionar escuelas' },
@@ -149,12 +174,12 @@ export function AdminNavbar() {
 
   return (
     <>
-      <header className="bg-[#011627]/95 backdrop-blur-sm shadow-lg sticky top-0 z-[60] border-b border-white/10">
+      <header className="bg-[#011627]/95 backdrop-blur-sm shadow-lg sticky top-0 z-60 border-b border-white/10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Brand */}
             <Link href="/dashboard/admin" className="flex items-center">
-              <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+              <div className="w-10 h-10 flex items-center justify-center overflow-auto">
                 <Image
                   src="/logoclasedesusrf.png"
                   alt="clasesde.pe"
@@ -171,27 +196,50 @@ export function AdminNavbar() {
               {navigation.slice(0, 5).map((item) => {
                 const IconComponent = item.icon;
                 const active = isActive(item.href);
+                const isNotificationItem = item.href === '/dashboard/admin/notifications';
 
                 return (
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap ${active
+                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap relative ${active
                       ? 'text-[#FF3366] bg-white/10'
                       : 'text-[#F6F7F8]/80 hover:text-[#FF3366] transition-colors'
                       }`}
                   >
-                    <IconComponent className="w-4 h-4 flex-shrink-0" />
+                    <div className="relative">
+                      <IconComponent className="w-4 h-4 flex-shrink-0" />
+                      {isNotificationItem && unreadCount > 0 && (
+                        <span className="absolute -top-2 -right-2 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1 border border-[#011627]">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-sm font-medium">{item.name}</span>
                   </Link>
                 );
               })}
               {navigation.length > 5 && (
-                <div className="relative">
+                <div className="relative group">
                   <button className="flex items-center space-x-1 px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap text-[#F6F7F8]/80 hover:text-[#FF3366] transition-colors">
                     <span className="text-sm font-medium">Más</span>
-                    <ChevronRight className="w-3 h-3 transition-transform duration-200" />
+                    <ChevronRight className="w-3 h-3 transition-transform duration-200 group-hover:rotate-90" />
                   </button>
+                  <div className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-200 z-100 min-w-[200px] py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right">
+                    {navigation.slice(5).map((item) => {
+                      const IconComponent = item.icon;
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className="flex items-center space-x-3 px-4 py-3 transition-all duration-200 text-gray-700 hover:bg-gray-50"
+                        >
+                          <IconComponent className="w-4 h-4" />
+                          <span className="font-medium text-sm">{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </nav>
@@ -227,7 +275,7 @@ export function AdminNavbar() {
       </header>
 
       {/* Mobile Menu Overlay */}
-      <div className={`lg:hidden fixed inset-0 z-[100] transition-all duration-300 ${
+      <div className={`lg:hidden fixed inset-0 z-100 transition-all duration-300 ${
         mobileMenuOpen ? 'visible opacity-100' : 'invisible opacity-0'
       }`}>
         {/* Backdrop */}
@@ -252,12 +300,13 @@ export function AdminNavbar() {
           </div>
 
           {/* Scrollable Navigation */}
-          <div className="flex-1 overflow-y-auto overscroll-contain py-2 px-3 space-y-1" style={{
+          <div className="flex-1 overflow-y-auto overscroll-contain py-2 px-3 space-y-1 scrollbar-hide" style={{
             WebkitOverflowScrolling: 'touch'
           }}>
             {navigation.map((item) => {
               const IconComponent = item.icon;
               const active = isActive(item.href);
+              const isNotificationItem = item.href === '/dashboard/admin/notifications';
 
               return (
                 <Link
@@ -272,7 +321,12 @@ export function AdminNavbar() {
                 >
                   <IconComponent className={`w-5 h-5 ${active ? 'text-[#FF3366]' : 'text-gray-400'}`} />
                   <span className="font-medium">{item.name}</span>
-                  {active && <ChevronRight className="w-4 h-4 ml-auto" />}
+                  {isNotificationItem && unreadCount > 0 && (
+                     <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                       {unreadCount > 9 ? '9+' : unreadCount}
+                     </span>
+                  )}
+                  {active && !isNotificationItem && <ChevronRight className="w-4 h-4 ml-auto" />}
                 </Link>
               );
             })}

@@ -1,88 +1,69 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Cargar variables de entorno
+// Cargar variables de entorno desde el archivo .env en la raiz del backend
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 import { emailService } from '../src/services/email.service';
 
-async function main() {
-    const to = 'yerctech@gmail.com'; // Tu correo para recibir todas las pruebas
-    const name = 'YercTech User';
+async function sendTestEmails() {
+    const email = 'yerctech@gmail.com';
+    const name = 'Yerc Tech';
+    const schoolName = 'ClaseDeSurf.com';
+    const className = 'Clase de Surf Intermedio';
+    const date = '15/12/2025';
+    const time = '10:00 AM';
+    const instructor = 'Juan Pérez';
+    const location = 'Playa Makaha, Miraflores, Lima';
+    const duration = 90;
+    const price = 120.00;
 
-    console.log(`🚀 Iniciando prueba completa de notificaciones a ${to}...`);
+    console.log('🚀 Iniciando envío de correos de prueba a:', email);
 
     try {
-        // 1. Welcome Email
-        console.log('1️⃣ Enviando Welcome Email...');
-        await emailService.sendWelcomeEmail(to, name, 'ClaseDeSurf Demo');
+        // 1. Welcome
+        console.log('1. Enviando Welcome Email...');
+        await emailService.sendWelcomeEmail(email, name, schoolName);
 
         // 2. Password Reset
-        console.log('2️⃣ Enviando Password Reset...');
-        await emailService.sendPasswordReset(to, name, 'TOKENDENUMERODEPRUEBA123456');
+        console.log('2. Enviando Password Reset...');
+        await emailService.sendPasswordReset(email, name, 'token-de-prueba-123');
 
-        // 3. Reserva Confirmada
-        console.log('3️⃣ Enviando Reserva Confirmada...');
+        // 3. Reservation Confirmed
+        console.log('3. Enviando Reservation Confirmed...');
         await emailService.sendReservationConfirmed(
-            to,
-            name,
-            'Clase Intermedia - Grupales',
-            '12/12/2025',
-            '10:00 AM',
-            'Instructor Juan',
-            'Escuela del Pacífico'
+            email, name, className, date, time, instructor, schoolName, location, duration, price
         );
 
-        // 4. Reserva Cancelada
-        console.log('4️⃣ Enviando Reserva Cancelada...');
+        // 4. Reservation Cancelled
+        console.log('4. Enviando Reservation Cancelled...');
         await emailService.sendReservationCancelled(
-            to,
-            name,
-            'Clase Principiante',
-            '15/12/2025',
-            'Escuela del Pacífico'
+            email, name, className, date, time, schoolName, location
         );
 
-        // 5. Reserva Reprogramada
-        console.log('5️⃣ Enviando Reserva Reprogramada...');
+        // 5. Reservation Changed
+        console.log('5. Enviando Reservation Changed...');
         await emailService.sendReservationChanged(
-            to,
-            name,
-            'Clase Privada Experto',
-            '20/12/2025', // Old Date
-            '21/12/2025', // New Date
-            '08:00 AM',
-            'Escuela del Pacífico'
+            email, name, className, '14/12/2025', date, time, schoolName, location, duration
         );
 
-        // 6. Confirmación de Pago
-        console.log('6️⃣ Enviando Confirmación de Pago...');
+        // 6. Payment Confirmation
+        console.log('6. Enviando Payment Confirmation...');
         await emailService.sendPaymentConfirmation(
-            to,
-            name,
-            150.00,
-            'S/.',
-            'Pago por Clase Privada',
-            'TXN-987654321',
-            'Escuela del Pacífico'
+            email, name, price, 'PEN', className, 'TXN-987654321', schoolName, 'Tarjeta de Crédito', new Date().toLocaleDateString()
         );
 
         // 7. Check-in Reminder
-        console.log('7️⃣ Enviando Recordatorio Check-in...');
+        console.log('7. Enviando Check-in Reminder...');
         await emailService.sendCheckInReminder(
-            to,
-            name,
-            'Clase Mañanera',
-            'Mañana',
-            '06:00 AM',
-            'Escuela del Pacífico'
+            email, name, className, date, time, schoolName, location
         );
 
-        console.log('✅ ¡Todas las pruebas enviadas! Revisa tu bandeja de entrada.');
+        console.log('✅ Todos los correos de prueba han sido enviados correctamente.');
 
     } catch (error) {
-        console.error('❌ Error durante las pruebas:', error);
+        console.error('❌ Error enviando correos de prueba:', error);
     }
 }
 
-main();
+sendTestEmails();

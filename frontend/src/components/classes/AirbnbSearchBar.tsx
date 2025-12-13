@@ -1,12 +1,17 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import { 
+  MapPinIcon, 
+  CalendarIcon, 
+  BarChartIcon, 
+  LayersIcon, 
+  SearchIcon,
+  XIcon
+} from 'lucide-react'
+import { CustomMobileDatePicker } from '@/components/ui/CustomMobileDatePicker'
 
-interface AirbnbSearchBarProps {
-  onFilterChange: (filters: FilterValues) => void
-  onReset: () => void
-}
-
+// --- Types ---
 export interface FilterValues {
   date?: string
   level?: string
@@ -14,431 +19,362 @@ export interface FilterValues {
   locality?: string
 }
 
+interface AirbnbSearchBarProps {
+  onFilterChange: (filters: FilterValues) => void
+  onReset: () => void
+}
+
+// --- Configuration ---
+const LOCATION_OPTIONS = [
+  { value: 'Costa Verde', label: 'Costa Verde', subLabel: 'Miraflores, Barranco' },
+  { value: 'Punta Hermosa', label: 'Punta Hermosa', subLabel: 'Playas del Sur' },
+  { value: 'San Bartolo', label: 'San Bartolo', subLabel: 'Playas del Sur' }
+]
+
+const LEVEL_OPTIONS = [
+  { value: 'BEGINNER', label: 'Principiante', subLabel: 'Nunca he surfeado' },
+  { value: 'INTERMEDIATE', label: 'Intermedio', subLabel: 'Ya tomo olas verdes' },
+  { value: 'ADVANCED', label: 'Avanzado', subLabel: 'Quiero perfeccionar' }
+]
+
+const TYPE_OPTIONS = [
+  { value: 'GROUP', label: 'Grupales', subLabel: 'Clases divertidas en grupo' },
+  { value: 'PRIVATE', label: 'Personalizadas', subLabel: '1 a 1 con el instructor' },
+  { value: 'INTENSIVE', label: 'Pro / Intensivo', subLabel: 'Entrenamiento técnico' }
+]
+
 export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProps) {
   const [filters, setFilters] = useState<FilterValues>({})
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
-  const [dropdownPosition, setDropdownPosition] = useState<number>(0)
-  const [isMobile, setIsMobile] = useState(false)
+  const [activeDesktopDropdown, setActiveDesktopDropdown] = useState<string | null>(null)
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+  
+  // Refs for click-outside detection on desktop
   const containerRef = useRef<HTMLDivElement>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const dateInputRef = useRef<HTMLInputElement>(null)
-  const buttonRefs = {
-    locality: useRef<HTMLDivElement>(null),
-    date: useRef<HTMLDivElement>(null),
-    level: useRef<HTMLDivElement>(null),
-    type: useRef<HTMLDivElement>(null)
-  }
 
-  // Detect mobile on mount and resize
+  // Close dropdowns when clicking outside
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(typeof window !== 'undefined' && window.innerWidth < 640)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
-  // Calculate dropdown position when activeDropdown changes
-  useEffect(() => {
-    if (!activeDropdown || isMobile) {
-      return
-    }
-
-    const updatePosition = () => {
-      const buttonRef = buttonRefs[activeDropdown as keyof typeof buttonRefs]
-      if (buttonRef?.current && containerRef.current) {
-        const buttonRect = buttonRef.current.getBoundingClientRect()
-        const containerRect = containerRef.current.getBoundingClientRect()
-        const left = buttonRect.left - containerRect.left
-        setDropdownPosition(left)
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setActiveDesktopDropdown(null)
       }
     }
-
-    requestAnimationFrame(() => {
-      updatePosition()
-    })
-
-    window.addEventListener('resize', updatePosition)
-    return () => window.removeEventListener('resize', updatePosition)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeDropdown, isMobile])
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    if (!activeDropdown) return
-
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node
-      if (
-        containerRef.current?.contains(target) ||
-        dropdownRef.current?.contains(target)
-      ) {
-        return
-      }
-      setActiveDropdown(null)
-    }
-
-    // Escuchar tanto mousedown como touchstart para mejor compatibilidad móvil
     document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('touchstart', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('touchstart', handleClickOutside)
-    }
-  }, [activeDropdown])
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleChange = (field: keyof FilterValues, value: string) => {
     const newFilters = { ...filters, [field]: value || undefined }
     setFilters(newFilters)
-    onFilterChange(newFilters)
-    setActiveDropdown(null)
+  }
+
+  const handleSearch = () => {
+    onFilterChange(filters)
+    setActiveDesktopDropdown(null)
   }
 
   const handleReset = () => {
     setFilters({})
     onReset()
-    setActiveDropdown(null)
+    setActiveDesktopDropdown(null)
   }
 
-  const handleDateButtonClick = (e: React.MouseEvent | React.TouchEvent) => {
-    if (isMobile) {
-      e.preventDefault()
-      e.stopPropagation()
-      // En móvil, activar directamente el input nativo
-      if (dateInputRef.current) {
-        // Usar un pequeño delay para asegurar que el evento se procese
-        setTimeout(() => {
-          dateInputRef.current?.focus()
-          // Forzar el click en el input
-          const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window
-          })
-          dateInputRef.current?.dispatchEvent(clickEvent)
-        }, 10)
-      }
-    } else {
-      // En escritorio, abrir el dropdown
-      setActiveDropdown(activeDropdown === 'date' ? null : 'date')
-    }
-  }
+  // Helper to get labels
+  const getLabel = (options: typeof LOCATION_OPTIONS, value?: string) => 
+    options.find(o => o.value === value)?.label
 
-  const toggleDropdown = (field: string) => {
-    if (field === 'date' && isMobile) {
-      // En móvil, el botón maneja esto directamente
-      return
-    }
-    setActiveDropdown(activeDropdown === field ? null : field)
-  }
+  // --- Render Components ---
 
-  const getDisplayValue = (field: keyof FilterValues, options: { value: string; label: string }[]) => {
-    const value = filters[field]
-    if (!value) return null
-    const option = options.find(opt => opt.value === value)
-    return option?.label || value
-  }
-
-  const locationOptions = [
-    { value: 'Costa Verde', label: 'Costa Verde' },
-    { value: 'Punta Hermosa', label: 'Punta Hermosa' },
-    { value: 'San Bartolo', label: 'San Bartolo' }
-  ]
-
-  const levelOptions = [
-    { value: 'BEGINNER', label: 'Principiante' },
-    { value: 'INTERMEDIATE', label: 'Intermedio' },
-    { value: 'ADVANCED', label: 'Avanzado' }
-  ]
-
-  const typeOptions = [
-    { value: 'GROUP', label: 'Grupales' },
-    { value: 'PRIVATE', label: 'Personalizadas' },
-    { value: 'INTENSIVE', label: 'Pro' }
-  ]
-
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return null
-    const date = new Date(dateString)
-    return date.toLocaleDateString('es-ES', { 
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'short' 
-    })
-  }
-
-  const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '')
-
-  const renderDropdownContent = () => {
-    switch (activeDropdown) {
-      case 'locality':
-        return (
-          <div className="animate-fade-in">
-            <h3 className="text-lg font-semibold text-[#011627] mb-4">Selecciona ubicación</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => handleChange('locality', '')}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-150 ease-out text-sm ${
-                  !filters.locality
-                    ? 'bg-[#E9FBF7] text-[#2EC4B6] font-semibold'
-                    : 'hover:bg-gray-50 text-gray-700'
-                }`}
-              >
-                Todas las ubicaciones
-              </button>
-              {locationOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleChange('locality', option.value)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-150 ease-out text-sm ${
-                    filters.locality === option.value
-                      ? 'bg-[#E9FBF7] text-[#2EC4B6] font-semibold'
-                      : 'hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )
-      case 'date':
-        return (
-          <div className="hidden sm:block animate-fade-in">
-            <h3 className="text-lg font-semibold text-[#011627] mb-4">Selecciona fecha</h3>
-            <input
-              type="date"
-              value={filters.date || ''}
-              onChange={(e) => handleChange('date', e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2EC4B6] focus:border-[#2EC4B6]"
-            />
-            {filters.date && (
-              <button
-                onClick={() => handleChange('date', '')}
-                className="mt-4 text-sm text-[#2EC4B6] hover:underline"
-              >
-                Limpiar fecha
-              </button>
-            )}
-          </div>
-        )
-      case 'level':
-        return (
-          <div className="animate-fade-in">
-            <h3 className="text-lg font-semibold text-[#011627] mb-4">Selecciona nivel</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => handleChange('level', '')}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-150 ease-out text-sm ${
-                  !filters.level
-                    ? 'bg-[#E9FBF7] text-[#2EC4B6] font-semibold'
-                    : 'hover:bg-gray-50 text-gray-700'
-                }`}
-              >
-                Todos los niveles
-              </button>
-              {levelOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleChange('level', option.value)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-150 ease-out text-sm ${
-                    filters.level === option.value
-                      ? 'bg-[#E9FBF7] text-[#2EC4B6] font-semibold'
-                      : 'hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )
-      case 'type':
-        return (
-          <div className="animate-fade-in">
-            <h3 className="text-lg font-semibold text-[#011627] mb-4">Selecciona tipo de clase</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => handleChange('type', '')}
-                className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-150 ease-out text-sm ${
-                  !filters.type
-                    ? 'bg-[#E9FBF7] text-[#2EC4B6] font-semibold'
-                    : 'hover:bg-gray-50 text-gray-700'
-                }`}
-              >
-                Todos los tipos
-              </button>
-              {typeOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => handleChange('type', option.value)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-150 ease-out text-sm ${
-                    filters.type === option.value
-                      ? 'bg-[#E9FBF7] text-[#2EC4B6] font-semibold'
-                      : 'hover:bg-gray-50 text-gray-700'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )
-      default:
-        return null
-    }
-  }
-
-  return (
-    <div ref={containerRef} className="relative w-full">
-      {/* Main Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center bg-white rounded-2xl sm:rounded-full shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-200 overflow-hidden">
-        {/* Location Button */}
-        <div ref={buttonRefs.locality} className="relative flex-1">
-          <button
-            onClick={() => toggleDropdown('locality')}
-            className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-left border-b sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 transition-all duration-200 ease-out ${
-              filters.locality ? 'font-semibold text-[#011627]' : 'text-gray-600'
-            } ${activeDropdown === 'locality' ? 'bg-gray-50' : ''}`}
-          >
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-500">¿Dónde?</div>
-            <div className="text-sm truncate mt-1">
-              {getDisplayValue('locality', locationOptions) || 'Cualquier ubicación'}
-            </div>
-          </button>
-        </div>
-
-        {/* Date Button - Refactorizado para iOS */}
-        <div ref={buttonRefs.date} className="relative flex-1">
-          {/* Input de fecha nativo - completamente funcional en móvil, sobre el botón */}
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={filters.date || ''}
-            onChange={(e) => handleChange('date', e.target.value)}
-            min={new Date().toISOString().split('T')[0]}
-            className="absolute inset-0 w-full h-full z-20 opacity-0 cursor-pointer sm:hidden"
-            aria-label="Seleccionar fecha"
-            style={{ 
-              fontSize: '16px', // Previene zoom en iOS
-              WebkitAppearance: 'none',
-              appearance: 'none',
-              pointerEvents: 'auto' // Asegurar que sea clickeable
-            }}
-            tabIndex={0}
-          />
-          {/* Botón visual - en móvil el input está encima y captura los eventos */}
-          <button
-            onClick={handleDateButtonClick}
-            onTouchStart={handleDateButtonClick}
-            type="button"
-            className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-left border-b sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 transition-all duration-200 ease-out relative ${
-              filters.date ? 'font-semibold text-[#011627]' : 'text-gray-600'
-            } ${activeDropdown === 'date' ? 'bg-gray-50' : ''}`}
-            style={isMobile ? { pointerEvents: 'none' } : {}}
-          >
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-500">¿Cuándo?</div>
-            <div className="text-sm truncate mt-1">
-              {formatDate(filters.date) || 'Cualquier fecha'}
-            </div>
-          </button>
-        </div>
-
-        {/* Level Button */}
-        <div ref={buttonRefs.level} className="relative flex-1">
-          <button
-            onClick={() => toggleDropdown('level')}
-            className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-left border-b sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 transition-all duration-200 ease-out ${
-              filters.level ? 'font-semibold text-[#011627]' : 'text-gray-600'
-            } ${activeDropdown === 'level' ? 'bg-gray-50' : ''}`}
-          >
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Nivel</div>
-            <div className="text-sm truncate mt-1">
-              {getDisplayValue('level', levelOptions) || 'Cualquier nivel'}
-            </div>
-          </button>
-        </div>
-
-        {/* Type Button */}
-        <div ref={buttonRefs.type} className="relative flex-1">
-          <button
-            onClick={() => toggleDropdown('type')}
-            className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-left border-b-0 sm:border-b-0 sm:border-r border-gray-200 hover:bg-gray-50 transition-all duration-200 ease-out ${
-              filters.type ? 'font-semibold text-[#011627]' : 'text-gray-600'
-            } ${activeDropdown === 'type' ? 'bg-gray-50' : ''}`}
-          >
-            <div className="text-xs font-bold uppercase tracking-wider text-gray-500">Tipo</div>
-            <div className="text-sm truncate mt-1">
-              {getDisplayValue('type', typeOptions) || 'Cualquier tipo'}
-            </div>
-          </button>
-        </div>
-
-        {/* Search Button */}
-        <div className="p-2">
-          <button
-            onClick={() => {
-              onFilterChange(filters)
-              setActiveDropdown(null)
-            }}
-            className="w-full sm:w-auto bg-gradient-to-r from-[#FF3366] to-[#D12352] hover:from-[#D12352] hover:to-[#B01E45] text-white font-semibold rounded-full flex items-center justify-center px-6 py-3 transition-all duration-200"
-            aria-label="Buscar"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span className="ml-2 hidden sm:inline">Buscar</span>
-          </button>
-        </div>
+  // 1. Mobile Filter Card
+  const MobileFilterCard = ({ 
+    icon: Icon, 
+    label, 
+    value, 
+    placeholder,
+    type = 'select',
+    options = [],
+    field,
+    minDate
+  }: { 
+    icon: any, 
+    label: string, 
+    value?: string, 
+    placeholder: string,
+    type?: 'select' | 'date',
+    options?: typeof LOCATION_OPTIONS,
+    field: keyof FilterValues,
+    minDate?: string
+  }) => (
+    <div 
+      className={`relative bg-white rounded-2xl shadow-sm border p-4 flex items-center gap-4 overflow-hidden group active:scale-[0.99] transition-transform ${
+        value ? 'border-[#FF3366] ring-1 ring-[#FF3366]/20' : 'border-gray-100'
+      }`}
+      onClick={() => {
+        if (type === 'date') {
+          setIsDatePickerOpen(true)
+        }
+      }}
+    >
+      {/* Icon Area */}
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 
+        ${value ? 'bg-[#FF3366] text-white' : 'bg-gray-100 text-gray-400'}`}>
+        <Icon size={18} strokeWidth={2.5} />
       </div>
 
-      {/* Dropdown Container - Modal on mobile, Dropdown on desktop */}
-      {activeDropdown && (
-        <>
-          {/* Backdrop for mobile - solo aparece cuando hay dropdown activo */}
-          {isMobile && (
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-[100] animate-fade-in"
-              onClick={() => setActiveDropdown(null)}
-              onTouchStart={(e) => {
-                // Solo cerrar si el click es directamente en el backdrop
-                if (e.target === e.currentTarget) {
-                  setActiveDropdown(null)
-                }
-              }}
-            />
-          )}
-          {/* Dropdown - Posicionado relativo al botón activo en desktop */}
-          <div
-            ref={dropdownRef}
-            className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-md bg-white rounded-2xl shadow-2xl z-[101] p-6 max-h-[85vh] overflow-y-auto
-                       animate-slide-down
-                       sm:absolute sm:top-full sm:mt-2 sm:w-auto sm:min-w-[400px] sm:max-w-md sm:rounded-xl sm:translate-x-0 sm:translate-y-0
-                       sm:animate-scale-in sm:z-50`}
-            style={{
-              ...(!isMobile && activeDropdown
-                ? { left: `${dropdownPosition}px` }
-                : {})
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-          >
-            {renderDropdownContent()}
-            {hasActiveFilters && (
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <button
-                  onClick={handleReset}
-                  className="w-full text-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#011627] hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  Limpiar todos los filtros
-                </button>
-              </div>
-            )}
-          </div>
-        </>
+      {/* Text Area */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</span>
+        <span className={`text-base font-semibold truncate ${value ? 'text-gray-900' : 'text-gray-500'}`}>
+          {type === 'select' 
+            ? (getLabel(options, value) || placeholder)
+            : (value ? new Date(value).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) : placeholder)
+          }
+        </span>
+      </div>
+
+      {/* Inputs Overlay */}
+      {type === 'select' ? (
+        <select
+          className="absolute inset-0 w-full h-full opacity-0 z-10 cursor-pointer"
+          value={value || ''}
+          onChange={(e) => handleChange(field, e.target.value)}
+        >
+          <option value="">{placeholder}</option>
+          {options.map(opt => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label} - {opt.subLabel}
+            </option>
+          ))}
+        </select>
+      ) : (
+        // For Date, we use the div's onClick to open the custom picker. 
+        <div className="absolute inset-0 z-10 cursor-pointer" /> 
       )}
     </div>
+  )
+
+  // 2. Desktop Wrapper
+  return (
+    <>
+      <div ref={containerRef} className="w-full max-w-7xl mx-auto">
+        
+        {/* === MOBILE LAYOUT (Variable < 640px) === */}
+        <div className="flex flex-col gap-3 sm:hidden">
+          <MobileFilterCard 
+            icon={MapPinIcon}
+            label="¿Dónde?" 
+            placeholder="Cualquier ubicación"
+            field="locality"
+            value={filters.locality}
+            options={LOCATION_OPTIONS}
+          />
+          
+          <MobileFilterCard 
+            icon={CalendarIcon}
+            label="¿Cuándo?" 
+            placeholder="Cualquier fecha"
+            type="date"
+            field="date"
+            value={filters.date}
+            minDate={new Date().toISOString().split('T')[0]}
+          />
+
+          <div className="flex gap-3">
+             <div className="flex-1">
+                <MobileFilterCard 
+                  icon={BarChartIcon}
+                  label="Nivel" 
+                  placeholder="Todos"
+                  field="level"
+                  value={filters.level}
+                  options={LEVEL_OPTIONS}
+                />
+             </div>
+             <div className="flex-1">
+                <MobileFilterCard 
+                  icon={LayersIcon}
+                  label="Tipo" 
+                  placeholder="Todos"
+                  field="type"
+                  value={filters.type}
+                  options={TYPE_OPTIONS}
+                />
+             </div>
+          </div>
+
+          <button 
+            onClick={handleSearch}
+            className="w-full mt-2 bg-linear-to-r from-[#FF3366] to-[#D12352] text-white font-bold py-4 rounded-xl shadow-lg shadow-[#FF3366]/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+          >
+            <SearchIcon size={20} />
+            Buscar Clases
+          </button>
+          
+          {(filters.date || filters.level || filters.locality || filters.type) && (
+            <button 
+              onClick={handleReset}
+              className="text-sm text-gray-500 font-medium py-2 flex items-center justify-center gap-1"
+            >
+              <XIcon size={14} />
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+
+        {/* === DESKTOP LAYOUT (Hidden on Mobile) === */}
+        <div className="hidden sm:block">
+           <div className="flex items-center bg-white rounded-full shadow-lg border border-gray-200 p-1 relative z-20">
+              
+              {/* Location */}
+              <div 
+                className={`flex-1 relative px-6 py-3 rounded-full hover:bg-gray-100 cursor-pointer transition-colors ${activeDesktopDropdown === 'locality' ? 'bg-white shadow-lg z-30' : ''}`}
+                onClick={() => setActiveDesktopDropdown(activeDesktopDropdown === 'locality' ? null : 'locality')}
+              >
+                 <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-0.5">¿Dónde?</div>
+                 <div className={`text-sm truncate ${filters.locality ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                    {getLabel(LOCATION_OPTIONS, filters.locality) || 'Explorar destinos'}
+                 </div>
+                 
+                 {/* Desktop Dropdown: Location */}
+                 {activeDesktopDropdown === 'locality' && (
+                   <div className="absolute top-[120%] left-0 w-[300px] bg-white rounded-3xl shadow-xl border border-gray-100 p-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="space-y-1">
+                        <div 
+                           onClick={(e) => { e.stopPropagation(); handleChange('locality', ''); setActiveDesktopDropdown(null); }}
+                           className="p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors"
+                        >
+                           <div className="font-semibold text-gray-900">Cualquier destino</div>
+                        </div>
+                        {LOCATION_OPTIONS.map(opt => (
+                           <div 
+                              key={opt.value}
+                              onClick={(e) => { e.stopPropagation(); handleChange('locality', opt.value); setActiveDesktopDropdown(null); }}
+                              className={`p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors ${filters.locality === opt.value ? 'bg-[#E9FBF7]' : ''}`}
+                           >
+                              <div className="font-semibold text-gray-900">{opt.label}</div>
+                              <div className="text-xs text-gray-500">{opt.subLabel}</div>
+                           </div>
+                        ))}
+                      </div>
+                   </div>
+                 )}
+              </div>
+
+              <div className="w-px h-8 bg-gray-200 my-auto" />
+
+              {/* Date */}
+              <div 
+                className="flex-1 relative px-6 py-3 rounded-full hover:bg-gray-100 cursor-pointer transition-colors"
+                onClick={() => setActiveDesktopDropdown(activeDesktopDropdown === 'date' ? null : 'date')}
+              >
+                 <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-0.5">¿Cuándo?</div>
+                 <div className={`text-sm truncate ${filters.date ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                    {filters.date 
+                      ? new Date(filters.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
+                      : 'Agrega fechas'
+                    }
+                 </div>
+
+                 {/* Desktop Dropdown: Date */}
+                 {activeDesktopDropdown === 'date' && (
+                    <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-[320px] bg-white rounded-3xl shadow-xl border border-gray-100 p-4 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                       <CustomMobileDatePicker
+                          isOpen={true}
+                          onClose={() => setActiveDesktopDropdown(null)}
+                          value={filters.date}
+                          onChange={(date) => { handleChange('date', date); setActiveDesktopDropdown(null); }}
+                          minDate={new Date().toISOString().split('T')[0]}
+                          inline={true}
+                       />
+                    </div>
+                 )}
+              </div>
+
+              <div className="w-px h-8 bg-gray-200 my-auto" />
+
+              {/* Level */}
+              <div 
+                 className="flex-1 relative px-6 py-3 rounded-full hover:bg-gray-100 cursor-pointer transition-colors"
+                 onClick={() => setActiveDesktopDropdown(activeDesktopDropdown === 'level' ? null : 'level')}
+              >
+                 <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-0.5">Nivel</div>
+                 <div className={`text-sm truncate ${filters.level ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                    {getLabel(LEVEL_OPTIONS, filters.level) || 'Cualquiera'}
+                 </div>
+
+                  {activeDesktopDropdown === 'level' && (
+                   <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-[300px] bg-white rounded-3xl shadow-xl border border-gray-100 p-4 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="space-y-1">
+                        <div onClick={(e) => { e.stopPropagation(); handleChange('level', ''); setActiveDesktopDropdown(null); }} className="p-3 hover:bg-gray-50 rounded-xl cursor-pointer"><div className="font-semibold">Cualquiera</div></div>
+                        {LEVEL_OPTIONS.map(opt => (
+                           <div key={opt.value} onClick={(e) => { e.stopPropagation(); handleChange('level', opt.value); setActiveDesktopDropdown(null); }} className="p-3 hover:bg-gray-50 rounded-xl cursor-pointer">
+                              <div className="font-semibold text-gray-900">{opt.label}</div>
+                              <div className="text-xs text-gray-500">{opt.subLabel}</div>
+                           </div>
+                        ))}
+                      </div>
+                   </div>
+                 )}
+              </div>
+
+              <div className="w-px h-8 bg-gray-200 my-auto" />
+
+              {/* Type */}
+              <div 
+                 className="flex-1 relative px-6 py-3 rounded-full hover:bg-gray-100 cursor-pointer transition-colors"
+                 onClick={() => setActiveDesktopDropdown(activeDesktopDropdown === 'type' ? null : 'type')}
+              >
+                 <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-0.5">Tipo</div>
+                 <div className={`text-sm truncate ${filters.type ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                    {getLabel(TYPE_OPTIONS, filters.type) || 'Cualquiera'}
+                 </div>
+
+                 {activeDesktopDropdown === 'type' && (
+                   <div className="absolute top-[120%] left-1/2 -translate-x-1/2 w-[300px] bg-white rounded-3xl shadow-xl border border-gray-100 p-4 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="space-y-1">
+                        <div onClick={(e) => { e.stopPropagation(); handleChange('type', ''); setActiveDesktopDropdown(null); }} className="p-3 hover:bg-gray-50 rounded-xl cursor-pointer"><div className="font-semibold">Cualquiera</div></div>
+                        {TYPE_OPTIONS.map(opt => (
+                           <div key={opt.value} onClick={(e) => { e.stopPropagation(); handleChange('type', opt.value); setActiveDesktopDropdown(null); }} className="p-3 hover:bg-gray-50 rounded-xl cursor-pointer">
+                              <div className="font-semibold text-gray-900">{opt.label}</div>
+                              <div className="text-xs text-gray-500">{opt.subLabel}</div>
+                           </div>
+                        ))}
+                      </div>
+                   </div>
+                 )}
+              </div>
+
+              {/* Search Button (Desktop) & Clear */}
+              <div className="pl-2 pr-2 flex items-center gap-2">
+                 {(filters.date || filters.level || filters.locality || filters.type) && (
+                    <button 
+                       onClick={(e) => { e.stopPropagation(); handleReset(); }}
+                       className="hidden lg:flex items-center justify-center w-8 h-8 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                       title="Limpiar filtros"
+                    >
+                       <XIcon size={16} />
+                    </button>
+                 )}
+                 <button 
+                    onClick={handleSearch}
+                    className="bg-linear-to-r from-[#FF3366] to-[#D12352] hover:bg-[#D12352] text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                 >
+                    <SearchIcon size={20} strokeWidth={3} />
+                 </button>
+              </div>
+
+           </div>
+        </div>
+
+      </div>
+
+      {/* Custom Mobile Date Picker Modal */}
+      <CustomMobileDatePicker
+        isOpen={isDatePickerOpen}
+        onClose={() => setIsDatePickerOpen(false)}
+        value={filters.date}
+        onChange={(date) => handleChange('date', date)}
+        minDate={new Date().toISOString().split('T')[0]}
+      />
+    </>
   )
 }

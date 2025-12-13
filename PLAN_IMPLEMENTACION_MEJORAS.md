@@ -463,7 +463,7 @@ EMAIL_PROVIDER=sendgrid|mailgun|resend
 SENDGRID_API_KEY=
 MAILGUN_API_KEY=
 MAILGUN_DOMAIN=
-RESEND_API_KEY=
+RESEND_API_KEY=re_EtLG3Tkv_FwY8oQH8LDewAXE47AFfs4Se
 EMAIL_FROM=noreply@clasedesurf.com
 
 # WhatsApp (ya existe)

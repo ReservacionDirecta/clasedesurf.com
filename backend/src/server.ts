@@ -19,10 +19,13 @@ import beachesRouter from './routes/beaches';
 import notesRouter from './routes/notes';
 import discountCodesRouter from './routes/discountCodes';
 import imagesRouter from './routes/images';
-import emailsRouter from './routes/emails';
+import notificationsRouter from './routes/notifications';
 import { whatsappService } from './services/whatsapp.service';
+import { initializeRedis, getRedisClient } from './config/redis';
 import prisma from './prisma';
 const app = express();
+
+
 const port = process.env.PORT || 4000;
 
 // Trust proxy for Railway deployment
@@ -79,10 +82,11 @@ app.use('/instructor', instructorClassesRouter);
 app.use('/students', studentsRouter);
 app.use('/stats', statsRouter);
 app.use('/beaches', beachesRouter);
+
 app.use('/notes', notesRouter);
 app.use('/discount-codes', discountCodesRouter);
 app.use('/images', imagesRouter);
-app.use('/emails', emailsRouter);
+app.use('/notifications', notificationsRouter);
 
 app.get('/', (_req, res) => res.json({
   message: 'Backend API running',
@@ -148,10 +152,34 @@ app.get('/db-test', async (req, res) => {
   }
 });
 
+// Redis Test Route
+app.get('/redis-test', async (req, res) => {
+  try {
+    const redis = getRedisClient();
+    await redis.set('test-key', 'Redis is working! ' + new Date().toISOString());
+    const value = await redis.get('test-key');
+
+    res.json({
+      message: 'Redis connection successful',
+      value_retrieved: value,
+      status: redis.status
+    });
+  } catch (error: any) {
+    console.error('Redis test error:', error);
+    res.status(500).json({
+      message: 'Redis operation failed',
+      error: error.message
+    });
+  }
+});
+
 async function startServer() {
   try {
     await prisma.$connect();
     console.log('✅ Connected to PostgreSQL');
+
+    // Initialize Redis
+    initializeRedis();
 
     // Solo inicializar WhatsApp si está habilitado
     if (process.env.WHATSAPP_ENABLED === 'true') {

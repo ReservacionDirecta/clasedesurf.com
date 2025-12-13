@@ -299,7 +299,58 @@ export default function SchoolStudents() {
 
         {/* Students Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile Cards View */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {filteredStudents.map((student) => (
+              <div key={student.id} className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                      <Users className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900">{student.name}</h3>
+                      <p className="text-xs text-gray-500">{student.age} años</p>
+                    </div>
+                  </div>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(student.status)}`}>
+                    {student.status === 'active' ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                  <div className="flex flex-col">
+                    <span className="text-gray-400">Nivel</span>
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-medium w-fit ${getLevelColor(student.level)}`}>
+                      {student.level === 'BEGINNER' ? 'Principiante' :
+                        student.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-gray-400">Progreso</span>
+                    <span className="font-medium mt-1">{student.completedClasses}/{student.totalClasses} clases</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                  <div className="text-xs">
+                    <span className="text-gray-400">Total: </span>
+                    <span className="font-medium text-gray-900">{formatCurrency(student.totalPaid)}</span>
+                  </div>
+                  <button
+                    onClick={() => handleViewStudent(student)}
+                    className="flex items-center px-3 py-1.5 text-blue-600 bg-blue-50 rounded-lg text-xs font-medium active:scale-95 transition-transform"
+                  >
+                    <Eye className="w-3.5 h-3.5 mr-1.5" />
+                    Ver Detalles
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -393,7 +444,7 @@ export default function SchoolStudents() {
 
         {/* Modal Detalles del Estudiante */}
         {showDetailModal && selectedStudent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-100 p-0 sm:p-4 overflow-y-auto">
             <div className="bg-white rounded-t-3xl sm:rounded-lg p-4 sm:p-6 max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
               <div className="flex justify-between items-center mb-4 sm:mb-6 sticky top-0 bg-white pb-2 border-b border-gray-200 sm:border-none sm:relative">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -514,7 +565,7 @@ export default function SchoolStudents() {
         {/* Modal Agregar Estudiante */}
         {showAddStudentModal && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-[100] flex items-start sm:items-center justify-center overflow-y-auto p-0 sm:p-4"
+            className="fixed inset-0 bg-black bg-opacity-50 z-100 flex items-start sm:items-center justify-center overflow-y-auto p-0 sm:p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setShowAddStudentModal(false);

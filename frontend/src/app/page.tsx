@@ -435,9 +435,9 @@ export default function Home() {
       </section>
       
       {/* Sección principal de clases - Mobile Optimized */}
-      <main id="encuentra-tu-clase" className="relative bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] py-6 sm:py-10">
+      <main id="encuentra-tu-clase" className="relative bg-linear-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] py-6 sm:py-10">
         {/* Background Wave Pattern */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 opacity-30">
             <svg className="w-full h-full" viewBox="0 0 1440 960" preserveAspectRatio="none">
               <defs>
@@ -459,14 +459,14 @@ export default function Home() {
           {/* Mobile-Optimized Header Section */}
           <div className="text-center mb-4 sm:mb-8">
             {/* Mobile Badge */}
-            <div className="inline-flex items-center bg-gradient-to-b from-[#FF3366] to-[#2EC4B6] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-bold mb-4 sm:mb-6 shadow-xl">
+            <div className="inline-flex items-center bg-linear-to-b from-[#FF3366] to-[#2EC4B6] text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-bold mb-4 sm:mb-6 shadow-xl">
               <SearchIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
               BÚSQUEDA AVANZADA
             </div>
             
             <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-black mb-3 sm:mb-4 leading-tight px-2 sm:px-0">
               <span className="text-white">Encuentra tu</span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-[#FF3366] via-[#FF668C] to-[#2EC4B6]">
+              <span className="block text-transparent bg-clip-text bg-linear-to-r from-[#FF3366] via-[#FF668C] to-[#2EC4B6]">
                 Clase Perfecta
               </span>
             </h2>
@@ -519,7 +519,7 @@ export default function Home() {
               {error && <span className="text-yellow-600 text-xs sm:text-sm ml-2">(datos de ejemplo)</span>}
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <label htmlFor="search-sort" className="text-xs sm:text-sm font-medium text-[#011627] mobile-hidden flex-shrink-0">Ordenar:</label>
+              <label htmlFor="search-sort" className="text-xs sm:text-sm font-medium text-[#011627] mobile-hidden shrink-0">Ordenar:</label>
               <select
                 id="search-sort"
                 className="border-2 border-[#CBD5E1] rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium text-[#011627] bg-white focus:ring-2 focus:ring-[#9DE6DC] focus:border-[#2EC4B6] shadow-sm touch-target-md flex-1 sm:flex-none min-w-0 max-w-full"

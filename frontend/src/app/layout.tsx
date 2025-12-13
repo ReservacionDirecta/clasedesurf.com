@@ -17,7 +17,16 @@ export const metadata: Metadata = {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 5,
-    viewportFit: 'cover', // Para iOS safe area
+    userScalable: false, // Prevent zoom for app-like feel
+    viewportFit: 'cover',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Clase de Surf',
+  },
+  formatDetection: {
+    telephone: false,
   },
 }
 

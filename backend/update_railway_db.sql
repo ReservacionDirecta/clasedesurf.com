@@ -66,4 +66,12 @@ ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3);
 -- Columna status en schools
 ALTER TABLE "schools"
 ADD COLUMN IF NOT EXISTS "status" "SchoolStatus" NOT NULL DEFAULT 'PENDING';
+-- 5. REPARACIÓN DEL ESTADO DE MIGRACIÓN (Fix Error P3009)
+-- Marcar la migración fallida como exitosa manualmente
+UPDATE "_prisma_migrations"
+SET "finished_at" = NOW(),
+    "logs" = NULL,
+    "rolled_back_at" = NULL
+WHERE "migration_name" = '20251212031634_add_soft_delete_to_classes'
+    AND "finished_at" IS NULL;
 COMMIT;

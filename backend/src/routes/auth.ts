@@ -3,6 +3,7 @@ import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { emailService } from '../services/email.service';
 import { validateBody } from '../middleware/validation';
 import { registerSchema, loginSchema } from '../validations/auth';
 import { authLimiter } from '../middleware/rateLimiter';
@@ -71,6 +72,12 @@ router.post('/register', authLimiter, validateBody(registerSchema), async (req, 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30); // 30 days
     await prisma.refreshToken.create({ data: { tokenHash: refreshHash, user: { connect: { id: user.id } }, expiresAt } });
     setRefreshCookie(res, rawRefresh);
+
+    try {
+      await emailService.sendWelcomeEmail(user.email, user.name || 'Surfista', 'ClaseDeSurf.com');
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+    }
 
     const { password: _p, ...safe } = user as any;
     res.status(201).json({ user: safe, token: accessToken });

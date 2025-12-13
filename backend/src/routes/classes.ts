@@ -182,6 +182,41 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   }
 });
 
+// GET /classes/deleted - Get deleted classes (ADMIN or SCHOOL_ADMIN)
+// MOVED UP to avoid conflict with /:id
+router.get('/deleted', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, async (req: AuthRequest, res) => {
+  try {
+    const whereClause: any = {
+      deletedAt: { not: null }
+    };
+
+    // If SCHOOL_ADMIN, only show their school's deleted classes
+    if (req.role === 'SCHOOL_ADMIN' && req.schoolId) {
+      whereClause.schoolId = req.schoolId;
+    }
+
+    const deletedClasses = await prisma.class.findMany({
+      where: whereClause,
+      include: {
+        school: { select: { id: true, name: true } },
+        beach: { select: { id: true, name: true, location: true } },
+        reservations: {
+          select: {
+            id: true,
+            status: true
+          }
+        }
+      },
+      orderBy: { deletedAt: 'desc' }
+    });
+
+    res.json(deletedClasses);
+  } catch (err) {
+    console.error('[GET /classes/deleted] Error:', err);
+    res.status(500).json({ message: 'Error al obtener clases eliminadas' });
+  }
+});
+
 // GET /classes/:id - get single class
 router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
@@ -544,40 +579,6 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resol
       message: 'Error interno del servidor',
       error: process.env.NODE_ENV === 'development' ? err?.message : undefined
     });
-  }
-});
-
-// GET /classes/deleted - Get deleted classes (ADMIN or SCHOOL_ADMIN)
-router.get('/deleted', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, async (req: AuthRequest, res) => {
-  try {
-    const whereClause: any = {
-      deletedAt: { not: null }
-    };
-
-    // If SCHOOL_ADMIN, only show their school's deleted classes
-    if (req.role === 'SCHOOL_ADMIN' && req.schoolId) {
-      whereClause.schoolId = req.schoolId;
-    }
-
-    const deletedClasses = await prisma.class.findMany({
-      where: whereClause,
-      include: {
-        school: { select: { id: true, name: true } },
-        beach: { select: { id: true, name: true, location: true } },
-        reservations: {
-          select: {
-            id: true,
-            status: true
-          }
-        }
-      },
-      orderBy: { deletedAt: 'desc' }
-    });
-
-    res.json(deletedClasses);
-  } catch (err) {
-    console.error('[GET /classes/deleted] Error:', err);
-    res.status(500).json({ message: 'Error al obtener clases eliminadas' });
   }
 });
 

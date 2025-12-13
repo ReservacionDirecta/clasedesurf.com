@@ -20,7 +20,8 @@ import {
   ChevronRight,
   Globe,
   Eye,
-  Tag
+  Tag,
+  Bell
 } from 'lucide-react';
 
 export function AdminSidebar() {
@@ -94,6 +95,7 @@ export function AdminSidebar() {
     { name: 'Descuentos', href: '/dashboard/admin/discounts', icon: Tag, description: 'Códigos de descuento' },
     { name: 'Reports', href: '/dashboard/admin/reports', icon: FileText, description: 'Ver reportes' },
     { name: 'Settings', href: '/dashboard/admin/settings', icon: Settings, description: 'Configuración' },
+    { name: 'Notificaciones', href: '/dashboard/admin/notifications', icon: Bell, description: 'Historial de notificaciones' },
   ];
 
   const quickActions = [

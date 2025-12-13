@@ -46,8 +46,8 @@ export function Hero() {
             {/* Mobile-Optimized Layout */}
             <div className="text-center text-white">
               <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-black mb-4 sm:mb-6 lg:mb-8 leading-tight text-white drop-shadow-2xl">
-                <span className="block">El Marketplace de</span>
-                <span className="block">Surf N°1</span>
+                <span className="block">El Marketplace</span>
+                <span className="block">de Surf</span>
               </h1>
               
               <p className="text-sm xs:text-base sm:text-lg lg:text-xl xl:text-2xl mb-6 sm:mb-8 lg:mb-10 max-w-3xl mx-auto leading-relaxed font-medium text-white drop-shadow-lg px-2 sm:px-0">

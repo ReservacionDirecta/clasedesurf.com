@@ -12,7 +12,8 @@ import {
   Home, 
   LogOut, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bell
 } from 'lucide-react';
 import { AvatarDisplay } from '@/components/avatar/AvatarSelector';
 
@@ -90,6 +91,12 @@ export function StudentSidebar() {
       href: '/', 
       icon: Home,
       description: 'Página principal'
+    },
+    { 
+      name: 'Notificaciones', 
+      href: '/dashboard/student/notifications', 
+      icon: Bell,
+      description: 'Historial de mensajes'
     },
   ];
 

@@ -39,6 +39,13 @@ const config: Config = {
         'slide-up': 'slide-up 0.3s ease-out',
         'scale-in': 'scale-in 0.2s ease-out',
       },
+      zIndex: {
+        '60': '60',
+        '70': '70',
+        '80': '80',
+        '90': '90',
+        '100': '100',
+      },
     },
   },
   plugins: [],

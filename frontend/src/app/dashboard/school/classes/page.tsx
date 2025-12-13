@@ -523,99 +523,118 @@ export default function ClassesManagementPage() {
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex-1">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-3">
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div className="flex items-start gap-3 min-w-0">
                       <input
                         type="checkbox"
                         checked={selectedClasses.includes(cls.id)}
                         onChange={() => toggleSelectClass(cls.id)}
-                        className="mt-1.5 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        className="mt-1.5 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer shrink-0"
                         onClick={(e) => e.stopPropagation()}
                       />
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{cls.title}</h3>
-                        <p className="text-gray-600 mb-3">{cls.description}</p>
+                      <div className="min-w-0">
+                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2 leading-tight">
+                          {cls.title}
+                        </h3>
+                        <p className="text-sm sm:text-base text-gray-600 mb-1 sm:mb-2 line-clamp-2">
+                          {cls.description}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex gap-2 ml-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(cls.status || 'upcoming')}`}>
+                    <div className="flex flex-col sm:flex-row gap-2 shrink-0 items-end sm:items-start">
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap shadow-sm border border-transparent ${getStatusColor(cls.status || 'upcoming')}`}>
                         {cls.status === 'upcoming' ? 'Próxima' :
                           cls.status === 'completed' ? 'Completada' : 'Cancelada'}
                       </span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(cls.level)}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap shadow-sm border border-transparent ${getLevelColor(cls.level)}`}>
                         {cls.level === 'BEGINNER' ? 'Principiante' :
                           cls.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="flex items-center text-gray-600">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {formatDate(cls.date)}
+                  <div className="grid grid-cols-1 mobile-s:grid-cols-2 md:grid-cols-4 gap-y-3 gap-x-4 text-sm text-gray-600">
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
+                      <span className="truncate">{formatDate(cls.date)}</span>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <Clock className="w-4 h-4 mr-2" />
-                      {cls.duration} minutos
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
+                      <span className="truncate">{cls.duration} minutos</span>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <Users className="w-4 h-4 mr-2" />
-                      {cls.enrolled || 0}/{cls.capacity} estudiantes
+                    <div className="flex items-center">
+                      <Users className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
+                      <span className="truncate">{cls.enrolled || 0}/{cls.capacity} estudiantes</span>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      {cls.location || 'Por definir'}
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
+                      <span className="truncate">{cls.location || 'Por definir'}</span>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="text-lg font-semibold text-green-600">
-                      S/. {cls.price}
+                  <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center justify-between sm:justify-start sm:gap-4">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Precio</span>
+                        <div className="text-xl font-bold text-gray-900">
+                          S/. {cls.price}
+                        </div>
+                      </div>
                     </div>
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-                      <button
-                        onClick={() => router.push(`/dashboard/school/classes/${cls.id}`)}
-                        className="flex items-center justify-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
-                      >
-                        <Eye className="w-4 h-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">Ver Detalles</span>
-                      </button>
-                      <button
-                        onClick={() => router.push(`/dashboard/school/classes/${cls.id}/reservations`)}
-                        className="flex items-center justify-center px-3 py-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors text-sm"
-                      >
-                        <ListChecks className="w-4 h-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">Ver Reservas</span>
-                      </button>
-                      <button
-                        onClick={() => router.push(`/classes/${cls.id}`)}
-                        className="flex items-center justify-center px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors text-sm"
-                      >
-                        <Eye className="w-4 h-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">Vista Pública</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedClass(cls);
-                          setShowEditModal(true);
-                        }}
-                        className="flex items-center justify-center px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm"
-                        title={(cls.reservations?.length ?? 0) > 0 ? 'Editar detalles limitados (hay reservas activas)' : 'Editar clase'}
-                      >
-                        <Edit className="w-4 h-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">Editar</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedClass(cls);
-                          setShowDeleteModal(true);
-                        }}
-                        className="flex items-center justify-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm"
-                        title="Eliminar clase permanentemente"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1 flex-shrink-0" />
-                        <span className="truncate">Eliminar</span>
-                      </button>
+
+                    <div className="flex flex-col gap-2 w-full sm:w-auto">
+                      {/* Primary Actions - Full width on mobile */}
+                      <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto">
+                        <button
+                          onClick={() => router.push(`/dashboard/school/classes/${cls.id}/reservations`)}
+                          className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium shadow-sm"
+                        >
+                          <ListChecks className="w-4 h-4 mr-1.5 shrink-0" />
+                          <span className="truncate">Reservas</span>
+                        </button>
+                        <button
+                          onClick={() => router.push(`/dashboard/school/classes/${cls.id}`)}
+                          className="flex items-center justify-center px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-sm font-medium shadow-sm"
+                        >
+                          <Eye className="w-4 h-4 mr-1.5 shrink-0" />
+                          <span className="truncate">Detalles</span>
+                        </button>
+                      </div>
+
+                      {/* Secondary Management Actions - Icon row on mobile */}
+                      <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto">
+                        <button
+                          onClick={() => router.push(`/classes/${cls.id}`)}
+                          className="flex items-center justify-center px-3 py-2 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-sm border border-purple-100"
+                          title="Vista Pública"
+                        >
+                          <Eye className="w-4 h-4 list:mr-1.5 shrink-0" />
+                          <span className="sm:hidden ml-1.5">Ver</span>
+                          <span className="hidden sm:inline ml-1.5">Publica</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedClass(cls);
+                            setShowEditModal(true);
+                          }}
+                          className="flex items-center justify-center px-3 py-2 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm border border-gray-200"
+                          title={(cls.reservations?.length ?? 0) > 0 ? 'Editar detalles limitados' : 'Editar clase'}
+                        >
+                          <Edit className="w-4 h-4 shrink-0" />
+                          <span className="sm:hidden ml-1.5">Editar</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedClass(cls);
+                            setShowDeleteModal(true);
+                          }}
+                          className="flex items-center justify-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors text-sm border border-red-100"
+                          title="Eliminar clase"
+                        >
+                          <Trash2 className="w-4 h-4 shrink-0" />
+                          <span className="sm:hidden ml-1.5">Borrar</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -647,7 +666,7 @@ export default function ClassesManagementPage() {
         {showCreateModal && null}
 
         {showEditModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <h3 className="text-lg font-bold mb-4">Editar Clase</h3>
               <p className="text-gray-600 mb-4">Editando: {selectedClass.title}</p>
@@ -685,7 +704,7 @@ export default function ClassesManagementPage() {
         )}
 
         {showDeleteModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4" onClick={() => setShowDeleteModal(false)}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4" onClick={() => setShowDeleteModal(false)}>
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900">Eliminar Clase</h3>

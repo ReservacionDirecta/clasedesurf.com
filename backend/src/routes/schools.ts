@@ -75,7 +75,7 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
 
     const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
 
-    if (!user || user.role !== 'SCHOOL_ADMIN') {
+    if (!user || (user.role !== 'SCHOOL_ADMIN' && user.role !== 'ADMIN')) {
       return res.status(403).json({ message: 'Only school admins can access this endpoint' });
     }
 
@@ -152,6 +152,29 @@ router.get('/:id/reviews', validateParams(schoolIdSchema), async (req, res) => {
       take: 6
     });
     res.json(reviews);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+// PUT /schools/:id/status - update status (requires ADMIN)
+router.put('/:id/status', requireAuth, requireRole(['ADMIN']), validateParams(schoolIdSchema), async (req, res) => {
+  try {
+    const { id } = req.params as any;
+    const { status } = req.body;
+
+    if (!['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const updated = await prisma.school.update({
+      where: { id: Number(id) },
+      data: { status }
+    });
+
+    res.json(updated);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
@@ -274,26 +297,6 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
   }
 });
 
-// PUT /schools/:id/status - update status (requires ADMIN)
-router.put('/:id/status', requireAuth, requireRole(['ADMIN']), validateParams(schoolIdSchema), async (req, res) => {
-  try {
-    const { id } = req.params as any;
-    const { status } = req.body;
 
-    if (!['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
-    }
-
-    const updated = await prisma.school.update({
-      where: { id: Number(id) },
-      data: { status }
-    });
-
-    res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
 
 export default router;

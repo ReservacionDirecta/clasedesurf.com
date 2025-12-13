@@ -20,7 +20,8 @@ import {
     FileText,
     MoreHorizontal,
     X,
-    Tag
+    Tag,
+    Bell
 } from 'lucide-react';
 
 interface NavItem {
@@ -42,6 +43,7 @@ const navigationItems: NavItem[] = [
     { name: 'Descuentos', href: '/dashboard/admin/discounts', icon: Tag, roles: ['ADMIN'] },
     { name: 'Reports', href: '/dashboard/admin/reports', icon: FileText, roles: ['ADMIN'] },
     { name: 'Settings', href: '/dashboard/admin/settings', icon: Settings, roles: ['ADMIN'] },
+    { name: 'Notificaciones', href: '/dashboard/admin/notifications', icon: Bell, roles: ['ADMIN'] },
 
     // School Admin Navigation
     { name: 'Dashboard', href: '/dashboard/school', icon: Home, roles: ['SCHOOL_ADMIN'] },
@@ -52,6 +54,7 @@ const navigationItems: NavItem[] = [
     { name: 'Bookings', href: '/dashboard/school/reservations', icon: Calendar, roles: ['SCHOOL_ADMIN'] },
     { name: 'Payments', href: '/dashboard/school/payments', icon: CreditCard, roles: ['SCHOOL_ADMIN'] },
     { name: 'Profile', href: '/dashboard/school/profile', icon: Settings, roles: ['SCHOOL_ADMIN'] },
+    { name: 'Notificaciones', href: '/dashboard/student/notifications', icon: Bell, roles: ['SCHOOL_ADMIN'] },
 
     // Instructor Navigation
     { name: 'Dashboard', href: '/dashboard/instructor', icon: Home, roles: ['INSTRUCTOR'] },
@@ -59,12 +62,14 @@ const navigationItems: NavItem[] = [
     { name: 'Classes', href: '/dashboard/instructor/classes', icon: BookOpen, roles: ['INSTRUCTOR'] },
     { name: 'Students', href: '/dashboard/instructor/students', icon: Users, roles: ['INSTRUCTOR'] },
     { name: 'Earnings', href: '/dashboard/instructor/earnings', icon: DollarSign, roles: ['INSTRUCTOR'] },
+    { name: 'Notificaciones', href: '/dashboard/student/notifications', icon: Bell, roles: ['INSTRUCTOR'] },
 
     // Student Navigation
     { name: 'Dashboard', href: '/dashboard/student', icon: Home, roles: ['STUDENT'] },
     { name: 'Perfil', href: '/dashboard/student/profile', icon: User, roles: ['STUDENT'] },
     { name: 'Clases', href: '/classes', icon: Waves, roles: ['STUDENT'] },
     { name: 'Reservas', href: '/reservations', icon: Calendar, roles: ['STUDENT'] },
+    { name: 'Notificaciones', href: '/dashboard/student/notifications', icon: Bell, roles: ['STUDENT'] },
 ];
 
 export function MobileBottomNav() {

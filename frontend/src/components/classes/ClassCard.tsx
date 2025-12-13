@@ -1,205 +1,209 @@
-'use client'
+'use client';
 
-import Image from 'next/image'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Image from 'next/image';
+import { useState } from 'react';
+import Link from 'next/link'
+import { useRouter } from 'next/navigation';
 
-import { Button } from '@/components/ui/Button'
-import { PriceDisplay } from '@/components/ui/PriceDisplay'
-import { getBeachImage, getClassTypeImage, getSurfImageByLevel } from '@/lib/lima-beach-images'
-import { formatDualCurrency } from '@/lib/currency'
+import { Button } from '@/components/ui/Button';
+import { PriceDisplay } from '@/components/ui/PriceDisplay';
+import { getBeachImage, getClassTypeImage, getSurfImageByLevel } from '@/lib/lima-beach-images';
+import { formatDualCurrency } from '@/lib/currency';
 
 interface ClassData {
-  id: string
-  title: string
-  description: string
-  date: Date
-  startTime: Date
-  endTime: Date
-  duration: number
-  capacity: number
-  price: number
-  currency: string
-  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT'
-  type: 'GROUP' | 'PRIVATE' | 'SEMI_PRIVATE' | 'INTENSIVE' | 'KIDS'
-  location?: string
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  startTime: Date;
+  endTime: Date;
+  duration: number;
+  capacity: number;
+  price: number;
+  currency: string;
+  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+  type: 'GROUP' | 'PRIVATE' | 'SEMI_PRIVATE' | 'INTENSIVE' | 'KIDS';
+  location?: string;
   beach?: {
-    name: string
-    location?: string
-  }
-  instructorName?: string
-  includesBoard: boolean
-  includesWetsuit: boolean
-  includesInsurance: boolean
-  availableSpots?: number
+    name: string;
+    location?: string;
+  };
+  instructorName?: string;
+  includesBoard: boolean;
+  includesWetsuit: boolean;
+  includesInsurance: boolean;
+  availableSpots?: number;
   school: {
-    id: string
-    name: string
-    city: string
-    rating: number
-    totalReviews: number
-    verified: boolean
-    yearsExperience: number
-    logo?: string
-    description?: string
-    shortReview?: string
-  }
+    id: string;
+    name: string;
+    city: string;
+    rating: number;
+    totalReviews: number;
+    verified: boolean;
+    yearsExperience: number;
+    logo?: string;
+    description?: string;
+    shortReview?: string;
+  };
   instructor?: {
-    name: string
-    photo?: string
-    rating: number
-    experience: string
-    specialties: string[]
-  }
-  classImage?: string
-  images?: string[]  // Array de URLs de imágenes
+    name: string;
+    photo?: string;
+    rating: number;
+    experience: string;
+    specialties: string[];
+  };
+  classImage?: string;
+  images?: string[]; // Array de URLs de imágenes
 }
 
 interface ClassCardProps {
-  classData: ClassData
-  onSelect: () => void
-  priority?: boolean
+  classData: ClassData;
+  onSelect: () => void;
+  priority?: boolean;
 }
 
 export function ClassCard({ classData, onSelect, priority = false }: ClassCardProps) {
-  const router = useRouter()
-  const [showDetails, setShowDetails] = useState(false)
-  
+  const router = useRouter();
+  const [showDetails, setShowDetails] = useState(false);
+
   const handleReserveClick = () => {
     // Redirigir directamente a la página de detalles de la clase
-    router.push(`/classes/${classData.id}`)
-  }
+    router.push(`/classes/${classData.id}`);
+  };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    })
-  }
+    return date.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('es-ES', { 
+    return date.toLocaleDateString('es-ES', {
       weekday: 'short',
       day: 'numeric',
-      month: 'short'
-    })
-  }
+      month: 'short',
+    });
+  };
 
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'BEGINNER':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800';
       case 'INTERMEDIATE':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800';
       case 'ADVANCED':
-        return 'bg-orange-100 text-orange-800'
+        return 'bg-orange-100 text-orange-800';
       case 'EXPERT':
-        return 'bg-red-100 text-red-800'
+        return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800';
     }
-  }
+  };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'GROUP':
-        return 'Grupal'
+        return 'Grupal';
       case 'PRIVATE':
-        return 'Privada'
+        return 'Privada';
       case 'SEMI_PRIVATE':
-        return 'Semi-privada'
+        return 'Semi-privada';
       case 'INTENSIVE':
-        return 'Intensivo'
+        return 'Intensivo';
       case 'KIDS':
-        return 'Niños'
+        return 'Niños';
       default:
-        return type
+        return type;
     }
-  }
+  };
 
   const getLevelLabel = (level: string) => {
     switch (level) {
       case 'BEGINNER':
-        return 'Principiante'
+        return 'Principiante';
       case 'INTERMEDIATE':
-        return 'Intermedio'
+        return 'Intermedio';
       case 'ADVANCED':
-        return 'Avanzado'
+        return 'Avanzado';
       case 'EXPERT':
-        return 'Experto'
+        return 'Experto';
       default:
-        return level
+        return level;
     }
-  }
+  };
 
   // Generar imagen específica de surf en Lima basada en ubicación y nivel
   const getClassImage = (type: string, level: string) => {
     // Si hay imágenes personalizadas, usar la primera
     if (classData.images && classData.images.length > 0) {
-      return classData.images[0]
+      return classData.images[0];
     }
-    
+
     // Si hay imagen personalizada, usarla solo si es de surf
     if (classData.classImage && classData.classImage.includes('surf')) {
-      return classData.classImage
+      return classData.classImage;
     }
-    
+
     // Priorizar imagen específica de la playa de Lima para surf
     if (classData.location) {
-      return getBeachImage(classData.location, 'surf', level)
+      return getBeachImage(classData.location, 'surf', level);
     }
-    
+
     // Fallback a imagen de surf por tipo de clase (siempre surf en Lima)
-    return getClassTypeImage(type)
-  }
+    return getClassTypeImage(type);
+  };
 
   // Generar logo de escuela
   const getSchoolLogo = (schoolName: string) => {
     if (classData.school.logo) {
-      return classData.school.logo
+      return classData.school.logo;
     }
     // Generar avatar basado en el nombre de la escuela
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(schoolName)}&size=64&background=0066cc&color=ffffff&bold=true`
-  }
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(schoolName)}&size=64&background=0066cc&color=ffffff&bold=true`;
+  };
 
   // Generar foto de instructor
   const getInstructorPhoto = (instructorName: string) => {
     if (classData.instructor?.photo) {
-      return classData.instructor.photo
+      return classData.instructor.photo;
     }
     // Generar avatar basado en el nombre del instructor
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&size=48&background=059669&color=ffffff&bold=true`
-  }
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(instructorName)}&size=48&background=059669&color=ffffff&bold=true`;
+  };
 
   // Calcular número de instructores basado en tipo de clase y capacidad
   const getInstructorCount = (type: string, capacity: number) => {
     switch (type) {
       case 'PRIVATE':
-        return 1 // Clases privadas siempre 1 instructor
+        return 1; // Clases privadas siempre 1 instructor
       case 'SEMI_PRIVATE':
-        return 1 // Semi-privadas (2-3 estudiantes) 1 instructor
+        return 1; // Semi-privadas (2-3 estudiantes) 1 instructor
       case 'GROUP':
         // Clases grupales: cada 2 estudiantes van acompañados de 1 instructor
         // Capacidad 3-4 estudiantes = 2-3 instructores
-        if (capacity <= 2) return 1
-        if (capacity <= 4) return Math.ceil(capacity / 2) // 3-4 estudiantes = 2-3 instructores
-        return Math.ceil(capacity / 2) // Máximo ratio 1:2
+        if (capacity <= 2) return 1;
+        if (capacity <= 4) return Math.ceil(capacity / 2); // 3-4 estudiantes = 2-3 instructores
+        return Math.ceil(capacity / 2); // Máximo ratio 1:2
       case 'INTENSIVE':
         // Intensivos requieren más atención, ratio 1:1 o 1:2
-        return Math.ceil(capacity / 2)
+        return Math.ceil(capacity / 2);
       case 'KIDS':
         // Niños requieren más supervisión, ratio 1:1.5
-        return Math.ceil(capacity / 1.5)
+        return Math.ceil(capacity / 1.5);
       default:
-        return Math.ceil(capacity / 2)
+        return Math.ceil(capacity / 2);
     }
-  }
+  };
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-gray-200">
       {/* Image Gallery */}
       <div className="relative h-44 sm:h-52 overflow-hidden">
-        {classData.images && classData.images.length > 0 && classData.images[0] && classData.images[0].trim() !== '' ? (
+        {classData.images &&
+        classData.images.length > 0 &&
+        classData.images[0] &&
+        classData.images[0].trim() !== '' ? (
           <div className="relative w-full h-full">
             {/* Main image */}
             <Image
@@ -212,16 +216,16 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               unoptimized={(() => {
                 const imgUrl = classData.images[0];
                 if (!imgUrl) return false;
-                
+
                 // URLs relativas que empiezan con /api/ necesitan unoptimized
                 if (imgUrl.startsWith('/api/')) return true;
-                
+
                 // URLs externas (http/https) - verificar si están en dominios permitidos
                 if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
                   try {
                     const url = new URL(imgUrl);
                     const hostname = url.hostname;
-                    
+
                     // Dominios permitidos en next.config.js
                     const allowedDomains = [
                       'images.unsplash.com',
@@ -230,14 +234,14 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
                       'cdninstagram.com',
                       'instagram.com',
                       'clasedesurf.com',
-                      'res.cloudinary.com'
+                      'res.cloudinary.com',
                     ];
-                    
+
                     // Verificar si el dominio está permitido
-                    const isAllowed = allowedDomains.some(domain => 
-                      hostname === domain || hostname.endsWith('.' + domain)
+                    const isAllowed = allowedDomains.some(
+                      (domain) => hostname === domain || hostname.endsWith('.' + domain)
                     );
-                    
+
                     // Si no está permitido, usar unoptimized
                     return !isAllowed;
                   } catch {
@@ -245,7 +249,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
                     return true;
                   }
                 }
-                
+
                 // Para otras URLs (relativas locales), no usar unoptimized
                 return false;
               })()}
@@ -260,9 +264,9 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
             />
             {/* Image counter badge - solo mostrar si hay más de 1 imagen */}
             {classData.images.length > 1 && (
-            <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-              {classData.images.length} imágenes
-            </div>
+              <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                {classData.images.length} imágenes
+              </div>
             )}
           </div>
         ) : (
@@ -276,17 +280,24 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
                 className="object-cover transition-transform duration-300 hover:scale-105"
                 priority={priority}
                 loading={priority ? undefined : 'lazy'}
-                unoptimized={imageSrc?.startsWith('/api/') || imageSrc?.includes('cdninstagram.com') || imageSrc?.includes('instagram.com') || false}
+                unoptimized={
+                  imageSrc?.startsWith('/api/') ||
+                  imageSrc?.includes('cdninstagram.com') ||
+                  imageSrc?.includes('instagram.com') ||
+                  false
+                }
               />
             );
           })()
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
-        
+        <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-black/10" />
+
         {/* Top badges */}
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
-          <span className={`${getLevelColor(classData.level)} px-3 py-1 rounded-full text-xs font-bold shadow-sm`}>
+          <span
+            className={`${getLevelColor(classData.level)} px-3 py-1 rounded-full text-xs font-bold shadow-sm`}
+          >
             {getLevelLabel(classData.level)}
           </span>
           <span className="bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-900 shadow-sm">
@@ -298,14 +309,14 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
         <div className="absolute bottom-3 left-3">
           <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-lg">
             {(() => {
-              const prices = formatDualCurrency(classData.price)
+              const prices = formatDualCurrency(classData.price);
               return (
                 <>
                   <div className="text-lg font-black text-gray-900">{prices.pen}</div>
                   <div className="text-xs text-gray-500 -mt-1">{prices.usd}</div>
                   <div className="text-xs text-gray-600 -mt-0.5">por persona</div>
                 </>
-              )
+              );
             })()}
           </div>
         </div>
@@ -334,26 +345,40 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               alt={`Logo de ${classData.school.name}`}
               width={24}
               height={24}
-              className="h-5 w-5 sm:h-6 sm:w-6 rounded-full border border-gray-200 flex-shrink-0"
+              className="h-5 w-5 sm:h-6 sm:w-6 rounded-full border border-gray-200 shrink-0"
             />
 
             <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0">
-              <h4 className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{classData.school.name}</h4>
+              <h4 className="text-xs sm:text-sm font-semibold text-gray-900 truncate">
+                {classData.school.name}
+              </h4>
               {classData.school.verified && (
                 <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                   <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <path
+                      fillRule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               )}
             </div>
           </div>
-          <div className="flex items-center space-x-0.5 sm:space-x-1 bg-yellow-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg flex-shrink-0">
-            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+          <div className="flex items-center space-x-0.5 sm:space-x-1 bg-yellow-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg shrink-0">
+            <svg
+              className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-500"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
-            <span className="text-[10px] sm:text-xs font-bold text-yellow-700">{classData.school.rating}</span>
-            <span className="text-[10px] sm:text-xs text-yellow-600 hidden sm:inline">({classData.school.totalReviews})</span>
+            <span className="text-[10px] sm:text-xs font-bold text-yellow-700">
+              {classData.school.rating}
+            </span>
+            <span className="text-[10px] sm:text-xs text-yellow-600 hidden sm:inline">
+              ({classData.school.totalReviews})
+            </span>
           </div>
         </div>
 
@@ -361,7 +386,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
         <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1.5 sm:mb-2 line-clamp-1">
           {classData.title}
         </h3>
-        
+
         {/* Description */}
         <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 leading-relaxed">
           {classData.description}
@@ -372,14 +397,25 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
           {/* Date and time */}
           <div className="flex items-center justify-between">
             <div className="flex items-center text-xs sm:text-sm text-gray-600 min-w-0 flex-1">
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg
+                className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
               <span className="font-medium truncate capitalize">
-                {formatDate(classData.date)} • {formatTime(classData.startTime)} - {formatTime(classData.endTime)}
+                {formatDate(classData.date)} • {formatTime(classData.startTime)} -{' '}
+                {formatTime(classData.endTime)}
               </span>
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-500 bg-gray-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex-shrink-0 ml-2">
+            <div className="text-[10px] sm:text-xs text-gray-500 bg-gray-50 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md shrink-0 ml-2">
               {classData.duration} min
             </div>
           </div>
@@ -387,25 +423,51 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
           {/* Location - Muestra nombre de playa y ubicación */}
           {(classData.beach || classData.location) && (
             <div className="flex items-center text-xs sm:text-sm text-gray-600 min-w-0">
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
               <span className="font-medium truncate">
-                {classData.beach 
+                {classData.beach
                   ? `${classData.beach.name}${classData.beach.location ? ` - ${classData.beach.location}` : classData.location ? ` - ${classData.location}` : ''}`
-                  : classData.location
-                }
+                  : classData.location}
               </span>
             </div>
           )}
 
           {/* Instructor info */}
           <div className="flex items-center text-xs sm:text-sm text-gray-600 min-w-0">
-            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            <svg
+              className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-gray-400 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
             </svg>
-            <span className="font-medium truncate">{classData.instructorName || 'Instructor calificado'}</span>
+            <span className="font-medium truncate">
+              {classData.instructorName || 'Instructor calificado'}
+            </span>
           </div>
         </div>
 
@@ -425,7 +487,7 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
               </div>
             )}
           </div>
-          <div className="text-[10px] sm:text-xs text-gray-500 flex-shrink-0 ml-2">
+          <div className="text-[10px] sm:text-xs text-gray-500 shrink-0 ml-2">
             {classData.capacity} max
           </div>
         </div>
@@ -433,15 +495,17 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
         {/* Action Button */}
         <button
           className={`w-full py-2.5 sm:py-3 px-4 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 touch-target-lg ${
-            classData.availableSpots && classData.availableSpots > 0 
-              ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-md hover:shadow-lg active:scale-95' 
+            classData.availableSpots && classData.availableSpots > 0
+              ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-md hover:shadow-lg active:scale-95'
               : 'bg-gray-100 active:bg-gray-200 text-gray-600 border border-gray-300 active:scale-95'
           }`}
           onClick={handleReserveClick}
           disabled={!classData.availableSpots || classData.availableSpots === 0}
           style={{ touchAction: 'manipulation' }}
         >
-          {classData.availableSpots && classData.availableSpots > 0 ? 'Reservar Ahora' : 'Lista de Espera'}
+          {classData.availableSpots && classData.availableSpots > 0
+            ? 'Reservar Ahora'
+            : 'Lista de Espera'}
         </button>
 
         {/* Quick details toggle */}
@@ -450,10 +514,10 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
           className="w-full mt-3 py-2 text-xs text-gray-500 hover:text-gray-700 transition-colors duration-200 flex items-center justify-center"
         >
           <span className="mr-1">{showDetails ? 'Menos detalles' : 'Más detalles'}</span>
-          <svg 
+          <svg
             className={`w-3 h-3 transition-transform duration-200 ${showDetails ? 'rotate-180' : ''}`}
-            fill="none" 
-            stroke="currentColor" 
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -463,88 +527,99 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
 
       {/* Expandable Details Section */}
       {showDetails && (
-        <div className="border-t-2 border-gray-100 bg-gray-50 p-6 animate-in slide-in-from-top duration-300">
-          {/* School Information */}
-          <div className="mb-6">
-            <div className="flex items-start space-x-4 mb-4">
+        <div className="border-t border-gray-100 bg-gray-50/50 p-4 sm:p-5 animate-in slide-in-from-top duration-300">
+          {/* School Header - Compact Grid */}
+          <div className="flex items-start gap-4 mb-5">
+            <Link href={`/schools/${classData.school.id}`} className="shrink-0 hover:opacity-80 transition-opacity">
               <Image
                 src={getSchoolLogo(classData.school.name)}
                 alt={`Logo de ${classData.school.name}`}
-                width={64}
-                height={64}
-                className="h-16 w-16 rounded-full border-2 border-gray-200 shadow-sm"
+                width={56}
+                height={56}
+                className="h-14 w-14 rounded-full border border-gray-200 shadow-sm"
               />
+            </Link>
 
-              <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
-                  <h4 className="text-lg font-bold text-gray-900">{classData.school.name}</h4>
-                  {classData.school.verified && (
-                    <span className="verified-badge text-xs">✓</span>
-                  )}
-                </div>
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                  <span className="rating-badge text-xs">
-                    ⭐ {classData.school.rating} ({classData.school.totalReviews} reseñas)
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <Link href={`/schools/${classData.school.id}`}>
+                  <h4 className="text-base font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-1">
+                    {classData.school.name}
+                  </h4>
+                </Link>
+                {classData.school.verified && (
+                  <span className="text-blue-500" title="Escuela Verificada">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
                   </span>
-                  <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">
-                    {classData.school.yearsExperience} años de experiencia
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 leading-relaxed">
-                  {classData.school.description || 
-                    `Escuela de surf especializada en ${getLevelLabel(classData.level).toLowerCase()} con instructores certificados y equipamiento de primera calidad.`
-                  }
-                </p>
+                )}
               </div>
+
+              {/* Meta info row */}
+              <div className="flex items-center gap-3 text-xs text-gray-500 mb-2">
+                <span className="flex items-center gap-1 font-medium text-gray-700">
+                  <span className="text-yellow-400">★</span> {classData.school.rating}
+                  <span className="text-gray-400 font-normal">({classData.school.totalReviews})</span>
+                </span>
+                <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                <span>{classData.school.yearsExperience} años exp.</span>
+              </div>
+
+              <Link 
+                href={`/schools/${classData.school.id}`}
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline inline-flex items-center"
+              >
+                Ver perfil
+                <svg className="w-3 h-3 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
-
-            {/* Short Review */}
-            {classData.school.shortReview && (
-              <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
-                <div className="flex items-start space-x-3">
-                  <div className="text-blue-500 text-lg">&ldquo;</div>
-                  <div>
-                    <p className="text-sm text-gray-700 italic mb-2">
-                      {classData.school.shortReview}
-                    </p>
-                    <p className="text-xs text-gray-500">- Reseña destacada</p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Instructor Information */}
-          {classData.instructor && (
-            <div className="border-t border-gray-200 pt-4">
-              <h5 className="text-md font-bold text-gray-900 mb-3">Tu Instructor</h5>
-              <div className="flex items-start space-x-4">
-                <Image
-                  src={getInstructorPhoto(classData.instructor.name)}
-                  alt={`Foto de ${classData.instructor.name}`}
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-full border-2 border-gray-200 shadow-sm"
-                />
+          <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-3">
+             {classData.school.description || 
+               `Escuela de surf especializada en ${getLevelLabel(classData.level).toLowerCase()} con instructores certificados.`
+             }
+          </p>
 
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <h6 className="font-semibold text-gray-900">{classData.instructor.name}</h6>
-                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
-                      ⭐ {classData.instructor.rating}
+          {/* Featured Review - Cleaner look */}
+          {classData.school.shortReview && (
+            <div className="relative pl-3 border-l-2 border-blue-200 mb-5">
+              <p className="text-xs italic text-gray-600 leading-relaxed">
+                "{classData.school.shortReview}"
+              </p>
+            </div>
+          )}
+
+          {/* Instructor Compact */}
+          {classData.instructor && (
+            <div className="bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-3 shadow-sm">
+              <Image
+                src={getInstructorPhoto(classData.instructor.name)}
+                alt={classData.instructor.name}
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full object-cover border border-gray-100 shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between mb-0.5">
+                  <h5 className="text-sm font-semibold text-gray-900 truncate">
+                    {classData.instructor.name}
+                  </h5>
+                  <span className="flex items-center text-[10px] font-bold text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded">
+                    <span className="text-yellow-400 mr-0.5">★</span>
+                    {classData.instructor.rating}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span className="text-xs text-blue-600 font-medium whitespace-nowrap">Instructor</span>
+                  {classData.instructor.specialties.slice(0, 2).map((spec, i) => (
+                    <span key={i} className="text-[10px] text-gray-500 bg-gray-50 px-1.5 rounded truncate border border-gray-100">
+                      {spec}
                     </span>
-                  </div>
-                  <p className="text-xs text-gray-600 mb-2">{classData.instructor.experience}</p>
-                  <div className="flex flex-wrap gap-1">
-                    {classData.instructor.specialties.map((specialty, index) => (
-                      <span 
-                        key={index}
-                        className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium"
-                      >
-                        {specialty}
-                      </span>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -552,5 +627,5 @@ export function ClassCard({ classData, onSelect, priority = false }: ClassCardPr
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -414,7 +414,7 @@ export default function SchoolReservations() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-blue-500">
             <div className="flex items-center">
-              <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+              <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 shrink-0" />
               <div className="ml-3 sm:ml-4">
                 <h3 className="text-xs sm:text-sm font-medium text-gray-600">Total</h3>
                 <p className="text-xl sm:text-3xl font-bold text-blue-600">{totalReservations}</p>
@@ -424,7 +424,7 @@ export default function SchoolReservations() {
 
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-green-500">
             <div className="flex items-center">
-              <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" />
+              <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 shrink-0" />
               <div className="ml-3 sm:ml-4">
                 <h3 className="text-xs sm:text-sm font-medium text-gray-600">Confirmadas</h3>
                 <p className="text-xl sm:text-3xl font-bold text-green-600">{confirmedReservations}</p>
@@ -434,7 +434,7 @@ export default function SchoolReservations() {
 
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-yellow-500">
             <div className="flex items-center">
-              <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 flex-shrink-0" />
+              <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 shrink-0" />
               <div className="ml-3 sm:ml-4">
                 <h3 className="text-xs sm:text-sm font-medium text-gray-600">Pendientes</h3>
                 <p className="text-xl sm:text-3xl font-bold text-yellow-600">{pendingReservations}</p>
@@ -444,7 +444,7 @@ export default function SchoolReservations() {
 
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-red-500">
             <div className="flex items-center">
-              <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 flex-shrink-0" />
+              <XCircle className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 shrink-0" />
               <div className="ml-3 sm:ml-4">
                 <h3 className="text-xs sm:text-sm font-medium text-gray-600">Canceladas</h3>
                 <p className="text-xl sm:text-3xl font-bold text-red-600">{canceledReservations}</p>
@@ -454,7 +454,7 @@ export default function SchoolReservations() {
 
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-purple-500 col-span-2 md:col-span-1">
             <div className="flex items-center">
-              <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 flex-shrink-0" />
+              <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 shrink-0" />
               <div className="ml-3 sm:ml-4">
                 <h3 className="text-xs sm:text-sm font-medium text-gray-600">Ingresos</h3>
                 <p className="text-lg sm:text-2xl font-bold text-purple-600">{formatCurrency(totalRevenue)}</p>
@@ -503,7 +503,7 @@ export default function SchoolReservations() {
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3 sm:gap-4 flex-1">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
                         <User className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -543,21 +543,21 @@ export default function SchoolReservations() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                       <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <Calendar className="w-4 h-4 mr-2 shrink-0" />
                         <span className="truncate">{formatDate(reservation.class.date)}</span>
                       </div>
                       <div className="flex items-center">
-                        <Users className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <Users className="w-4 h-4 mr-2 shrink-0" />
                         <span className="truncate">Instructor: {reservation.class.instructor}</span>
                       </div>
                       {reservation.class.duration && (
                         <div className="flex items-center">
-                          <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <Clock className="w-4 h-4 mr-2 shrink-0" />
                           <span>{reservation.class.duration} min</span>
                         </div>
                       )}
                       <div className="flex items-center font-medium text-green-600">
-                        <DollarSign className="w-4 h-4 mr-1 flex-shrink-0" />
+                        <DollarSign className="w-4 h-4 mr-1 shrink-0" />
                         {formatCurrency(reservation.class.price)}
                       </div>
                     </div>
@@ -580,35 +580,38 @@ export default function SchoolReservations() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-2 lg:flex-col lg:min-w-[200px]">
-                  <button
-                    onClick={() => handleViewReservation(reservation)}
-                    className="flex items-center justify-center px-3 sm:px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm font-medium border border-blue-200"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    Ver Detalles
-                  </button>
-                  <button
-                    onClick={() => handleEditReservation(reservation)}
-                    className="flex items-center justify-center px-3 sm:px-4 py-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors text-sm font-medium border border-indigo-200"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleManagePayment(reservation)}
-                    className="flex items-center justify-center px-3 sm:px-4 py-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors text-sm font-medium border border-purple-200"
-                  >
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Pagos
-                  </button>
-                  {reservation.status !== 'CANCELED' && reservation.status !== 'COMPLETED' && (
-                    <>
+                <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col gap-3">
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+                    <button
+                      onClick={() => handleViewReservation(reservation)}
+                      className="flex items-center justify-center px-3 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <Eye className="w-4 h-4 mr-1.5" />
+                      Detalles
+                    </button>
+                    <button
+                      onClick={() => handleEditReservation(reservation)}
+                      className="flex items-center justify-center px-3 py-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors text-sm font-medium"
+                    >
+                      <Edit className="w-4 h-4 mr-1.5" />
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleManagePayment(reservation)}
+                      className="flex items-center justify-center px-3 py-2 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-sm font-medium col-span-2 sm:col-span-1"
+                    >
+                      <CreditCard className="w-4 h-4 mr-1.5" />
+                      Gestionar Pagos
+                    </button>
+                  </div>
+
+                  {(reservation.status !== 'CANCELED' && reservation.status !== 'COMPLETED') && (
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-dashed border-gray-200">
                       {reservation.status === 'PENDING' && (
                         <button
                           onClick={() => handleStatusChange(reservation.id, 'CONFIRMED')}
                           disabled={actionLoading}
-                          className="flex items-center justify-center px-3 sm:px-4 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors text-sm font-medium border border-green-200 disabled:opacity-50"
+                          className="flex items-center justify-center px-4 py-2.5 bg-green-600 text-white hover:bg-green-700 rounded-lg transition-colors text-sm font-bold shadow-sm active:scale-95 transform duration-100"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Confirmar
@@ -617,12 +620,12 @@ export default function SchoolReservations() {
                       <button
                         onClick={() => handleCancelReservation(reservation.id)}
                         disabled={actionLoading}
-                        className="flex items-center justify-center px-3 sm:px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium border border-red-200 disabled:opacity-50"
+                        className={`flex items-center justify-center px-4 py-2.5 border-2 border-red-100 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-bold active:scale-95 transform duration-100 ${reservation.status !== 'PENDING' ? 'col-span-2' : ''}`}
                       >
                         <XCircle className="w-4 h-4 mr-2" />
-                        Cancelar
+                        Cancelar Reserva
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
@@ -645,7 +648,7 @@ export default function SchoolReservations() {
 
         {/* Modal Detalles de la Reserva */}
         {showDetailModal && selectedReservation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4" onClick={() => setShowDetailModal(false)}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4" onClick={() => setShowDetailModal(false)}>
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto no-scrollbar" onClick={(e) => e.stopPropagation()} style={{ WebkitOverflowScrolling: 'touch' }}>
               <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
@@ -880,7 +883,7 @@ export default function SchoolReservations() {
 
         {/* Modal Editar Reserva */}
         {showEditModal && selectedReservation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4" onClick={() => setShowEditModal(false)}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4" onClick={() => setShowEditModal(false)}>
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto no-scrollbar" onClick={(e) => e.stopPropagation()} style={{ WebkitOverflowScrolling: 'touch' }}>
               <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Editar Reserva #{selectedReservation.id}</h3>
@@ -951,7 +954,7 @@ export default function SchoolReservations() {
 
         {/* Modal Gestionar Pago */}
         {showPaymentModal && selectedReservation && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4" onClick={() => setShowPaymentModal(false)}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4" onClick={() => setShowPaymentModal(false)}>
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto no-scrollbar" onClick={(e) => e.stopPropagation()} style={{ WebkitOverflowScrolling: 'touch' }}>
               <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Gestionar Pago - Reserva #{selectedReservation.id}</h3>

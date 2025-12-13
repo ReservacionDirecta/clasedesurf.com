@@ -1,5 +1,6 @@
 import express from 'express';
 import prisma from '../prisma';
+import { emailService } from '../services/email.service';
 import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
 import { validateBody, validateParams } from '../middleware/validation';
@@ -116,6 +117,31 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
 
     if (!result) return res.status(500).json({ message: 'Reservation failed' });
     if (!result.ok) return res.status(400).json({ message: result.reason });
+
+    if (result.ok && result.reservation) {
+      // Enviar correo de confirmación
+      const r = result.reservation as any;
+      try {
+        const classDate = new Date(r.class.date);
+        const dateStr = classDate.toLocaleDateString();
+        const timeStr = classDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        await emailService.sendReservationConfirmed(
+          r.user.email,
+          r.user.name,
+          r.class.title || 'Clase de Surf',
+          dateStr,
+          timeStr,
+          r.class.instructor || 'Instructor',
+          r.class.school.name,
+          r.class.school.location || 'Ubicación pendiente',
+          r.class.duration || 60,
+          r.class.price || 0
+        );
+      } catch (emailError) {
+        console.error('Failed to send confirmation email:', emailError);
+      }
+    }
 
     res.status(201).json(result.reservation);
   } catch (err: any) {
@@ -326,7 +352,8 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
             school: {
               select: {
                 id: true,
-                name: true
+                name: true,
+                location: true // Ensure location is fetched
               }
             }
           }
@@ -414,8 +441,47 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
       classId: updatedReservation.classId
     });
 
+    if (updatedReservation.status === 'CANCELED') {
+      const r = updatedReservation as any;
+      try {
+        const classDate = new Date(r.class.date);
+        await emailService.sendReservationCancelled(
+          r.user.email,
+          r.user.name,
+          r.class.title || 'Clase de Surf',
+          classDate.toLocaleDateString(),
+          classDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          r.class.school.name,
+          r.class.school.location || 'Ubicación pendiente'
+        );
+      } catch (emailError) {
+        console.error('Failed to send cancellation email:', emailError);
+      }
+    } else if (updateData.classId && updateData.classId !== reservation.classId) {
+      // Cambio de clase (reprogramación)
+      const r = updatedReservation as any;
+      const oldClass = reservation.class;
+      try {
+        const newClassDate = new Date(r.class.date);
+        await emailService.sendReservationChanged(
+          r.user.email,
+          r.user.name,
+          r.class.title || 'Clase de Surf',
+          new Date(oldClass.date).toLocaleDateString(),
+          newClassDate.toLocaleDateString(),
+          newClassDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          r.class.school.name,
+          r.class.school.location || 'Ubicación pendiente',
+          r.class.duration || 60
+        );
+      } catch (emailError) {
+        console.error('Failed to send modification email:', emailError);
+      }
+    }
+
     res.json(updatedReservation);
   } catch (err) {
+
     console.error('[PUT /reservations/:id] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }

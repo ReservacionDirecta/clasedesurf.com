@@ -142,6 +142,14 @@ export default function AdminDashboardPage() {
       icon: '📈',
       color: 'from-indigo-500 to-indigo-600',
       stats: 'Detailed insights'
+    },
+    {
+      title: 'Notificaciones',
+      description: 'Ver historial de notificaciones enviadas',
+      href: '/dashboard/admin/notifications',
+      icon: '🔔',
+      color: 'from-amber-500 to-amber-600',
+      stats: 'Ver alertas'
     }
   ];
 
