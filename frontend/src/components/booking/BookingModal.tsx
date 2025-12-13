@@ -272,7 +272,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
   const basePricePEN = classData.price * formData.participants // Precio en PEN (moneda base)
   
   // Aplicar descuento si existe
-  const finalPricePEN = discountInfo?.valid && discountInfo.finalAmount 
+  const finalPricePEN = discountInfo?.valid && typeof discountInfo.finalAmount === 'number'
     ? discountInfo.finalAmount 
     : basePricePEN
   
@@ -305,7 +305,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
       if (data.valid) {
         setDiscountInfo({
           valid: true,
-          discountCodeId: data.discountCode.id,
+          discountCodeId: data.discountCodeId,
           discountAmount: data.discountAmount,
           finalAmount: data.finalAmount,
           message: `Descuento de ${data.discountCode.discountPercentage}% aplicado`
