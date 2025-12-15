@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { User, Mail, Phone, Star, Award, BookOpen, Calendar, Camera, Upload, Edit, Save, X } from 'lucide-react';
 import AvatarSelector, { AvatarDisplay } from '@/components/avatar/AvatarSelector';
 import { useToast } from '@/contexts/ToastContext';
+import { useUnsavedChangesWarning } from '@/hooks/useFormPersistence';
 
 export default function InstructorProfile() {
   const { data: session, status } = useSession();
@@ -18,6 +19,10 @@ export default function InstructorProfile() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  
+  // Warn user before leaving if there are unsaved changes
+  useUnsavedChangesWarning(isDirty && isEditing);
 
   const fetchInstructorProfile = useCallback(async () => {
     try {
@@ -89,6 +94,7 @@ export default function InstructorProfile() {
     if (!isEditing) {
       setIsEditing(true);
     }
+    setIsDirty(true);
   };
 
   const handleSaveProfile = async () => {
@@ -126,6 +132,7 @@ export default function InstructorProfile() {
       }
 
       setIsEditing(false);
+      setIsDirty(false);
       fetchInstructorProfile(); // Reload to get updated data
       showSuccess('¡Perfil actualizado!', 'Los cambios se guardaron correctamente');
     } catch (error) {

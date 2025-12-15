@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Waves, AlertCircle } from 'lucide-react';
@@ -20,13 +20,52 @@ function LoginForm() {
   
   // Check if user was redirected due to expired token
   const isExpired = searchParams?.get('expired') === 'true';
+  const [sessionCleared, setSessionCleared] = useState(false);
+  
+  // Función para limpiar cookies del cliente
+  const clearClientCookies = () => {
+    document.cookie.split(";").forEach((c) => {
+      const eqPos = c.indexOf("=");
+      const name = eqPos > -1 ? c.substring(0, eqPos).trim() : c.trim();
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    });
+  };
   
   useEffect(() => {
-    if (isExpired) {
+    // Si la sesión expiró, limpiar todo automáticamente
+    if (isExpired && !sessionCleared) {
+      const cleanupSession = async () => {
+        try {
+          // Limpiar cookies
+          clearClientCookies();
+          
+          // Limpiar storage
+          try {
+            localStorage.clear();
+            sessionStorage.clear();
+          } catch (e) {
+            console.warn('Error clearing storage:', e);
+          }
+          
+          // Intentar cerrar sesión de forma silenciosa
+          try {
+            await signOut({ redirect: false });
+          } catch (e) {
+            console.warn('Error during silent signOut:', e);
+          }
+          
+          setSessionCleared(true);
+        } catch (error) {
+          console.error('Error cleaning up expired session:', error);
+          setSessionCleared(true);
+        }
+      };
+      
+      cleanupSession();
       setError('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
       showErrorToast('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
     }
-  }, [isExpired, showErrorToast]);
+  }, [isExpired, sessionCleared, showErrorToast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

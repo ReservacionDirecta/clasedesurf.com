@@ -5,9 +5,10 @@ export const dynamic = 'force-dynamic';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useToast } from '@/contexts/ToastContext';
 import AvatarSelector, { AvatarDisplay } from '@/components/avatar/AvatarSelector';
+import { useUnsavedChangesWarning } from '@/hooks/useFormPersistence';
 
 interface UserProfile {
   name: string;
@@ -46,6 +47,13 @@ export default function StudentProfile() {
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Track if form has been modified to prevent data loss on tab switch
+  const [isDirty, setIsDirty] = useState(false);
+  const initialFetchDone = useRef(false);
+  
+  // Warn user before leaving if there are unsaved changes
+  useUnsavedChangesWarning(isDirty && isEditing);
   
   // Avatar state
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
@@ -162,6 +170,7 @@ export default function StudentProfile() {
     if (!isEditing) {
       setIsEditing(true);
     }
+    setIsDirty(true);
   };
   
   // Handle form change
@@ -173,6 +182,7 @@ export default function StudentProfile() {
       ...prev,
       [id]: type === 'checkbox' ? checked : value,
     }));
+    setIsDirty(true);
   };
   
   // Save profile
@@ -223,6 +233,7 @@ export default function StudentProfile() {
       await update({ name: userProfile.name });
       
       setIsEditing(false);
+      setIsDirty(false);
       showSuccess('Perfil actualizado', 'Tu información se ha guardado correctamente');
       
     } catch (err: any) {
@@ -239,6 +250,7 @@ export default function StudentProfile() {
     // Reload profile to reset all changes
     loadProfile();
     setIsEditing(false);
+    setIsDirty(false);
   };
   
   // Get recommendations

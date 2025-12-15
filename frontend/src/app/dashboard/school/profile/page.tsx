@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { MapPin, Phone, Mail, Globe, Instagram, Facebook, MessageCircle, Camera, Edit, Save, X, Eye, Upload, ImageIcon } from 'lucide-react';
 import Image from 'next/image';
@@ -41,8 +41,19 @@ export default function SchoolProfilePage() {
   // Image upload states
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
+  
+  // Track unsaved changes to prevent data loss on tab switch
+  const [isDirty, setIsDirty] = useState(false);
+  const initialFetchDone = useRef(false);
+  const originalSchoolData = useRef<School | null>(null);
 
   const fetchSchool = useCallback(async () => {
+    // Don't refetch if there are unsaved changes
+    if (isDirty) {
+      console.log('[Frontend] Skipping fetch - form has unsaved changes');
+      return;
+    }
+    
     try {
       setLoading(true);
       
@@ -63,6 +74,10 @@ export default function SchoolProfilePage() {
       
       if (selectedSchool) {
         setSchool(selectedSchool);
+        // Store original data for comparison
+        originalSchoolData.current = JSON.parse(JSON.stringify(selectedSchool));
+        initialFetchDone.current = true;
+        setIsDirty(false);
       }
     } catch (err) {
       console.error('Error fetching school:', err);
@@ -70,7 +85,7 @@ export default function SchoolProfilePage() {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [session, isDirty]);
 
   useEffect(() => {
     if (status === 'loading') {
@@ -87,12 +102,28 @@ export default function SchoolProfilePage() {
       return;
     }
 
-    // Only fetch if we don't have school data yet
-    if (!school) {
+    // Only fetch if:
+    // 1. Initial fetch hasn't been done yet
+    // 2. There are no unsaved changes
+    if (!initialFetchDone.current && !isDirty) {
       fetchSchool();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router]); // Removed fetchSchool from dependencies to prevent unnecessary refetches
+
+  // Warn user before leaving if there are unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = ''; // Required for Chrome
+        return ''; // Required for other browsers
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -150,6 +181,9 @@ export default function SchoolProfilePage() {
       
       // Update the school state with the response from backend
       setSchool(updatedSchool);
+      // Update original data reference and reset dirty state
+      originalSchoolData.current = JSON.parse(JSON.stringify(updatedSchool));
+      setIsDirty(false);
       showSuccess('¡Guardado!', 'Los cambios se guardaron correctamente');
       
     } catch (err) {
@@ -169,6 +203,8 @@ export default function SchoolProfilePage() {
       console.log('[Frontend] Updated school state:', JSON.stringify(updated, null, 2));
       return updated;
     });
+    // Mark form as dirty (has unsaved changes)
+    setIsDirty(true);
   };
 
   const handleImageUpload = async (file: File, type: 'logo' | 'coverImage') => {
@@ -308,7 +344,14 @@ export default function SchoolProfilePage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Perfil de la Escuela</h1>
-              <p className="text-gray-600 mt-1">Gestiona la información de tu escuela</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-gray-600">Gestiona la información de tu escuela</p>
+                {isDirty && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                    Cambios sin guardar
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex gap-3">
               {school && (

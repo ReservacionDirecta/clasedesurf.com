@@ -82,6 +82,15 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
   const getLabel = (options: typeof LOCATION_OPTIONS, value?: string) => 
     options.find(o => o.value === value)?.label
 
+  // Helper to format date preventing timezone issues
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return ''
+    // Create a date object that respects the string's day, irrespective of timezones.
+    // We append T12:00:00 to ensure we are in the middle of the day.
+    const date = new Date(`${dateStr}T12:00:00`) 
+    return date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
+  }
+
   // --- Render Components ---
 
   // 1. Mobile Filter Card
@@ -126,7 +135,7 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
         <span className={`text-base font-semibold truncate ${value ? 'text-gray-900' : 'text-gray-500'}`}>
           {type === 'select' 
             ? (getLabel(options, value) || placeholder)
-            : (value ? new Date(value).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) : placeholder)
+            : (value ? formatDate(value) : placeholder)
           }
         </span>
       </div>
@@ -269,7 +278,7 @@ export function AirbnbSearchBar({ onFilterChange, onReset }: AirbnbSearchBarProp
                  <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-0.5">¿Cuándo?</div>
                  <div className={`text-sm truncate ${filters.date ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
                     {filters.date 
-                      ? new Date(filters.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
+                      ? formatDate(filters.date)
                       : 'Agrega fechas'
                     }
                  </div>

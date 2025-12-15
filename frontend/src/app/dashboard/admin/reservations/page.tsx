@@ -397,8 +397,27 @@ function AdminReservationsContent() {
                           </h3>
                           {reservation.payment ? (
                             <>
+                              {/* Mostrar descuento si existe */}
+                              {reservation.payment.discountCode && reservation.payment.discountAmount > 0 && (
+                                <div className="bg-green-50 border border-green-200 rounded p-2 mb-2">
+                                  <div className="flex items-center gap-1 text-green-700 text-xs font-medium">
+                                    <span>Descuento:</span>
+                                    <span className="bg-green-100 px-1.5 py-0.5 rounded font-mono">
+                                      {reservation.payment.discountCode.code}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center mt-1 text-xs">
+                                    <span className="text-gray-500 line-through">
+                                      S/. {reservation.payment.originalAmount?.toFixed(2)}
+                                    </span>
+                                    <span className="text-green-600 font-semibold">
+                                      -S/. {reservation.payment.discountAmount?.toFixed(2)}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                               <div className="text-sm text-gray-900 font-medium">
-                                S/. {reservation.payment.amount?.toFixed(2) || '0.00'}
+                                Total: S/. {reservation.payment.amount?.toFixed(2) || '0.00'}
                               </div>
                               <div className="text-sm text-gray-600">
                                 Estado: <span className={`font-medium ${

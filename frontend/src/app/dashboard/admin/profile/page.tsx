@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { useUnsavedChangesWarning } from '@/hooks/useFormPersistence';
 
 export default function AdminProfilePage() {
   const { data: session, status } = useSession();
@@ -21,6 +22,10 @@ export default function AdminProfilePage() {
     timezone: 'UTC-5',
     language: 'en'
   });
+  const [isDirty, setIsDirty] = useState(false);
+  
+  // Warn user before leaving if there are unsaved changes
+  useUnsavedChangesWarning(isDirty && isEditing);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -42,11 +47,18 @@ export default function AdminProfilePage() {
     setLoading(false);
   }, [session, status, router]);
 
+  // Helper to update profile data and mark as dirty
+  const handleProfileChange = (field: string, value: string) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+    setIsDirty(true);
+  };
+
   const handleSave = async () => {
     try {
       // Here you would typically save to backend
       console.log('Saving profile data:', profileData);
       setIsEditing(false);
+      setIsDirty(false);
       // Show success message
     } catch (error) {
       console.error('Error saving profile:', error);
@@ -144,7 +156,7 @@ export default function AdminProfilePage() {
                   <input
                     type="text"
                     value={profileData.name}
-                    onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                    onChange={(e) => handleProfileChange('name', e.target.value)}
                     disabled={!isEditing}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
                   />
@@ -155,7 +167,7 @@ export default function AdminProfilePage() {
                   <input
                     type="email"
                     value={profileData.email}
-                    onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                    onChange={(e) => handleProfileChange('email', e.target.value)}
                     disabled={!isEditing}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
                   />
@@ -166,7 +178,7 @@ export default function AdminProfilePage() {
                   <input
                     type="tel"
                     value={profileData.phone}
-                    onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                    onChange={(e) => handleProfileChange('phone', e.target.value)}
                     disabled={!isEditing}
                     placeholder="+51 999 999 999"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
@@ -178,7 +190,7 @@ export default function AdminProfilePage() {
                   <input
                     type="text"
                     value={profileData.location}
-                    onChange={(e) => setProfileData({...profileData, location: e.target.value})}
+                    onChange={(e) => handleProfileChange('location', e.target.value)}
                     disabled={!isEditing}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
                   />
@@ -188,7 +200,7 @@ export default function AdminProfilePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
                   <select
                     value={profileData.timezone}
-                    onChange={(e) => setProfileData({...profileData, timezone: e.target.value})}
+                    onChange={(e) => handleProfileChange('timezone', e.target.value)}
                     disabled={!isEditing}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
                   >
@@ -204,7 +216,7 @@ export default function AdminProfilePage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
                   <select
                     value={profileData.language}
-                    onChange={(e) => setProfileData({...profileData, language: e.target.value})}
+                    onChange={(e) => handleProfileChange('language', e.target.value)}
                     disabled={!isEditing}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"
                   >
@@ -219,7 +231,7 @@ export default function AdminProfilePage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
                 <textarea
                   value={profileData.bio}
-                  onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                  onChange={(e) => handleProfileChange('bio', e.target.value)}
                   disabled={!isEditing}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500"

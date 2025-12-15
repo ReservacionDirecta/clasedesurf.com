@@ -113,17 +113,47 @@ export function AdminSidebar() {
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
+      setProfileDropdownOpen(false);
+      
+      // Pequeña pausa para permitir que cualquier dropdown se cierre
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Limpiar cookies del cliente
+      document.cookie.split(";").forEach((c) => {
+        const eqPos = c.indexOf("=");
+        const name = eqPos > -1 ? c.substring(0, eqPos).trim() : c.trim();
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      });
+      
+      // Limpiar storage
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn('Error clearing storage:', e);
+      }
+      
       await signOut({ 
         redirect: false 
       });
-      // Redirección manual para evitar problemas con NEXTAUTH_URL
-      router.push('/login');
-      router.refresh();
+      
+      // Usar window.location.href para redirección más robusta
+      window.location.href = '/login';
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
+      // Incluso si hay error, intentar redirigir y limpiar
+      try {
+        document.cookie.split(";").forEach((c) => {
+          const eqPos = c.indexOf("=");
+          const name = eqPos > -1 ? c.substring(0, eqPos).trim() : c.trim();
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+        });
+      } catch (e) {
+        console.warn('Error clearing cookies on error:', e);
+      }
+      window.location.href = '/login';
+    } finally {
       setIsSigningOut(false);
-      // Intentar redirección manual incluso si hay error
-      router.push('/login');
     }
   };
 

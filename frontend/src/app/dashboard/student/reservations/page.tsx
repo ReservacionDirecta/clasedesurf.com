@@ -16,7 +16,9 @@ import {
   AlertCircle,
   CreditCard,
   Eye,
-  Star
+  Star,
+  Tag,
+  Sparkles
 } from 'lucide-react';
 
 interface StudentReservation {
@@ -43,9 +45,15 @@ interface StudentReservation {
   payment?: {
     id: number;
     amount: number;
+    originalAmount?: number;
+    discountAmount?: number;
     status: string;
     paymentMethod: string;
     paidAt?: string;
+    discountCode?: {
+      id: number;
+      code: string;
+    };
   };
 }
 
@@ -120,9 +128,12 @@ export default function StudentReservations() {
         payment: r.payment ? {
           id: r.payment.id,
           amount: Number(r.payment.amount),
+          originalAmount: r.payment.originalAmount ? Number(r.payment.originalAmount) : undefined,
+          discountAmount: r.payment.discountAmount ? Number(r.payment.discountAmount) : undefined,
           status: r.payment.status,
           paymentMethod: r.payment.paymentMethod || 'N/A',
-          paidAt: r.payment.paidAt
+          paidAt: r.payment.paidAt,
+          discountCode: r.payment.discountCode || undefined
         } : undefined
       }));
 
@@ -204,12 +215,44 @@ export default function StudentReservations() {
                     {r.class.startTime} - {r.class.endTime}
                   </p>
                   {r.payment && (
-                    <p className="flex items-center mt-2 pt-2 border-t border-gray-100">
-                      <span className="font-medium mr-2">Pago:</span>
-                      <span className={r.payment.status === 'PAID' ? 'text-green-600 font-medium' : 'text-orange-600'}>
-                        {r.payment.status}
-                      </span>
-                    </p>
+                    <div className="mt-2 pt-2 border-t border-gray-100 space-y-1">
+                      <p className="flex items-center">
+                        <span className="font-medium mr-2">Pago:</span>
+                        <span className={r.payment.status === 'PAID' ? 'text-green-600 font-medium' : 'text-orange-600'}>
+                          {r.payment.status === 'PAID' ? 'Pagado' : r.payment.status === 'PENDING' ? 'Pendiente' : r.payment.status}
+                        </span>
+                      </p>
+                      {/* Mostrar información de descuento si existe */}
+                      {r.payment.discountCode && r.payment.discountAmount && r.payment.discountAmount > 0 && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                          <p className="flex items-center gap-1 text-green-700 text-xs font-medium">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Descuento aplicado:</span>
+                            <span className="bg-green-100 px-1.5 py-0.5 rounded font-mono">
+                              {r.payment.discountCode.code}
+                            </span>
+                          </p>
+                          <div className="flex justify-between items-center mt-1 text-xs">
+                            <span className="text-gray-500 line-through">
+                              S/ {r.payment.originalAmount?.toFixed(2)}
+                            </span>
+                            <span className="text-green-700 font-bold">
+                              S/ {r.payment.amount.toFixed(2)}
+                            </span>
+                          </div>
+                          <p className="text-green-600 text-xs mt-0.5">
+                            ¡Ahorraste S/ {r.payment.discountAmount.toFixed(2)}!
+                          </p>
+                        </div>
+                      )}
+                      {/* Si no hay descuento, mostrar solo el monto */}
+                      {(!r.payment.discountCode || !r.payment.discountAmount || r.payment.discountAmount === 0) && (
+                        <p className="flex items-center text-xs text-gray-600">
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          <span className="font-medium">Total: S/ {r.payment.amount.toFixed(2)}</span>
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
