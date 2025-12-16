@@ -1,0 +1,116 @@
+  "email": "testprueba123@gmail.com",
+  "password": "Test123456!",
+  "role": "STUDENT"
+}
+[Validation] foundedYear in validated data: undefined undefined
+prisma:query SELECT 1
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query INSERT INTO "public"."students" ("userId","level","canSwim","createdAt","updatedAt") VALUES ($1,CAST($2::text AS "public"."ClassLevel"),$3,$4,$5) RETURNING "public"."students"."id", "public"."students"."userId", "public"."students"."schoolId", "public"."students"."birthdate", "public"."students"."notes", "public"."students"."level"::text, "public"."students"."canSwim", "public"."students"."createdAt", "public"."students"."updatedAt"
+  data: { id: '256b04a7-1d57-43da-acc5-ea6489bd8eac' },
+Signing token with JWT_SECRET: zvPwjXx4gK...
+prisma:query BEGIN
+  error: null,
+prisma:query SELECT "public"."users"."id" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) OFFSET $2
+  headers: {
+prisma:query INSERT INTO "public"."refresh_tokens" ("tokenHash","userId","expiresAt","createdAt") VALUES ($1,$2,$3,$4) RETURNING "public"."refresh_tokens"."id"
+prisma:query SELECT "public"."refresh_tokens"."id", "public"."refresh_tokens"."tokenHash", "public"."refresh_tokens"."userId", "public"."refresh_tokens"."expiresAt", "public"."refresh_tokens"."createdAt" FROM "public"."refresh_tokens" WHERE "public"."refresh_tokens"."id" = $1 LIMIT $2 OFFSET $3
+    'cf-cache-status': 'DYNAMIC',
+prisma:query COMMIT
+    'cf-ray': '9aea5e7b6a000814-IAD',
+📧 Sending email to testprueba123@gmail.com [¡Bienvenido a ClaseDeSurf.com!]
+    connection: 'keep-alive',
+✅ Email sent successfully: {
+    'content-encoding': 'br',
+    'content-type': 'application/json',
+    date: 'Tue, 16 Dec 2025 01:22:20 GMT',
+    'ratelimit-limit': '2',
+    'ratelimit-policy': '2;w=1',
+    'ratelimit-remaining': '1',
+    'ratelimit-reset': '1',
+    server: 'cloudflare',
+    'transfer-encoding': 'chunked',
+    'x-resend-daily-quota': '2',
+    'x-resend-monthly-quota': '12'
+  }
+}
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query INSERT INTO "public"."notifications" ("userId","type","category","subject","content","metadata","isRead","createdAt") VALUES ($1,CAST($2::text AS "public"."NotificationType"),$3,$4,$5,$6,$7,$8) RETURNING "public"."notifications"."id", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."category", "public"."notifications"."subject", "public"."notifications"."content", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt"
+📝 Notification saved for user 14
+[Validation] Validating body: {
+prisma:query SELECT 1
+  "email": "admin@clasedesurf.com",
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+  "password": "password123"
+prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
+}
+[Validation] Validation passed: {
+Signing token with JWT_SECRET: zvPwjXx4gK...
+  "email": "admin@clasedesurf.com",
+prisma:query BEGIN
+  "password": "password123"
+}
+[Validation] foundedYear in validated data: undefined undefined
+prisma:query SELECT "public"."users"."id" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) OFFSET $2
+prisma:query INSERT INTO "public"."refresh_tokens" ("tokenHash","userId","expiresAt","createdAt") VALUES ($1,$2,$3,$4) RETURNING "public"."refresh_tokens"."id"
+prisma:query SELECT "public"."refresh_tokens"."id", "public"."refresh_tokens"."tokenHash", "public"."refresh_tokens"."userId", "public"."refresh_tokens"."expiresAt", "public"."refresh_tokens"."createdAt" FROM "public"."refresh_tokens" WHERE "public"."refresh_tokens"."id" = $1 LIMIT $2 OFFSET $3
+prisma:query COMMIT
+Using JWT_SECRET: zvPwjXx4gK...
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."category", "public"."notifications"."subject", "public"."notifications"."content", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
+SyntaxError: Unexpected token \ in JSON at position 1
+    at JSON.parse (<anonymous>)
+    at parse (/app/node_modules/body-parser/lib/types/json.js:92:19)
+    at /app/node_modules/body-parser/lib/read.js:128:18
+    at AsyncResource.runInAsyncScope (node:async_hooks:203:9)
+    at invokeCallback (/app/node_modules/raw-body/index.js:238:16)
+    at done (/app/node_modules/raw-body/index.js:227:7)
+    at IncomingMessage.onEnd (/app/node_modules/raw-body/index.js:287:7)
+    at IncomingMessage.emit (node:events:517:28)
+    at endReadableNT (node:internal/streams/readable:1400:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+prisma:query INSERT INTO "public"."users" ("email","name","password","role","canSwim","createdAt","updatedAt") VALUES ($1,$2,$3,CAST($4::text AS "public"."UserRole"),$5,$6,$7) RETURNING "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar"
+[Validation] Validating body: {
+  "name": "Prueba Email Surf",
+  "email": "yerct.test2024@gmail.com",
+  "password": "TestEmail2024!"
+}
+[Validation] Validation passed: {
+  "name": "Prueba Email Surf",
+  "email": "yerct.test2024@gmail.com",
+  "password": "TestEmail2024!",
+  "role": "STUDENT"
+}
+[Validation] foundedYear in validated data: undefined undefined
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."refresh_tokens"."id", "public"."refresh_tokens"."tokenHash", "public"."refresh_tokens"."userId", "public"."refresh_tokens"."expiresAt", "public"."refresh_tokens"."createdAt" FROM "public"."refresh_tokens" WHERE "public"."refresh_tokens"."id" = $1 LIMIT $2 OFFSET $3
+prisma:query INSERT INTO "public"."students" ("userId","level","canSwim","createdAt","updatedAt") VALUES ($1,CAST($2::text AS "public"."ClassLevel"),$3,$4,$5) RETURNING "public"."students"."id", "public"."students"."userId", "public"."students"."schoolId", "public"."students"."birthdate", "public"."students"."notes", "public"."students"."level"::text, "public"."students"."canSwim", "public"."students"."createdAt", "public"."students"."updatedAt"
+prisma:query COMMIT
+📧 Sending email to yerct.test2024@gmail.com [¡Bienvenido a ClaseDeSurf.com!]
+✅ Email sent successfully: {
+  data: { id: '152d234e-521c-4563-8ef9-80ff3ec1167f' },
+  error: null,
+Signing token with JWT_SECRET: zvPwjXx4gK...
+  headers: {
+    'cf-cache-status': 'DYNAMIC',
+prisma:query BEGIN
+    'cf-ray': '9aea60474d6e15cd-IAD',
+prisma:query SELECT "public"."users"."id" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) OFFSET $2
+    connection: 'keep-alive',
+prisma:query INSERT INTO "public"."refresh_tokens" ("tokenHash","userId","expiresAt","createdAt") VALUES ($1,$2,$3,$4) RETURNING "public"."refresh_tokens"."id"
+    'content-encoding': 'br',
+    'content-type': 'application/json',
+    date: 'Tue, 16 Dec 2025 01:23:33 GMT',
+    'ratelimit-limit': '2',
+    'ratelimit-policy': '2;w=1',
+    'ratelimit-remaining': '1',
+    'ratelimit-reset': '1',
+    server: 'cloudflare',
+    'transfer-encoding': 'chunked',
+    'x-resend-daily-quota': '3',
+    'x-resend-monthly-quota': '13'
+  }
+}
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query INSERT INTO "public"."notifications" ("userId","type","category","subject","content","metadata","isRead","createdAt") VALUES ($1,CAST($2::text AS "public"."NotificationType"),$3,$4,$5,$6,$7,$8) RETURNING "public"."notifications"."id", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."category", "public"."notifications"."subject", "public"."notifications"."content", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt"
+📝 Notification saved for user 15
+2025-12-16 01:24:12.117 UTC [27] LOG:  checkpoint starting: time
+2025-12-16 01:24:13.753 UTC [27] LOG:  checkpoint complete: wrote 17 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.609 s, sync=0.011 s, total=1.637 s; sync files=16, longest=0.010 s, average=0.001 s; distance=28 kB, estimate=85 kB; lsn=0/35B54C0, redo lsn=0/35B5468

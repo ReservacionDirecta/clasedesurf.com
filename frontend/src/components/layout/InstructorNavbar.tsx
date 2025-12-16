@@ -277,7 +277,7 @@ export default function InstructorNavbar() {
       </nav>
 
       {/* Mobile Slide-out Menu */}
-      <div className={`lg:hidden fixed inset-0 z-50 transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      <div className={`lg:hidden fixed inset-0 z-[100] transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}>
         {/* Backdrop */}
         <div

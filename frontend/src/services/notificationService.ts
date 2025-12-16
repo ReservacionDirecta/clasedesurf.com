@@ -43,6 +43,12 @@ export const notificationService = {
         return response.data;
     },
 
+    // Admin only: get ALL system notifications
+    async getAllForAdmin(limit = 50, offset = 0): Promise<Notification[]> {
+        const response = await api.get(`/notifications/all?limit=${limit}&offset=${offset}`);
+        return response.data;
+    },
+
     async getById(id: number): Promise<Notification> {
         const response = await api.get(`/notifications/${id}`);
         return response.data;

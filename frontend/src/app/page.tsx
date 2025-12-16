@@ -551,8 +551,26 @@ export default function Home() {
         {/* No Results */}
         {!loading && filteredClasses.length === 0 && (
           <div className="text-center py-12">
-            <div className="w-24 h-24 mx-auto mb-4 bg-[#F6F7F8] rounded-full flex items-center justify-center border border-[#FF3366]/20">
-              <SurferIcon className="w-12 h-12 text-[#2EC4B6]" />
+            {/* Clear "no results" icon: magnifying glass with wave inside and X overlay */}
+            <div className="w-28 h-28 mx-auto mb-6 relative">
+              {/* Background circle */}
+              <div className="w-full h-full bg-gradient-to-br from-[#F0F9FF] to-[#E0F2FE] rounded-full flex items-center justify-center border-2 border-[#2EC4B6]/30 shadow-lg">
+                {/* Magnifying glass with wave */}
+                <svg className="w-14 h-14 text-[#2EC4B6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  {/* Magnifying glass circle */}
+                  <circle cx="10" cy="10" r="7" strokeLinecap="round" strokeLinejoin="round" />
+                  {/* Handle */}
+                  <path d="M21 21L15 15" strokeLinecap="round" strokeLinejoin="round" />
+                  {/* Wave inside the glass */}
+                  <path d="M6 10C7 9 8 11 10 10C12 9 13 11 14 10" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+                </svg>
+              </div>
+              {/* X badge overlay */}
+              <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-[#FF3366] rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
             </div>
             <h3 className="text-xl font-semibold text-[#011627] mb-2">
               No encontramos clases con esos filtros

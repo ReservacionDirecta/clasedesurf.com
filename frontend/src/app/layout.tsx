@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
@@ -10,16 +10,19 @@ import { ExchangeRateInitializer } from '@/components/currency/ExchangeRateIniti
 
 const inter = Inter({ subsets: ['latin'] })
 
+// Viewport configuration - separate export for Next.js 14+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  minimumScale: 1,
+  maximumScale: 5,
+  userScalable: true, // Allow user to zoom if needed
+  viewportFit: 'cover',
+}
+
 export const metadata: Metadata = {
   title: 'Clase de Surf - Aprende Surf en Lima, Perú',
   description: 'Clases de surf para todos los niveles en las mejores playas de Lima, Perú. Instructores certificados y equipamiento incluido.',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: false, // Prevent zoom for app-like feel
-    viewportFit: 'cover',
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

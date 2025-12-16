@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --primary: #ff3366;
@@ -9,6 +9,14 @@
   --secondary-dark: #1baa9c;
   --base-dark: #011627;
   --base-light: #f6f7f8;
+}
+
+/* Prevent horizontal overflow that causes zoom on mobile */
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -25,6 +33,9 @@ body {
   font-size: 16px;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+  /* Ensure content doesn't escape viewport */
+  width: 100%;
+  max-width: 100vw;
 }
 
 /* Focus states for accessibility */

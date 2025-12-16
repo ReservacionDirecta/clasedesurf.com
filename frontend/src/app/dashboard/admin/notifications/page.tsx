@@ -19,7 +19,8 @@ export default function AdminNotificationsPage() {
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      const data = await notificationService.getAll();
+      // Use getAllForAdmin to get ALL system notifications (admin only)
+      const data = await notificationService.getAllForAdmin(50, 0);
       setNotifications(data);
     } catch (error) {
       console.error('Error loading notifications:', error);
@@ -115,9 +116,16 @@ export default function AdminNotificationsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      {getCategoryLabel(notification.category)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        {getCategoryLabel(notification.category)}
+                      </span>
+                      {notification.user && (
+                        <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                          → {notification.user.name || notification.user.email}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
                         {format(new Date(notification.createdAt), "d MMM, h:mm a", { locale: es })}
                     </span>
