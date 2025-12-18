@@ -38,6 +38,7 @@ const buildQueryParams = (filters: FilterValues) => {
   if (filters.level) params.append('level', filters.level)
   if (filters.type) params.append('type', filters.type)
   if (filters.locality) params.append('locality', filters.locality)
+  if (filters.participants) params.append('participants', filters.participants)
   return params.toString()
 }
 
@@ -165,7 +166,7 @@ const renderErrorState = (message: string, retry: () => void) => (
 )
 
 const renderHero = () => (
-  <section className="relative overflow-hidden bg-gradient-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] pb-12 sm:pb-16 pt-16 sm:pt-20 safe-area-top" style={{ paddingTop: 'max(4rem, env(safe-area-inset-top))' }}>
+  <section className="relative overflow-hidden bg-linear-to-br from-[#011627] via-[#072F46] to-[#0F4C5C] pb-12 sm:pb-16 pt-16 sm:pt-20 safe-area-top" style={{ paddingTop: 'max(4rem, env(safe-area-inset-top))' }}>
     <div className="absolute inset-0 opacity-40">
       <svg className="h-full w-full" viewBox="0 0 1440 960" preserveAspectRatio="none">
         <defs>
@@ -279,15 +280,24 @@ export default function ClassesPage() {
     handleOpen(classItem)
   }
 
+  const visibleClasses = useMemo(() => {
+    return classes.filter(c => {
+      if (filters.participants && c.availableSpots < Number(filters.participants)) {
+        return false
+      }
+      return true
+    })
+  }, [classes, filters.participants])
+
   const resultsSummary = useMemo(() => {
     if (loading) {
       return 'Buscando clases disponibles…'
     }
-    if (classes.length === 0) {
+    if (visibleClasses.length === 0) {
       return 'Sin coincidencias con el filtro actual'
     }
-    return `${classes.length} ${classes.length === 1 ? 'clase disponible' : 'clases disponibles'}`
-  }, [classes, loading])
+    return `${visibleClasses.length} ${visibleClasses.length === 1 ? 'clase disponible' : 'clases disponibles'}`
+  }, [visibleClasses, loading])
 
   const handleBookingSubmit = async (payload: any) => {
     try {
@@ -371,14 +381,15 @@ export default function ClassesPage() {
             <div className="mt-6 sm:mt-8">
               {loading && renderSkeleton()}
               {!loading && error && renderErrorState(error, refetch)}
-              {!loading && !error && classes.length === 0 && renderEmptyState()}
-              {!loading && !error && classes.length > 0 && (
+              {!loading && !error && visibleClasses.length === 0 && renderEmptyState()}
+              {!loading && !error && visibleClasses.length > 0 && (
                 <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {classes.map((classItem) => (
+                  {visibleClasses.map((classItem) => (
                     <ClassCard
                       key={classItem.id}
                       classData={classItem}
                       onSelect={() => handleBookingClick(classItem)}
+                      searchContext={{ participants: filters.participants }}
                     />
                   ))}
                 </div>

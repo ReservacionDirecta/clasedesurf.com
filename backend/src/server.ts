@@ -23,7 +23,14 @@ import notificationsRouter from './routes/notifications';
 import { whatsappService } from './services/whatsapp.service';
 import { initializeRedis, getRedisClient } from './config/redis';
 import prisma from './prisma';
+import path from 'path';
+
 const app = express();
+
+// Serve static files from frontend uploads (for legacy/local images)
+const frontendUploads = path.join(__dirname, '../../frontend/public/uploads'); // Adjust path as needed
+app.use('/images/uploads', express.static(path.join(frontendUploads))); // Maps /images/uploads/classes/x.jpg to frontend/public/uploads/classes/x.jpg
+app.use('/api/images/uploads', express.static(path.join(frontendUploads))); // Fallback for requests that keep the /api prefix
 
 
 const port = process.env.PORT || 4000;

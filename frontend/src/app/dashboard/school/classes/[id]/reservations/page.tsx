@@ -282,7 +282,7 @@ export default function ClassReservationsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-12 bg-gray-200 rounded w-1/3"></div>
@@ -300,7 +300,7 @@ export default function ClassReservationsPage() {
 
   if (error && !classData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-8">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white border border-red-200 rounded-xl p-8 text-center shadow-lg">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
@@ -319,7 +319,7 @@ export default function ClassReservationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -493,7 +493,7 @@ export default function ClassReservationsPage() {
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
             <p className="text-red-800 font-medium">{error}</p>
           </div>
         )}
@@ -630,7 +630,7 @@ export default function ClassReservationsPage() {
                   {reservation.specialRequest && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                       <div className="flex items-start gap-2">
-                        <FileText className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <FileText className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm font-medium text-yellow-900">Solicitud Especial:</p>
                           <p className="text-sm text-yellow-800 mt-1">{reservation.specialRequest}</p>

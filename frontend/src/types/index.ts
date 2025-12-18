@@ -53,15 +53,24 @@ export interface Class {
     totalRevenue: number;
     occupancyRate: number;
   };
-  beach?: {
-    id: number;
-    name: string;
-    location?: string;
-  };
+  beach?: Beach;
   beachId?: number;
   reservations?: any[];
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  isRecurring?: boolean;
+  recurrencePattern?: {
+    days: number[];
+    times: string[];
+  };
+  startDate?: string | Date;
+  endDate?: string | Date;
+}
+
+export interface Beach {
+  id: number;
+  name: string;
+  location?: string;
 }
 export interface Reservation {
   id: number;

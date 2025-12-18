@@ -20,9 +20,16 @@ export const createClassSchema = z.object({
     .refine((dateStr) => {
       const date = new Date(dateStr);
       const now = new Date();
-      // Permitir fechas de hoy en adelante (no solo futuro estricto)
-      return date.getTime() >= now.getTime() - (24 * 60 * 60 * 1000); // Permite hasta 24h atrás
-    }, 'Class date must be today or in the future'),
+      return date.getTime() >= now.getTime() - (24 * 60 * 60 * 1000);
+    }, 'Class date must be today or in the future')
+    .optional(), // Made optional for recurring classes
+  isRecurring: z.boolean().default(false).optional(),
+  recurrencePattern: z.object({
+    days: z.array(z.number().min(0).max(6)),
+    times: z.array(z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/))
+  }).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
   duration: z.number()
     .int('Duration must be a whole number')
     .min(30, 'Duration must be at least 30 minutes')
@@ -35,6 +42,7 @@ export const createClassSchema = z.object({
     .min(0, 'Price must be non-negative')
     .max(10000, 'Price must be less than 10000'),
   level: ClassLevelEnum,
+  type: z.string().optional().default('SURF_LESSON'),
   instructor: z.string()
     .max(100, 'Instructor name must be less than 100 characters')
     .nullable()
@@ -97,12 +105,14 @@ export const updateClassSchema = z.object({
     .optional(),
   date: z.string()
     .datetime('Invalid date format')
-    .refine((dateStr) => {
-      const date = new Date(dateStr);
-      const now = new Date();
-      return date.getTime() >= now.getTime() - (24 * 60 * 60 * 1000);
-    }, 'Class date must be today or in the future')
     .optional(),
+  isRecurring: z.boolean().optional(),
+  recurrencePattern: z.object({
+    days: z.array(z.number().min(0).max(6)),
+    times: z.array(z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/))
+  }).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
   duration: z.number()
     .int('Duration must be a whole number')
     .min(30, 'Duration must be at least 30 minutes')
@@ -118,6 +128,7 @@ export const updateClassSchema = z.object({
     .max(10000, 'Price must be less than 10000')
     .optional(),
   level: ClassLevelEnum.optional(),
+  type: z.string().optional(),
   instructor: z.string()
     .max(100, 'Instructor name must be less than 100 characters')
     .nullable()

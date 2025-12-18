@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import Link from 'next/link'
 import { type School } from '@/types'
 
@@ -55,20 +56,25 @@ const SchoolCard = ({ school }: SchoolCardProps) => {
       <article className="group flex flex-col rounded-3xl bg-white shadow-xl ring-1 ring-gray-100 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
         <div className="relative h-48 w-full overflow-hidden rounded-t-3xl">
           {school.coverImage ? (
-            <Image
+            <ImageWithFallback
               src={school.coverImage}
               alt={name}
               fill
               sizes="(min-width: 1024px) 400px, 100vw"
               className="object-cover transition-transform duration-700 group-hover:scale-110"
               priority
+              fallbackComponent={
+                <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-[#2EC4B6] via-[#5DE0D0] to-[#FF3366] text-white">
+                  <span className="text-3xl font-bold tracking-wide drop-shadow-lg">{getInitials(name)}</span>
+                </div>
+              }
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#2EC4B6] via-[#5DE0D0] to-[#FF3366] text-white">
+            <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-[#2EC4B6] via-[#5DE0D0] to-[#FF3366] text-white">
               <span className="text-3xl font-bold tracking-wide drop-shadow-lg">{getInitials(name)}</span>
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-60" />
           
           <div className="absolute top-4 right-4 flex items-center gap-2">
              <span className="flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-[#011627] backdrop-blur-md shadow-sm">
@@ -84,11 +90,16 @@ const SchoolCard = ({ school }: SchoolCardProps) => {
           {/* Logo Overlay */}
           <div className="absolute -top-10 left-6 h-20 w-20 overflow-hidden rounded-2xl border-4 border-white bg-white shadow-lg">
             {logo ? (
-              <Image
+              <ImageWithFallback
                 src={logo}
                 alt={`${name} logo`}
                 fill
                 className="object-cover"
+                fallbackComponent={
+                  <div className="flex h-full w-full items-center justify-center bg-gray-100 text-[#011627] font-bold text-xl">
+                    {getInitials(name)}
+                  </div>
+                }
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center bg-gray-100 text-[#011627] font-bold text-xl">
@@ -148,7 +159,7 @@ const SchoolCard = ({ school }: SchoolCardProps) => {
             </div>
 
             <div className="mt-auto flex flex-col gap-2 pt-2">
-              <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2EC4B6] to-[#5DE0D0] px-4 py-3 text-sm font-bold text-white shadow-lg transition-all duration-300 group-hover:shadow-xl">
+              <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-[#2EC4B6] to-[#5DE0D0] px-4 py-3 text-sm font-bold text-white shadow-lg transition-all duration-300 group-hover:shadow-xl">
                 Ver perfil completo
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />

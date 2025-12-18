@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Users, Plus, Edit, Trash2, Mail, Phone, Star, Award } from 'lucide-react';
 import SimpleInstructorForm from '@/components/forms/SimpleInstructorForm';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import InstructorForm from '@/components/forms/InstructorForm';
 
 // Use API proxy routes instead of direct backend URLs
@@ -235,7 +236,7 @@ export default function InstructorsPage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
           <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
             <div className="flex items-center">
-              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 shrink-0" />
               <div className="ml-2 sm:ml-4 min-w-0">
                 <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Total</h3>
                 <p className="text-lg sm:text-2xl md:text-3xl font-bold text-blue-600">{instructors.length}</p>
@@ -245,7 +246,7 @@ export default function InstructorsPage() {
 
           <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
             <div className="flex items-center">
-              <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 flex-shrink-0" />
+              <Star className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 shrink-0" />
               <div className="ml-2 sm:ml-4 min-w-0">
                 <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Rating</h3>
                 <p className="text-lg sm:text-2xl md:text-3xl font-bold text-yellow-600">4.8</p>
@@ -255,7 +256,7 @@ export default function InstructorsPage() {
 
           <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
             <div className="flex items-center">
-              <Award className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" />
+              <Award className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 shrink-0" />
               <div className="ml-2 sm:ml-4 min-w-0">
                 <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Activos</h3>
                 <p className="text-lg sm:text-2xl md:text-3xl font-bold text-green-600">{instructors.length}</p>
@@ -265,7 +266,7 @@ export default function InstructorsPage() {
 
           <div className="bg-white rounded-lg shadow p-3 sm:p-4 md:p-6">
             <div className="flex items-center">
-              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 flex-shrink-0" />
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 shrink-0" />
               <div className="ml-2 sm:ml-4 min-w-0">
                 <h3 className="text-xs sm:text-sm md:text-lg font-semibold text-gray-900 truncate">Clases</h3>
                 <p className="text-lg sm:text-2xl md:text-3xl font-bold text-purple-600">156</p>
@@ -295,15 +296,15 @@ export default function InstructorsPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                     {instructor.profileImage ? (
-                      <Image
+                      <ImageWithFallback
                         src={instructor.profileImage}
                         alt={instructor.name}
                         width={64}
                         height={64}
-                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover flex-shrink-0"
+                        className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
                         <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
                       </div>
                     )}
@@ -313,13 +314,13 @@ export default function InstructorsPage() {
 
                       <div className="flex flex-col gap-1 mt-2">
                         <div className="flex items-center text-gray-600 text-xs sm:text-sm">
-                          <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                          <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2 shrink-0" />
                           <span className="truncate">{instructor.email}</span>
                         </div>
 
                         {instructor.phone && (
                           <div className="flex items-center text-gray-600 text-xs sm:text-sm">
-                            <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                            <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2 shrink-0" />
                             <span>{instructor.phone}</span>
                           </div>
                         )}
@@ -366,7 +367,7 @@ export default function InstructorsPage() {
 
         {/* Create Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-3 sm:p-4">
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
               <SimpleInstructorForm
                 onSubmit={handleCreateInstructor}
@@ -379,7 +380,7 @@ export default function InstructorsPage() {
 
         {/* Edit Modal */}
         {showEditModal && selectedInstructor && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-3 sm:p-4">
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-xl w-full max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg sm:text-xl font-bold mb-4">Editar Instructor</h3>
               <InstructorForm
@@ -405,7 +406,7 @@ export default function InstructorsPage() {
 
         {/* Delete Confirm Modal */}
         {deleteTarget && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-3 sm:p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-3 sm:p-4">
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar Instructor</h3>
               <p className="text-gray-600 mb-4">

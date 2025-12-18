@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, Users, MapPin, DollarSign, Edit, Eye, ArrowLeft, Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/currency';
+import { ClassAvailabilityCalendar } from '@/components/classes/ClassAvailabilityCalendar';
 
 interface ClassData {
   id: number;
@@ -416,6 +417,9 @@ export default function ClassDetailsPage() {
                 </p>
               </div>
             )}
+
+            {/* Inventory / Availability Calendar */}
+            <ClassAvailabilityCalendar classId={classId} />
           </div>
 
           {/* Sidebar */}

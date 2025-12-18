@@ -1,5 +1,5 @@
 // API service for connecting to the backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+const API_BASE_URL = '/api';
 
 export interface ApiClass {
   id: number;
@@ -99,6 +99,8 @@ export interface ClassFilters {
   schoolId?: number;
   location?: string;
   locality?: string;
+  participants?: string | number;
+  q?: string;
 }
 
 class ApiService {

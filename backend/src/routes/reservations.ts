@@ -14,7 +14,7 @@ const router = express.Router();
 router.post('/', requireAuth, validateBody(createReservationSchema), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    const { classId, specialRequest, participants, discountCodeId, discountAmount } = req.body;
+    const { classId, specialRequest, participants, discountCodeId, discountAmount, date, time } = req.body;
     if (!userId) return res.status(401).json({ message: 'User not authenticated' });
 
     // Determinar el número de participantes según el tipo de datos recibidos
@@ -38,9 +38,61 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
       const cls = await tx.class.findUnique({ where: { id: Number(classId) } });
       if (!cls) throw new Error('Class not found');
 
-      const count = await tx.reservation.count({ where: { classId: Number(classId), status: { not: 'CANCELED' } } });
+      // Determine booking date and time
+      let bookingDate = cls.date;
+      let bookingTimeStr = time; // Optional for single classes
+
+      if (cls.isRecurring) {
+        if (!date || !time) {
+          // Fallback or Error? Ideally error for recurring.
+          // throw new Error('Date and time are required for recurring class bookings');
+          // For safety, if missing, we default to cls.date (legacy behavior), but strictly we should require them.
+          if (date) bookingDate = new Date(date);
+        } else {
+          bookingDate = new Date(date);
+          bookingTimeStr = time;
+        }
+      } else {
+        // Single class: prefer the date/time passed to ensure alignment, but default to class date
+        if (date) bookingDate = new Date(date);
+      }
+
+      // Check capacity for THIS specific slot (date+time) if recurring
+      // For single class, simply check classId (unless we start supporting multiple slots per single class id?)
+      const countWhere: any = {
+        classId: Number(classId),
+        status: { not: 'CANCELED' }
+      };
+
+      if (cls.isRecurring) {
+        // Only count reservations for this specific date AND time
+        // Note: Prisma date comparison needs exact match or range. 
+        // Booking sends specific ISO string for date.
+        if (date) countWhere.date = bookingDate;
+        if (bookingTimeStr) countWhere.time = bookingTimeStr;
+      }
+
+      const count = await tx.reservation.count({ where: countWhere });
+
       if (count + requested > cls.capacity) {
         return { ok: false, reason: 'Not enough spots available' };
+      }
+
+      // Validar que la clase no haya pasado (ayer o antes)
+      // Use bookingDate for check
+      const checkDate = new Date(bookingDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+
+      // Allow bookings for today (>= today). But if checks strictly time, we might want to check time too.
+      // For now, just date check.
+      // If bookingDate includes time (it usually does for recurring), we can check normally.
+      // But let's strip time for the "is past day" check
+      const checkDateDay = new Date(checkDate);
+      checkDateDay.setHours(0, 0, 0, 0);
+
+      if (checkDateDay < today) {
+        return { ok: false, reason: 'Cannot book past classes' };
       }
 
       // Calcular precio original (precio de la clase * número de participantes)
@@ -57,7 +109,9 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
           class: { connect: { id: Number(classId) } },
           specialRequest: specialRequest || null,
           participants: participantsData,  // Guardar datos de participantes como JSON
-          status: 'PENDING'
+          status: 'PENDING',
+          date: bookingDate,
+          time: bookingTimeStr
         }
       });
 

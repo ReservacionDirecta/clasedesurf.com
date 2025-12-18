@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import {
   Calendar,
   ChevronLeft,
@@ -267,12 +268,13 @@ export default function ClassesCalendarWidget({ classes, onClassClick }: Classes
                               <div className="flex items-center" title={cls.instructor.name}>
                                 {cls.instructor.profileImage ? (
                                   <div className="relative w-4 h-4 rounded-full overflow-hidden border border-gray-100">
-                                    <Image
+                                    <ImageWithFallback
                                       src={cls.instructor.profileImage}
                                       alt={cls.instructor.name}
                                       fill
                                       className="object-cover"
                                       sizes="16px"
+                                      fallbackSrc="/logoclasedesusrf.png"
                                     />
                                   </div>
                                 ) : (

@@ -392,7 +392,7 @@ export default function StudentDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Header with Profile */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-cyan-600 rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-linear-to-r from-blue-500 via-blue-600 to-cyan-600 rounded-2xl shadow-xl overflow-hidden">
             <div className="relative">
               {/* Background Pattern */}
               <div className="absolute inset-0 opacity-10">
@@ -416,13 +416,13 @@ export default function StudentDashboard() {
                             className="w-full h-full"
                           />
                         ) : profile?.name ? (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-cyan-400">
+                          <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-blue-400 to-cyan-400">
                             <span className="text-3xl md:text-4xl font-bold text-white">
                               {profile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                             </span>
                           </div>
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400 to-cyan-400">
+                          <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-blue-400 to-cyan-400">
                             <User className="w-12 h-12 md:w-16 md:h-16 text-white" />
                           </div>
                         )}
@@ -578,7 +578,7 @@ export default function StudentDashboard() {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-3">
                   <div 
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
+                    className="bg-linear-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
                     style={{ width: `${levelProgress.progress}%` }}
                   ></div>
                 </div>

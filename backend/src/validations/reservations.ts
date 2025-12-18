@@ -54,7 +54,9 @@ export const createReservationSchema = z.object({
   discountAmount: z.number()
     .min(0, 'Discount amount must be positive')
     .optional()
-    .nullable()
+    .nullable(),
+  date: z.string().optional(),
+  time: z.string().optional()
 });
 
 // Schema for updating reservation status (admin only)

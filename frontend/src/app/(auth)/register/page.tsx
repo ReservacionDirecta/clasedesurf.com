@@ -252,7 +252,7 @@ export default function RegisterPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Botón Volver */}
         <Link
@@ -265,7 +265,7 @@ export default function RegisterPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-linear-to-br from-blue-500 to-cyan-500 rounded-2xl shadow-lg">
             <Waves className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Únete a ClaseDeSurf</h1>
@@ -318,7 +318,7 @@ export default function RegisterPage() {
                       onChange={(e) => setRole(e.target.value as UserRole)}
                       className="sr-only"
                     />
-                    <div className={`flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-r ${option.color} flex items-center justify-center text-white mr-4`}>
+                    <div className={`shrink-0 w-12 h-12 rounded-lg bg-linear-to-r ${option.color} flex items-center justify-center text-white mr-4`}>
                       {option.icon}
                     </div>
                     <div className="flex-1">
@@ -326,7 +326,7 @@ export default function RegisterPage() {
                       <div className="text-sm text-gray-500">{option.description}</div>
                     </div>
                     {role === option.value && (
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
@@ -463,7 +463,7 @@ export default function RegisterPage() {
             {success && (
               <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-start">
-                  <svg className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-green-400 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <div className="ml-3 flex-1">
@@ -482,7 +482,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading || isRedirecting}
-              className={`w-full mt-6 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-lg transition-all transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              className={`w-full mt-6 px-6 py-3 bg-linear-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-lg transition-all transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                 isLoading || isRedirecting
                   ? 'opacity-50 cursor-not-allowed'
                   : 'hover:from-blue-700 hover:to-cyan-700 hover:scale-[1.02] active:scale-[0.98]'

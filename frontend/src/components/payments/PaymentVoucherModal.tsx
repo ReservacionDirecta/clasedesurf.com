@@ -1,6 +1,7 @@
 "use client";
 
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 
@@ -75,7 +76,7 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-100 p-0 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-t-3xl sm:rounded-lg shadow-xl max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
         {/* Modal Header - Sticky en móvil */}
         <div className="bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-lg sticky top-0 z-10">
@@ -238,14 +239,15 @@ export function PaymentVoucherModal({ isOpen, onClose, payment, onSuccess }: Pay
               <div className="mt-3">
                 <p className="text-sm font-medium text-gray-700 mb-2">Vista Previa:</p>
                 <div className="relative w-full overflow-hidden rounded-lg border border-gray-300 bg-gray-100">
-                  <Image
+                  <ImageWithFallback
                     src={formData.voucherImage}
                     alt="Voucher preview"
                     width={600}
                     height={400}
                     className="h-auto w-full object-contain max-h-[300px]"
                     onError={() => setFormData(prev => ({ ...prev, voucherImage: '' }))}
-                    unoptimized={true} // Add unoptimized to prevent issues with external URLs in some cases
+                    unoptimized={true}
+                    fallbackSrc="/logoclasedesusrf.png"
                   />
                 </div>
               </div>

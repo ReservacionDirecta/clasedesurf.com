@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { Class } from '@/types';
 import { Upload, Link as LinkIcon, X, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import ImageLibrary from '@/components/images/ImageLibrary';
 
 interface Instructor {
@@ -13,41 +14,62 @@ interface Instructor {
   userId: number;
 }
 
+interface SchoolOption {
+  id: number;
+  name: string;
+}
+
 interface ClassFormProps {
   classData?: Class;
   onSubmit: (data: Partial<Class>) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  schools?: SchoolOption[]; // For Admin mode
 }
 
-export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: ClassFormProps) {
+export default function ClassForm({ classData, onSubmit, onCancel, isLoading, schools }: ClassFormProps) {
   const { data: session } = useSession();
+  // Estados para recurrencia
+  const [isRecurring, setIsRecurring] = useState(classData?.isRecurring || false);
+  const [startDate, setStartDate] = useState(classData?.startDate ? new Date(classData.startDate).toISOString().slice(0, 10) : '');
+  const [endDate, setEndDate] = useState(classData?.endDate ? new Date(classData.endDate).toISOString().slice(0, 10) : '');
+  const [selectedDays, setSelectedDays] = useState<number[]>(
+    classData?.recurrencePattern?.days || []
+  );
+  // Default to one time slot if existing class or empty
+  const [timeSlots, setTimeSlots] = useState<string[]>(
+    classData?.recurrencePattern?.times || ['09:00']
+  );
+
   const [formData, setFormData] = useState({
     title: classData?.title || '',
     description: classData?.description || '',
     date: classData?.date ? new Date(classData.date).toISOString().slice(0, 16) : '',
-    duration: classData?.duration || 60,
-    capacity: classData?.capacity || 10,
+    duration: classData?.duration || 120,
+    capacity: classData?.capacity || 5,
     price: classData?.price || 0,
     level: classData?.level || 'BEGINNER',
     instructor: classData?.instructor || '',
     studentDetails: '',
-    images: classData?.images || []
+    images: classData?.images || [],
+    schoolId: classData?.schoolId || (schools && schools.length > 0 ? schools[0].id : '')
   });
 
-  // Estado local para el precio mientras se escribe (permite string vacío)
+  // ... (priceInput state) ...
   const [priceInput, setPriceInput] = useState<string>(String(formData.price || ''));
 
-  // Estados para manejo de imágenes
+  // ... (image states) ...
   const [imageUrl, setImageUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState('');
   const [showLibrary, setShowLibrary] = useState(false);
 
+  // ... (other states) ...
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loadingInstructors, setLoadingInstructors] = useState(true);
 
+  // ... (useEffect for instructors) ...
   useEffect(() => {
     const fetchInstructors = async () => {
       try {
@@ -83,7 +105,17 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) newErrors.title = 'El título es requerido';
-    if (!formData.date) newErrors.date = 'La fecha es requerida';
+    if (schools && !formData.schoolId) newErrors.schoolId = 'Selecciona una escuela'; // Validate school if admin
+    
+    if (isRecurring) {
+        if (!startDate) newErrors.startDate = 'Fecha inicio requerida';
+        if (!endDate) newErrors.endDate = 'Fecha fin requerida';
+        if (selectedDays.length === 0) newErrors.selectedDays = 'Selecciona al menos un día';
+        if (timeSlots.length === 0) newErrors.timeSlots = 'Agrega al menos un horario';
+    } else {
+        if (!formData.date) newErrors.date = 'La fecha es requerida';
+    }
+
     if (formData.duration < 30) newErrors.duration = 'La duración mínima es 30 minutos';
     if (formData.capacity < 1) newErrors.capacity = 'La capacidad debe ser al menos 1';
     if (formData.price < 0) newErrors.price = 'El precio no puede ser negativo';
@@ -96,18 +128,33 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
     e.preventDefault();
     if (!validate()) return;
 
+    // Base data
     const submitData: any = {
       title: formData.title,
       description: formData.description || null,
-      date: new Date(formData.date).toISOString(),
       duration: Number(formData.duration),
       capacity: Number(formData.capacity),
       price: Number(formData.price),
       level: formData.level,
       instructor: formData.instructor || null,
       studentDetails: formData.studentDetails || null,
-      images: formData.images.length > 0 ? formData.images : []
+      images: formData.images.length > 0 ? formData.images : [],
+      isRecurring,
+      schoolId: schools ? Number(formData.schoolId) : undefined // Send schoolId if in admin mode
     };
+
+    if (isRecurring) {
+        submitData.startDate = new Date(startDate).toISOString();
+        submitData.endDate = new Date(endDate).toISOString();
+        submitData.recurrencePattern = {
+            days: selectedDays,
+            times: timeSlots
+        };
+        // Set date to startDate for compatibility
+        submitData.date = new Date(startDate).toISOString();
+    } else {
+        submitData.date = new Date(formData.date).toISOString();
+    }
 
     await onSubmit(submitData);
   };
@@ -244,6 +291,28 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+        {/* School Selector (Admin Only) */}
+        {schools && schools.length > 0 && (
+          <div className="md:col-span-2">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+              Escuela *
+            </label>
+            <select
+              name="schoolId"
+              value={formData.schoolId}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.schoolId ? 'border-red-500' : 'border-gray-300'}`}
+              disabled={isLoading}
+            >
+               <option value="">Selecciona una escuela</option>
+               {schools.map(school => (
+                 <option key={school.id} value={school.id}>{school.name}</option>
+               ))}
+            </select>
+            {errors.schoolId && <p className="text-red-500 text-xs mt-1">{errors.schoolId}</p>}
+          </div>
+        )}
+
         {/* Title */}
         <div className="md:col-span-2">
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
@@ -278,22 +347,135 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
           />
         </div>
 
-        {/* Date */}
-        <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
-            Fecha y Hora *
-          </label>
-          <input
-            type="datetime-local"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
-            className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.date ? 'border-red-500' : 'border-gray-300'
-              }`}
-            disabled={isLoading}
-          />
-          {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
+        {/* Recurrence Toggle */}
+        <div className="md:col-span-2 py-2">
+           <label className="flex items-center space-x-2 cursor-pointer select-none">
+               <input 
+                 type="checkbox" 
+                 checked={isRecurring} 
+                 onChange={(e) => setIsRecurring(e.target.checked)} 
+                 className="form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" 
+                 disabled={isLoading}
+               />
+               <span className="text-sm font-medium text-gray-700">Clase Recurrente (Varios días/horarios)</span>
+           </label>
         </div>
+
+        {isRecurring ? (
+            <>
+               {/* Start/End Date */}
+               <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                    Fecha Inicio *
+                  </label>
+                  <input 
+                    type="date" 
+                    value={startDate} 
+                    onChange={e => setStartDate(e.target.value)} 
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.startDate ? 'border-red-500' : 'border-gray-300'}`}
+                    disabled={isLoading}
+                  />
+                  {errors.startDate && <p className="text-red-500 text-xs mt-1">{errors.startDate}</p>}
+               </div>
+               <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                    Fecha Fin *
+                  </label>
+                  <input 
+                    type="date" 
+                    value={endDate} 
+                    onChange={e => setEndDate(e.target.value)} 
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.endDate ? 'border-red-500' : 'border-gray-300'}`}
+                    disabled={isLoading}
+                   />
+                   {errors.endDate && <p className="text-red-500 text-xs mt-1">{errors.endDate}</p>}
+               </div>
+               
+               {/* Days */}
+               <div className="md:col-span-2">
+                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Días de la semana *</label>
+                   <div className="flex gap-2 flex-wrap">
+                       {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map((d, i) => (
+                           <button 
+                               type="button" 
+                               key={i}
+                               onClick={() => {
+                                   if (selectedDays.includes(i)) setSelectedDays(selectedDays.filter(d => d !== i));
+                                   else setSelectedDays([...selectedDays, i]);
+                               }}
+                               disabled={isLoading}
+                               className={`
+                                 w-10 h-10 rounded-lg text-xs font-bold transition-all
+                                 ${selectedDays.includes(i) 
+                                    ? 'bg-blue-600 text-white shadow-md transform scale-105' 
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}
+                               `}>
+                               {d}
+                           </button>
+                       ))}
+                   </div>
+                   {errors.selectedDays && <p className="text-red-500 text-xs mt-1">{errors.selectedDays}</p>}
+               </div>
+               
+               {/* Time Slots */}
+               <div className="md:col-span-2">
+                   <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Horarios *</label>
+                   <div className="space-y-2">
+                     {timeSlots.map((time, idx) => (
+                       <div key={idx} className="flex gap-2 items-center max-w-xs">
+                           <input 
+                             type="time" 
+                             value={time} 
+                             onChange={(e) => {
+                               const newSlots = [...timeSlots];
+                               newSlots[idx] = e.target.value;
+                               setTimeSlots(newSlots);
+                             }} 
+                             className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                             disabled={isLoading}
+                           />
+                           {timeSlots.length > 1 && (
+                             <button 
+                               type="button" 
+                               onClick={() => setTimeSlots(timeSlots.filter((_, i) => i !== idx))} 
+                               className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                               disabled={isLoading}
+                             >
+                               <X className="w-4 h-4" />
+                             </button>
+                           )}
+                       </div>
+                     ))}
+                   </div>
+                   <button 
+                     type="button" 
+                     onClick={() => setTimeSlots([...timeSlots, '09:00'])} 
+                     className="mt-2 text-blue-600 text-sm font-bold flex items-center gap-1 hover:text-blue-700 disabled:opacity-50"
+                     disabled={isLoading}
+                   >
+                     <span>+</span> Agregar Horario
+                   </button>
+                   {errors.timeSlots && <p className="text-red-500 text-xs mt-1">{errors.timeSlots}</p>}
+               </div>
+            </>
+        ) : (
+            /* Date (Single) */
+            <div>
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">
+                Fecha y Hora *
+              </label>
+              <input
+                type="datetime-local"
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 ${errors.date ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                disabled={isLoading}
+              />
+              {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
+            </div>
+        )}
 
         {/* Duration */}
         <div>
@@ -464,7 +646,7 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
             {/* URL Input - Mobile Optimized */}
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 flex items-center gap-2">
-                <LinkIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <LinkIcon className="w-4 h-4 text-gray-400 shrink-0" />
                 <input
                   type="url"
                   value={imageUrl}
@@ -520,12 +702,13 @@ export default function ClassForm({ classData, onSubmit, onCancel, isLoading }: 
                   {formData.images.map((img, index) => (
                     <div key={index} className="relative group aspect-square">
                       <div className="relative w-full h-full rounded-lg overflow-hidden border border-gray-200">
-                        <Image
+                        <ImageWithFallback
                           src={img}
                           alt={`Img ${index + 1}`}
                           fill
                           className="object-cover"
                           sizes="33vw"
+                          fallbackSrc="/logoclasedesusrf.png"
                         />
                         {/* Remove Button - Always visible on mobile or larger touch target */}
                         <button

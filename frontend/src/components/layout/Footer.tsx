@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import CookieSettingsButton from '@/components/cookies/CookieSettingsButton'
 
 export function Footer() {
@@ -11,13 +12,13 @@ export function Footer() {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center mb-4">
               <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                <Image 
+                <ImageWithFallback 
                   src="/logoclasedesusrf.png" 
                   alt="clasesde.pe" 
                   width={40} 
                   height={40} 
                   className="w-full h-full object-contain"
-                  unoptimized
+                  fallbackSrc="/logoclasedesusrf.png"
                 />
               </div>
             </div>

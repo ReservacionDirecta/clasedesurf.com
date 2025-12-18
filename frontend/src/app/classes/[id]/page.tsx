@@ -1,9 +1,10 @@
 'use client';
 
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { formatDualCurrency } from '@/lib/currency';
 import {
@@ -14,22 +15,26 @@ import {
   Star,
   Phone,
   Mail,
-  ArrowLeft,
   CheckCircle,
   XCircle,
   AlertCircle,
   User,
   CreditCard,
-  Waves,
-  Shield,
-  Award,
-  Lightbulb,
   ChevronLeft,
   ChevronRight,
-  Image as ImageIcon,
-  X
+  Shield,
+  Award,
+  ArrowLeft,
+  Share2,
+  Heart,
+  X,
+  Check,
+  Waves,
+  Lightbulb,
+  Image as ImageIcon
 } from 'lucide-react';
 import { BookingModal } from '@/components/booking/BookingModal';
+import { BookingWidget } from '@/components/classes/BookingWidget';
 
 interface ClassDetails {
   id: number;
@@ -42,10 +47,18 @@ interface ClassDetails {
   capacity: number;
   enrolled: number;
   price: number;
+  type: string;
   level: string;
   location: string;
   status: 'ACTIVE' | 'CANCELED' | 'COMPLETED';
   images?: string[];
+  isRecurring?: boolean;
+  recurrencePattern?: {
+    days: number[];
+    times: string[];
+  };
+  startDate?: string;
+  endDate?: string;
   beach?: {
     id: number;
     name: string;
@@ -87,6 +100,8 @@ interface ClassDetails {
 export default function ClassDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialParticipants = searchParams.get('participants') ? parseInt(searchParams.get('participants')!, 10) : 1;
   const { data: session } = useSession();
   const [classDetails, setClassDetails] = useState<ClassDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,6 +116,26 @@ export default function ClassDetailsPage() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  
+  // New State for GYG Layout
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [activeSegment, setActiveSegment] = useState<'details' | 'reviews' | 'location'>('details');
+  const [bookingParticipants, setBookingParticipants] = useState(initialParticipants);
+  const [availableDates, setAvailableDates] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<any>(null); // For recurring classes
+
+  // Update bookingParticipants if URL changes
+  useEffect(() => {
+    setBookingParticipants(initialParticipants);
+  }, [initialParticipants]);
+
+  const handleWidgetReserve = (participants: number, dateData?: any) => {
+    setBookingParticipants(participants);
+    if (classDetails?.isRecurring && dateData) {
+       setSelectedDate(dateData);
+    }
+    setShowReservationModal(true);
+  };
 
   const classId = params.id as string;
 
@@ -170,22 +205,15 @@ export default function ClassDetailsPage() {
         throw new Error('Datos de clase inválidos recibidos del servidor');
       }
 
-      // Calculate start and end times from date and duration
-      // The date from backend is a DateTime, so we extract the time from it
+      // Process times
       const classDate = new Date(classData.date);
-
-      // Check if date is valid
-      if (isNaN(classDate.getTime())) {
-        console.error('Invalid date received:', classData.date);
-      }
-
       const startTime = classDate.toLocaleTimeString('es-ES', {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false
       });
 
-      const duration = classData.duration || 120; // Default 120 minutes if not provided
+      const duration = classData.duration || 120;
       const endDate = new Date(classDate.getTime() + duration * 60000);
       const endTime = endDate.toLocaleTimeString('es-ES', {
         hour: '2-digit',
@@ -193,30 +221,29 @@ export default function ClassDetailsPage() {
         hour12: false
       });
 
-      console.log('Class times calculated:', {
-        date: classData.date,
-        startTime,
-        endTime,
-        duration
-      });
-
       // Process class data to match expected format
       const processedClass: ClassDetails = {
-        id: classData.id,
-        title: classData.title,
+        ...classData,
         description: classData.description || 'Clase de surf',
-        date: classData.date,
-        startTime: startTime,
-        endTime: endTime,
-        duration: classData.duration || 120,
-        capacity: classData.capacity,
+        startTime,
+        endTime,
+        duration,
         enrolled: classData.reservations?.filter((r: any) => r.status !== 'CANCELED').length || 0,
         price: Number(classData.price),
         level: classData.level || 'BEGINNER',
         location: classData.location || 'Por definir',
         status: classData.status || 'ACTIVE',
+        type: classData.type || 'SURF_LESSON', 
         images: classData.images || [],
-        beach: classData.beach || undefined,
+        school: {
+          id: classData.school?.id || 0,
+          name: classData.school?.name || 'Escuela de Surf',
+          location: classData.school?.location || 'Lima, Perú',
+          phone: classData.school?.phone || '',
+          email: classData.school?.email || '',
+          rating: 4.8, // Fallback defaults
+          totalReviews: 0
+        },
         instructor: {
           id: 1,
           name: classData.instructor || 'Instructor',
@@ -226,15 +253,6 @@ export default function ClassDetailsPage() {
           yearsExperience: 5,
           specialties: [],
           profileImage: undefined
-        },
-        school: {
-          id: classData.school?.id || 0,
-          name: classData.school?.name || 'Escuela de Surf',
-          location: classData.school?.location || 'Lima, Perú',
-          phone: classData.school?.phone || '',
-          email: classData.school?.email || '',
-          rating: 4.8,
-          totalReviews: 0
         },
         reservations: classData.reservations?.map((r: any) => ({
           id: r.id,
@@ -252,7 +270,6 @@ export default function ClassDetailsPage() {
 
       setClassDetails(processedClass);
 
-      // Check if user has a reservation for this class
       if (session?.user?.id) {
         const userRes = processedClass.reservations.find(
           (r: any) => r.userId === parseInt(session.user.id as string)
@@ -274,6 +291,75 @@ export default function ClassDetailsPage() {
       fetchClassDetails();
     }
   }, [classId, fetchClassDetails]);
+
+  // Handle Dates logic (Recurring vs Single)
+  useEffect(() => {
+    const fetchAvailabilityCalendar = async () => {
+       if (!classDetails) return;
+       
+       try {
+         const start = new Date();
+         const end = new Date();
+         end.setDate(end.getDate() + 90); // Fetch next 3 months
+
+         // For single class, we might strictly check its date, but calendar endpoint handles it too.
+         // If single class date is far in future, ensure we cover it.
+         if (!classDetails.isRecurring && new Date(classDetails.date) > end) {
+             end.setTime(new Date(classDetails.date).getTime() + 86400000); // Add 1 day buffer
+         }
+
+         const res = await fetch(`/api/classes/${classId}/calendar?start=${start.toISOString()}&end=${end.toISOString()}`);
+         if (res.ok) {
+            const slots = await res.json();
+            
+            // Map slots to availableDates format
+            const dates = slots
+              .filter((s: any) => !s.isClosed && s.available > 0)
+              .map((s: any) => {
+                  const [hours, mins] = s.time.split(':').map(Number);
+                  const slotDate = new Date(s.date);
+                  const startTime = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+                  
+                  // Calculate end time based on duration
+                  const slotEndTimeStr = new Date(slotDate.getTime() + (classDetails.duration || 120) * 60000)
+                    .toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+                  return {
+                      id: `${s.date}_${s.time}`,
+                      date: new Date(s.date).toISOString(), // Ensure ISO string for consistency
+                      startTime: startTime,
+                      endTime: slotEndTimeStr,
+                      isRecurringInstance: classDetails.isRecurring,
+                      price: s.price, // Use override price if exists
+                      availableSpots: s.available
+                  };
+              });
+            
+            setAvailableDates(dates);
+            
+            // If we have dates and no selection, select first
+            if (dates.length > 0 && !selectedDate) {
+                // If single class, try to match the exact date
+                if (!classDetails.isRecurring) {
+                    const match = dates.find((d: any) => d.date.startsWith(classDetails.date.split('T')[0]));
+                    setSelectedDate(match || dates[0]);
+                } else {
+                    setSelectedDate(dates[0]);
+                }
+            }
+         }
+       } catch (err) {
+         console.error("Error fetching availability:", err);
+       }
+    };
+
+    if (classDetails) {
+        fetchAvailabilityCalendar();
+    }
+  }, [classDetails, classId]); 
+  // removed dependency on selectedDate to prevent infinite loop if setSelectedDate triggers re-render, 
+  // but useEffect depends on classDetails which changes rarely. 
+
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -449,6 +535,12 @@ export default function ClassDetailsPage() {
 
     setReservationLoading(true);
     try {
+      // For recurring classes, use the selected date/time
+      // For single classes, use the class default date/time
+      const reservationDate = classDetails.isRecurring && selectedDate ? selectedDate.date : classDetails.date;
+      const reservationStartTime = classDetails.isRecurring && selectedDate ? selectedDate.startTime : classDetails.startTime;
+      const reservationEndTime = classDetails.isRecurring && selectedDate ? selectedDate.endTime : classDetails.endTime;
+
       // Preparar datos de reserva para la página de confirmación
       const reservationData = {
         classId: classDetails.id.toString(),
@@ -456,18 +548,22 @@ export default function ClassDetailsPage() {
           id: classDetails.id,
           title: classDetails.title,
           description: classDetails.description,
-          price: classDetails.price,
-          date: classDetails.date,
-          startTime: classDetails.startTime,
-          endTime: classDetails.endTime,
+          price: (selectedDate && selectedDate.price) ? selectedDate.price : classDetails.price,
+          date: reservationDate,
+          startTime: reservationStartTime,
+          endTime: reservationEndTime,
           level: classDetails.level,
           location: classDetails.location,
-          school: classDetails.school
+          school: classDetails.school,
+          isRecurring: classDetails.isRecurring
         },
         bookingData: {
           ...bookingData,
           email: session.user.email || bookingData.email,
-          name: session.user.name || bookingData.name
+          name: session.user.name || bookingData.name,
+          date: reservationDate, // Explicitly pass selected date
+          time: reservationStartTime,
+          totalAmount: (selectedDate && selectedDate.price ? selectedDate.price : classDetails.price) * (bookingData.participants || 1)
         },
         status: 'pending' as const
       };
@@ -566,6 +662,9 @@ export default function ClassDetailsPage() {
 
   const availableSpots = classDetails ? classDetails.capacity - classDetails.enrolled : 0;
   const levelInfo = classDetails ? getLevelInfo(classDetails.level) : null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isPast = classDetails ? new Date(classDetails.date) < today : false;
 
   if (loading) {
     return (
@@ -607,579 +706,290 @@ export default function ClassDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ paddingBottom: 'max(5rem, env(safe-area-inset-bottom))' }}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
-        {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center text-blue-600 hover:text-blue-800 mb-4 sm:mb-6 touch-manipulation active:scale-95 transition-transform"
-          style={{ touchAction: 'manipulation' }}
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          <span className="text-sm sm:text-base">Volver</span>
-        </button>
+    <div className="min-h-screen bg-white pb-20 font-sans text-gray-900">
+      {/* 1. Header Section (Full Width) */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm/50">
+         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
+             <button onClick={() => router.back()} className="text-blue-600 font-medium hover:text-blue-800 flex items-center gap-2 transition-colors">
+                 <ArrowLeft className="w-5 h-5" /> <span className="hidden sm:inline">Volver</span>
+             </button>
+             <div className="flex items-center gap-4">
+                <button className="p-2 hover:bg-gray-50 rounded-full transition-colors" aria-label="Compartir">
+                    <Share2 className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+                </button>
+                <button 
+                    className="p-2 hover:bg-gray-50 rounded-full transition-colors" 
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    aria-label="Guardar en favoritos"
+                >
+                    <Heart className={`w-5 h-5 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-500 hover:text-gray-700'}`} />
+                </button>
+             </div>
+         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-          {/* Class Information */}
-          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            {/* Image Gallery */}
-            {classDetails.images && classDetails.images.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-                <div className="relative aspect-video sm:aspect-[16/10] bg-gray-100">
-                  {/* Main Image */}
-                  <div
-                    className="relative w-full h-full"
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                    style={{ touchAction: 'pan-y pinch-zoom' }}
-                  >
-                    <Image
-                      src={classDetails.images[currentImageIndex]}
-                      alt={`${classDetails.title} - Imagen ${currentImageIndex + 1}`}
-                      fill
-                      className="object-cover"
-                      priority
-                      unoptimized
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-
-                    {/* Image Counter */}
-                    {classDetails.images.length > 1 && (
-                      <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
-                        {currentImageIndex + 1} / {classDetails.images.length}
-                      </div>
-                    )}
-
-                    {/* Navigation Arrows */}
-                    {classDetails.images.length > 1 && (
-                      <>
-                        <button
-                          onClick={prevImage}
-                          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white p-2 sm:p-3 rounded-full transition-all touch-manipulation active:scale-90"
-                          aria-label="Imagen anterior"
-                          style={{ touchAction: 'manipulation' }}
-                        >
-                          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </button>
-                        <button
-                          onClick={nextImage}
-                          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 backdrop-blur-sm text-white p-2 sm:p-3 rounded-full transition-all touch-manipulation active:scale-90"
-                          aria-label="Siguiente imagen"
-                          style={{ touchAction: 'manipulation' }}
-                        >
-                          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                        </button>
-                      </>
-                    )}
-
-                    {/* Click to view fullscreen */}
-                    <button
-                      onClick={() => setShowImageModal(true)}
-                      className="absolute inset-0 w-full h-full bg-transparent hover:bg-black/5 transition-colors"
-                      aria-label="Ver imagen en pantalla completa"
-                    />
-                  </div>
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            {/* Title & Ratings */}
+            <div className="mb-8">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2 block">Clase de Surf</span>
+                <h1 className="text-3xl md:text-5xl font-extrabold text-[#011627] mb-4 leading-tight">{classDetails.title}</h1>
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5">
+                        <div className="flex text-yellow-400">
+                           <Star className="w-4 h-4 fill-current" />
+                           <Star className="w-4 h-4 fill-current" />
+                           <Star className="w-4 h-4 fill-current" />
+                           <Star className="w-4 h-4 fill-current" />
+                           <Star className="w-4 h-4 fill-current" />
+                        </div>
+                        <span className="font-bold text-[#011627]">{classDetails.school.rating}</span>
+                        <span className="text-gray-500 underline ml-1 cursor-pointer hover:text-blue-600">({classDetails.school.totalReviews} reseñas)</span>
+                    </div>
+                    <span className="w-1 h-1 bg-gray-300 rounded-full hidden sm:block"></span>
+                    <div className="flex items-center gap-1 text-gray-600">
+                        <span>Actividad de</span>
+                        <span className="font-bold text-blue-600 cursor-pointer hover:underline">{classDetails.school.name}</span>
+                    </div>
                 </div>
+            </div>
 
-                {/* Thumbnail Gallery */}
-                {classDetails.images.length > 1 && (
-                  <div className="p-3 sm:p-4 border-t border-gray-200 bg-gray-50">
-                    <div
-                      className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 no-scrollbar"
-                      style={{ WebkitOverflowScrolling: 'touch' }}
-                    >
-                      {classDetails.images.map((img, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentImageIndex(index)}
-                          className={`relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all ${index === currentImageIndex
-                              ? 'border-blue-600 ring-2 ring-blue-200'
-                              : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                        >
-                          <Image
-                            src={img}
-                            alt={`Miniatura ${index + 1}`}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
+            {/* Gallery Grid (GYG Style) */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 h-[300px] md:h-[480px] mb-12 rounded-2xl overflow-hidden relative shadow-sm">
+                 {/* Main Image */}
+                 <div className="md:col-span-2 md:row-span-2 relative h-full bg-gray-100 cursor-pointer group" onClick={() => setShowImageModal(true)}>
+                     <ImageWithFallback src={(classDetails.images || [])[0]} alt="Principal" fill className="object-cover group-hover:scale-105 transition-transform duration-700" priority />
+                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                 </div>
+                 {/* Secondary Images */}
+                 <div className="md:col-span-1 md:row-span-1 relative h-full bg-gray-100 hidden md:block cursor-pointer group">
+                      <ImageWithFallback src={(classDetails.images || [])[1] || (classDetails.images || [])[0]} alt="Galería 2" fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                 </div>
+                 <div className="md:col-span-1 md:row-span-1 relative h-full bg-gray-100 hidden md:block cursor-pointer group">
+                      <ImageWithFallback src={(classDetails.images || [])[2] || (classDetails.images || [])[0]} alt="Galería 3" fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                 </div>
+                 <div className="md:col-span-1 md:row-span-1 relative h-full bg-gray-100 hidden md:block cursor-pointer group">
+                      <ImageWithFallback src={(classDetails.images || [])[3] || (classDetails.images || [])[0]} alt="Galería 4" fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                 </div>
+                 <div className="md:col-span-1 md:row-span-1 relative h-full bg-gray-100 hidden md:block cursor-pointer group" onClick={() => setShowImageModal(true)}>
+                      <ImageWithFallback src={(classDetails.images || [])[4] || (classDetails.images || [])[0]} alt="Galería 5" fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                          <span className="text-white font-bold text-sm flex items-center gap-2 backdrop-blur-sm bg-white/10 px-3 py-1.5 rounded-full border border-white/20">
+                             <ImageIcon className="w-4 h-4" /> Ver todas las fotos
+                          </span>
+                      </div>
+                 </div>
+                 
+                 {/* Mobile View All Button */}
+                 <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg text-sm font-bold shadow-lg md:hidden flex items-center gap-2 z-10" onClick={() => setShowImageModal(true)}>
+                     <ImageIcon className="w-4 h-4" /> Fotos
+                 </button>
+            </div>
+
+            {/* Content & Sidebar Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-16 relative">
+                 {/* Left Column */}
+                 <div className="lg:col-span-2 space-y-16">
+                      {/* Key Details Bar (Icons) */}
+                      <div>
+                          <p className="text-gray-700 max-w-3xl text-lg leading-relaxed mb-6 font-light">{classDetails.description.split('.')[0]}.</p>
+                          
+                          <div className="flex flex-wrap gap-x-12 gap-y-6 text-sm text-[#011627] py-6 border-y border-gray-100">
+                               <div className="flex items-start gap-4 max-w-[280px]">
+                                   <div className="p-2 bg-green-50 rounded-lg shrink-0"><CheckCircle className="w-5 h-5 text-green-600" /></div>
+                                   <div>
+                                       <span className="font-bold text-base block mb-1">Cancelación gratuita</span>
+                                       <span className="text-gray-500 leading-snug">Cancela con hasta 24 horas de antelación y recibe un reembolso completo</span>
+                                   </div>
+                               </div>
+                               <div className="flex items-start gap-4 max-w-[280px]">
+                                   <div className="p-2 bg-blue-50 rounded-lg shrink-0"><CreditCard className="w-5 h-5 text-blue-600" /></div>
+                                   <div>
+                                       <span className="font-bold text-base block mb-1">Reserva ahora y paga después</span>
+                                       <span className="text-gray-500 leading-snug">Mantén tu plan flexible reservando ahora sin coste</span>
+                                   </div>
+                               </div>
+                               <div className="flex items-start gap-4 max-w-[280px]">
+                                   <div className="p-2 bg-purple-50 rounded-lg shrink-0"><Clock className="w-5 h-5 text-purple-600" /></div>
+                                   <div>
+                                       <span className="font-bold text-base block mb-1">Duración {classDetails.duration} min</span>
+                                       <span className="text-gray-500 leading-snug">Consulta la disponibilidad para ver los horarios de inicio</span>
+                                   </div>
+                               </div>
+                               <div className="flex items-start gap-4 max-w-[280px]">
+                                   <div className="p-2 bg-orange-50 rounded-lg shrink-0"><Award className="w-5 h-5 text-orange-600" /></div>
+                                   <div>
+                                       <span className="font-bold text-base block mb-1">Instructor certificado</span>
+                                       <span className="text-gray-500 leading-snug">Español, Inglés</span>
+                                   </div>
+                               </div>
+                          </div>
+                      </div>
+                      
+                      {/* Experience Section */}
+                      <section>
+                           <h2 className="text-2xl font-bold text-[#011627] mb-8">La experiencia</h2>
+                           
+                           {/* Highlights */}
+                           <div className="mb-10">
+                               <h3 className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-4">Destacados</h3>
+                               <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                   <li className="flex items-start gap-3">
+                                       <div className="w-1.5 h-1.5 rounded-full bg-[#0071EB] mt-2.5 shrink-0" />
+                                       <span className="text-gray-700 leading-relaxed">Aprende a surfear en una de las mejores escuelas de Lima con atención personalizada.</span>
+                                   </li>
+                                   <li className="flex items-start gap-3">
+                                       <div className="w-1.5 h-1.5 rounded-full bg-[#0071EB] mt-2.5 shrink-0" />
+                                       <span className="text-gray-700 leading-relaxed">Instructores certificados con años de experiencia local e internacional.</span>
+                                   </li>
+                                   <li className="flex items-start gap-3">
+                                       <div className="w-1.5 h-1.5 rounded-full bg-[#0071EB] mt-2.5 shrink-0" />
+                                       <span className="text-gray-700 leading-relaxed">Todo el equipamiento incluido (tabla soft-top premium y wetsuit higienizado).</span>
+                                   </li>
+                                   <li className="flex items-start gap-3">
+                                       <div className="w-1.5 h-1.5 rounded-full bg-[#0071EB] mt-2.5 shrink-0" />
+                                       <span className="text-gray-700 leading-relaxed">Clase nivel {getLevelInfo(classDetails.level).text} adaptada a tu ritmo y habilidades.</span>
+                                   </li>
+                               </ul>
+                           </div>
+                           
+                           <h3 className="font-bold text-xs uppercase tracking-wider text-gray-500 mb-4">Descripción completa</h3>
+                           <div className="prose prose-lg text-gray-700 max-w-none">
+                               <p className="mb-4 text-justify leading-relaxed">{classDetails.description}</p>
+                               <p className="text-justify leading-relaxed">Nos enfocamos en la seguridad y la diversión. Tu clase comenzará con una introducción en arena de 15 minutos donde aprenderás técnicas de remo, postura y seguridad en el mar. Luego, entrarás al agua acompañado de tu instructor quien te asistirá en todo momento para que logres pararte en tus primeras olas.</p>
+                               <p className="mt-4 text-justify leading-relaxed font-medium text-[#011627]">Perfecto para: {classDetails.level === 'BEGINNER' ? 'Principiantes absolutos y personas con algo de experiencia que quieren corregir técnica.' : 'Surfistas que ya se paran en la espuma y quieren llegar al line-up y tomar paredes.'}</p>
+                           </div>
+                      </section>
+                      
+                      {/* Includes Section */}
+                      <section>
+                           <h2 className="text-2xl font-bold text-[#011627] mb-6">Qué incluye</h2>
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                               {['Instrucción experta personalizada', 'Tabla de surf adecuada a tu nivel', 'Wetsuit / Traje de neopreno limpio', 'Seguro de accidentes', 'Acceso a duchas y vestuarios', 'Fotos de la sesión (sujeto a disponibilidad)'].map((item, idx) => (
+                                   <div key={idx} className="flex items-center gap-3">
+                                       <div className="bg-white p-1 rounded-full border border-gray-200 shadow-sm"><Check className="w-4 h-4 text-green-600 shrink-0" /></div>
+                                       <span className="text-gray-700 font-medium">{item}</span>
+                                   </div>
+                               ))}
+                           </div>
+                      </section>
+                      
+                      {/* Meeting Point */}
+                      <section>
+                           <h2 className="text-2xl font-bold text-[#011627] mb-6">Punto de encuentro</h2>
+                           <div className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                                <div className="h-56 bg-gray-200 relative overflow-hidden">
+                                    <ImageWithFallback 
+                                        src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=2662&auto=format&fit=crop" 
+                                        alt="Map Location" 
+                                        fill 
+                                        className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-blue-900/10"></div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="bg-white p-4 rounded-full shadow-xl animate-bounce">
+                                            <MapPin className="w-6 h-6 text-blue-600" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-8">
+                                     <div className="flex items-start justify-between gap-4">
+                                         <div>
+                                            <h3 className="font-bold text-xl mb-1 text-[#011627]">{classDetails.school.name}</h3>
+                                            <p className="text-gray-600 text-lg mb-4">{classDetails.school.location}, {classDetails.location}</p>
+                                            <p className="text-sm text-gray-500 mb-6">Busca nuestras banderas y el instructor con uniforme de la escuela.</p>
+                                         </div>
+                                         <div className="hidden sm:block">
+                                              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(classDetails.school.location)}`} target="_blank" rel="noopener noreferrer" className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                                 <Share2 className="w-4 h-4" /> Cómo llegar
+                                              </a>
+                                         </div>
+                                     </div>
+                                     <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(classDetails.school.location)}`} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#0071EB] text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors">
+                                         Abrir en Google Maps
+                                     </a>
+                                </div>
+                           </div>
+                      </section>
+                      
+                      {/* Important Information */}
+                      <section>
+                           <h2 className="text-2xl font-bold text-[#011627] mb-6">Información importante</h2>
+                           <div className="space-y-8">
+                                <div>
+                                    <h3 className="font-bold text-sm uppercase tracking-wider text-gray-900 mb-3">Qué llevar</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['Ropa de baño', 'Toalla', 'Sandalias', 'Protector solar', 'Ropa seca de cambio', 'Agua'].map((item, i) => (
+                                           <span key={i} className="bg-gray-100 px-4 py-2 rounded-full text-sm font-medium text-gray-700 border border-gray-200">{item}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="bg-amber-50 rounded-xl p-6 border border-amber-100">
+                                    <h3 className="font-bold text-sm uppercase tracking-wider text-amber-900 mb-4 flex items-center gap-2"><Lightbulb className="w-4 h-4" /> Antes de viajar</h3>
+                                    <ul className="space-y-3 text-sm text-amber-900/80">
+                                        <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0"></span>Llega 15 minutos antes de la hora de inicio para equiparte con calma.</li>
+                                        <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0"></span>No comas pesado al menos 1 hora antes de la clase.</li>
+                                        <li className="flex items-start gap-2"><span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0"></span>Si usas lentes de contacto, avísale a tu instructor.</li>
+                                    </ul>
+                                </div>
+                           </div>
+                      </section>
+                 </div>
+                 
+                 {/* Right Column: Booking Widget */}
+                 <div className="hidden lg:block lg:col-span-1 relative">
+                      <div className="sticky top-28 space-y-4">
+                          <BookingWidget 
+                               classData={{
+                                 ...classDetails,
+                                 currency: 'PEN',
+                                 availableSpots: classDetails.capacity - classDetails.enrolled
+                               }}
+                               initialParticipants={bookingParticipants}
+                               onReserve={(p) => handleWidgetReserve(p, selectedDate)}
+                               availableDates={availableDates}
+                               selectedDateId={selectedDate ? selectedDate.id : classDetails.id}
+                               onDateChange={(val) => {
+                                  const selected = availableDates.find(d => d.id.toString() === val.toString());
+                                  if (selected?.isRecurringInstance) {
+                                      setSelectedDate(selected);
+                                  } else {
+                                      router.push(`/classes/${val}?participants=${bookingParticipants}`);
+                                  }
+                               }}
                           />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Hero Section */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-4 sm:p-6 text-white">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                  <div className="flex-1">
-                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 leading-tight">{classDetails.title}</h1>
-                    <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-4 text-blue-100 text-sm sm:text-base">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span className="capitalize">{formatDate(classDetails.date)}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{formatTime(classDetails.startTime)} - {formatTime(classDetails.endTime)}</span>
-                      </div>
-                      {classDetails.beach && (
-                        <div className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>{classDetails.beach.name}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-left sm:text-right">
-                    {(() => {
-                      const prices = formatDualCurrency(classDetails.price);
-                      return (
-                        <>
-                          <div className="text-2xl sm:text-3xl font-bold text-white">{prices.pen}</div>
-                          <div className="text-blue-200 text-xs sm:text-sm">{prices.usd}</div>
-                          <div className="text-blue-200 text-xs mt-1">por persona</div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 sm:p-6">
-                <div className="flex flex-wrap gap-2 sm:gap-3 mb-4 sm:mb-6">
-                  <span className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium ${levelInfo?.color}`}>
-                    {levelInfo?.text}
-                  </span>
-                  <span className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium border ${availableSpots > 0
-                      ? 'bg-green-100 text-green-800 border-green-200'
-                      : 'bg-red-100 text-red-800 border-red-200'
-                    }`}>
-                    {availableSpots > 0 ? `${availableSpots} cupos disponibles` : 'Clase llena'}
-                  </span>
-                  <span className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-medium">
-                    {classDetails.duration} min
-                  </span>
-                </div>
-
-                <div className="prose max-w-none">
-                  <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{classDetails.description}</p>
-                </div>
-
-                <div className="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="flex items-center text-gray-600 text-sm sm:text-base">
-                    <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-blue-600 flex-shrink-0" />
-                    <span className="break-words">{classDetails.location}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600 text-sm sm:text-base">
-                    <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-green-600 flex-shrink-0" />
-                    <span>{classDetails.enrolled}/{classDetails.capacity} estudiantes</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Instructor Information */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">Tu Instructor</h2>
-              <div className="flex items-start gap-3 sm:gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  {classDetails.instructor.profileImage ? (
-                    <Image
-                      src={classDetails.instructor.profileImage}
-                      alt={classDetails.instructor.name}
-                      width={64}
-                      height={64}
-                      className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-7 h-7 sm:w-8 sm:h-8 text-blue-600" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">{classDetails.instructor.name}</h3>
-                    <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full w-fit">
-                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current mr-1" />
-                      <span className="text-xs sm:text-sm font-semibold text-yellow-700">{classDetails.instructor.rating}</span>
-                    </div>
-                  </div>
-                  <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 leading-relaxed">{classDetails.instructor.bio}</p>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-500">
-                    <span>{classDetails.instructor.yearsExperience} años de experiencia</span>
-                    <span className="hidden sm:inline">•</span>
-                    <span>{classDetails.instructor.totalReviews} reseñas</span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {classDetails.instructor.specialties.slice(0, 3).map((specialty, index) => (
-                      <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {specialty}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* What's Included */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6">
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">¿Qué incluye?</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                    <Waves className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                  </div>
-                  <span className="text-gray-700 text-sm sm:text-base">Tabla de surf</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                  </div>
-                  <span className="text-gray-700 text-sm sm:text-base">Traje de neopreno</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                    <Award className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
-                  </div>
-                  <span className="text-gray-700 text-sm sm:text-base">Instructor certificado</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-red-600" />
-                  </div>
-                  <span className="text-gray-700 text-sm sm:text-base">Seguro de accidentes</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-4 sm:space-y-6">
-            {/* Booking Card */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6 sticky top-4 sm:top-6 z-10" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Reservar Clase</h3>
-
-              {userReservation ? (
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      {(() => {
-                        const badge = getStatusBadge(userReservation.status);
-                        const IconComponent = badge.icon;
-                        return (
-                          <>
-                            <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                            <span className="font-semibold text-sm sm:text-base">Tu Reserva: {badge.text}</span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <p className="text-xs sm:text-sm text-gray-600">
-                      Reservado el {new Date(userReservation.createdAt).toLocaleDateString('es-ES')}
-                    </p>
-                    {userReservation.specialRequest && (
-                      <p className="text-xs sm:text-sm text-gray-600 mt-2">
-                        <span className="font-medium">Solicitud:</span> {userReservation.specialRequest}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* School Information */}
-                  {classDetails.school && (
-                    <div className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                      <h4 className="font-semibold text-sm sm:text-base text-gray-900 mb-2 sm:mb-3 flex items-center">
-                        <MapPin className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                        Información de la Escuela
-                      </h4>
-                      <div className="space-y-2 text-xs sm:text-sm">
-                        <div>
-                          <p className="font-medium text-gray-900">{classDetails.school.name}</p>
-                        </div>
-                        {classDetails.school.location && (
-                          <div className="flex items-start text-gray-600">
-                            <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                            <span>{classDetails.school.location}</span>
+                          <div className="text-center pt-2">
+                               <button className="text-gray-500 font-medium text-sm hover:text-blue-600 transition-colors flex items-center justify-center gap-2 w-full">
+                                   <Mail className="w-4 h-4" /> Contactar al proveedor
+                               </button>
                           </div>
-                        )}
-                        {classDetails.school.phone && (
-                          <div className="flex items-center text-gray-600">
-                            <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
-                            <a href={`tel:${classDetails.school.phone}`} className="hover:text-blue-600">
-                              {classDetails.school.phone}
-                            </a>
-                          </div>
-                        )}
-                        {classDetails.school.email && (
-                          <div className="flex items-center text-gray-600">
-                            <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
-                            <a href={`mailto:${classDetails.school.email}`} className="hover:text-blue-600 break-all">
-                              {classDetails.school.email}
-                            </a>
-                          </div>
-                        )}
-                        {classDetails.school.rating > 0 && (
-                          <div className="flex items-center text-gray-600 pt-1">
-                            <Star className="w-4 h-4 mr-2 text-yellow-400 fill-current" />
-                            <span className="font-medium">{classDetails.school.rating}</span>
-                            {classDetails.school.totalReviews > 0 && (
-                              <span className="ml-1 text-gray-500">
-                                ({classDetails.school.totalReviews} {classDetails.school.totalReviews === 1 ? 'reseña' : 'reseñas'})
-                              </span>
-                            )}
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  )}
-
-                  {userReservation.status !== 'CANCELED' && userReservation.status !== 'COMPLETED' && new Date(classDetails.date) >= new Date() && (
-                    <button
-                      onClick={handleCancelReservation}
-                      disabled={reservationLoading}
-                      className="w-full bg-red-600 text-white py-2.5 sm:py-3 rounded-lg hover:bg-red-700 active:bg-red-800 transition-colors font-medium text-sm sm:text-base disabled:opacity-50 touch-manipulation"
-                      style={{ touchAction: 'manipulation' }}
-                    >
-                      {reservationLoading ? 'Cancelando...' : 'Cancelar Reserva'}
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3 sm:space-y-4">
-                  <div className="text-center">
-                    {(() => {
-                      const prices = formatDualCurrency(classDetails.price);
-                      return (
-                        <>
-                          <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{prices.pen}</div>
-                          <div className="text-base sm:text-lg text-gray-600 mb-1">{prices.usd}</div>
-                          <div className="text-gray-600 text-xs sm:text-sm">por persona</div>
-                        </>
-                      );
-                    })()}
-                  </div>
-
-                  <div className="space-y-2 text-xs sm:text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Capacidad:</span>
-                      <span className="font-medium">{classDetails.capacity} personas</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Disponibles:</span>
-                      <span className={`font-medium ${availableSpots > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {availableSpots} cupos
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Duración:</span>
-                      <span className="font-medium">{classDetails.duration} minutos</span>
-                    </div>
-                  </div>
-
-                  {session ? (
-                    availableSpots > 0 ? (
-                      <button
-                        onClick={() => setShowReservationModal(true)}
-                        disabled={reservationLoading}
-                        className="w-full bg-blue-600 text-white py-2.5 sm:py-3 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-medium text-sm sm:text-base touch-manipulation disabled:opacity-50"
-                        style={{ touchAction: 'manipulation' }}
-                      >
-                        {reservationLoading ? 'Procesando...' : 'Reservar Ahora'}
-                      </button>
-                    ) : (
-                      <button disabled className="w-full bg-gray-400 text-white py-2.5 sm:py-3 rounded-lg cursor-not-allowed font-medium text-sm sm:text-base">
-                        Clase Llena
-                      </button>
-                    )
-                  ) : (
-                    <button
-                      onClick={() => router.push('/login')}
-                      className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium touch-manipulation"
-                    >
-                      Iniciar Sesión para Reservar
-                    </button>
-                  )}
-                </div>
-              )}
+                 </div>
             </div>
+      </div>
+      
+      {/* Mobile Sticky Action Bar - Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden z-50 safe-area-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.15)]">
+           <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
+               <div className="flex flex-col">
+                   <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Precio total desde</span>
+                   <div className="flex items-baseline gap-1">
+                       <span className="text-xl font-bold text-[#011627]">{formatDualCurrency(classDetails.price).pen}</span>
+                       <span className="text-xs text-gray-500 font-medium">/ persona</span>
+                   </div>
+               </div>
+               <button 
+                  onClick={() => handleWidgetReserve(bookingParticipants)}
+                  className="bg-[#0071EB] text-white px-8 py-3.5 rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-blue-600/30 shadow-lg active:scale-95 transform"
+               >
+                  Reservar ahora
+               </button>
+           </div>
+      </div>
 
-            {/* School Information */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Escuela</h3>
-              <div className="space-y-3">
-                <div>
-                  <h4 className="font-semibold text-gray-900">{classDetails.school.name}</h4>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-medium">{classDetails.school.rating}</span>
-                    <span className="text-sm text-gray-500">({classDetails.school.totalReviews} reseñas)</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    <span>{classDetails.school.location}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <Phone className="w-4 h-4 mr-2" />
-                    <span>{classDetails.school.phone}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <Mail className="w-4 h-4 mr-2" />
-                    <span>{classDetails.school.email}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Level Information */}
-            {levelInfo && (
-              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Nivel de la Clase</h3>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${levelInfo.color}`}>
-                    {levelInfo.text}
-                  </span>
-                </div>
-                <p className="text-gray-600 text-sm">{levelInfo.description}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Tips Section - Al final de la página */}
-        {classDetails && tips.length > 0 && (
-          <div className="mt-8 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl shadow-lg border border-blue-100 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Lightbulb className="w-6 h-6 text-yellow-500" />
-              <h2 className="text-xl font-bold text-gray-900">Tips para Prepararte</h2>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Consejos útiles para aprovechar al máximo tu clase de nivel {levelInfo?.text.toLowerCase() || 'principiante'}
-            </p>
-
-            <div className="bg-white rounded-lg shadow-md p-6 relative">
-              {/* Tip Content */}
-              <div className="min-h-[120px]">
-                <div className="flex items-start gap-4">
-                  <div className="text-4xl flex-shrink-0">{tips[currentTipIndex]?.icon}</div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {tips[currentTipIndex]?.title}
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      {tips[currentTipIndex]?.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation */}
-              {tips.length > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={prevTip}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    aria-label="Tip anterior"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-gray-600" />
-                  </button>
-
-                  <div className="flex gap-2">
-                    {tips.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentTipIndex(index)}
-                        className={`w-2 h-2 rounded-full transition-all ${index === currentTipIndex
-                            ? 'bg-blue-600 w-6'
-                            : 'bg-gray-300 hover:bg-gray-400'
-                          }`}
-                        aria-label={`Ir al tip ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={nextTip}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    aria-label="Siguiente tip"
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-600" />
-                  </button>
-                </div>
-              )}
-
-              {/* Tip counter */}
-              <div className="text-center mt-4 text-sm text-gray-500">
-                Tip {currentTipIndex + 1} de {tips.length}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Reservations List (Only for instructors) */}
-        {session?.user?.role === 'INSTRUCTOR' && (
-          <div className="mt-8 bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Reservas de esta Clase</h2>
-
-            {classDetails.reservations.length === 0 ? (
-              <div className="text-center py-8">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">Aún no hay reservas para esta clase</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {classDetails.reservations.map((reservation) => {
-                  const badge = getStatusBadge(reservation.status);
-                  const IconComponent = badge.icon;
-
-                  return (
-                    <div key={reservation.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                          <User className="w-5 h-5 text-gray-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900">{reservation.user.name}</h4>
-                          <p className="text-sm text-gray-600">{reservation.user.email}</p>
-                          {reservation.specialRequest && (
-                            <p className="text-xs text-blue-600 mt-1">&quot;{reservation.specialRequest}&quot;</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleViewStudentProfile(reservation.user)}
-                          className="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-sm"
-                        >
-                          Ver Perfil
-                        </button>
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${badge.class}`}>
-                          <IconComponent className="w-3 h-3 mr-1 inline" />
-                          {badge.text}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Modal de Reserva Mejorado */}
-        {showReservationModal && classDetails && (
+      <div className="max-w-7xl mx-auto px-4">  {showReservationModal && classDetails && (
           <BookingModal
             isOpen={showReservationModal}
             onClose={() => setShowReservationModal(false)}
@@ -1201,13 +1011,14 @@ export default function ClassDetailsPage() {
               school: classDetails.school
             }}
             onSubmit={handleBookingSubmit}
+            initialParticipants={initialParticipants}
           />
         )}
 
         {/* Modal de Imagen en Pantalla Completa */}
         {showImageModal && classDetails.images && classDetails.images.length > 0 && (
           <div
-            className="fixed inset-0 z-[90] bg-black/95 flex items-center justify-center p-4"
+            className="fixed inset-0 z-90 bg-black/95 flex items-center justify-center p-4"
             onClick={() => setShowImageModal(false)}
             style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
@@ -1255,16 +1066,13 @@ export default function ClassDetailsPage() {
               className="relative w-full h-full max-w-7xl max-h-[90vh] flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <Image
+              <ImageWithFallback
                 src={classDetails.images[currentImageIndex]}
                 alt={`${classDetails.title} - Imagen ${currentImageIndex + 1}`}
                 fill
                 className="object-contain"
                 unoptimized
                 priority
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
               />
             </div>
           </div>
@@ -1272,7 +1080,7 @@ export default function ClassDetailsPage() {
 
         {/* Modal de Perfil del Estudiante */}
         {showStudentProfileModal && selectedStudent && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-[70] p-0 sm:p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-70 p-0 sm:p-4 overflow-y-auto">
             <div className="bg-white rounded-t-3xl sm:rounded-xl p-4 sm:p-6 max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
               <div className="flex justify-between items-center mb-4 sm:mb-6 sticky top-0 bg-white pb-2 border-b border-gray-200 sm:border-none sm:relative">
                 <h3 className="text-lg sm:text-2xl font-bold text-gray-900">Perfil del Estudiante</h3>
@@ -1288,10 +1096,10 @@ export default function ClassDetailsPage() {
               <div className="space-y-6">
                 {/* Información básica */}
                 <div className="flex items-start gap-4">
-                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    {selectedStudent.profileImage ? (
-                      <Image
-                        src={selectedStudent.profileImage}
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                    {selectedStudent.profilePhoto ? (
+                      <ImageWithFallback
+                        src={selectedStudent.profilePhoto}
                         alt={selectedStudent.name}
                         width={80}
                         height={80}

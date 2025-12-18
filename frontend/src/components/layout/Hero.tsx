@@ -1,7 +1,11 @@
 import { Button } from '@/components/ui/Button'
 import { StarIcon, LightningIcon } from '@/components/ui/Icons'
 
-export function Hero() {
+interface HeroProps {
+  children?: React.ReactNode
+}
+
+export function Hero({ children }: HeroProps) {
   // Función para hacer scroll a la sección de búsqueda
   const scrollToSearch = () => {
     const searchSection = document.getElementById('encuentra-tu-clase')
@@ -10,7 +14,7 @@ export function Hero() {
     }
   }
   return (
-    <section className="relative min-h-screen sm:min-h-screen py-12 sm:py-20 flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[600px] sm:min-h-[700px] py-12 sm:py-20 flex items-center justify-center overflow-hidden">
 
       {/* Background Image - Hero local personalizada */}
       <div 
@@ -21,7 +25,7 @@ export function Hero() {
       />
       
       {/* Simple Light Overlay */}
-      <div className="absolute inset-0 bg-[#011627]/70" />
+      <div className="absolute inset-0 bg-[#011627]/60" />
       
       {/* Animated Wave Pattern Overlay */}
       <div className="absolute inset-0 opacity-20">
@@ -45,45 +49,43 @@ export function Hero() {
             
             {/* Mobile-Optimized Layout */}
             <div className="text-center text-white">
-              <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-black mb-4 sm:mb-6 lg:mb-8 leading-tight text-white drop-shadow-2xl">
-                <span className="block">El Marketplace</span>
-                <span className="block">de Surf</span>
+              <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black mb-4 sm:mb-6 leading-tight text-white drop-shadow-2xl">
+                <span className="block">Surfea hoy.</span>
+                <span className="block text-[#2EC4B6]">Vive la experiencia.</span>
               </h1>
               
-              <p className="text-sm xs:text-base sm:text-lg lg:text-xl xl:text-2xl mb-6 sm:mb-8 lg:mb-10 max-w-3xl mx-auto leading-relaxed font-medium text-white drop-shadow-lg px-2 sm:px-0">
-                <span>Encuentra tus clases de surf.</span>
-                <span className="font-bold ml-1 sm:ml-2">Impulsa tu pasión.</span>
+              <p className="text-base xs:text-lg sm:text-xl lg:text-2xl mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed font-medium text-gray-100 drop-shadow-lg px-2 sm:px-0">
+                La plataforma líder para reservar clases de surf en Lima.
               </p>
               
-              {/* Mobile-Optimized CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6 justify-center mb-6 sm:mb-8 lg:mb-12 px-4 sm:px-0">
-                <Button 
-                  variant="primary"
-                  onClick={scrollToSearch}
-                  className="touch-target-lg text-sm sm:text-base lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 w-full sm:w-auto"
-                >
-                  EXPLORAR CLASES
-                </Button>
+              {/* Search Bar Container */}
+              <div className="w-full max-w-5xl mx-auto mb-10 sm:mb-16">
+                 {children}
               </div>
+
+              {!children && (
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6 justify-center mb-6 sm:mb-8 lg:mb-12 px-4 sm:px-0">
+                  <Button 
+                    variant="primary"
+                    onClick={scrollToSearch}
+                    className="touch-target-lg text-sm sm:text-base lg:text-xl rounded-xl lg:rounded-2xl transition-all duration-300 transform hover:-translate-y-1 lg:hover:-translate-y-2 w-full sm:w-auto"
+                  >
+                    EXPLORAR CLASES
+                  </Button>
+                </div>
+              )}
 
               {/* Mobile-Optimized Trust Indicators */}
               <div className="max-w-sm sm:max-w-md mx-auto px-4 sm:px-0">
-                <div className="bg-[#011627]/70 backdrop-blur-md rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-6 shadow-xl border border-white/20">
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-[#2EC4B6] rounded-full flex items-center justify-center shadow-lg flex-shrink-0">
-                      <LightningIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#011627]" />
-                    </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <p className="text-xs sm:text-sm lg:text-lg font-bold text-white leading-tight">
-                        ¿Eres instructor o tienes una academia?
-                      </p>
-                      <p className="text-xs sm:text-xs lg:text-sm text-white leading-tight">
-                        <a href="/register" className="underline hover:text-[#2EC4B6] transition-colors font-medium">
-                          Únete gratis a clasesde.pe
-                        </a>
-                      </p>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-center gap-6 text-sm sm:text-base font-medium text-gray-200">
+                   <div className="flex items-center gap-2">
+                      <StarIcon className="w-5 h-5 text-yellow-400" />
+                      <span>4.9/5 Rating</span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                       <LightningIcon className="w-5 h-5 text-[#2EC4B6]" />
+                       <span>Reserva instantánea</span>
+                   </div>
                 </div>
               </div>
             </div>
@@ -93,25 +95,22 @@ export function Hero() {
         {/* Mobile-Optimized Bottom Stats */}
         <div className="relative z-10 pb-4 sm:pb-8">
           <div className="max-w-7xl mx-auto px-3 sm:px-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-white">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center text-white/90">
               <div className="p-2 sm:p-0">
                 <div className="text-lg sm:text-2xl lg:text-3xl font-bold">50+</div>
-                <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Academias Verificadas</div>
+                <div className="text-xs sm:text-sm font-medium">Academias</div>
               </div>
               <div className="p-2 sm:p-0">
                 <div className="text-lg sm:text-2xl lg:text-3xl font-bold">300+</div>
-                <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Instructores Certificados</div>
+                <div className="text-xs sm:text-sm font-medium">Instructores</div>
               </div>
               <div className="p-2 sm:p-0">
                 <div className="text-lg sm:text-2xl lg:text-3xl font-bold">5K+</div>
-                <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Estudiantes Activos</div>
+                <div className="text-xs sm:text-sm font-medium">Estudiantes</div>
               </div>
               <div className="p-2 sm:p-0">
-                <div className="flex items-center justify-center text-lg sm:text-2xl lg:text-3xl font-bold">
-                  4.9
-                  <StarIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 ml-1" />
-                </div>
-                <div className="text-xs sm:text-xs lg:text-sm opacity-90 leading-tight">Rating Promedio</div>
+                 <div className="text-lg sm:text-2xl lg:text-3xl font-bold">100%</div>
+                 <div className="text-xs sm:text-sm font-medium">Diversión</div>
               </div>
             </div>
           </div>

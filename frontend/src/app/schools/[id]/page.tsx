@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import Link from 'next/link'
+import { MobileBottomNav } from '@/components/navigation/MobileBottomNav'
 import { 
   MapPin, 
   Star,
@@ -175,21 +177,26 @@ export default function SchoolDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Cover Image */}
-      <div className="relative h-48 sm:h-64 md:h-80 bg-gradient-to-br from-blue-600 to-blue-800">
+      <div className="relative h-48 sm:h-64 md:h-80 bg-linear-to-br from-blue-600 to-blue-800">
         {school.coverImage ? (
-          <Image
+          <ImageWithFallback
             src={school.coverImage}
             alt={school.name}
             fill
             className="object-cover"
             priority
+            fallbackComponent={
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Building2 className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-white/30" />
+              </div>
+            }
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Building2 className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-white/30" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent"></div>
       </div>
 
       {/* School Info Card */}
@@ -198,18 +205,23 @@ export default function SchoolDetailPage() {
           <div className="p-6 sm:p-8 md:p-10">
             <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
               {/* Logo */}
-              <div className="flex-shrink-0 mx-auto lg:mx-0">
-                <div className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border-4 border-white shadow-xl overflow-hidden">
+              <div className="shrink-0 mx-auto lg:mx-0">
+                <div className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 rounded-2xl bg-linear-to-br from-blue-50 to-indigo-50 border-4 border-white shadow-xl overflow-hidden">
                   {school.logo ? (
-                    <Image
+                    <ImageWithFallback
                       src={school.logo}
                       alt={`${school.name} logo`}
                       width={160}
                       height={160}
                       className="object-cover w-full h-full"
+                      fallbackComponent={
+                        <div className="w-full h-full bg-linear-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                          <Building2 className="w-16 h-16 sm:w-20 sm:h-20 text-blue-400" />
+                        </div>
+                      }
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
+                    <div className="w-full h-full bg-linear-to-br from-blue-100 to-indigo-100 flex items-center justify-center">
                       <Building2 className="w-16 h-16 sm:w-20 sm:h-20 text-blue-400" />
                     </div>
                   )}
@@ -220,7 +232,7 @@ export default function SchoolDetailPage() {
               <div className="flex-1 text-center lg:text-left">
                 {/* Header with Name and Rating */}
                 <div className="mb-6">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     {school.name}
                   </h1>
                   <div className="flex items-center justify-center lg:justify-start text-gray-600 mb-3">
@@ -236,7 +248,7 @@ export default function SchoolDetailPage() {
 
                 {/* Rating Section - Destacado */}
                 {school.rating && school.rating > 0 ? (
-                  <div className="mb-6 inline-flex items-center gap-3 bg-gradient-to-r from-yellow-50 to-amber-50 px-6 py-4 rounded-xl border-2 border-yellow-200 shadow-lg">
+                  <div className="mb-6 inline-flex items-center gap-3 bg-linear-to-r from-yellow-50 to-amber-50 px-6 py-4 rounded-xl border-2 border-yellow-200 shadow-lg">
                     <div className="flex items-center gap-2">
                       <Star className="w-8 h-8 text-yellow-400 fill-current" />
                       <div>
@@ -259,7 +271,7 @@ export default function SchoolDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="mb-6 inline-flex items-center gap-3 bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 rounded-xl border-2 border-gray-200">
+                  <div className="mb-6 inline-flex items-center gap-3 bg-linear-to-r from-gray-50 to-gray-100 px-6 py-4 rounded-xl border-2 border-gray-200">
                     <Star className="w-6 h-6 text-gray-400" />
                     <span className="text-gray-600 font-medium">Sin calificaciones aún</span>
                   </div>
@@ -324,13 +336,18 @@ export default function SchoolDetailPage() {
                   className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden group"
                 >
                   {/* Class Image */}
-                  <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600">
+                  <div className="relative h-48 bg-linear-to-br from-blue-400 to-blue-600">
                     {classItem.images && classItem.images.length > 0 ? (
-                      <Image
+                      <ImageWithFallback
                         src={classItem.images[0]}
                         alt={classItem.title}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        fallbackComponent={
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Users className="w-16 h-16 text-white/30" />
+                          </div>
+                        }
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -447,6 +464,7 @@ export default function SchoolDetailPage() {
           )}
         </div>
       </div>
+      <MobileBottomNav />
     </div>
   )
 }

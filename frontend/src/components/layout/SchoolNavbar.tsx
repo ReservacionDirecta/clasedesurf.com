@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
@@ -195,11 +196,11 @@ export function SchoolNavbar() {
             {/* Logo and Brand */}
             <div className="flex items-center">
               <Link href="/dashboard/school" className="flex items-center space-x-3 group">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                   <Waves className="w-6 h-6 text-white" />
                 </div>
                 <div className="hidden sm:block">
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <h1 className="text-xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     clasesde.pe
                   </h1>
                   <p className="text-xs text-gray-500">Panel de Administración</p>
@@ -217,8 +218,8 @@ export function SchoolNavbar() {
                   <Link
                     key={item.name}
                     href={item.href}
-                    className={`group flex items-center space-x-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${active
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
+                    className={`group flex items-center space-x-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0 ${active
+                      ? 'bg-linear-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                   >
@@ -243,16 +244,16 @@ export function SchoolNavbar() {
                 <div className="relative group">
                   <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-blue-100 group-hover:ring-blue-300 transition-all duration-200">
                     {profilePhoto ? (
-                      <Image
+                      <ImageWithFallback
                         src={profilePhoto}
                         alt={session?.user?.name || 'User'}
                         width={40}
                         height={40}
                         className="w-full h-full object-cover"
-                        unoptimized
+                        fallbackSrc="/logoclasedesusrf.png"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center">
+                      <div className="w-full h-full bg-linear-to-br from-blue-400 to-indigo-400 flex items-center justify-center">
                         <span className="text-white font-semibold text-sm">
                           {getInitials(session?.user?.name)}
                         </span>
@@ -307,7 +308,7 @@ export function SchoolNavbar() {
             paddingBottom: 'env(safe-area-inset-bottom, 0px)'
           }}>
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-3 flex-shrink-0">
+          <div className="bg-linear-to-r from-blue-500 to-indigo-500 p-3 shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-base font-bold text-white">Menú</h2>
               <button
@@ -326,16 +327,16 @@ export function SchoolNavbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="flex items-center space-x-2 p-2 bg-white/10 backdrop-blur-sm rounded-lg hover:bg-white/20 transition-all duration-200"
             >
-              <div className="relative flex-shrink-0">
+              <div className="relative shrink-0">
                 <div className="w-8 h-8 rounded-full overflow-hidden ring-2 ring-white/30">
                   {profilePhoto ? (
-                    <Image
+                    <ImageWithFallback
                       src={profilePhoto}
                       alt={session?.user?.name || 'User'}
                       width={32}
                       height={32}
                       className="w-full h-full object-cover"
-                      unoptimized
+                      fallbackSrc="/logoclasedesusrf.png"
                     />
                   ) : (
                     <div className="w-full h-full bg-white/20 flex items-center justify-center">
@@ -355,7 +356,7 @@ export function SchoolNavbar() {
                   {session?.user?.email}
                 </p>
               </div>
-              <ChevronRight className="w-3 h-3 text-white/60 flex-shrink-0" />
+              <ChevronRight className="w-3 h-3 text-white/60 shrink-0" />
             </Link>
           </div>
 
@@ -373,13 +374,13 @@ export function SchoolNavbar() {
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`group flex items-center justify-between p-2 rounded-lg transition-all duration-200 ${active
-                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
+                    ? 'bg-linear-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
                     : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
                     }`}
                   style={{ touchAction: 'manipulation' }}
                 >
                   <div className="flex items-center space-x-2 min-w-0 flex-1">
-                    <div className={`p-1 rounded-lg transition-all duration-200 flex-shrink-0 ${active
+                    <div className={`p-1 rounded-lg transition-all duration-200 shrink-0 ${active
                       ? 'bg-blue-100 text-blue-700'
                       : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
                       }`}>
@@ -390,7 +391,7 @@ export function SchoolNavbar() {
                       <p className="text-[10px] text-gray-500 truncate">{item.description}</p>
                     </div>
                   </div>
-                  <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0 ${active ? 'text-blue-700' : 'text-gray-400 group-hover:translate-x-1'
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${active ? 'text-blue-700' : 'text-gray-400 group-hover:translate-x-1'
                     }`} />
                 </Link>
               );
@@ -398,16 +399,16 @@ export function SchoolNavbar() {
           </div>
 
           {/* Logout Button - Fixed at bottom */}
-          <div className="p-2 border-t border-gray-200 bg-gray-50 flex-shrink-0" style={{
+          <div className="p-2 border-t border-gray-200 bg-gray-50 shrink-0" style={{
             paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))'
           }}>
             <button
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-xs font-semibold text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 touch-manipulation"
+              className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-xs font-semibold text-white bg-linear-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 touch-manipulation"
               style={{ touchAction: 'manipulation' }}
             >
-              <LogOut className="w-3.5 h-3.5 flex-shrink-0" />
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{isSigningOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}</span>
             </button>
           </div>

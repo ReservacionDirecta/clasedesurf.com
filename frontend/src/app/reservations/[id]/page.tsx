@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { formatDualCurrency } from '@/lib/currency';
 import {
   Calendar,
@@ -586,7 +587,7 @@ function ReservationDetailsContent() {
                           <div className="md:col-span-2">
                             <p className="text-sm text-gray-600 mb-2">Comprobante de Pago</p>
                             <div className="relative w-full h-64 border border-gray-200 rounded-lg overflow-hidden">
-                              <Image
+                              <ImageWithFallback
                                 src={reservation.payment.voucherImage}
                                 alt="Comprobante de pago"
                                 fill
@@ -612,7 +613,7 @@ function ReservationDetailsContent() {
               <div className="space-y-4">
                 {reservation.class.school.logo && (
                   <div className="relative w-24 h-24 rounded-lg overflow-hidden">
-                    <Image
+                    <ImageWithFallback
                       src={reservation.class.school.logo}
                       alt={reservation.class.school.name}
                       fill
@@ -724,7 +725,7 @@ function ReservationDetailsContent() {
                   Instructor
                 </h2>
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
                     <User className="w-8 h-8 text-blue-600" />
                   </div>
                   <div>
@@ -742,7 +743,7 @@ function ReservationDetailsContent() {
           <div className="space-y-6">
             {/* Tips Card */}
             {tips.length > 0 && (
-              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg shadow-lg p-6 border border-blue-100">
+              <div className="bg-linear-to-br from-blue-50 to-cyan-50 rounded-lg shadow-lg p-6 border border-blue-100">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-900 flex items-center">
                     <Lightbulb className="w-5 h-5 mr-2 text-yellow-500" />

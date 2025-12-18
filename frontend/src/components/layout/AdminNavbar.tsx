@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -212,13 +213,13 @@ export function AdminNavbar() {
             {/* Logo and Brand */}
             <Link href="/dashboard/admin" className="flex items-center">
               <div className="w-10 h-10 flex items-center justify-center overflow-auto">
-                <Image
+                <ImageWithFallback
                   src="/logoclasedesusrf.png"
                   alt="clasesde.pe"
                   width={40}
                   height={40}
                   className="w-full h-full object-contain"
-                  unoptimized
+                  fallbackSrc="/logoclasedesusrf.png"
                 />
               </div>
             </Link>
@@ -370,7 +371,7 @@ export function AdminNavbar() {
           }}>
             {/* User Info */}
             <div className="flex items-center space-x-3 px-3 py-2 bg-white/5 rounded-lg">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF3366] to-[#FF3366]/60 flex items-center justify-center text-white font-bold shadow-lg">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#FF3366] to-[#FF3366]/60 flex items-center justify-center text-white font-bold shadow-lg">
                 {getInitials(session?.user?.name)}
               </div>
               <div className="flex-1 min-w-0">

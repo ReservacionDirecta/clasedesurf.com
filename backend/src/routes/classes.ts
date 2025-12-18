@@ -28,7 +28,7 @@ const optionalAuth = (req: AuthRequest, res: any, next: any) => {
 // GET /classes - list classes with filters (supports multi-tenant filtering)
 router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   try {
-    const { date, level, type, minPrice, maxPrice, schoolId, locality } = req.query;
+    const { date, level, type, minPrice, maxPrice, schoolId, locality, participants, q } = req.query;
 
     // Build filter object - exclude soft-deleted classes by default
     const where: any = {
@@ -65,15 +65,43 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
     }
 
     // Filter by date (exact date match)
-    if (date && typeof date === 'string') {
-      const filterDate = new Date(date);
-      const startOfDay = new Date(filterDate.setHours(0, 0, 0, 0));
-      const endOfDay = new Date(filterDate.setHours(23, 59, 59, 999));
+    const targetDate = date && typeof date === 'string' ? new Date(date) : null;
 
-      where.date = {
-        gte: startOfDay,
-        lte: endOfDay
-      };
+    if (targetDate) {
+      const startOfDay = new Date(targetDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(targetDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      where.OR = [
+        {
+          // Single classes on this date
+          isRecurring: false,
+          date: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
+        },
+        {
+          // Recurring classes active during this date
+          isRecurring: true,
+          startDate: { lte: endOfDay },
+          endDate: { gte: startOfDay }
+        }
+      ];
+    } else {
+      // Default: show only future/current classes (from now onwards)
+      const now = new Date();
+      where.OR = [
+        {
+          isRecurring: false,
+          date: { gte: now }
+        },
+        {
+          isRecurring: true,
+          endDate: { gte: now }
+        }
+      ];
     }
 
     // Filter by level
@@ -91,6 +119,41 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       where.price = {};
       if (minPrice) where.price.gte = Number(minPrice);
       if (maxPrice) where.price.lte = Number(maxPrice);
+    }
+
+    // Filter by participants (capacity check in DB)
+    if (participants) {
+      where.capacity = {
+        gte: Number(participants)
+      };
+    }
+
+    // Generic Search (q)
+    if (q) {
+      const search = String(q).toLowerCase();
+      const searchWhere = {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { location: { contains: search, mode: 'insensitive' } },
+          {
+            school: {
+              name: { contains: search, mode: 'insensitive' }
+            }
+          }
+        ]
+      };
+
+      // Combine with existing OR or AND
+      if (where.OR) {
+        where.AND = [
+          { OR: where.OR },
+          searchWhere
+        ];
+        delete where.OR;
+      } else {
+        Object.assign(where, searchWhere);
+      }
     }
 
     const classes = await prisma.class.findMany({
@@ -116,7 +179,6 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
             totalReviews: true,
             createdAt: true,
             updatedAt: true
-            // Excluir reviews explícitamente para evitar errores si la migración falló
           }
         },
         reservations: {
@@ -129,8 +191,25 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       orderBy: { date: 'asc' }
     });
 
+    // Post-filter recurring classes if a specific date was requested
+    // to ensure the day of week matches the pattern
+    let finalClasses = classes;
+    if (targetDate) {
+      const targetDay = targetDate.getDay(); // 0 = Sunday
+      finalClasses = classes.filter(cls => {
+        if (!cls.isRecurring) return true;
+        // Check if recurrencePattern exists and has days
+        const pattern = cls.recurrencePattern as any;
+        if (pattern && Array.isArray(pattern.days)) {
+          return pattern.days.includes(targetDay);
+        }
+        return true; // If no pattern defined but marked recurring, show it? Or hide? Let's show.
+      });
+    }
+
     // Calculate payment info and available spots for each class
-    const classesWithInfo = classes.map(cls => {
+    let classesWithInfo = finalClasses.map(cls => {
+      // ... existing mapping logic ...
       const activeReservations = cls.reservations.filter(r => r.status !== 'CANCELED');
       const totalReservations = activeReservations.length;
       const paidReservations = cls.reservations.filter(r => r.payment?.status === 'PAID').length;
@@ -139,42 +218,47 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         .reduce((sum, r) => sum + (r.payment?.amount || 0), 0);
 
       // Calculate available spots
-      const availableSpots = cls.capacity - totalReservations;
+      const availableSpots = Math.max(0, cls.capacity - totalReservations);
+      const occupancyRate = cls.capacity > 0 ? (totalReservations / cls.capacity) * 100 : 0;
 
-      // Normalize and filter images - remove empty strings and normalize paths
+      // Normalize images
       let normalizedImages: string[] = [];
       if (cls.images && Array.isArray(cls.images)) {
         normalizedImages = cls.images
           .filter((img: string) => img && typeof img === 'string' && img.trim() !== '')
           .map((img: string) => {
             const trimmedImg = img.trim();
-            // If image is already a full URL (http/https) or starts with /, keep it as is
             if (trimmedImg.startsWith('http://') || trimmedImg.startsWith('https://') || trimmedImg.startsWith('/')) {
               return trimmedImg;
             }
-            // If image doesn't start with http or /, assume it's a relative path
-            return `/uploads/${trimmedImg}`;
+            return `/uploads/classes/${trimmedImg}`;
           });
       }
 
       return {
         ...cls,
-        images: normalizedImages,
-        availableSpots: Math.max(0, availableSpots), // Ensure non-negative
+        availableSpots,
         paymentInfo: {
           totalReservations,
           paidReservations,
           totalRevenue,
-          occupancyRate: cls.capacity > 0 ? (totalReservations / cls.capacity) * 100 : 0
-        }
+          occupancyRate
+        },
+        images: normalizedImages
       };
     });
 
+    // ... rest of filtering ...
+    // Filter by available spots if participants filter is provided
+    if (participants) {
+      const neededSpots = Number(participants);
+      classesWithInfo = classesWithInfo.filter(cls => cls.availableSpots >= neededSpots);
+    }
+
     res.json(classesWithInfo);
   } catch (err: any) {
+    // ... existing error handling ...
     console.error('[GET /classes] Error:', err);
-    console.error('[GET /classes] Error message:', err?.message);
-    console.error('[GET /classes] Error stack:', err?.stack);
     res.status(500).json({
       message: 'Internal server error',
       error: process.env.NODE_ENV === 'development' ? err?.message : undefined
@@ -182,107 +266,108 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   }
 });
 
-// GET /classes/deleted - Get deleted classes (ADMIN or SCHOOL_ADMIN)
-// MOVED UP to avoid conflict with /:id
-router.get('/deleted', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, async (req: AuthRequest, res) => {
-  try {
-    const whereClause: any = {
-      deletedAt: { not: null }
-    };
-
-    // If SCHOOL_ADMIN, only show their school's deleted classes
-    if (req.role === 'SCHOOL_ADMIN' && req.schoolId) {
-      whereClause.schoolId = req.schoolId;
-    }
-
-    const deletedClasses = await prisma.class.findMany({
-      where: whereClause,
-      include: {
-        school: { select: { id: true, name: true } },
-        beach: { select: { id: true, name: true, location: true } },
-        reservations: {
-          select: {
-            id: true,
-            status: true
-          }
-        }
-      },
-      orderBy: { deletedAt: 'desc' }
-    });
-
-    res.json(deletedClasses);
-  } catch (err) {
-    console.error('[GET /classes/deleted] Error:', err);
-    res.status(500).json({ message: 'Error al obtener clases eliminadas' });
-  }
-});
-
-// GET /classes/:id - get single class
+// GET /classes/:id - get class details
 router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
+    const classId = Number(id);
 
-    const classData = await prisma.class.findUnique({
-      where: { id: Number(id) },
+    const classItem = await prisma.class.findUnique({
+      where: { id: classId },
       include: {
-        school: true,
+        school: {
+          select: {
+            id: true,
+            name: true,
+            location: true,
+            description: true,
+            phone: true,
+            email: true,
+            address: true,
+            logo: true,
+            coverImage: true,
+            createdAt: true,
+            updatedAt: true,
+            rating: true,
+            totalReviews: true,
+            instagram: true,
+            facebook: true,
+            whatsapp: true,
+            website: true
+          }
+        },
         reservations: {
           include: {
             payment: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
+            user: true
           }
-        }
+        },
+        beach: true
       }
     });
 
-    if (!classData) {
+    if (!classItem) {
       return res.status(404).json({ message: 'Class not found' });
     }
 
-    // Filter active reservations
-    const activeReservations = classData.reservations.filter(r => r.status !== 'CANCELED');
+    // Process availability
+    const activeReservations = classItem.reservations.filter(r => r.status !== 'CANCELED');
+    const totalReservations = activeReservations.length;
+    const availableSpots = Math.max(0, classItem.capacity - totalReservations);
+    const paidReservations = classItem.reservations.filter(r => r.payment?.status === 'PAID').length;
+    const totalRevenue = classItem.reservations
+      .filter(r => r.payment?.status === 'PAID')
+      .reduce((sum, r) => sum + (r.payment?.amount || 0), 0);
+    const occupancyRate = classItem.capacity > 0 ? (totalReservations / classItem.capacity) * 100 : 0;
 
-    // Normalize and filter images - remove empty strings and normalize paths
+    // Normalize images
     let normalizedImages: string[] = [];
-    if (classData.images && Array.isArray(classData.images)) {
-      normalizedImages = classData.images
+    if (classItem.images && Array.isArray(classItem.images)) {
+      normalizedImages = classItem.images
         .filter((img: string) => img && typeof img === 'string' && img.trim() !== '')
         .map((img: string) => {
           const trimmedImg = img.trim();
-          // If image is already a full URL (http/https) or starts with /, keep it as is
-          if (trimmedImg.startsWith('http://') || trimmedImg.startsWith('https://') || trimmedImg.startsWith('/')) {
+          if (trimmedImg.startsWith('http') || trimmedImg.startsWith('/')) {
             return trimmedImg;
           }
-          // If image doesn't start with http or /, assume it's a relative path
-          return `/uploads/${trimmedImg}`;
+          return `/uploads/classes/${trimmedImg}`;
         });
     }
 
-    res.json({
-      ...classData,
+    const responseData = {
+      ...classItem,
       images: normalizedImages,
-      reservations: activeReservations
+      availableSpots,
+      paymentInfo: {
+        totalReservations,
+        paidReservations,
+        totalRevenue,
+        occupancyRate
+      }
+    };
+
+    res.json(responseData);
+
+  } catch (err: any) {
+    console.error('[GET /classes/:id] Error:', err);
+    res.status(500).json({
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err?.message : undefined
     });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
   }
 });
-
-// POST /classes - create class (ADMIN or SCHOOL_ADMIN)
 router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createClassSchema), async (req: AuthRequest, res) => {
   try {
-    const { title, description, date, duration, capacity, price, level, instructor, images, schoolId, studentDetails, beachId } = req.body;
+    const {
+      title, description, date, duration, capacity, price, level,
+      instructor, images, schoolId, studentDetails, beachId,
+      isRecurring, recurrencePattern, startDate, endDate
+    } = req.body;
 
-    console.log('📝 Creando clase con datos:', { title, description, date, duration, capacity, price, level, instructor, studentDetails, beachId });
+    console.log('📝 Creando clase:', { title, isRecurring, recurrencePattern });
 
-    const classDate = new Date(date);
+    // Use date provided OR startDate if recurring (fallback)
+    const classDate = date ? new Date(date) : (startDate ? new Date(startDate) : new Date());
 
     // Determine final schoolId
     let finalSchoolId: number | undefined = schoolId ? Number(schoolId) : undefined;
@@ -291,8 +376,6 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
       finalSchoolId = req.schoolId;
     }
     if (!finalSchoolId) return res.status(400).json({ message: 'School ID is required' });
-
-    console.log('🏫 School ID final:', finalSchoolId);
 
     const newClass = await prisma.class.create({
       data: {
@@ -306,7 +389,11 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
         instructor,
         images: images || [],
         school: { connect: { id: Number(finalSchoolId) } },
-        ...(beachId && { beach: { connect: { id: Number(beachId) } } })
+        ...(beachId && { beach: { connect: { id: Number(beachId) } } }),
+        isRecurring: isRecurring || false,
+        recurrencePattern: recurrencePattern,
+        startDate: startDate ? new Date(startDate) : classDate,
+        endDate: endDate ? new Date(endDate) : classDate
       }
     });
 
@@ -436,6 +523,28 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
     // Handle images separately if provided
     const { images, ...restData } = data;
     const updateData: any = { ...restData };
+
+    // Explicitly convert date strings to Date objects for Prisma
+    if (updateData.date) updateData.date = new Date(updateData.date);
+    if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
+    if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
+
+    // Transform relation fields (Prisma expects nested writes for relations in updates)
+    if (updateData.schoolId) {
+      updateData.school = { connect: { id: Number(updateData.schoolId) } };
+      delete updateData.schoolId;
+    }
+
+    if (updateData.beachId) {
+      updateData.beach = { connect: { id: Number(updateData.beachId) } };
+      delete updateData.beachId;
+    }
+
+    // Remove studentDetails as it is not in the Class model
+    if (updateData.studentDetails !== undefined) {
+      delete updateData.studentDetails;
+    }
+
     if (images !== undefined) {
       // Normalize images paths
       if (Array.isArray(images)) {
@@ -452,9 +561,13 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
 
     const updated = await prisma.class.update({ where: { id: Number(id) }, data: updateData });
     res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+  } catch (err: any) {
+    console.error('[PUT /classes/:id] Error updating class:', err);
+    console.error('[PUT /classes/:id] Request Body:', req.body);
+    res.status(500).json({
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err?.message : undefined
+    });
   }
 });
 
@@ -675,6 +788,184 @@ router.post('/:id/duplicate', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']
   } catch (err) {
     console.error('[POST /classes/:id/duplicate] Error:', err);
     res.status(500).json({ message: 'Error al duplicar la clase' });
+  }
+});
+
+// GET /classes/:id/calendar - Get availability calendar for a range
+router.get('/:id/calendar', optionalAuth, validateParams(classIdSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as any;
+    const { start, end } = req.query;
+
+    if (!start || !end) {
+      return res.status(400).json({ message: 'Start and end dates are required' });
+    }
+
+    const startDate = new Date(String(start));
+    const endDate = new Date(String(end));
+    const classId = Number(id);
+
+    // 1. Fetch Class
+    const classItem = await prisma.class.findUnique({
+      where: { id: classId }
+    });
+
+    if (!classItem) return res.status(404).json({ message: 'Class not found' });
+
+    // 2. Fetch Availabilities (Overrides)
+    const availabilities = await prisma.classAvailability.findMany({
+      where: {
+        classId,
+        date: { gte: startDate, lte: endDate }
+      }
+    });
+
+    // 3. Fetch Reservations
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        classId,
+        status: { not: 'CANCELED' },
+        OR: [
+          { date: { gte: startDate, lte: endDate } },
+          // Include reservations that might not have date set but stick to class date if single?
+          // For recurring inventory, we rely on 'date' field in reservation.
+        ]
+      }
+    });
+
+    // 4. Generate Slots
+    let slots: any[] = [];
+    const current = new Date(startDate);
+
+    // Helper map for fast lookup
+    const availabilityMap = new Map();
+    availabilities.forEach((a: any) => {
+      const key = `${a.date.toISOString().split('T')[0]}_${a.time || 'ALL'}`;
+      availabilityMap.set(key, a);
+    });
+
+    const reservationMap = new Map(); // key: "YYYY-MM-DD_HH:mm" -> count
+    reservations.forEach((r: any) => {
+      if (r.date) {
+        const d = new Date(r.date).toISOString().split('T')[0];
+        const t = r.time || 'ALL';
+        const key = `${d}_${t}`;
+        reservationMap.set(key, (reservationMap.get(key) || 0) + (typeof r.participants === 'number' ? r.participants : 1)); // Simplified count
+      }
+    });
+
+    while (current <= endDate) {
+      const dateStr = current.toISOString().split('T')[0];
+      const dayOfWeek = current.getDay();
+
+      if (classItem.isRecurring) {
+        // Recurring Logic
+        const pattern = classItem.recurrencePattern as any;
+        if (pattern && Array.isArray(pattern.days) && pattern.days.includes(dayOfWeek)) {
+          // For each time defined in pattern
+          if (pattern.times && Array.isArray(pattern.times)) {
+            pattern.times.forEach((time: string) => {
+              const key = `${dateStr}_${time}`;
+              const override = availabilityMap.get(key);
+              const reserved = reservationMap.get(key) || 0;
+
+              // Default values from class
+              let capacity = classItem.capacity;
+              let price = classItem.price;
+              let isClosed = false;
+
+              // Apply override
+              if (override) {
+                if (override.capacity !== null) capacity = override.capacity;
+                if (override.price !== null) price = override.price;
+                if (override.isClosed) isClosed = true;
+              }
+
+              const available = Math.max(0, capacity - reserved);
+
+              slots.push({
+                date: dateStr,
+                time,
+                price,
+                capacity,
+                reserved,
+                available,
+                isClosed,
+                hasOverride: !!override
+              });
+            });
+          }
+        }
+      } else {
+        // Single Class Logic - Only appears on its specific date
+        const classDateStr = new Date(classItem.date).toISOString().split('T')[0];
+        if (dateStr === classDateStr) {
+          const time = classItem.date.toISOString().split('T')[1].substring(0, 5); // default time
+          const key = `${dateStr}_${time}`; // or ALL
+          // ... logic similar to above ...
+          // For simplicity in single class, we usually don't use the calendar endpoint as much, 
+          // but let's return it for consistency if single class is requested.
+
+          const override = availabilityMap.get(`${dateStr}_ALL`) || availabilityMap.get(`${dateStr}_${time}`);
+          const reserved = reservations.length; // Simple count for single class
+
+          slots.push({
+            date: dateStr,
+            time,
+            price: override?.price ?? classItem.price,
+            capacity: override?.capacity ?? classItem.capacity,
+            reserved,
+            available: Math.max(0, (override?.capacity ?? classItem.capacity) - reserved),
+            isClosed: override?.isClosed ?? false
+          });
+        }
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    res.json(slots);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// POST /classes/:id/availability - Set override for a specific slot
+router.post('/:id/availability', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as any;
+    const { date, time, price, capacity, isClosed } = req.body;
+
+    if (!date) return res.status(400).json({ message: 'Date is required' });
+
+    // Upsert availability
+    const availability = await prisma.classAvailability.upsert({
+      where: {
+        classId_date_time: {
+          classId: Number(id),
+          date: new Date(date),
+          time: time || null
+        }
+      },
+      update: {
+        price: price !== undefined ? price : undefined,
+        capacity: capacity !== undefined ? capacity : undefined,
+        isClosed: isClosed !== undefined ? isClosed : undefined
+      },
+      create: {
+        classId: Number(id),
+        date: new Date(date),
+        time: time || null,
+        price,
+        capacity,
+        isClosed: isClosed || false
+      }
+    });
+
+    res.json(availability);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 

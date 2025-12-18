@@ -42,6 +42,7 @@ interface BookingModalProps {
   onClose: () => void
   classData: ClassData
   onSubmit: (bookingData: any) => void
+  initialParticipants?: number
 }
 
 const STEPS = [
@@ -50,7 +51,7 @@ const STEPS = [
   { id: 3, name: 'Emergencia', icon: '🆘' }
 ]
 
-export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingModalProps) {
+export function BookingModal({ isOpen, onClose, classData, onSubmit, initialParticipants = 1 }: BookingModalProps) {
   const { data: session } = useSession()
   const { success, error: showError } = useNotifications()
   const [currentStep, setCurrentStep] = useState(1)
@@ -66,7 +67,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
     injuries: '',
     emergencyContact: '',
     emergencyPhone: '',
-    participants: 1,
+    participants: initialParticipants,
     specialRequest: '',
     discountCode: ''
   })
@@ -474,7 +475,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit }: BookingMo
                     onChange={handleInputChange}
                     className="w-full h-12 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    {Array.from({ length: Math.min(classData.availableSpots || 1, 5) }, (_, i) => (
+                    {Array.from({ length: Math.min(classData.availableSpots || 1, 10) }, (_, i) => (
                       <option key={i + 1} value={i + 1}>
                         {i + 1} {i === 0 ? 'persona' : 'personas'}
                       </option>

@@ -29,6 +29,7 @@ import {
   Clock
 } from 'lucide-react';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 
 interface School {
   id: number;
@@ -371,11 +372,16 @@ export default function AdminSchoolsPage() {
         
         {currentImage ? (
           <div className={`relative ${aspectClass} w-full bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200`}>
-            <Image
+            <ImageWithFallback
               src={currentImage}
               alt={label}
               fill
               className="object-cover"
+              fallbackComponent={
+                <div className="flex w-full h-full items-center justify-center bg-gray-100 text-gray-400">
+                  <ImageIcon className="w-8 h-8" />
+                </div>
+              }
             />
             <button
               type="button"
@@ -642,13 +648,18 @@ export default function AdminSchoolsPage() {
             filteredSchools.map((school) => (
               <div key={school.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow overflow-hidden">
                 {/* Cover Image */}
-                <div className="relative h-48 bg-gradient-to-br from-blue-500 to-blue-600">
+                <div className="relative h-48 bg-linear-to-br from-blue-500 to-blue-600">
                   {school.coverImage ? (
-                    <Image
+                    <ImageWithFallback
                       src={school.coverImage}
                       alt={school.name}
                       fill
                       className="object-cover"
+                      fallbackComponent={
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Building2 className="w-16 h-16 text-white/30" />
+                        </div>
+                      }
                     />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -661,12 +672,17 @@ export default function AdminSchoolsPage() {
                 <div className="relative px-6 -mt-12">
                   <div className="w-24 h-24 rounded-full bg-white border-4 border-white shadow-lg overflow-hidden">
                     {school.logo ? (
-                      <Image
+                      <ImageWithFallback
                         src={school.logo}
                         alt={`${school.name} logo`}
                         width={96}
                         height={96}
                         className="object-cover w-full h-full"
+                        fallbackComponent={
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <SchoolIcon className="w-12 h-12 text-gray-400" />
+                          </div>
+                        }
                       />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center">
@@ -774,7 +790,7 @@ export default function AdminSchoolsPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b sticky top-0 bg-white z-10">
               <div className="flex items-center justify-between">
@@ -796,7 +812,7 @@ export default function AdminSchoolsPage() {
 
       {/* Edit Modal */}
       {showEditModal && selectedSchool && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b sticky top-0 bg-white z-10">
               <div className="flex items-center justify-between">
@@ -818,7 +834,7 @@ export default function AdminSchoolsPage() {
 
       {/* Delete Modal */}
       {showDeleteModal && selectedSchool && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6">
               <h2 className="text-xl font-bold mb-4">Confirmar Eliminación</h2>

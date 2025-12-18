@@ -35,8 +35,12 @@ import {
   Target,
   Award,
   Waves,
-  Settings
+  Settings,
+  Building2, 
+  School as SchoolIcon 
 } from 'lucide-react';
+import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 
 interface School {
   id: number;
@@ -609,24 +613,24 @@ export default function SchoolDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 pb-20 sm:pb-8">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-cyan-50 pb-20 sm:pb-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg shadow p-4 sm:p-6 text-white">
+          <div className="bg-linear-to-r from-blue-500 to-indigo-600 rounded-lg shadow p-4 sm:p-6 text-white">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 flex items-center gap-2">
                   <span className="truncate">¡Bienvenido, {session?.user?.name}!</span>
-                  <span className="flex-shrink-0">🏄‍♂️</span>
+                  <span className="shrink-0">🏄‍♂️</span>
                 </h1>
                 <p className="text-blue-100 mb-3 text-sm sm:text-base">Gestiona tu escuela de surf desde aquí</p>
                 <div className="flex items-center text-blue-100 min-w-0">
-                  <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <MapPin className="w-4 h-4 mr-2 shrink-0" />
                   <span className="text-sm sm:text-base truncate">{school?.name || 'Tu Escuela de Surf'}</span>
                 </div>
               </div>
-              <div className="text-center md:text-right flex-shrink-0">
+              <div className="text-center md:text-right shrink-0">
                 <div className="text-3xl sm:text-4xl font-bold mb-1">{classes.length}</div>
                 <div className="text-blue-200 text-xs sm:text-sm whitespace-nowrap">Clases Activas</div>
               </div>
@@ -645,7 +649,7 @@ export default function SchoolDashboardPage() {
             </div>
             <div className="flex items-center relative z-10">
               <div className="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors shadow-sm">
-                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 shrink-0" />
               </div>
               <div className="ml-3 sm:ml-4 min-w-0 flex-1">
                 <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-700">Instructores</h3>
@@ -673,7 +677,7 @@ export default function SchoolDashboardPage() {
             </div>
             <div className="flex items-center relative z-10">
               <div className="p-3 bg-green-50 rounded-xl group-hover:bg-green-100 transition-colors shadow-sm">
-                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" />
+                <Users className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 shrink-0" />
               </div>
               <div className="ml-3 sm:ml-4 min-w-0 flex-1">
                 <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-green-700">Estudiantes</h3>
@@ -701,7 +705,7 @@ export default function SchoolDashboardPage() {
             </div>
             <div className="flex items-center relative z-10">
               <div className="p-3 bg-yellow-50 rounded-xl group-hover:bg-yellow-100 transition-colors shadow-sm">
-                <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 flex-shrink-0" />
+                <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600 shrink-0" />
               </div>
               <div className="ml-3 sm:ml-4 min-w-0 flex-1">
                 <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-yellow-700">Ingresos</h3>
@@ -729,7 +733,7 @@ export default function SchoolDashboardPage() {
             </div>
             <div className="flex items-center relative z-10">
               <div className="p-3 bg-purple-50 rounded-xl group-hover:bg-purple-100 transition-colors shadow-sm">
-                <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 flex-shrink-0" />
+                <Calendar className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 shrink-0" />
               </div>
               <div className="ml-3 sm:ml-4 min-w-0 flex-1">
                 <h3 className="text-sm font-semibold text-gray-900 truncate group-hover:text-purple-700">Clases</h3>

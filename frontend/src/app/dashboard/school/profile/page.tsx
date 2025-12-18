@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { MapPin, Phone, Mail, Globe, Instagram, Facebook, MessageCircle, Camera, Edit, Save, X, Eye, Upload, ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { useToast } from '@/contexts/ToastContext';
 
 interface School {
@@ -256,11 +257,16 @@ export default function SchoolProfilePage() {
         
         {currentImage ? (
           <div className={`relative ${aspectClass} w-full bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200`}>
-            <Image
+            <ImageWithFallback
               src={currentImage}
               alt={label}
               fill
               className="object-cover"
+              fallbackComponent={
+                <div className="flex w-full h-full items-center justify-center bg-gray-100 text-gray-400">
+                  <ImageIcon className="w-12 h-12" />
+                </div>
+              }
             />
             <button
               type="button"

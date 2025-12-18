@@ -151,11 +151,11 @@ export function StudentSidebar() {
         <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
           {!isCollapsed && (
             <Link href="/dashboard/student" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                 <Waves className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                <h1 className="text-lg font-bold bg-linear-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                   clasesde.pe
                 </h1>
                 <p className="text-xs text-gray-500">Panel de Estudiante</p>
@@ -164,7 +164,7 @@ export function StudentSidebar() {
           )}
           {isCollapsed && (
             <Link href="/dashboard/student" className="flex items-center justify-center w-full">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
                 <Waves className="w-6 h-6 text-white" />
               </div>
             </Link>
@@ -198,7 +198,7 @@ export function StudentSidebar() {
                   className={`
                     group flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200
                     ${active
-                      ? 'bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 shadow-sm'
+                      ? 'bg-linear-to-r from-blue-50 to-cyan-50 text-blue-700 shadow-sm'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }
                     ${isCollapsed ? 'justify-center' : ''}
@@ -230,14 +230,14 @@ export function StudentSidebar() {
             `}
             title={isCollapsed ? (session?.user?.name ?? undefined) : ''}
           >
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-blue-100">
                 <AvatarDisplay 
                   avatarId={avatar} 
                   role="STUDENT" 
                   size="md"
                   fallback={
-                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
+                    <div className="w-full h-full bg-linear-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
                       <span className="text-white font-semibold text-sm">
                         {getInitials(session?.user?.name)}
                       </span>

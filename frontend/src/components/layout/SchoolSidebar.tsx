@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import {
@@ -162,14 +163,14 @@ export function SchoolSidebar() {
         data-collapsed={isCollapsed}
       >
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 flex-shrink-0">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 shrink-0">
           {!isCollapsed && (
             <Link href="/dashboard/school" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                 <Waves className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <h1 className="text-lg font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   clasesde.pe
                 </h1>
                 <p className="text-xs text-gray-500">Panel Admin</p>
@@ -178,7 +179,7 @@ export function SchoolSidebar() {
           )}
           {isCollapsed && (
             <Link href="/dashboard/school" className="flex items-center justify-center w-full">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
                 <Waves className="w-6 h-6 text-white" />
               </div>
             </Link>
@@ -212,7 +213,7 @@ export function SchoolSidebar() {
                   className={`
                     group flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200
                     ${active
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
+                      ? 'bg-linear-to-r from-blue-50 to-indigo-50 text-blue-700 shadow-sm'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }
                     ${isCollapsed ? 'justify-center' : ''}
@@ -234,7 +235,7 @@ export function SchoolSidebar() {
         </nav>
 
         {/* User Profile Section */}
-        <div className="border-t border-gray-200 p-4 flex-shrink-0">
+        <div className="border-t border-gray-200 p-4 shrink-0">
           <Link
             href="/dashboard/school/profile"
             className={`
@@ -243,19 +244,19 @@ export function SchoolSidebar() {
             `}
             title={isCollapsed ? (session?.user?.name ?? undefined) : ''}
           >
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-blue-100">
                 {profilePhoto ? (
-                  <Image
+                  <ImageWithFallback
                     src={profilePhoto}
                     alt={session?.user?.name || 'User'}
                     width={40}
                     height={40}
                     className="w-full h-full object-cover"
-                    unoptimized
+                    fallbackSrc="/logoclasedesusrf.png"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-blue-400 to-indigo-400 flex items-center justify-center">
+                  <div className="w-full h-full bg-linear-to-br from-blue-400 to-indigo-400 flex items-center justify-center">
                     <span className="text-white font-semibold text-sm">
                       {getInitials(session?.user?.name)}
                     </span>

@@ -1,116 +1,216 @@
-  "email": "testprueba123@gmail.com",
-  "password": "Test123456!",
-  "role": "STUDENT"
-}
-[Validation] foundedYear in validated data: undefined undefined
-prisma:query SELECT 1
-prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
-prisma:query INSERT INTO "public"."students" ("userId","level","canSwim","createdAt","updatedAt") VALUES ($1,CAST($2::text AS "public"."ClassLevel"),$3,$4,$5) RETURNING "public"."students"."id", "public"."students"."userId", "public"."students"."schoolId", "public"."students"."birthdate", "public"."students"."notes", "public"."students"."level"::text, "public"."students"."canSwim", "public"."students"."createdAt", "public"."students"."updatedAt"
-  data: { id: '256b04a7-1d57-43da-acc5-ea6489bd8eac' },
-Signing token with JWT_SECRET: zvPwjXx4gK...
-prisma:query BEGIN
-  error: null,
-prisma:query SELECT "public"."users"."id" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) OFFSET $2
-  headers: {
-prisma:query INSERT INTO "public"."refresh_tokens" ("tokenHash","userId","expiresAt","createdAt") VALUES ($1,$2,$3,$4) RETURNING "public"."refresh_tokens"."id"
-prisma:query SELECT "public"."refresh_tokens"."id", "public"."refresh_tokens"."tokenHash", "public"."refresh_tokens"."userId", "public"."refresh_tokens"."expiresAt", "public"."refresh_tokens"."createdAt" FROM "public"."refresh_tokens" WHERE "public"."refresh_tokens"."id" = $1 LIMIT $2 OFFSET $3
-    'cf-cache-status': 'DYNAMIC',
-prisma:query COMMIT
-    'cf-ray': '9aea5e7b6a000814-IAD',
-📧 Sending email to testprueba123@gmail.com [¡Bienvenido a ClaseDeSurf.com!]
-    connection: 'keep-alive',
-✅ Email sent successfully: {
-    'content-encoding': 'br',
-    'content-type': 'application/json',
-    date: 'Tue, 16 Dec 2025 01:22:20 GMT',
-    'ratelimit-limit': '2',
-    'ratelimit-policy': '2;w=1',
-    'ratelimit-remaining': '1',
-    'ratelimit-reset': '1',
-    server: 'cloudflare',
-    'transfer-encoding': 'chunked',
-    'x-resend-daily-quota': '2',
-    'x-resend-monthly-quota': '12'
-  }
-}
-prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
-prisma:query INSERT INTO "public"."notifications" ("userId","type","category","subject","content","metadata","isRead","createdAt") VALUES ($1,CAST($2::text AS "public"."NotificationType"),$3,$4,$5,$6,$7,$8) RETURNING "public"."notifications"."id", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."category", "public"."notifications"."subject", "public"."notifications"."content", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt"
-📝 Notification saved for user 14
-[Validation] Validating body: {
-prisma:query SELECT 1
-  "email": "admin@clasedesurf.com",
-prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
-  "password": "password123"
-prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-}
-[Validation] Validation passed: {
-Signing token with JWT_SECRET: zvPwjXx4gK...
-  "email": "admin@clasedesurf.com",
-prisma:query BEGIN
-  "password": "password123"
-}
-[Validation] foundedYear in validated data: undefined undefined
-prisma:query SELECT "public"."users"."id" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) OFFSET $2
-prisma:query INSERT INTO "public"."refresh_tokens" ("tokenHash","userId","expiresAt","createdAt") VALUES ($1,$2,$3,$4) RETURNING "public"."refresh_tokens"."id"
-prisma:query SELECT "public"."refresh_tokens"."id", "public"."refresh_tokens"."tokenHash", "public"."refresh_tokens"."userId", "public"."refresh_tokens"."expiresAt", "public"."refresh_tokens"."createdAt" FROM "public"."refresh_tokens" WHERE "public"."refresh_tokens"."id" = $1 LIMIT $2 OFFSET $3
-prisma:query COMMIT
+✅ [Redis] Connected successfully
 Using JWT_SECRET: zvPwjXx4gK...
-prisma:query SELECT "public"."notifications"."id", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."category", "public"."notifications"."subject", "public"."notifications"."content", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt" FROM "public"."notifications" WHERE "public"."notifications"."userId" = $1 ORDER BY "public"."notifications"."createdAt" DESC LIMIT $2 OFFSET $3
-SyntaxError: Unexpected token \ in JSON at position 1
-    at JSON.parse (<anonymous>)
-    at parse (/app/node_modules/body-parser/lib/types/json.js:92:19)
-    at /app/node_modules/body-parser/lib/read.js:128:18
-    at AsyncResource.runInAsyncScope (node:async_hooks:203:9)
-    at invokeCallback (/app/node_modules/raw-body/index.js:238:16)
-    at done (/app/node_modules/raw-body/index.js:227:7)
-    at IncomingMessage.onEnd (/app/node_modules/raw-body/index.js:287:7)
-    at IncomingMessage.emit (node:events:517:28)
-    at endReadableNT (node:internal/streams/readable:1400:12)
-    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
-prisma:query INSERT INTO "public"."users" ("email","name","password","role","canSwim","createdAt","updatedAt") VALUES ($1,$2,$3,CAST($4::text AS "public"."UserRole"),$5,$6,$7) RETURNING "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar"
+prisma:query SELECT 1
+prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location", "public"."schools"."description", "public"."schools"."phone", "public"."schools"."email", "public"."schools"."website", "public"."schools"."instagram", "public"."schools"."facebook", "public"."schools"."whatsapp", "public"."schools"."address", "public"."schools"."logo", "public"."schools"."coverImage", "public"."schools"."foundedYear", "public"."schools"."rating", "public"."schools"."totalReviews", "public"."schools"."createdAt", "public"."schools"."updatedAt", "public"."schools"."status"::text FROM "public"."schools" WHERE 1=1 ORDER BY "public"."schools"."createdAt" DESC OFFSET $1
+prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."date", "public"."classes"."duration", "public"."classes"."capacity", "public"."classes"."price", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."isRecurring", "public"."classes"."recurrencePattern", "public"."classes"."startDate", "public"."classes"."endDate", "public"."classes"."type" FROM "public"."classes" WHERE ("public"."classes"."deletedAt" IS NULL AND (("public"."classes"."isRecurring" = $1 AND "public"."classes"."date" >= $2) OR ("public"."classes"."isRecurring" = $3 AND "public"."classes"."endDate" >= $4))) ORDER BY "public"."classes"."date" ASC OFFSET $5
+prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location", "public"."schools"."description", "public"."schools"."phone", "public"."schools"."email", "public"."schools"."website", "public"."schools"."instagram", "public"."schools"."facebook", "public"."schools"."whatsapp", "public"."schools"."address", "public"."schools"."logo", "public"."schools"."coverImage", "public"."schools"."foundedYear", "public"."schools"."rating", "public"."schools"."totalReviews", "public"."schools"."createdAt", "public"."schools"."updatedAt" FROM "public"."schools" WHERE "public"."schools"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."Reservation"."id", "public"."Reservation"."userId", "public"."Reservation"."classId", "public"."Reservation"."status"::text, "public"."Reservation"."specialRequest", "public"."Reservation"."createdAt", "public"."Reservation"."updatedAt", "public"."Reservation"."participants", "public"."Reservation"."date", "public"."Reservation"."time" FROM "public"."Reservation" WHERE "public"."Reservation"."classId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) OFFSET $15
+prisma:query SELECT "public"."payments"."id", "public"."payments"."reservationId", "public"."payments"."amount", "public"."payments"."status"::text, "public"."payments"."paymentMethod", "public"."payments"."transactionId", "public"."payments"."paidAt", "public"."payments"."createdAt", "public"."payments"."updatedAt", "public"."payments"."voucherImage", "public"."payments"."voucherNotes", "public"."payments"."discountCodeId", "public"."payments"."discountAmount", "public"."payments"."originalAmount" FROM "public"."payments" WHERE "public"."payments"."reservationId" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20) OFFSET $21
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE "public"."users"."id" IN ($1,$2,$3,$4,$5,$6,$7,$8,$9) OFFSET $10
+prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text FROM "public"."instructors" WHERE 1=1 ORDER BY "public"."instructors"."createdAt" DESC OFFSET $1
+prisma:query SELECT "public"."beaches"."id", "public"."beaches"."name", "public"."beaches"."location", "public"."beaches"."description", "public"."beaches"."createdAt", "public"."beaches"."updatedAt" FROM "public"."beaches" WHERE 1=1 ORDER BY "public"."beaches"."name" ASC OFFSET $1
+prisma:query SELECT "public"."users"."id", "public"."users"."name", "public"."users"."email", "public"."users"."phone" FROM "public"."users" WHERE "public"."users"."id" IN ($1,$2,$3,$4) OFFSET $5
+prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location" FROM "public"."schools" WHERE "public"."schools"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."instructor_reviews"."id", "public"."instructor_reviews"."rating", "public"."instructor_reviews"."comment", "public"."instructor_reviews"."studentName", "public"."instructor_reviews"."createdAt", "public"."instructor_reviews"."instructorId" FROM "public"."instructor_reviews" WHERE "public"."instructor_reviews"."instructorId" IN ($1,$2,$3,$4) ORDER BY "public"."instructor_reviews"."createdAt" DESC OFFSET $5
+Using JWT_SECRET: zvPwjXx4gK...
+prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text FROM "public"."instructors" WHERE 1=1 ORDER BY "public"."instructors"."createdAt" DESC OFFSET $1
+prisma:query SELECT "public"."users"."id", "public"."users"."name", "public"."users"."email", "public"."users"."phone" FROM "public"."users" WHERE "public"."users"."id" IN ($1,$2,$3,$4) OFFSET $5
+prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location" FROM "public"."schools" WHERE "public"."schools"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."instructor_reviews"."id", "public"."instructor_reviews"."rating", "public"."instructor_reviews"."comment", "public"."instructor_reviews"."studentName", "public"."instructor_reviews"."createdAt", "public"."instructor_reviews"."instructorId" FROM "public"."instructor_reviews" WHERE "public"."instructor_reviews"."instructorId" IN ($1,$2,$3,$4) ORDER BY "public"."instructor_reviews"."createdAt" DESC OFFSET $5
+Using JWT_SECRET: zvPwjXx4gK...
+prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text FROM "public"."instructors" WHERE 1=1 ORDER BY "public"."instructors"."createdAt" DESC OFFSET $1
+prisma:query SELECT "public"."users"."id", "public"."users"."name", "public"."users"."email", "public"."users"."phone" FROM "public"."users" WHERE "public"."users"."id" IN ($1,$2,$3,$4) OFFSET $5
+prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location" FROM "public"."schools" WHERE "public"."schools"."id" IN ($1,$2) OFFSET $3
+prisma:query SELECT "public"."instructor_reviews"."id", "public"."instructor_reviews"."rating", "public"."instructor_reviews"."comment", "public"."instructor_reviews"."studentName", "public"."instructor_reviews"."createdAt", "public"."instructor_reviews"."instructorId" FROM "public"."instructor_reviews" WHERE "public"."instructor_reviews"."instructorId" IN ($1,$2,$3,$4) ORDER BY "public"."instructor_reviews"."createdAt" DESC OFFSET $5
+Using JWT_SECRET: zvPwjXx4gK...
 [Validation] Validating body: {
-  "name": "Prueba Email Surf",
-  "email": "yerct.test2024@gmail.com",
-  "password": "TestEmail2024!"
+  "title": "Clase de Surf Principiante - Mañana",
+  "description": "Clase de surf nivel beginner con instructor certificado. Incluye tabla y traje de neopreno.",      
+  "duration": 120,
+  "capacity": 8,
+  "price": 80,
+  "level": "BEGINNER",
+  "instructor": "Juan Pérez",
+  "studentDetails": null,
+  "images": [
+    "/uploads/classes/surf-class-1.jpg",
+    "/uploads/classes/surf-class-2.jpg"
+  ],
+  "isRecurring": true,
+  "schoolId": 3,
+  "startDate": "2025-12-19T00:00:00.000Z",
+  "endDate": "2025-12-31T00:00:00.000Z",
+  "recurrencePattern": {
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "times": [
+      "09:00"
+    ]
+  },
+  "date": "2025-12-19T00:00:00.000Z"
 }
 [Validation] Validation passed: {
-  "name": "Prueba Email Surf",
-  "email": "yerct.test2024@gmail.com",
-  "password": "TestEmail2024!",
-  "role": "STUDENT"
+  "title": "Clase de Surf Principiante - Mañana",
+  "description": "Clase de surf nivel beginner con instructor certificado. Incluye tabla y traje de neopreno.",      
+  "date": "2025-12-19T00:00:00.000Z",
+  "isRecurring": true,
+  "recurrencePattern": {
+    "days": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "times": [
+      "09:00"
+    ]
+  },
+  "startDate": "2025-12-19T00:00:00.000Z",
+  "endDate": "2025-12-31T00:00:00.000Z",
+  "duration": 120,
+  "capacity": 8,
+  "price": 80,
+  "level": "BEGINNER",
+  "instructor": "Juan Pérez",
+  "images": [
+    "/uploads/classes/surf-class-1.jpg",
+    "/uploads/classes/surf-class-2.jpg"
+  ],
+  "schoolId": 3,
+  "studentDetails": null
 }
 [Validation] foundedYear in validated data: undefined undefined
-prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
-prisma:query SELECT "public"."refresh_tokens"."id", "public"."refresh_tokens"."tokenHash", "public"."refresh_tokens"."userId", "public"."refresh_tokens"."expiresAt", "public"."refresh_tokens"."createdAt" FROM "public"."refresh_tokens" WHERE "public"."refresh_tokens"."id" = $1 LIMIT $2 OFFSET $3
-prisma:query INSERT INTO "public"."students" ("userId","level","canSwim","createdAt","updatedAt") VALUES ($1,CAST($2::text AS "public"."ClassLevel"),$3,$4,$5) RETURNING "public"."students"."id", "public"."students"."userId", "public"."students"."schoolId", "public"."students"."birthdate", "public"."students"."notes", "public"."students"."level"::text, "public"."students"."canSwim", "public"."students"."createdAt", "public"."students"."updatedAt"
-prisma:query COMMIT
-📧 Sending email to yerct.test2024@gmail.com [¡Bienvenido a ClaseDeSurf.com!]
-✅ Email sent successfully: {
-  data: { id: '152d234e-521c-4563-8ef9-80ff3ec1167f' },
-  error: null,
-Signing token with JWT_SECRET: zvPwjXx4gK...
-  headers: {
-    'cf-cache-status': 'DYNAMIC',
-prisma:query BEGIN
-    'cf-ray': '9aea60474d6e15cd-IAD',
-prisma:query SELECT "public"."users"."id" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) OFFSET $2
-    connection: 'keep-alive',
-prisma:query INSERT INTO "public"."refresh_tokens" ("tokenHash","userId","expiresAt","createdAt") VALUES ($1,$2,$3,$4) RETURNING "public"."refresh_tokens"."id"
-    'content-encoding': 'br',
-    'content-type': 'application/json',
-    date: 'Tue, 16 Dec 2025 01:23:33 GMT',
-    'ratelimit-limit': '2',
-    'ratelimit-policy': '2;w=1',
-    'ratelimit-remaining': '1',
-    'ratelimit-reset': '1',
-    server: 'cloudflare',
-    'transfer-encoding': 'chunked',
-    'x-resend-daily-quota': '3',
-    'x-resend-monthly-quota': '13'
+prisma:error 
+Invalid `prisma.class.update()` invocation:
+
+{
+  where: {
+    id: 16
+  },
+  data: {
+    title: "Clase de Surf Principiante - Mañana",
+    description: "Clase de surf nivel beginner con instructor certificado. Incluye tabla y traje de neopreno.",      
+    date: new Date("2025-12-19T00:00:00.000Z"),
+    isRecurring: true,
+    recurrencePattern: {
+      days: [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      times: [
+        "09:00"
+      ]
+    },
+    startDate: new Date("2025-12-19T00:00:00.000Z"),
+    endDate: new Date("2025-12-31T00:00:00.000Z"),
+    duration: 120,
+    capacity: 8,
+    price: 80,
+    level: "BEGINNER",
+    instructor: "Juan Pérez",
+    schoolId: 3,
+    ~~~~~~~~
+    studentDetails: null,
+    images: [
+      "/uploads/classes/surf-class-1.jpg",
+      "/uploads/classes/surf-class-2.jpg"
+    ],
+?   createdAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+?   deletedAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+?   type?: String | StringFieldUpdateOperationsInput,
+?   beach?: BeachUpdateOneWithoutClassesNestedInput,
+?   school?: SchoolUpdateOneRequiredWithoutClassesNestedInput,
+?   reservations?: ReservationUpdateManyWithoutClassNestedInput,
+?   availability?: ClassAvailabilityUpdateManyWithoutClassNestedInput
   }
 }
-prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."email" = $1 AND 1=1) LIMIT $2 OFFSET $3
-prisma:query INSERT INTO "public"."notifications" ("userId","type","category","subject","content","metadata","isRead","createdAt") VALUES ($1,CAST($2::text AS "public"."NotificationType"),$3,$4,$5,$6,$7,$8) RETURNING "public"."notifications"."id", "public"."notifications"."userId", "public"."notifications"."type"::text, "public"."notifications"."category", "public"."notifications"."subject", "public"."notifications"."content", "public"."notifications"."metadata", "public"."notifications"."isRead", "public"."notifications"."createdAt"
-📝 Notification saved for user 15
-2025-12-16 01:24:12.117 UTC [27] LOG:  checkpoint starting: time
-2025-12-16 01:24:13.753 UTC [27] LOG:  checkpoint complete: wrote 17 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.609 s, sync=0.011 s, total=1.637 s; sync files=16, longest=0.010 s, average=0.001 s; distance=28 kB, estimate=85 kB; lsn=0/35B54C0, redo lsn=0/35B5468
+
+Unknown argument `schoolId`. Did you mean `school`? Available options are marked with ?.
+[PUT /classes/:id] Error updating class: PrismaClientValidationError:
+Invalid `prisma.class.update()` invocation:
+
+{
+  where: {
+    id: 16
+  },
+  data: {
+    title: "Clase de Surf Principiante - Mañana",
+    description: "Clase de surf nivel beginner con instructor certificado. Incluye tabla y traje de neopreno.",      
+    date: new Date("2025-12-19T00:00:00.000Z"),
+    isRecurring: true,
+    recurrencePattern: {
+      days: [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      times: [
+        "09:00"
+      ]
+    },
+    startDate: new Date("2025-12-19T00:00:00.000Z"),
+    endDate: new Date("2025-12-31T00:00:00.000Z"),
+    duration: 120,
+    capacity: 8,
+    price: 80,
+    level: "BEGINNER",
+    instructor: "Juan Pérez",
+    schoolId: 3,
+    ~~~~~~~~
+    studentDetails: null,
+    images: [
+      "/uploads/classes/surf-class-1.jpg",
+      "/uploads/classes/surf-class-2.jpg"
+    ],
+?   createdAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+?   deletedAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+?   type?: String | StringFieldUpdateOperationsInput,
+?   beach?: BeachUpdateOneWithoutClassesNestedInput,
+?   school?: SchoolUpdateOneRequiredWithoutClassesNestedInput,
+?   reservations?: ReservationUpdateManyWithoutClassNestedInput,
+?   availability?: ClassAvailabilityUpdateManyWithoutClassNestedInput
+  }
+}
+
+Unknown argument `schoolId`. Did you mean `school`? Available options are marked with ?.
+    at wn (C:\Users\yerct\clasedesurf.com\backend\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at $n.handleRequestError (C:\Users\yerct\clasedesurf.com\backend\node_modules\@prisma\client\runtime\library.js:121:6958)
+    at $n.handleAndLogRequestError (C:\Users\yerct\clasedesurf.com\backend\node_modules\@prisma\client\runtime\library.js:121:6623)
+    at $n.request (C:\Users\yerct\clasedesurf.com\backend\node_modules\@prisma\client\runtime\library.js:121:6307)   
+    at l (C:\Users\yerct\clasedesurf.com\backend\node_modules\@prisma\client\runtime\library.js:131:9633)
+    at C:\Users\yerct\clasedesurf.com\backend\src\routes\classes.ts:546:21 {
+  clientVersion: '5.22.0'
+}
+[PUT /classes/:id] Request Body: {
+  title: 'Clase de Surf Principiante - Mañana',
+  description: 'Clase de surf nivel beginner con instructor certificado. Incluye tabla y traje de neopreno.',        
+  date: '2025-12-19T00:00:00.000Z',
+  isRecurring: true,
+  recurrencePattern: { days: [ 1, 2, 3, 4, 5 ], times: [ '09:00' ] },
+  startDate: '2025-12-19T00:00:00.000Z',
+  endDate: '2025-12-31T00:00:00.000Z',
+  duration: 120,
+  capacity: 8,
+  price: 80,
+  level: 'BEGINNER',
+  instructor: 'Juan Pérez',
+  images: [
+    '/uploads/classes/surf-class-1.jpg',
+    '/uploads/classes/surf-class-2.jpg'
+  ],
+  schoolId: 3,
+  studentDetails: null
+}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { X, Check, ImageIcon, Loader2 } from 'lucide-react';
 
 interface ImageLibraryProps {
@@ -132,12 +133,13 @@ export default function ImageLibrary({ onSelect, onClose, selectedImages = [], m
                       ${!canSelectMore && !isSelected(image.url) ? 'opacity-50 cursor-not-allowed' : ''}
                     `}
                   >
-                    <Image
+                    <ImageWithFallback
                       src={image.url}
                       alt={image.classTitle}
                       fill
                       className="object-cover"
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                      fallbackSrc="/logoclasedesusrf.png"
                     />
                     
                     {/* Selected Indicator */}
@@ -150,7 +152,7 @@ export default function ImageLibrary({ onSelect, onClose, selectedImages = [], m
                     )}
 
                     {/* Image Info */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
+                    <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black to-transparent p-2">
                       <p className="text-white text-xs truncate">{image.classTitle}</p>
                     </div>
                   </div>

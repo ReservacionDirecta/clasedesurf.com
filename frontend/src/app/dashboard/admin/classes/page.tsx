@@ -1,3 +1,4 @@
+// ... (imports remain similar, add ClassForm)
 "use client";
 
 export const dynamic = 'force-dynamic';
@@ -18,64 +19,19 @@ import {
   Edit,
   Trash2,
   Eye,
-  School,
+  School as SchoolIcon,
   TrendingUp,
   AlertCircle,
   CheckCircle2,
   XCircle,
   ListChecks,
   Image as ImageIcon,
-  X,
-  Upload,
-  Grid,
-  Check
+  X
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import ClassForm from '@/components/forms/ClassForm';
+import { Class, School, Beach } from '@/types';
 
-interface Class {
-  id: number;
-  title: string;
-  description?: string;
-  date: string;
-  duration: number;
-  capacity: number;
-  price: number;
-  level: string;
-  instructor?: string;
-  images?: string[];
-  beach?: {
-    id: number;
-    name: string;
-    location?: string;
-  };
-  beachId?: number;
-  school?: {
-    id: number;
-    name: string;
-    location?: string;
-  };
-  availableSpots?: number;
-  paymentInfo?: {
-    totalReservations: number;
-    paidReservations: number;
-    totalRevenue: number;
-    occupancyRate: number;
-  };
-  reservations?: any[];
-}
-
-interface School {
-  id: number;
-  name: string;
-  location?: string;
-}
-
-interface Beach {
-  id: number;
-  name: string;
-  location?: string;
-  description?: string;
-}
 
 export default function AdminClassesPage() {
   const { data: session, status } = useSession();
@@ -101,30 +57,8 @@ export default function AdminClassesPage() {
   const [filterLevel, setFilterLevel] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'upcoming' | 'completed' | 'past'>('all');
 
-  // Form Data
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    date: '',
-    duration: '',
-    capacity: '',
-    price: '',
-    level: 'BEGINNER',
-    instructor: '',
-    schoolId: '',
-    beachId: '',
-    images: [] as string[]
-  });
-
-  // Image URL input state
-  const [newImageUrl, setNewImageUrl] = useState('');
-  
-  // Image Library State
-  const [showImageLibrary, setShowImageLibrary] = useState(false);
-  const [libraryImages, setLibraryImages] = useState<{url: string, publicId?: string}[]>([]);
-  const [loadingImages, setLoadingImages] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
+  // Form loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -218,49 +152,17 @@ export default function AdminClassesPage() {
     setFilteredClasses(filtered);
   };
 
-  const handleCreateClass = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateSubmit = async (data: Partial<Class>) => {
+    setIsSubmitting(true);
     try {
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // Preparar los datos para enviar
-      const createData: any = {
-        title: formData.title,
-        description: formData.description || null,
-        duration: parseInt(formData.duration),
-        capacity: parseInt(formData.capacity),
-        price: parseFloat(formData.price),
-        level: formData.level,
-        instructor: formData.instructor || null,
-        schoolId: parseInt(formData.schoolId)
-      };
-
-      // Convertir fecha a formato ISO datetime
-      if (formData.date) {
-        const dateObj = new Date(formData.date);
-        createData.date = dateObj.toISOString();
-      }
-
-      // Manejar beachId: solo incluir si tiene valor
-      if (formData.beachId && formData.beachId.trim() !== '') {
-        createData.beachId = parseInt(formData.beachId);
-      }
-
-      // Manejar imágenes: validar que haya al menos una
-      const filteredImages = formData.images.filter(img => img.trim() !== '');
-      if (filteredImages.length > 0) {
-        createData.images = filteredImages;
-      } else {
-        // Para crear, al menos una imagen es requerida según el schema
-        createData.images = [];
-      }
-
       const res = await fetch('/api/classes', {
         method: 'POST',
         headers,
-        body: JSON.stringify(createData)
+        body: JSON.stringify(data)
       });
 
       if (!res.ok) {
@@ -269,59 +171,28 @@ export default function AdminClassesPage() {
       }
 
       await fetchData();
-      resetForm();
       setShowCreateModal(false);
       showSuccess('¡Clase creada!', 'La clase se creó correctamente');
     } catch (err: any) {
       console.error('Error al crear clase:', err);
       showError('Error al crear', err.message || 'No se pudo crear la clase');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleEditClass = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEditSubmit = async (data: Partial<Class>) => {
     if (!selectedClass) return;
-
+    setIsSubmitting(true);
     try {
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      // Preparar los datos para enviar
-      const updateData: any = {
-        title: formData.title,
-        description: formData.description || null,
-        duration: parseInt(formData.duration),
-        capacity: parseInt(formData.capacity),
-        price: parseFloat(formData.price),
-        level: formData.level,
-        instructor: formData.instructor || null,
-        schoolId: parseInt(formData.schoolId)
-      };
-
-      // Convertir fecha a formato ISO datetime
-      if (formData.date) {
-        const dateObj = new Date(formData.date);
-        updateData.date = dateObj.toISOString();
-      }
-
-      // Manejar beachId: enviar undefined si está vacío, número si tiene valor
-      if (formData.beachId && formData.beachId.trim() !== '') {
-        updateData.beachId = parseInt(formData.beachId);
-      }
-      // Si beachId está vacío, no lo incluimos (undefined)
-
-      // Manejar imágenes: solo enviar si hay al menos una
-      const filteredImages = formData.images.filter(img => img.trim() !== '');
-      if (filteredImages.length > 0) {
-        updateData.images = filteredImages;
-      }
-      // Si no hay imágenes, no lo incluimos (undefined)
-
       const res = await fetch(`/api/classes/${selectedClass.id}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify(updateData)
+        body: JSON.stringify(data)
       });
 
       if (!res.ok) {
@@ -330,13 +201,14 @@ export default function AdminClassesPage() {
       }
 
       await fetchData();
-      resetForm();
       setShowEditModal(false);
       setSelectedClass(null);
       showSuccess('¡Clase actualizada!', 'Los cambios se guardaron correctamente');
     } catch (err: any) {
       console.error('Error al actualizar clase:', err);
       showError('Error al actualizar', err.message || 'No se pudo actualizar la clase');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -392,151 +264,23 @@ export default function AdminClassesPage() {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      date: '',
-      duration: '',
-      capacity: '',
-      price: '',
-      level: 'BEGINNER',
-      instructor: '',
-      schoolId: '',
-      beachId: '',
-      images: []
-    });
-    setNewImageUrl('');
-  };
-
-  const addImageUrl = () => {
-    if (newImageUrl.trim() && formData.images.length < 5) {
-      setFormData({
-        ...formData,
-        images: [...formData.images, newImageUrl.trim()]
-      });
-      setNewImageUrl('');
-    }
-  };
-
-  const removeImageUrl = (index: number) => {
-    setFormData({
-      ...formData,
-      images: formData.images.filter((_, i) => i !== index)
-    });
-  };
-
-  const fetchImageLibrary = async () => {
-    setLoadingImages(true);
-    try {
-      const token = (session as any)?.backendToken;
-      const headers: any = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch('/api/images/library', { headers });
-      if (res.ok) {
-        const data = await res.json();
-        setLibraryImages(data.images || []);
-      }
-    } catch (error) {
-      console.error('Error fetching image library:', error);
-      showError('Error', 'No se pudieron cargar las imágenes');
-    } finally {
-      setLoadingImages(false);
-    }
-  };
-
-  const handleFileUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
-    if (!file.type.startsWith('image/')) {
-      showError('Error', 'Solo se permiten archivos de imagen');
-      return;
-    }
-
-    setUploadingImage(true);
-    try {
-      const token = (session as any)?.backendToken;
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', file);
-      formDataUpload.append('folder', 'classes');
-
-      const res = await fetch('/api/images/upload', {
-        method: 'POST',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-        body: formDataUpload
-      });
-
-      if (!res.ok) throw new Error('Error en la subida');
-
-      const data = await res.json();
-      
-      // Add to form data
-      if (formData.images.length < 5) {
-        setFormData(prev => ({
-          ...prev,
-          images: [...prev.images, data.url]
-        }));
-        showSuccess('Imagen subida', 'La imagen se ha subido y agregado correctamente');
-      }
-
-      // Refresh library
-      fetchImageLibrary();
-    } catch (error) {
-      console.error('Upload error:', error);
-      showError('Error', 'No se pudo subir la imagen');
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFileUpload(e.dataTransfer.files);
-    }
-  };
-
-  const openEditModal = (cls: Class) => {
-    setSelectedClass(cls);
-    setFormData({
-      title: cls.title,
-      description: cls.description || '',
-      date: new Date(cls.date).toISOString().slice(0, 16),
-      duration: cls.duration.toString(),
-      capacity: cls.capacity.toString(),
-      price: cls.price.toString(),
-      level: cls.level,
-      instructor: cls.instructor || '',
-      schoolId: cls.school?.id.toString() || '',
-      beachId: cls.beachId?.toString() || '',
-      images: cls.images || []
-    });
-    setNewImageUrl('');
-    setShowEditModal(true);
-  };
-
   const openViewModal = (cls: Class) => {
     setSelectedClass(cls);
     setShowViewModal(true);
   };
 
+  const openEditModal = (cls: Class) => {
+    setSelectedClass(cls);
+    setShowEditModal(true);
+  };
+
   const openDeleteModal = (cls: Class) => {
     setSelectedClass(cls);
     setShowDeleteModal(true);
+  };
+
+  const openCreateModal = () => {
+    setShowCreateModal(true);
   };
 
   // Statistics
@@ -560,7 +304,7 @@ export default function AdminClassesPage() {
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       weekday: 'long',
@@ -572,7 +316,7 @@ export default function AdminClassesPage() {
     });
   };
 
-  const formatShortDate = (dateString: string) => {
+  const formatShortDate = (dateString: string | Date) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       day: 'numeric',
@@ -581,105 +325,6 @@ export default function AdminClassesPage() {
       minute: '2-digit'
     });
   };
-
-  const renderImageSection = () => (
-    <div className="md:col-span-2">
-      <label className="block text-sm font-medium mb-1">Imágenes (Máximo 5)</label>
-      
-      {/* Drag & Drop Zone */}
-      <div 
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-          dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <div className="flex flex-col items-center justify-center space-y-2">
-          <div className="p-3 bg-gray-100 rounded-full">
-            {uploadingImage ? (
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            ) : (
-              <Upload className="w-6 h-6 text-gray-500" />
-            )}
-          </div>
-          <div className="text-sm text-gray-600">
-            <label className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium">
-              <span>Subir imagen</span>
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*"
-                onChange={(e) => handleFileUpload(e.target.files)}
-                disabled={uploadingImage}
-              />
-            </label>
-            <span className="mx-1">o arrastra y suelta</span>
-          </div>
-          <p className="text-xs text-gray-500">PNG, JPG, WebP hasta 5MB</p>
-        </div>
-
-        <div className="mt-4 flex items-center justify-center gap-3">
-          <span className="text-xs text-gray-400 uppercase">O también</span>
-          <button
-            type="button"
-            onClick={() => {
-              fetchImageLibrary();
-              setShowImageLibrary(true);
-            }}
-            className="flex items-center px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
-          >
-            <Grid className="w-4 h-4 mr-2" />
-            Elegir de la biblioteca
-          </button>
-        </div>
-      </div>
-
-      {/* Image Preview List */}
-      {formData.images.length > 0 && (
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {formData.images.map((img, index) => (
-            <div key={index} className="relative group aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-              <img 
-                src={img} 
-                alt={`Preview ${index}`} 
-                className="w-full h-full object-cover" 
-              />
-              <button
-                type="button"
-                onClick={() => removeImageUrl(index)}
-                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      
-      {/* URL Input Fallback */}
-      <div className="mt-4">
-         <div className="flex items-center gap-2">
-           <input
-             type="text"
-             value={newImageUrl}
-             onChange={(e) => setNewImageUrl(e.target.value)}
-             placeholder="O pegar URL directa..."
-             className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
-             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
-           />
-           <button
-             type="button"
-             onClick={addImageUrl}
-             className="p-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
-           >
-             <Plus className="w-4 h-4" />
-           </button>
-         </div>
-      </div>
-    </div>
-  );
 
   if (status === 'loading' || loading) {
     return (
@@ -703,10 +348,7 @@ export default function AdminClassesPage() {
               <p className="text-gray-600 mt-2">Administra todas las clases del sistema</p>
             </div>
             <button
-              onClick={() => {
-                resetForm();
-                setShowCreateModal(true);
-              }}
+              onClick={openCreateModal}
               className="mt-4 sm:mt-0 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
             >
               <Plus className="w-5 h-5 mr-2" />
@@ -840,7 +482,6 @@ export default function AdminClassesPage() {
         <div className="space-y-4">
           {filteredClasses.length > 0 ? (
             filteredClasses.map((cls) => {
-              const isUpcoming = new Date(cls.date) > new Date();
               const occupancy = cls.paymentInfo?.occupancyRate || 0;
 
               return (
@@ -861,7 +502,7 @@ export default function AdminClassesPage() {
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
                         <div className="flex items-center text-gray-600">
-                          <School className="w-4 h-4 mr-2" />
+                          <SchoolIcon className="w-4 h-4 mr-2" />
                           <span>{cls.school?.name || 'N/A'}</span>
                         </div>
                         <div className="flex items-center text-gray-600">
@@ -952,7 +593,7 @@ export default function AdminClassesPage() {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
@@ -962,145 +603,21 @@ export default function AdminClassesPage() {
                 </button>
               </div>
             </div>
-            <form onSubmit={handleCreateClass} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Título *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Escuela *</label>
-                  <select
-                    required
-                    value={formData.schoolId}
-                    onChange={(e) => setFormData({ ...formData, schoolId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccionar escuela</option>
-                    {schools.map(school => (
-                      <option key={school.id} value={school.id}>{school.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Fecha y Hora *</label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Duración (min) *</label>
-                  <input
-                    type="number"
-                    required
-                    min="30"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Capacidad *</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Precio (PEN) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Nivel *</label>
-                  <select
-                    value={formData.level}
-                    onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="BEGINNER">Principiante</option>
-                    <option value="INTERMEDIATE">Intermedio</option>
-                    <option value="ADVANCED">Avanzado</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Instructor</label>
-                  <input
-                    type="text"
-                    value={formData.instructor}
-                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nombre del instructor (opcional)"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Playa</label>
-                  <select
-                    value={formData.beachId}
-                    onChange={(e) => setFormData({ ...formData, beachId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccionar playa (opcional)</option>
-                    {beaches.map(beach => (
-                      <option key={beach.id} value={beach.id}>{beach.name} {beach.location ? `- ${beach.location}` : ''}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Descripción</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                  />
-                </div>
-                {renderImageSection()}
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Crear Clase
-                </button>
-              </div>
-            </form>
+            <div className="p-6">
+               <ClassForm
+                  onSubmit={handleCreateSubmit}
+                  onCancel={() => setShowCreateModal(false)}
+                  isLoading={isSubmitting}
+                  schools={schools}
+               />
+            </div>
           </div>
         </div>
       )}
 
       {/* Edit Modal */}
       {showEditModal && selectedClass && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
@@ -1110,145 +627,22 @@ export default function AdminClassesPage() {
                 </button>
               </div>
             </div>
-            <form onSubmit={handleEditClass} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Título *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Escuela *</label>
-                  <select
-                    required
-                    value={formData.schoolId}
-                    onChange={(e) => setFormData({ ...formData, schoolId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccionar escuela</option>
-                    {schools.map(school => (
-                      <option key={school.id} value={school.id}>{school.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Fecha y Hora *</label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Duración (min) *</label>
-                  <input
-                    type="number"
-                    required
-                    min="30"
-                    value={formData.duration}
-                    onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Capacidad *</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Precio (PEN) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Nivel *</label>
-                  <select
-                    value={formData.level}
-                    onChange={(e) => setFormData({ ...formData, level: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="BEGINNER">Principiante</option>
-                    <option value="INTERMEDIATE">Intermedio</option>
-                    <option value="ADVANCED">Avanzado</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Instructor</label>
-                  <input
-                    type="text"
-                    value={formData.instructor}
-                    onChange={(e) => setFormData({ ...formData, instructor: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nombre del instructor (opcional)"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Playa</label>
-                  <select
-                    value={formData.beachId}
-                    onChange={(e) => setFormData({ ...formData, beachId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Seleccionar playa (opcional)</option>
-                    {beaches.map(beach => (
-                      <option key={beach.id} value={beach.id}>{beach.name} {beach.location ? `- ${beach.location}` : ''}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Descripción</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    rows={3}
-                  />
-                </div>
-                {renderImageSection()}
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Guardar Cambios
-                </button>
-              </div>
-            </form>
+            <div className="p-6">
+                <ClassForm
+                    classData={selectedClass}
+                    onSubmit={handleEditSubmit}
+                    onCancel={() => setShowEditModal(false)}
+                    isLoading={isSubmitting}
+                    schools={schools}
+                />
+            </div>
           </div>
         </div>
       )}
 
       {/* View Modal */}
       {showViewModal && selectedClass && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
@@ -1375,7 +769,7 @@ export default function AdminClassesPage() {
 
       {/* Delete Modal */}
       {showDeleteModal && selectedClass && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6">
               <h2 className="text-xl font-bold mb-4">Confirmar Eliminación</h2>
@@ -1402,57 +796,6 @@ export default function AdminClassesPage() {
         </div>
       )}
 
-      {/* Image Library Modal */}
-      {showImageLibrary && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="text-lg font-bold">Biblioteca de Imágenes</h3>
-              <button onClick={() => setShowImageLibrary(false)} className="text-gray-400 hover:text-gray-600">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4">
-              {loadingImages ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : libraryImages.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No hay imágenes en la biblioteca</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {libraryImages.map((img, idx) => (
-                    <div 
-                      key={idx} 
-                      className="group relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-blue-500 transition-all"
-                      onClick={() => {
-                        if (formData.images.length < 5) {
-                          setFormData(prev => ({ ...prev, images: [...prev.images, img.url] }));
-                          setShowImageLibrary(false);
-                        } else {
-                          showError('Límite alcanzado', 'Máximo 5 imágenes por clase');
-                        }
-                      }}
-                    >
-                      <img src={img.url} alt="Library asset" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      {formData.images.includes(img.url) && (
-                        <div className="absolute top-2 right-2 bg-blue-600 text-white p-1 rounded-full">
-                          <Check className="w-3 h-3" />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

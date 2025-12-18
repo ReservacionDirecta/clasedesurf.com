@@ -195,7 +195,7 @@ export default function InstructorProfile() {
                 </div>
 
                 {/* Experience Badge */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-4">
+                <div className="bg-linear-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-4">
                   <div className="flex items-center justify-center">
                     <Calendar className="w-5 h-5 text-blue-600 mr-2" />
                     <span className="text-blue-900 font-semibold">
@@ -392,7 +392,7 @@ export default function InstructorProfile() {
             </div>
 
             {/* Quick Navigation */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+            <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Navegación Rápida</h3>
               <div className="grid grid-cols-1 gap-3">
                 <button

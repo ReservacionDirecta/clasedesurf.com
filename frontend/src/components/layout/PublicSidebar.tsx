@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { 
@@ -161,13 +162,13 @@ export function PublicSidebar() {
           {!isCollapsed && (
             <Link href="/" className="flex items-center space-x-3 group">
               <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                <Image 
+                <ImageWithFallback 
                   src="/logoclasedesusrf.png" 
                   alt="clasesde.pe" 
                   width={40} 
                   height={40} 
                   className="w-full h-full object-contain"
-                  unoptimized
+                  fallbackSrc="/logoclasedesusrf.png"
                 />
               </div>
               <div>
@@ -181,13 +182,13 @@ export function PublicSidebar() {
           {isCollapsed && (
             <Link href="/" className="flex items-center justify-center w-full">
               <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                <Image 
+                <ImageWithFallback 
                   src="/logoclasedesusrf.png" 
                   alt="clasesde.pe" 
                   width={40} 
                   height={40} 
                   className="w-full h-full object-contain"
-                  unoptimized
+                  fallbackSrc="/logoclasedesusrf.png"
                 />
               </div>
             </Link>
@@ -221,7 +222,7 @@ export function PublicSidebar() {
                   className={`
                     group flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200
                     ${active
-                      ? 'bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 shadow-sm'
+                      ? 'bg-linear-to-r from-blue-50 to-cyan-50 text-blue-700 shadow-sm'
                       : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                     }
                     ${isCollapsed ? 'justify-center' : ''}
@@ -254,19 +255,19 @@ export function PublicSidebar() {
               `}
               title={isCollapsed ? (session?.user?.name ?? undefined) : ''}
             >
-              <div className="relative flex-shrink-0">
+              <div className="relative shrink-0">
                 <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-blue-100">
                   {profilePhoto ? (
-                    <Image
+                    <ImageWithFallback
                       src={profilePhoto}
                       alt={session?.user?.name || 'User'}
                       width={40}
                       height={40}
                       className="w-full h-full object-cover"
-                      unoptimized
+                      fallbackSrc="/logoclasedesusrf.png"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
+                    <div className="w-full h-full bg-linear-to-br from-blue-400 to-cyan-400 flex items-center justify-center">
                       <span className="text-white font-semibold text-sm">
                         {getInitials(session?.user?.name)}
                       </span>
@@ -316,7 +317,7 @@ export function PublicSidebar() {
             </Link>
             <Link
               href="/register"
-              className="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl transition-all duration-200"
+              className="w-full flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-xl transition-all duration-200"
             >
               Registrarse
             </Link>

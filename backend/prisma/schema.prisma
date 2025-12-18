@@ -24,7 +24,7 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   profilePhoto  String?
-  avatar        String?        // Predefined avatar identifier (e.g., 'wave1', 'surf1')
+  avatar        String? // Predefined avatar identifier (e.g., 'wave1', 'surf1')
   instructor    Instructor?
   refreshTokens RefreshToken[]
   reservations  Reservation[]
@@ -97,32 +97,32 @@ model Student {
 }
 
 model School {
-  id           Int            @id @default(autoincrement())
-  name         String
-  location     String
-  description  String?
-  phone        String?
-  email        String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  address      String?
-  coverImage   String?
-  facebook     String?
-  instagram    String?
-  logo         String?
-  website      String?
-  whatsapp     String?
-  ownerId      Int?
-  foundedYear  Int?
-  rating       Float          @default(0)
-  totalReviews Int            @default(0)
-  classes      Class[]
-  instructors  Instructor[]
-  reviews      SchoolReview[]
-  students     Student[]
-  notes        CalendarNote[]
+  id            Int            @id @default(autoincrement())
+  name          String
+  location      String
+  description   String?
+  phone         String?
+  email         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  address       String?
+  coverImage    String?
+  facebook      String?
+  instagram     String?
+  logo          String?
+  website       String?
+  whatsapp      String?
+  ownerId       Int?
+  foundedYear   Int?
+  rating        Float          @default(0)
+  totalReviews  Int            @default(0)
+  classes       Class[]
+  instructors   Instructor[]
+  reviews       SchoolReview[]
+  students      Student[]
+  notes         CalendarNote[]
   discountCodes DiscountCode[]
-  status       SchoolStatus   @default(PENDING)
+  status        SchoolStatus   @default(PENDING)
 
   @@map("schools")
 }
@@ -159,7 +159,32 @@ model Class {
   school       School        @relation(fields: [schoolId], references: [id])
   reservations Reservation[]
 
+  // Recurring Class Fields
+  isRecurring       Boolean   @default(false)
+  recurrencePattern Json? // e.g. { days: [1,3,5], times: ["08:00", "15:00"] }
+  startDate         DateTime? // Valid from
+  endDate           DateTime? // Valid until
+  type              String    @default("SURF_LESSON") // e.g. SURF_LESSON, YOGA, etc.
+
+  availability      ClassAvailability[] // Inventory overrides
+
   @@map("classes")
+}
+
+model ClassAvailability {
+  id        Int      @id @default(autoincrement())
+  classId   Int
+  date      DateTime // Specific date for the override
+  time      String?  // Specific time (e.g. "08:00")
+  capacity  Int?     // Override default capacity
+  price     Float?   // Override default price
+  isClosed  Boolean  @default(false) // Master switch to close this slot
+  class     Class    @relation(fields: [classId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([classId, date, time]) // One override per slot
+  @@map("class_availability")
 }
 
 model Reservation {
@@ -175,26 +200,28 @@ model Reservation {
   class          Class             @relation(fields: [classId], references: [id])
   user           User              @relation(fields: [userId], references: [id])
 
-  @@map("reservations")
+  // Specifics for Recurring Bookings
+  date DateTime? // The specific date booked
+  time String? // The specific time slot booked
 }
 
 model Payment {
-  id            Int           @id @default(autoincrement())
-  reservationId Int           @unique
-  amount        Float
-  status        PaymentStatus @default(UNPAID)
-  paymentMethod String?
-  transactionId String?
-  paidAt        DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  voucherImage  String?
-  voucherNotes  String?
+  id             Int           @id @default(autoincrement())
+  reservationId  Int           @unique
+  amount         Float
+  status         PaymentStatus @default(UNPAID)
+  paymentMethod  String?
+  transactionId  String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  voucherImage   String?
+  voucherNotes   String?
   discountCodeId Int?
   discountAmount Float?
-  originalAmount Float?       // Monto original antes del descuento
-  reservation   Reservation   @relation(fields: [reservationId], references: [id])
-  discountCode  DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  originalAmount Float? // Monto original antes del descuento
+  reservation    Reservation   @relation(fields: [reservationId], references: [id])
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
 
   @@map("payments")
 }
@@ -255,7 +282,7 @@ model CalendarNote {
   title     String
   content   String?
   date      DateTime
-  time      String?  // Hora específica (formato HH:mm)
+  time      String? // Hora específica (formato HH:mm)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   school    School   @relation(fields: [schoolId], references: [id])
@@ -264,35 +291,35 @@ model CalendarNote {
 }
 
 model DiscountCode {
-  id                Int       @id @default(autoincrement())
-  code              String    @unique
-  description       String?
-  discountPercentage Float    // Porcentaje de descuento (0-100)
-  validFrom         DateTime  // Fecha de inicio de validez
-  validTo           DateTime  // Fecha de fin de validez
-  isActive          Boolean   @default(true)
-  maxUses           Int?      // Número máximo de usos (null = ilimitado)
-  usedCount         Int       @default(0)
-  schoolId          Int?      // null = código global (admin), número = código específico de escuela
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  school            School?   @relation(fields: [schoolId], references: [id])
-  payments          Payment[]
+  id                 Int       @id @default(autoincrement())
+  code               String    @unique
+  description        String?
+  discountPercentage Float // Porcentaje de descuento (0-100)
+  validFrom          DateTime // Fecha de inicio de validez
+  validTo            DateTime // Fecha de fin de validez
+  isActive           Boolean   @default(true)
+  maxUses            Int? // Número máximo de usos (null = ilimitado)
+  usedCount          Int       @default(0)
+  schoolId           Int? // null = código global (admin), número = código específico de escuela
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  school             School?   @relation(fields: [schoolId], references: [id])
+  payments           Payment[]
 
   @@map("discount_codes")
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   userId    Int
   type      NotificationType // EMAIL, WHATSAPP, SYSTEM
-  category  String   // RESERVATION_CONFIRMED, etc.
+  category  String // RESERVATION_CONFIRMED, etc.
   subject   String?
-  content   String   @db.Text // Store full HTML
+  content   String           @db.Text // Store full HTML
   metadata  Json?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id])
 
   @@map("notifications")
 }
