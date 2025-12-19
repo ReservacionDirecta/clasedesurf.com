@@ -4,10 +4,11 @@ export const dynamic = 'force-dynamic';
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
-import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X, ListChecks } from 'lucide-react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
+import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X, ListChecks, LayoutGrid, List } from 'lucide-react';
 import { SchoolContextBanner } from '@/components/school/SchoolContextBanner';
 import { useToast } from '@/contexts/ToastContext';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 
 interface Class {
   id: number;
@@ -24,6 +25,9 @@ interface Class {
   status?: 'upcoming' | 'completed' | 'cancelled';
   availableSpots?: number;
   reservations?: any[];
+  isRecurring?: boolean;
+  type?: string;
+  images?: string[];
   paymentInfo?: {
     totalReservations: number;
     paidReservations: number;
@@ -53,6 +57,59 @@ export default function ClassesManagementPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [groupBy, setGroupBy] = useState<'month' | 'name' | 'date'>('month');
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  // Toggle group expansion
+  const toggleGroup = (groupKey: string) => {
+    setExpandedGroups(prev => 
+      prev.includes(groupKey) 
+        ? prev.filter(key => key !== groupKey)
+        : [...prev, groupKey]
+    );
+  };
+
+  // Generic helper to group classes
+  const groupClasses = (classes: Class[], method: 'month' | 'name' | 'date') => {
+    const groups: { [key: string]: Class[] } = {};
+    classes.forEach(cls => {
+        let key = '';
+        if (method === 'month') {
+          const date = new Date(cls.date);
+          const dateKey = date.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+          key = dateKey.charAt(0).toUpperCase() + dateKey.slice(1);
+        } else if (method === 'date') {
+          const date = new Date(cls.date);
+          const dateKey = date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+           key = dateKey.charAt(0).toUpperCase() + dateKey.slice(1);
+        } else {
+          key = cls.title || 'Sin Título';
+        }
+
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(cls);
+    });
+    return groups;
+  };
+
+  // Helper to consolidate classes by Title within a group (useful for 'date' view)
+  const consolidateClasses = (classes: Class[]) => {
+      const clusters: { [key: string]: Class[] } = {};
+      classes.forEach(cls => {
+          // Cluster Key: Title + Date (YYYY-MM-DD)
+          // Actually, if we are in 'date' view, the Date is already same. So just Title.
+          // If we are in 'name' view, grouping by Date makes sense.
+          // Let's make a universal cluster key: Title + Date(YMD).
+          const d = new Date(cls.date);
+          const dateStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          const key = `${cls.title}||${dateStr}`; 
+          
+          if (!clusters[key]) clusters[key] = [];
+          clusters[key].push(cls);
+      });
+      return Object.values(clusters).sort((a,b) => new Date(a[0].date).getTime() - new Date(b[0].date).getTime());
+  };
 
   const fetchClasses = useCallback(async () => {
     try {
@@ -345,22 +402,44 @@ export default function ClassesManagementPage() {
     });
   };
 
-  const filteredClasses: Class[] = Array.isArray(classes)
-    ? classes.filter((cls: Class) => {
-      if (filter === 'all') return true;
-      // Calculate status based on date if status is not set
-      if (!cls.status) {
-        const classDate = new Date(cls.date);
-        const now = new Date();
-        if (classDate < now) {
-          return filter === 'completed';
-        } else {
-          return filter === 'upcoming';
+  const filteredClasses = useMemo(() => {
+    return Array.isArray(classes)
+      ? classes.filter((cls: Class) => {
+        if (filter === 'all') return true;
+        
+        if (!cls.status) {
+          const classDate = new Date(cls.date);
+          const now = new Date();
+          if (classDate < now) {
+            return filter === 'completed';
+          } else {
+            return filter === 'upcoming';
+          }
         }
-      }
-      return cls.status === filter;
-    })
-    : [];
+        return cls.status === filter;
+      })
+      : [];
+  }, [classes, filter]);
+
+  // Sort classes by date
+  const sortedClasses = useMemo(() => {
+    return [...filteredClasses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [filteredClasses]);
+
+  const groupedClasses = useMemo(() => {
+     return groupClasses(sortedClasses, groupBy);
+  }, [sortedClasses, groupBy]);
+  
+  // Auto-expand all groups ONLY when switching to 'month' view, or initially.
+  useEffect(() => {
+    if (groupBy === 'month' || groupBy === 'date') {
+       // Only update if not already matching to avoid loops if groupedClasses ref changes but content is same-ish
+       // But better: rely on stable groupedClasses from useMemo above.
+       setExpandedGroups(Object.keys(groupedClasses));
+    } else {
+       setExpandedGroups([]);
+    }
+  }, [groupBy, groupedClasses]); // Safe now because groupedClasses is stable via stable filteredClasses
 
   const totalRevenue = (classes || []).reduce((sum, cls) => sum + (cls.paymentInfo?.totalRevenue || 0), 0);
   const totalStudents = (classes || []).reduce((sum, cls) => sum + (cls.enrolled || 0), 0);
@@ -399,7 +478,46 @@ export default function ClassesManagementPage() {
               <h1 className="text-3xl font-bold text-gray-900">Gestión de Clases</h1>
               <p className="text-gray-600 mt-2">Administra las clases de {school?.name || 'tu escuela'}</p>
             </div>
-            <div className="mt-4 sm:mt-0 flex items-center gap-3">
+            <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-3">
+              <div className="flex bg-white rounded-lg shadow-sm border border-gray-200 p-0.5 mr-2">
+                <button
+                   onClick={() => setGroupBy('month')}
+                   className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${groupBy === 'month' ? 'bg-gray-100 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  Mes
+                </button>
+                <div className="w-px bg-gray-200 my-1 mx-0.5"></div>
+                <button
+                   onClick={() => setGroupBy('name')}
+                   className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${groupBy === 'name' ? 'bg-gray-100 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  Nombre
+                </button>
+                <div className="w-px bg-gray-200 my-1 mx-0.5"></div>
+                <button
+                   onClick={() => setGroupBy('date')}
+                   className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${groupBy === 'date' ? 'bg-gray-100 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                >
+                  Fecha
+                </button>
+              </div>
+
+              <div className="flex bg-white rounded-lg shadow-sm border border-gray-200 p-0.5 mr-2">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-gray-100 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  title="Vista de lista"
+                >
+                  <List className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-gray-100 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  title="Vista de cuadrícula"
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                </button>
+              </div>
               {selectedClasses.length > 0 && (
                 <button
                   onClick={() => handleBulkDelete()}
@@ -512,133 +630,248 @@ export default function ClassesManagementPage() {
           </div>
         </div>
 
-        {/* Classes List */}
-        <div className="space-y-6">
-          {filteredClasses.map((cls) => (
-            <div 
-              key={cls.id} 
-              className={`bg-white rounded-lg shadow p-6 transition-all ${
-                selectedClasses.includes(cls.id) ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-              }`}
-            >
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <input
-                        type="checkbox"
-                        checked={selectedClasses.includes(cls.id)}
-                        onChange={() => toggleSelectClass(cls.id)}
-                        className="mt-1.5 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer shrink-0"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <div className="min-w-0">
-                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2 leading-tight">
-                          {cls.title}
-                        </h3>
-                        <p className="text-sm sm:text-base text-gray-600 mb-1 sm:mb-2 line-clamp-2">
-                          {cls.description}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-2 shrink-0 items-end sm:items-start">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap shadow-sm border border-transparent ${getStatusColor(cls.status || 'upcoming')}`}>
-                        {cls.status === 'upcoming' ? 'Próxima' :
-                          cls.status === 'completed' ? 'Completada' : 'Cancelada'}
-                      </span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap shadow-sm border border-transparent ${getLevelColor(cls.level)}`}>
-                        {cls.level === 'BEGINNER' ? 'Principiante' :
-                          cls.level === 'INTERMEDIATE' ? 'Intermedio' : 'Avanzado'}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 mobile-s:grid-cols-2 md:grid-cols-4 gap-y-3 gap-x-4 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
-                      <span className="truncate">{formatDate(cls.date)}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
-                      <span className="truncate">{cls.duration} minutos</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
-                      <span className="truncate">{cls.enrolled || 0}/{cls.capacity} estudiantes</span>
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="w-4 h-4 mr-2 text-gray-400 shrink-0" />
-                      <span className="truncate">{cls.location || 'Por definir'}</span>
-                    </div>
-                  </div>
 
-                  <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center justify-between sm:justify-start sm:gap-4">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] uppercase tracking-wider text-gray-500 font-medium">Precio</span>
-                        <div className="text-xl font-bold text-gray-900">
-                          S/. {cls.price}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 w-full sm:w-auto">
-                      {/* Primary Actions - Full width on mobile */}
-                      <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto">
-                        <button
-                          onClick={() => router.push(`/dashboard/school/classes/${cls.id}/reservations`)}
-                          className="flex items-center justify-center px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors text-sm font-medium shadow-sm"
-                        >
-                          <ListChecks className="w-4 h-4 mr-1.5 shrink-0" />
-                          <span className="truncate">Reservas</span>
-                        </button>
-                        <button
-                          onClick={() => router.push(`/dashboard/school/classes/${cls.id}`)}
-                          className="flex items-center justify-center px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-sm font-medium shadow-sm"
-                        >
-                          <Eye className="w-4 h-4 mr-1.5 shrink-0" />
-                          <span className="truncate">Detalles</span>
-                        </button>
-                      </div>
-
-                      {/* Secondary Management Actions - Icon row on mobile */}
-                      <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto">
-                        <button
-                          onClick={() => router.push(`/classes/${cls.id}`)}
-                          className="flex items-center justify-center px-3 py-2 text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-sm border border-purple-100"
-                          title="Vista Pública"
-                        >
-                          <Eye className="w-4 h-4 list:mr-1.5 shrink-0" />
-                          <span className="sm:hidden ml-1.5">Ver</span>
-                          <span className="hidden sm:inline ml-1.5">Publica</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedClass(cls);
-                            setShowEditModal(true);
-                          }}
-                          className="flex items-center justify-center px-3 py-2 text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-sm border border-gray-200"
-                          title={(cls.reservations?.length ?? 0) > 0 ? 'Editar detalles limitados' : 'Editar clase'}
-                        >
-                          <Edit className="w-4 h-4 shrink-0" />
-                          <span className="sm:hidden ml-1.5">Editar</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedClass(cls);
-                            setShowDeleteModal(true);
-                          }}
-                          className="flex items-center justify-center px-3 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors text-sm border border-red-100"
-                          title="Eliminar clase"
-                        >
-                          <Trash2 className="w-4 h-4 shrink-0" />
-                          <span className="sm:hidden ml-1.5">Borrar</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+        <div className="space-y-8">
+          {Object.entries(groupedClasses).map(([groupKey, groupClassesList]) => (
+            <div key={groupKey} className="space-y-4">
+              <div 
+                className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm cursor-pointer hover:bg-gray-50 transition-colors sticky top-0 z-10 border border-gray-200"
+                onClick={() => toggleGroup(groupKey)}
+              >
+                <div className="flex items-center gap-3">
+                   <div className={`p-1 rounded-full ${expandedGroups.includes(groupKey) ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'}`}>
+                      {expandedGroups.includes(groupKey) ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      ) : (
+                        <svg className="w-5 h-5 transform -rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      )}
+                   </div>
+                   <div>
+                      <h2 className="text-lg font-bold text-gray-900">{groupKey}</h2>
+                      <p className="text-sm text-gray-500">{groupClassesList.length} clases</p>
+                   </div>
+                </div>
+                <div className="flex items-center gap-2">
+                   {/* Optional: Add group summary stats here if needed */}
                 </div>
               </div>
+              
+              {expandedGroups.includes(groupKey) && (
+              <>
+              {viewMode === 'list' ? (
+                 <div className="bg-white rounded-lg shadow overflow-hidden animate-fadeIn">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                              <input
+                                type="checkbox"
+                                checked={groupClassesList.every(c => selectedClasses.includes(c.id))}
+                                onChange={() => {
+                                  const allSelected = groupClassesList.every(c => selectedClasses.includes(c.id));
+                                  if (allSelected) {
+                                    setSelectedClasses(prev => prev.filter(id => !groupClassesList.find(c => c.id === id)));
+                                  } else {
+                                    const newIds = groupClassesList.map(c => c.id).filter(id => !selectedClasses.includes(id));
+                                    setSelectedClasses(prev => [...prev, ...newIds]);
+                                  }
+                                }}
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                              />
+                            </th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha y Hora</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clase</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiantes</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
+                            <th scope="col" className="relative px-6 py-3">
+                              <span className="sr-only">Acciones</span>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {groupClassesList.map((cls) => (
+                            <tr key={cls.id} className={`hover:bg-gray-50 ${selectedClasses.includes(cls.id) ? 'bg-blue-50' : ''}`}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedClasses.includes(cls.id)}
+                                  onChange={() => toggleSelectClass(cls.id)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                />
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {new Date(cls.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="text-sm font-medium text-gray-900">{cls.title}</div>
+                                <div className="text-sm text-gray-500 truncate max-w-xs">{cls.instructor || 'Sin instructor'} • {cls.duration} min</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(cls.status || 'upcoming')}`}>
+                                  {cls.status === 'upcoming' ? 'Próxima' : cls.status === 'completed' ? 'Completada' : 'Cancelada'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {cls.enrolled || 0} / {cls.capacity}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                S/. {cls.price}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button onClick={() => router.push(`/dashboard/school/classes/${cls.id}/reservations`)} className="text-blue-600 hover:text-blue-900" title="Ver Reservas">
+                                    <ListChecks className="w-5 h-5" />
+                                  </button>
+                                  <button onClick={() => { setSelectedClass(cls); setShowEditModal(true); }} className="text-gray-600 hover:text-gray-900" title="Editar">
+                                    <Edit className="w-5 h-5" />
+                                  </button>
+                                  <button onClick={() => { setSelectedClass(cls); setShowDeleteModal(true); }} className="text-red-600 hover:text-red-900" title="Eliminar">
+                                    <Trash2 className="w-5 h-5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                 </div>
+              ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+                  {consolidateClasses(groupClassesList).map((cluster) => {
+                    const primaryClass = cluster[0];
+                    const allIds = cluster.map(c => c.id);
+                    const isFullySelected = allIds.every(id => selectedClasses.includes(id));
+                    
+                    return (
+                    <div 
+                      key={primaryClass.id} 
+                      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 overflow-hidden ${
+                         isFullySelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+                      }`}
+                    >
+                      <div className="p-4">
+                        <div className="flex gap-4">
+                          {/* Image Thumbnail */}
+                          <div className="shrink-0 relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                            <ImageWithFallback
+                               src={primaryClass.images?.[0] || '/images/placeholder-class.jpg'} 
+                               alt={primaryClass.title}
+                               fill
+                               className="object-cover"
+                            />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                             <div className="flex items-start justify-between gap-2">
+                                <h3 className="text-lg font-bold text-gray-900 leading-tight line-clamp-2" title={primaryClass.title}>{primaryClass.title}</h3>
+                                <input
+                                  type="checkbox"
+                                  checked={isFullySelected}
+                                  onChange={() => {
+                                      if (isFullySelected) {
+                                          setSelectedClasses(prev => prev.filter(id => !allIds.includes(id)));
+                                      } else {
+                                          // Add missing ones
+                                          const missing = allIds.filter(id => !selectedClasses.includes(id));
+                                          setSelectedClasses(prev => [...prev, ...missing]);
+                                      }
+                                  }}
+                                  className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer shrink-0"
+                                />
+                             </div>
+                             
+                             <div className="flex flex-wrap gap-2 mt-2">
+                                 {/* Show aggregated status or just counts */}
+                                 <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
+                                    {cluster.length} horario{cluster.length > 1 ? 's' : ''}
+                                 </span>
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getLevelColor(primaryClass.level)}`}>
+                                  {primaryClass.level}
+                                </span>
+                             </div>
+                          </div>
+                        </div>
+
+                        {/* Distinct Time/Date Section */}
+                        <div className="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                             <div className="flex items-center justify-between mb-2">
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-gray-500 uppercase font-semibold">Fecha</span>
+                                    <div className="flex items-center gap-1.5 text-gray-900 font-medium">
+                                    <Calendar className="w-4 h-4 text-blue-500" />
+                                    {new Date(primaryClass.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                    </div>
+                                </div>
+                             </div>
+                             
+                             {/* Expanded Schedules List */}
+                             <div className="space-y-2 mt-3">
+                                {cluster.map(cls => (
+                                    <div key={cls.id} className="flex items-center justify-between bg-white p-2 rounded border border-gray-200 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1.5 text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">
+                                                <Clock className="w-3 h-3" />
+                                                {new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full uppercase ${getStatusColor(cls.status || 'upcoming')}`}>
+                                                {cls.status === 'upcoming' ? 'Activa' : cls.status === 'completed' ? 'Comp' : 'Canc'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                             <div className="flex items-center text-xs text-gray-500">
+                                                <Users className="w-3 h-3 mr-1" />
+                                                {cls.enrolled}/{cls.capacity}
+                                             </div>
+                                             
+                                             {/* Mini Actions */}
+                                             <button 
+                                                onClick={() => { setSelectedClass(cls); setShowEditModal(true); }}
+                                                className="text-gray-400 hover:text-blue-600 ml-1"
+                                                title="Editar"
+                                             >
+                                                <Edit className="w-3 h-3" />
+                                             </button>
+                                        </div>
+                                    </div>
+                                ))}
+                             </div>
+                        </div>
+
+                        {/* Additional Details Grid */}
+                        <div className="grid grid-cols-2 gap-3 mt-4 text-sm text-gray-600">
+                           <div className="flex items-center gap-2">
+                              {/* Aggregate stats if needed */}
+                           </div>
+                           <div className="flex items-center gap-2 justify-end font-medium text-gray-900">
+                              <DollarSign className="w-4 h-4 text-gray-400" />
+                              <span>S/. {primaryClass.price}</span>
+                           </div>
+                        </div>
+                      </div>
+
+                      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                         <span className="text-xs text-gray-500">
+                            ID: {allIds.join(', ')}
+                         </span>
+                         {/* Bulk actions for this cluster could go here */}
+                      </div>
+                    </div>
+                  );
+                  })}
+                </div>
+              )}
+              </>
+              )}
             </div>
           ))}
         </div>

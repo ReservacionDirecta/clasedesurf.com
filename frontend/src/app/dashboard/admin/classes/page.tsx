@@ -609,6 +609,7 @@ export default function AdminClassesPage() {
                   onCancel={() => setShowCreateModal(false)}
                   isLoading={isSubmitting}
                   schools={schools}
+                  beaches={beaches}
                />
             </div>
           </div>
@@ -634,6 +635,7 @@ export default function AdminClassesPage() {
                     onCancel={() => setShowEditModal(false)}
                     isLoading={isSubmitting}
                     schools={schools}
+                    beaches={beaches}
                 />
             </div>
           </div>

@@ -946,6 +946,83 @@ export default function NewClassPage() {
             {/* Campos para clases recurrentes (mantener existente) */}
             {formData.scheduleType === 'recurring' && (
               <>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Días de la Semana *
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { key: 'monday', label: 'L' },
+                      { key: 'tuesday', label: 'M' },
+                      { key: 'wednesday', label: 'X' },
+                      { key: 'thursday', label: 'J' },
+                      { key: 'friday', label: 'V' },
+                      { key: 'saturday', label: 'S' },
+                      { key: 'sunday', label: 'D' },
+                    ].map((day) => (
+                      <button
+                        key={day.key}
+                        type="button"
+                        onClick={() => handleDayToggle(day.key as DayOfWeek)}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors touch-manipulation ${
+                          formData.selectedDays.includes(day.key as DayOfWeek)
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                        title={day.key}
+                      >
+                        {day.label}
+                      </button>
+                    ))}
+                  </div>
+                  {formData.selectedDays.length === 0 && (
+                    <p className="text-xs text-red-500 mt-1">Selecciona al menos un día</p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Horarios *
+                  </label>
+                  <div className="space-y-3">
+                    {formData.times.map((time, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="time"
+                          value={time}
+                          onChange={(e) => handleTimeChange(index, e.target.value)}
+                          className="flex-1 px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
+                          required={formData.scheduleType === 'recurring'}
+                        />
+                        {formData.times.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeTimeField(index)}
+                            className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
+                            aria-label="Eliminar horario"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {formData.times.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={addTimeField}
+                      className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center touch-manipulation"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Agregar otro horario
+                    </button>
+                  )}
+                </div>
+
                 <div>
                   <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
                     Fecha de Inicio *
@@ -963,7 +1040,7 @@ export default function NewClassPage() {
 
                 <div>
                   <label htmlFor="weeksCount" className="block text-sm font-medium text-gray-700 mb-2">
-                    Número de Semanas *
+                    Número de Semanas (Duración del bloque)*
                   </label>
                   <input
                     type="number"
@@ -975,6 +1052,7 @@ export default function NewClassPage() {
                     className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
                     required={formData.scheduleType === 'recurring'}
                   />
+                  <p className="text-sm text-gray-500 mt-1">Por cuántas semanas se repetirán estas clases</p>
                 </div>
               </>
             )}
@@ -1158,7 +1236,7 @@ export default function NewClassPage() {
                 {/* Input de URL - Optimizado para móvil */}
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1 flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent bg-white">
-                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
                       <input
@@ -1192,7 +1270,7 @@ export default function NewClassPage() {
                 {/* Mensaje de error */}
                 {imageError && (
                   <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 px-4 py-3 rounded-lg border border-red-200">
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>{imageError}</span>
@@ -1351,7 +1429,7 @@ export default function NewClassPage() {
 
         {/* Modal para agregar nueva playa */}
         {showAddBeachModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <h3 className="text-xl font-bold mb-4">Agregar Nueva Playa</h3>
 

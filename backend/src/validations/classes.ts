@@ -89,6 +89,10 @@ export const createBulkClassesSchema = z.object({
     .int('School ID must be a whole number')
     .min(1, 'Invalid school ID')
     .optional(),
+  beachId: z.number()
+    .int('Beach ID must be a whole number')
+    .min(1, 'Invalid beach ID')
+    .optional(),
   occurrences: z.array(bulkClassOccurrenceSchema)
     .min(1, 'At least one occurrence is required')
 });

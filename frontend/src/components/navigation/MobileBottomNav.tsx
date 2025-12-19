@@ -172,6 +172,43 @@ export function MobileBottomNav() {
         setMoreMenuOpen(false);
     }, [pathname]);
 
+    const [isVisible, setIsVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+
+    useEffect(() => {
+        const controlNavbar = () => {
+            if (typeof window !== 'undefined') {
+                const currentScrollY = window.scrollY;
+                
+                // Show if at top or scrolling up
+                if (currentScrollY < 10 || currentScrollY < lastScrollY) {
+                    setIsVisible(true);
+                } else if (currentScrollY > lastScrollY && currentScrollY > 10) {
+                    // Hide if scrolling down and not at top
+                    setIsVisible(false);
+                    setMoreMenuOpen(false); // Close menu when hiding
+                }
+
+                setLastScrollY(currentScrollY);
+            }
+        };
+
+        let timeoutId: NodeJS.Timeout;
+        const throttledControlNavbar = () => {
+             if (timeoutId) return;
+             timeoutId = setTimeout(() => {
+                 controlNavbar();
+                 timeoutId = undefined!;
+             }, 100);
+        };
+
+        window.addEventListener('scroll', controlNavbar);
+
+        return () => {
+            window.removeEventListener('scroll', controlNavbar);
+        };
+    }, [lastScrollY]);
+
     // Early return después de todos los hooks
     if (!session?.user || !userRole) return null;
 
@@ -181,7 +218,7 @@ export function MobileBottomNav() {
             <div className="h-20 lg:hidden"></div>
 
             {/* Mobile Bottom Navigation - solo en pantallas < 1024px */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-100 z-50 shadow-2xl backdrop-blur-xl">
+            <nav className={`lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-100 z-50 shadow-2xl backdrop-blur-xl transition-transform duration-300 ease-in-out ${isVisible ? 'translate-y-0' : 'translate-y-[110%]'}`}>
                 {/* Background gradient based on role */}
                 <div className={`absolute inset-0 opacity-5 bg-gradient-to-r ${getRoleActiveGradient(userRole)}`}></div>
 

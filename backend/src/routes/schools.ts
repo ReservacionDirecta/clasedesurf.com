@@ -165,6 +165,8 @@ router.put('/:id/status', requireAuth, requireRole(['ADMIN']), validateParams(sc
     const { id } = req.params as any;
     const { status } = req.body;
 
+    console.log(`[PUT /schools/${id}/status] Request to update status to:`, status);
+
     if (!['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }

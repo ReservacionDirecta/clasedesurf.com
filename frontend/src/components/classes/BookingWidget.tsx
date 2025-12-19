@@ -54,10 +54,15 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
 
   const formatDateLabel = (dateStr: string | Date, start: string | Date, end: string | Date) => {
     const d = new Date(dateStr);
-    const s = new Date(start);
-    const e = new Date(end);
     
-    return `${d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })} • ${s.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`
+    // Helper to extract time string
+    const formatTimeStr = (t: string | Date) => {
+      if (t instanceof Date) return t.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      if (typeof t === 'string' && t.includes('T')) return new Date(t).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      return String(t).substring(0, 5); // Assume HH:mm or HH:mm:ss
+    };
+
+    return `${d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })} • ${formatTimeStr(start)}`;
   };
 
   return (
@@ -110,8 +115,12 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
                         })}
                      </p>
                      <p className="text-xs text-gray-600">
-                        {new Date(classData.startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - 
-                        {new Date(classData.endTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                        {typeof classData.startTime === 'string' && !classData.startTime.includes('T') 
+                           ? classData.startTime.substring(0, 5) 
+                           : new Date(classData.startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - 
+                        {typeof classData.endTime === 'string' && !classData.endTime.includes('T') 
+                           ? classData.endTime.substring(0, 5) 
+                           : new Date(classData.endTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                      </p>
                    </div>
                 </div>

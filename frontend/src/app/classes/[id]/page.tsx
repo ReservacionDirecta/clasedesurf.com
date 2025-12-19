@@ -333,7 +333,8 @@ export default function ClassDetailsPage() {
                       price: s.price, // Use override price if exists
                       availableSpots: s.available
                   };
-              });
+              })
+              .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
             
             setAvailableDates(dates);
             

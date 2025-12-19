@@ -55,8 +55,8 @@ if (-not $loginCheck) {
 Write-Color "OK Logueado en Docker Hub" "Green"
 
 # Nombres de las imágenes
-$BackendImage = "${DockerUsername}/clasesde-pe-backend"
-$FrontendImage = "${DockerUsername}/clasesde-pe-frontend"
+$BackendImage = "${DockerUsername}/clasedesurf-backend"
+$FrontendImage = "${DockerUsername}/clasedesurf-frontend"
 
 # ============================================
 # BUILD BACKEND
@@ -170,8 +170,8 @@ Write-Color "  docker pull ${FrontendImage}:latest" "White"
 Write-Host ""
 
 Write-Color "Docker Hub URLs:" "Cyan"
-Write-Color "  Backend:  https://hub.docker.com/r/${DockerUsername}/clasesde-pe-backend" "White"
-Write-Color "  Frontend: https://hub.docker.com/r/${DockerUsername}/clasesde-pe-frontend" "White"
+Write-Color "  Backend:  https://hub.docker.com/r/${DockerUsername}/clasedesurf-backend" "White"
+Write-Color "  Frontend: https://hub.docker.com/r/${DockerUsername}/clasedesurf-frontend" "White"
 Write-Host ""
 
 Write-Header "PROCESO COMPLETADO"

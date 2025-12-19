@@ -203,6 +203,8 @@ model Reservation {
   // Specifics for Recurring Bookings
   date DateTime? // The specific date booked
   time String? // The specific time slot booked
+
+  @@map("reservations")
 }
 
 model Payment {
