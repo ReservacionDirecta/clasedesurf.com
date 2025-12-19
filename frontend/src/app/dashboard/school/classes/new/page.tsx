@@ -7,6 +7,25 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { MultiDatePicker } from '@/components/ui/MultiDatePicker';
+import { 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  Users, 
+  DollarSign, 
+  Award, 
+  User, 
+  Image as ImageIcon, 
+  Plus, 
+  X, 
+  Upload, 
+  Link as LinkIcon,
+  CheckCircle2,
+  CalendarDays,
+  List,
+  Grid,
+  Info
+} from 'lucide-react';
 
 interface School {
   id: number;
@@ -696,735 +715,636 @@ export default function NewClassPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50/50 pb-12">
       {/* Header - Mobile Optimized */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Crear Nueva Clase</h1>
-              <p className="text-gray-600 mt-1 text-sm sm:text-base">Programa una nueva clase de surf</p>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between py-4 gap-4">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg hidden sm:block">
+                <Plus className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 leading-tight">Crear Nueva Clase</h1>
+                <p className="text-gray-500 text-sm">Configura los detalles y horarios</p>
+              </div>
             </div>
             <Link
               href="/dashboard/school/classes"
-              className="w-full sm:w-auto bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2.5 rounded-lg transition-colors text-center text-sm font-medium touch-manipulation"
+              className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors text-center text-sm font-medium shadow-sm flex items-center justify-center gap-2 group"
             >
-              ← Volver a Clases
+              <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              Cancelar
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-red-800 font-medium">{error}</p>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 shadow-sm animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 text-red-600 rounded-full">
+                <X className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-red-900">Ha ocurrido un error</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
             </div>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {/* Basic Information */}
-            <div className="md:col-span-2">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Información de la Clase</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          
+          {/* 1. Información Básica */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                <List className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Información Básica</h2>
+            </div>
+            
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 space-y-2">
+                <label htmlFor="title" className="block text-sm font-semibold text-gray-700">
+                  Título de la Clase <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
+                  placeholder="Ej: Clase de Surf para Principiantes"
+                  required
+                />
+              </div>
+
+              <div className="md:col-span-2 space-y-2">
+                <label htmlFor="description" className="block text-sm font-semibold text-gray-700">
+                  Descripción
+                </label>
+                <textarea
+                  id="description"
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none"
+                  placeholder="Describe qué aprenderán, requisitos, qué llevar..."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Fecha y Horario */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Programación</h2>
             </div>
 
-            <div className="md:col-span-2">
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Título de la Clase *
-              </label>
-              <input
-                type="text"
-                id="title"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                placeholder="Ej: Clase de Surf para Principiantes"
-                required
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Descripción
-              </label>
-              <textarea
-                id="description"
-                rows={4}
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                placeholder="Describe la clase, qué incluye, requisitos, etc."
-              />
-            </div>
-
-            {/* Date and Time */}
-            <div className="md:col-span-2 mt-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Fecha y Horario</h2>
-            </div>
-
-            {/* Tipo de horario */}
-            <div className="md:col-span-2">
-              <label htmlFor="scheduleType" className="block text-sm font-medium text-gray-700 mb-2">
-                Tipo de Horario *
-              </label>
-              <select
-                id="scheduleType"
-                value={formData.scheduleType}
-                onChange={(e) => handleInputChange('scheduleType', e.target.value as 'single' | 'recurring' | 'dateRange' | 'specificDates')}
-                className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                required
-              >
-                <option value="single">Clase Única</option>
-                <option value="dateRange">Clases en Bloque (Rango de Fechas)</option>
-                <option value="specificDates">Fechas Específicas (Seleccionar del Calendario)</option>
-                <option value="recurring">Clases Recurrentes (Días de la Semana)</option>
-              </select>
-              <p className="text-sm text-gray-500 mt-1">
-                {formData.scheduleType === 'single' && 'Crea una sola clase para una fecha y hora específica'}
-                {formData.scheduleType === 'dateRange' && 'Crea múltiples clases, una por cada día en el rango de fechas seleccionado'}
-                {formData.scheduleType === 'specificDates' && 'Selecciona fechas específicas del calendario para crear clases'}
-                {formData.scheduleType === 'recurring' && 'Crea clases recurrentes según días de la semana seleccionados'}
-              </p>
-            </div>
-
-            {/* Campos para clase única */}
-            {formData.scheduleType === 'single' && (
-              <>
-                <div>
-                  <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-                    Fecha *
-                  </label>
-                  <input
-                    type="date"
-                    id="date"
-                    value={formData.date}
-                    onChange={(e) => handleInputChange('date', e.target.value)}
-                    min={getMinDate()}
-                    className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
-                    Hora de Inicio *
-                  </label>
-                  <input
-                    type="time"
-                    id="time"
-                    value={formData.time}
-                    onChange={(e) => handleInputChange('time', e.target.value)}
-                    className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                    required
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Campos para rango de fechas */}
-            {formData.scheduleType === 'dateRange' && (
-              <>
-                <div>
-                  <label htmlFor="dateRangeStart" className="block text-sm font-medium text-gray-700 mb-2">
-                    Fecha de Inicio *
-                  </label>
-                  <input
-                    type="date"
-                    id="dateRangeStart"
-                    value={formData.dateRangeStart}
-                    onChange={(e) => handleInputChange('dateRangeStart', e.target.value)}
-                    min={getMinDate()}
-                    className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                    required={formData.scheduleType === 'dateRange'}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="dateRangeEnd" className="block text-sm font-medium text-gray-700 mb-2">
-                    Fecha de Fin *
-                  </label>
-                  <input
-                    type="date"
-                    id="dateRangeEnd"
-                    value={formData.dateRangeEnd}
-                    onChange={(e) => handleInputChange('dateRangeEnd', e.target.value)}
-                    min={formData.dateRangeStart || getMinDate()}
-                    className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                    required={formData.scheduleType === 'dateRange'}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
-                    Hora de Inicio *
-                  </label>
-                  <input
-                    type="time"
-                    id="time"
-                    value={formData.time}
-                    onChange={(e) => handleInputChange('time', e.target.value)}
-                    className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                    required={formData.scheduleType === 'dateRange'}
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Esta hora se aplicará a todas las clases del rango
-                  </p>
-                </div>
-
-                {formData.dateRangeStart && formData.dateRangeEnd && formData.time && (
-                  <div className="md:col-span-2">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-800">
-                        <strong>Vista previa:</strong> Se crearán{' '}
-                        {(() => {
-                          const occurrences = generateDateRangeOccurrences();
-                          return occurrences.length;
-                        })()}{' '}
-                        clases desde el {new Date(formData.dateRangeStart).toLocaleDateString('es-ES')} hasta el{' '}
-                        {new Date(formData.dateRangeEnd).toLocaleDateString('es-ES')} a las {formData.time}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Campos para fechas específicas */}
-            {formData.scheduleType === 'specificDates' && (
-              <>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Seleccionar Fechas del Calendario *
-                  </label>
-                  <MultiDatePicker
-                    selectedDates={formData.specificDates}
-                    onChange={(dates) => handleInputChange('specificDates', dates)}
-                    minDate={getMinDate()}
-                    className="w-full"
-                  />
-                  <p className="text-sm text-gray-500 mt-2">
-                    Haz clic en las fechas del calendario para seleccionarlas. Puedes seleccionar múltiples fechas.
-                  </p>
-                </div>
-
-                <div>
-                  <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-2">
-                    Hora de Inicio *
-                  </label>
-                  <input
-                    type="time"
-                    id="time"
-                    value={formData.time}
-                    onChange={(e) => handleInputChange('time', e.target.value)}
-                    className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                    required={formData.scheduleType === 'specificDates'}
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Esta hora se aplicará a todas las clases seleccionadas
-                  </p>
-                </div>
-
-                {formData.specificDates.length > 0 && formData.time && (
-                  <div className="md:col-span-2">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <p className="text-sm text-blue-800">
-                        <strong>Vista previa:</strong> Se crearán {formData.specificDates.length} clase(s) en las fechas seleccionadas a las {formData.time}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Campos para clases recurrentes (mantener existente) */}
-            {formData.scheduleType === 'recurring' && (
-              <>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Días de la Semana *
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { key: 'monday', label: 'L' },
-                      { key: 'tuesday', label: 'M' },
-                      { key: 'wednesday', label: 'X' },
-                      { key: 'thursday', label: 'J' },
-                      { key: 'friday', label: 'V' },
-                      { key: 'saturday', label: 'S' },
-                      { key: 'sunday', label: 'D' },
-                    ].map((day) => (
-                      <button
-                        key={day.key}
-                        type="button"
-                        onClick={() => handleDayToggle(day.key as DayOfWeek)}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors touch-manipulation ${
-                          formData.selectedDays.includes(day.key as DayOfWeek)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                        title={day.key}
-                      >
-                        {day.label}
-                      </button>
-                    ))}
-                  </div>
-                  {formData.selectedDays.length === 0 && (
-                    <p className="text-xs text-red-500 mt-1">Selecciona al menos un día</p>
-                  )}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Horarios *
-                  </label>
-                  <div className="space-y-3">
-                    {formData.times.map((time, index) => (
-                      <div key={index} className="flex gap-2">
-                        <input
-                          type="time"
-                          value={time}
-                          onChange={(e) => handleTimeChange(index, e.target.value)}
-                          className="flex-1 px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                          required={formData.scheduleType === 'recurring'}
-                        />
-                        {formData.times.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeTimeField(index)}
-                            className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
-                            aria-label="Eliminar horario"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {formData.times.length < 5 && (
+            <div className="p-6 space-y-6">
+              {/* Tipo de Horario Selector */}
+              <div className="space-y-3">
+                <label className="block text-sm font-semibold text-gray-700">Tipo de Frecuencia</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    { id: 'single', icon: Calendar, label: 'Clase Única', desc: 'Una fecha específica' },
+                    { id: 'recurring', icon: CalendarDays, label: 'Recurrente', desc: 'Semanalmente (ej: L/M/V)' },
+                    { id: 'dateRange', icon: List, label: 'Rango', desc: 'Bloque de fechas continuas' },
+                    { id: 'specificDates', icon: Grid, label: 'Múltiple', desc: 'Fechas sueltas' },
+                  ].map((type) => (
                     <button
+                      key={type.id}
                       type="button"
-                      onClick={addTimeField}
-                      className="mt-3 text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center touch-manipulation"
+                      onClick={() => handleInputChange('scheduleType', type.id)}
+                      className={`relative flex flex-col items-start p-4 rounded-xl border-2 transition-all text-left group ${
+                        formData.scheduleType === type.id
+                          ? 'border-purple-600 bg-purple-50 ring-1 ring-purple-600'
+                          : 'border-gray-100 bg-white hover:border-purple-200 hover:bg-gray-50'
+                      }`}
                     >
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Agregar otro horario
-                    </button>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                    Fecha de Inicio *
-                  </label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    value={formData.startDate}
-                    onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    min={getMinDate()}
-                    className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                    required={formData.scheduleType === 'recurring'}
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="weeksCount" className="block text-sm font-medium text-gray-700 mb-2">
-                    Número de Semanas (Duración del bloque)*
-                  </label>
-                  <input
-                    type="number"
-                    id="weeksCount"
-                    value={formData.weeksCount}
-                    onChange={(e) => handleInputChange('weeksCount', Number(e.target.value))}
-                    min="1"
-                    max="52"
-                    className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                    required={formData.scheduleType === 'recurring'}
-                  />
-                  <p className="text-sm text-gray-500 mt-1">Por cuántas semanas se repetirán estas clases</p>
-                </div>
-              </>
-            )}
-
-            <div>
-              <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-2">
-                Duración (minutos) *
-              </label>
-              <select
-                id="duration"
-                value={formData.duration}
-                onChange={(e) => handleInputChange('duration', Number(e.target.value))}
-                className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                required
-              >
-                <option value={60}>1 hora (60 min)</option>
-                <option value={90}>1.5 horas (90 min)</option>
-                <option value={120}>2 horas (120 min)</option>
-                <option value={150}>2.5 horas (150 min)</option>
-                <option value={180}>3 horas (180 min)</option>
-              </select>
-            </div>
-
-            {/* Class Details */}
-            <div className="md:col-span-2 mt-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Detalles de la Clase</h2>
-            </div>
-
-            <div>
-              <label htmlFor="level" className="block text-sm font-medium text-gray-700 mb-2">
-                Nivel *
-              </label>
-              <select
-                id="level"
-                value={formData.level}
-                onChange={(e) => handleInputChange('level', e.target.value)}
-                className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                required
-              >
-                <option value="BEGINNER">Principiante</option>
-                <option value="INTERMEDIATE">Intermedio</option>
-                <option value="ADVANCED">Avanzado</option>
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="instructor" className="block text-sm font-medium text-gray-700 mb-2">
-                Instructor
-              </label>
-              <input
-                type="text"
-                id="instructor"
-                value={formData.instructor}
-                onChange={(e) => handleInputChange('instructor', e.target.value)}
-                className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                placeholder="Nombre del instructor"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label htmlFor="beach" className="block text-sm font-medium text-gray-700 mb-2">
-                Playa
-              </label>
-              <div className="flex gap-2">
-                <select
-                  id="beach"
-                  value={formData.beachId || ''}
-                  onChange={(e) => handleInputChange('beachId', e.target.value ? Number(e.target.value) : undefined)}
-                  className="flex-1 px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                >
-                  <option value="">Seleccionar playa (opcional)</option>
-                  {beaches.map((beach) => (
-                    <option key={beach.id} value={beach.id}>
-                      {beach.name}{beach.location ? ` - ${beach.location}` : ''}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setShowAddBeachModal(true)}
-                  className="px-4 py-3 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg transition-colors flex items-center justify-center whitespace-nowrap text-sm font-medium touch-manipulation shadow-sm"
-                >
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Agregar Playa
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-2">
-                Capacidad Máxima *
-              </label>
-              <input
-                type="number"
-                id="capacity"
-                value={formData.capacity}
-                onChange={(e) => handleInputChange('capacity', Number(e.target.value))}
-                min="1"
-                max="20"
-                className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                required
-              />
-              <p className="text-sm text-gray-500 mt-1">Número máximo de estudiantes</p>
-            </div>
-
-            <div>
-              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                Precio (PEN) *
-              </label>
-              <input
-                type="number"
-                id="price"
-                value={priceInput}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Permitir cualquier valor mientras se escribe
-                  setPriceInput(value);
-                  // Actualizar formData solo si es un número válido
-                  if (value !== '' && value !== '.') {
-                    const numValue = parseFloat(value);
-                    if (!isNaN(numValue)) {
-                      handleInputChange('price', numValue);
-                    }
-                  }
-                }}
-                onBlur={(e) => {
-                  // Asegurar que el valor sea un número válido al perder el foco
-                  const value = e.target.value;
-                  if (value === '' || value === '.' || isNaN(parseFloat(value))) {
-                    setPriceInput('0');
-                    handleInputChange('price', 0);
-                  } else {
-                    const numValue = parseFloat(value);
-                    setPriceInput(String(numValue));
-                    handleInputChange('price', numValue);
-                  }
-                }}
-                min="0"
-                step="0.01"
-                className="w-full px-4 py-3 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                required
-              />
-              <p className="text-sm text-gray-500 mt-1">Precio por persona en soles peruanos (PEN)</p>
-            </div>
-
-            {/* Images Section - Mejorado para móvil */}
-            <div className="md:col-span-2 mt-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Imágenes de la Clase</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Agrega entre 1 y 5 imágenes para tu clase. Puedes subir archivos o ingresar URLs.
-              </p>
-
-              {/* Opciones de carga - Mobile First */}
-              <div className="space-y-4 mb-6">
-                {/* Botón de subir archivo - Optimizado para móvil */}
-                <div>
-                  <label className="block">
-                    <div className="flex flex-col sm:flex-row items-center justify-center px-4 py-4 sm:py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 transition-colors cursor-pointer bg-gray-50 hover:bg-blue-50 active:bg-blue-100 touch-manipulation">
-                      <svg className="w-6 h-6 sm:w-5 sm:h-5 text-gray-400 mb-2 sm:mb-0 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                      <span className="text-sm sm:text-sm text-gray-600 text-center font-medium">
-                        {uploadingImage ? 'Optimizando imagen...' : 'Toca para subir foto desde tu dispositivo'}
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/jpg,image/png,image/webp"
-                        onChange={handleImageUpload}
-                        disabled={saving || uploadingImage || formData.images.length >= 5}
-                        className="hidden"
-                      />
-                    </div>
-                      </label>
-                  <p className="text-xs text-gray-500 mt-2 text-center sm:text-left">
-                    Formatos: JPG, PNG, WebP (máx. 5MB)
-                  </p>
-                </div>
-
-                {/* Input de URL - Optimizado para móvil */}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent bg-white">
-                    <svg className="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                      <input
-                        type="url"
-                      value={imageUrl}
-                      onChange={(e) => {
-                        setImageUrl(e.target.value);
-                        setImageError('');
-                      }}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddImageUrl();
-                        }
-                      }}
-                      placeholder="Pegar URL de imagen..."
-                      className="flex-1 text-sm border-0 focus:ring-0 focus:outline-none"
-                      disabled={saving || formData.images.length >= 5}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAddImageUrl}
-                    disabled={saving || !imageUrl.trim() || formData.images.length >= 5}
-                    className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation shadow-sm"
-                  >
-                    Agregar URL
-                  </button>
-                </div>
-
-                {/* Mensaje de error */}
-                {imageError && (
-                  <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 px-4 py-3 rounded-lg border border-red-200">
-                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{imageError}</span>
-                  </div>
-                )}
-
-                {/* Contador de imágenes */}
-                {formData.images.length > 0 && (
-                  <div className="text-sm text-gray-600 text-center sm:text-left">
-                    <span className="font-medium">{formData.images.filter(img => img.trim()).length}</span> / 5 imágenes agregadas
-                  </div>
-                )}
-              </div>
-
-              {/* Galería de imágenes - Grid responsive */}
-              {formData.images.some(img => img.trim()) && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Vista Previa de Imágenes</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                    {formData.images.map((image, index) => {
-                      if (!image.trim()) return null;
-                      return (
-                        <div key={index} className="relative group aspect-square">
-                          <div className="relative w-full h-full rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100">
-                          <img
-                            src={image}
-                            alt={`Vista previa ${index + 1}`}
-                              className="w-full h-full object-cover"
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                                const parent = target.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = `
-                                    <div class="flex items-center justify-center h-full text-gray-400">
-                                      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                      </svg>
-                                    </div>
-                                  `;
-                                }
-                            }}
-                          />
-                            {/* Botón eliminar - Más grande en móvil */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newImages = [...formData.images];
-                                newImages[index] = '';
-                                setFormData(prev => ({ ...prev, images: newImages }));
-                              }}
-                              className="absolute top-1 right-1 p-1.5 sm:p-1 bg-red-600 text-white rounded-full shadow-lg hover:bg-red-700 active:scale-95 transition-all touch-manipulation"
-                              aria-label="Eliminar imagen"
-                              disabled={saving}
-                            >
-                              <svg className="w-4 h-4 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                            {/* Badge de número */}
-                            <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-0.5 rounded">
-                              {index + 1}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                      <div className={`p-2 rounded-lg mb-3 ${
+                        formData.scheduleType === type.id ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500 group-hover:bg-purple-100 group-hover:text-purple-600'
+                      }`}>
+                        <type.icon className="w-5 h-5" />
+                      </div>
+                      <span className={`block font-bold text-sm mb-1 ${formData.scheduleType === type.id ? 'text-purple-900' : 'text-gray-900'}`}>{type.label}</span>
+                      <span className="text-xs text-gray-500 leading-tight">{type.desc}</span>
+                      
+                      {formData.scheduleType === type.id && (
+                        <div className="absolute top-3 right-3 text-purple-600">
+                          <CheckCircle2 className="w-5 h-5" />
                         </div>
                       )}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {/* Campos de URL individuales (opcional, para edición manual) */}
-              <div className="mt-6 space-y-3">
-                <details className="group">
-                  <summary className="text-sm font-medium text-gray-700 cursor-pointer list-none flex items-center gap-2">
-                    <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                    Editar URLs manualmente (opcional)
-                  </summary>
-                  <div className="mt-3 space-y-3 pl-6">
-                    {formData.images.map((image, index) => (
-                      <div key={index} className="flex gap-2 items-start">
-                        <div className="flex-1">
-                          <label htmlFor={`image-url-${index}`} className="block text-xs font-medium text-gray-700 mb-1">
-                            Imagen {index + 1} {index === 0 && <span className="text-red-500">*</span>}
-                          </label>
-                          <input
-                            type="url"
-                            id={`image-url-${index}`}
-                            value={image}
-                            onChange={(e) => handleImageChange(index, e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="https://ejemplo.com/imagen.jpg"
-                            required={index === 0}
-                            disabled={saving}
-                          />
+              {/* Dynamic Content based on Schedule Type */}
+              <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+                {/* SINGLE CLASS */}
+                {formData.scheduleType === 'single' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-gray-700">Fecha <span className="text-red-500">*</span></label>
+                       <input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => handleInputChange('date', e.target.value)}
+                        min={getMinDate()}
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer"
+                        required
+                      />
                     </div>
-                    {formData.images.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeImageField(index)}
-                            className="mt-6 px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
-                            aria-label="Eliminar campo"
-                            disabled={saving}
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                    <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-gray-700">Hora <span className="text-red-500">*</span></label>
+                       <div className="relative">
+                         <input
+                          type="time"
+                          value={formData.time}
+                          onChange={(e) => handleInputChange('time', e.target.value)}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all cursor-pointer"
+                          required
+                        />
+                        <Clock className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
+                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* DATE RANGE */}
+                {formData.scheduleType === 'dateRange' && (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                         <label className="block text-sm font-semibold text-gray-700">Desde <span className="text-red-500">*</span></label>
+                         <input
+                          type="date"
+                          value={formData.dateRangeStart}
+                          onChange={(e) => handleInputChange('dateRangeStart', e.target.value)}
+                          min={getMinDate()}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                         <label className="block text-sm font-semibold text-gray-700">Hasta <span className="text-red-500">*</span></label>
+                         <input
+                          type="date"
+                          value={formData.dateRangeEnd}
+                          onChange={(e) => handleInputChange('dateRangeEnd', e.target.value)}
+                          min={formData.dateRangeStart || getMinDate()}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-gray-700">Hora de la sesión <span className="text-red-500">*</span></label>
+                       <div className="relative max-w-xs">
+                         <input
+                          type="time"
+                          value={formData.time}
+                          onChange={(e) => handleInputChange('time', e.target.value)}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          required
+                        />
+                        <Clock className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
+                       </div>
+                       <p className="text-xs text-gray-500">Se aplicará a todos los días del rango seleccionado.</p>
+                    </div>
+
+                    {(formData.dateRangeStart && formData.dateRangeEnd && formData.time) && (
+                      <div className="flex items-start gap-3 p-4 bg-blue-50 text-blue-800 rounded-xl border border-blue-100 text-sm">
+                        <Info className="w-5 h-5 shrink-0 mt-0.5" />
+                        <div>
+                           <strong>Resumen:</strong> Se generarán clases diarias desde el {new Date(formData.dateRangeStart).toLocaleDateString()} hasta el {new Date(formData.dateRangeEnd).toLocaleDateString()} a las {formData.time}.
+                        </div>
+                      </div>
                     )}
                   </div>
-                ))}
-                {formData.images.length < 5 && (
+                )}
+
+                {/* SPECIFIC DATES */}
+                {formData.scheduleType === 'specificDates' && (
+                  <div className="space-y-5">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-700">Selecciona Fechas <span className="text-red-500">*</span></label>
+                      <div className="bg-white p-1 rounded-xl border border-gray-200">
+                        <MultiDatePicker
+                          selectedDates={formData.specificDates}
+                          onChange={(dates) => handleInputChange('specificDates', dates)}
+                          minDate={getMinDate()}
+                          className="w-full border-none shadow-none"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">Haz clic para seleccionar/deseleccionar múltiples fechas.</p>
+                    </div>
+
+                    <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-gray-700">Hora de inicio <span className="text-red-500">*</span></label>
+                       <div className="relative max-w-xs">
+                         <input
+                          type="time"
+                          value={formData.time}
+                          onChange={(e) => handleInputChange('time', e.target.value)}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          required
+                        />
+                        <Clock className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 pointer-events-none" />
+                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* RECURRING */}
+                {formData.scheduleType === 'recurring' && (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                         <label className="block text-sm font-semibold text-gray-700">Fecha de Inicio del Ciclo <span className="text-red-500">*</span></label>
+                         <input
+                          type="date"
+                          value={formData.startDate}
+                          onChange={(e) => handleInputChange('startDate', e.target.value)}
+                          min={getMinDate()}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                         <label className="block text-sm font-semibold text-gray-700">Duración (Semanas) <span className="text-red-500">*</span></label>
+                         <input
+                          type="number"
+                          value={formData.weeksCount}
+                          onChange={(e) => handleInputChange('weeksCount', Number(e.target.value))}
+                          min="1"
+                          max="52"
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <label className="block text-sm font-semibold text-gray-700">Días de la semana <span className="text-red-500">*</span></label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { key: 'monday', label: 'Lun' },
+                          { key: 'tuesday', label: 'Mar' },
+                          { key: 'wednesday', label: 'Mié' },
+                          { key: 'thursday', label: 'Jue' },
+                          { key: 'friday', label: 'Vie' },
+                          { key: 'saturday', label: 'Sáb' },
+                          { key: 'sunday', label: 'Dom' },
+                        ].map((day) => (
+                          <button
+                            key={day.key}
+                            type="button"
+                            onClick={() => handleDayToggle(day.key as DayOfWeek)}
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-all shadow-sm ${
+                              formData.selectedDays.includes(day.key as DayOfWeek)
+                                ? 'bg-purple-600 text-white shadow-purple-200 scale-105'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:border-purple-300 hover:text-purple-600'
+                            }`}
+                          >
+                            {day.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                         <label className="block text-sm font-semibold text-gray-700">Horarios <span className="text-red-500">*</span></label>
+                         <div className="flex flex-wrap gap-3">
+                           {formData.times.map((time, index) => (
+                             <div key={index} className="relative group">
+                               <input
+                                  type="time"
+                                  value={time}
+                                  onChange={(e) => handleTimeChange(index, e.target.value)}
+                                  className="px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 w-32 font-medium"
+                                  required
+                               />
+                               {formData.times.length > 1 && (
+                                   <button 
+                                     type="button"
+                                     onClick={() => removeTimeField(index)}
+                                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity transform scale-90 hover:scale-100"
+                                   >
+                                     <X className="w-3 h-3" />
+                                   </button>
+                               )}
+                             </div>
+                           ))}
+                           {formData.times.length < 5 && (
+                             <button
+                               type="button"
+                               onClick={addTimeField}
+                               className="px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:text-purple-600 hover:border-purple-300 text-sm font-bold transition-all flex items-center gap-1"
+                             >
+                               <Plus className="w-4 h-4" /> Agregar hora
+                             </button>
+                           )}
+                         </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+               <div className="pt-2">
+                <label htmlFor="duration" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Duración de la sesión
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {[60, 90, 120, 150, 180].map(mins => (
+                     <button
+                       key={mins}
+                       type="button"
+                       onClick={() => handleInputChange('duration', mins)}
+                       className={`py-2 px-3 rounded-lg text-sm font-medium border transition-all ${
+                         formData.duration === mins 
+                         ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                         : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                       }`}
+                     >
+                       {mins / 60} {mins % 60 !== 0 ? '.5' : ''} horas
+                     </button>
+                  ))}
+                </div>
+               </div>
+
+            </div>
+          </div>
+          {/* 3. Detalles de la Clase */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div className="p-2 bg-green-100 text-green-600 rounded-lg">
+                <Award className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Detalles y Capacidad</h2>
+            </div>
+
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label htmlFor="level" className="block text-sm font-semibold text-gray-700">
+                  Nivel de Experiencia <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="level"
+                    value={formData.level}
+                    onChange={(e) => handleInputChange('level', e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all appearance-none font-medium"
+                    required
+                  >
+                    <option value="BEGINNER">Principiante (Primera vez)</option>
+                    <option value="INTERMEDIATE">Intermedio (Mejorar técnica)</option>
+                    <option value="ADVANCED">Avanzado (Alto rendimiento)</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="instructor" className="block text-sm font-semibold text-gray-700">
+                  Instructor Asignado
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="instructor"
+                    value={formData.instructor}
+                    onChange={(e) => handleInputChange('instructor', e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                    placeholder="Ej: Juan Pérez"
+                  />
+                  <User className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                </div>
+              </div>
+
+              <div className="md:col-span-2 space-y-2">
+                <label htmlFor="beach" className="block text-sm font-semibold text-gray-700">
+                  Ubicación / Playa
+                </label>
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <select
+                      id="beach"
+                      value={formData.beachId || ''}
+                      onChange={(e) => handleInputChange('beachId', e.target.value ? Number(e.target.value) : undefined)}
+                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all appearance-none"
+                    >
+                      <option value="">Seleccionar ubicación (reunión)</option>
+                      {beaches.map((beach) => (
+                        <option key={beach.id} value={beach.id}>
+                          {beach.name}{beach.location ? ` - ${beach.location}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                     <MapPin className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                     <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                     </div>
+                  </div>
                   <button
                     type="button"
-                    onClick={addImageField}
-                        className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors flex items-center justify-center text-sm touch-manipulation"
-                        disabled={saving}
+                    onClick={() => setShowAddBeachModal(true)}
+                    className="px-4 py-3 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 rounded-xl transition-all flex items-center justify-center shadow-sm font-medium whitespace-nowrap"
                   >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                        Agregar otro campo (máximo 5)
+                    <Plus className="w-5 h-5 mr-2" />
+                    Nueva
                   </button>
-                )}
-                  </div>
-                </details>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="capacity" className="block text-sm font-semibold text-gray-700">
+                  Capacidad Máxima <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="capacity"
+                    value={formData.capacity}
+                    onChange={(e) => handleInputChange('capacity', Number(e.target.value))}
+                    min="1"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all font-medium"
+                    required
+                  />
+                  <Users className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                </div>
+                <p className="text-xs text-gray-500">Cupos disponibles para estudiantes.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="price" className="block text-sm font-semibold text-gray-700">
+                  Precio por Persona (PEN) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    id="price"
+                    value={priceInput}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setPriceInput(value);
+                      if (value !== '' && value !== '.') {
+                        const numValue = parseFloat(value);
+                        if (!isNaN(numValue)) handleInputChange('price', numValue);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || value === '.' || isNaN(parseFloat(value))) {
+                        setPriceInput('0');
+                        handleInputChange('price', 0);
+                      } else {
+                        const numValue = parseFloat(value);
+                        setPriceInput(String(numValue));
+                        handleInputChange('price', numValue);
+                      }
+                    }}
+                    min="0"
+                    step="0.01"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all font-medium"
+                    required
+                  />
+                  <DollarSign className="absolute left-4 top-3.5 w-5 h-5 text-gray-400" />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Submit Buttons - Mobile Optimized */}
-          <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
-            <Link
-              href="/dashboard/school/classes"
-              className="w-full sm:w-auto px-6 py-3 text-center border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors font-medium touch-manipulation"
-            >
-              Cancelar
-            </Link>
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center justify-center font-medium shadow-sm touch-manipulation"
-            >
-              {saving && (
-                <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              )}
-              {saving ? 'Creando...' : 'Crear Clase'}
-            </button>
+          
+          {/* 4. Multimedia */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-gray-50/80 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+              <div className="p-2 bg-orange-100 text-orange-600 rounded-lg">
+                <ImageIcon className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900">Fotografía y Promoción</h2>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3">
+                 <Info className="w-5 h-5 text-blue-600 shrink-0" />
+                 <p className="text-sm text-blue-800">
+                   Agrega hasta 5 imágenes atractivas. Estas fotos aparecerán en el perfil de la clase para que los alumnos las vean.
+                 </p>
+              </div>
+
+              {/* Upload Area */}
+              <div className="space-y-4">
+                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                   {formData.images.map((img, idx) => (
+                     img.trim() ? (
+                       <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+                         <img src={img} alt={`Class ${idx}`} className="w-full h-full object-cover" />
+                         <button
+                           type="button"
+                           onClick={() => {
+                             const newImages = [...formData.images];
+                             newImages.splice(idx, 1);
+                             setFormData({...formData, images: newImages});
+                           }}
+                           className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                         <div className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-md">
+                           {idx + 1}
+                         </div>
+                       </div>
+                     ) : null
+                   ))}
+                   
+                   {formData.images.length < 5 && (
+                     <label className="border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center p-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all aspect-square group">
+                        <div className="p-3 bg-blue-100 text-blue-600 rounded-full group-hover:scale-110 transition-transform mb-2">
+                           <Upload className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-semibold text-gray-600 text-center">Subir Foto</span>
+                        <input 
+                           type="file" 
+                           accept="image/*" 
+                           className="hidden" 
+                           onChange={handleImageUpload}
+                           disabled={uploadingImage}
+                        />
+                     </label>
+                   )}
+                 </div>
+
+                 {/* URL Input Alternative */}
+                 <div className="pt-4 border-t border-gray-100">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">O agregar desde URL</label>
+                    <div className="flex gap-2">
+                       <div className="relative flex-1">
+                          <input
+                            type="url"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.target.value)}
+                            placeholder="https://..."
+                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+                          />
+                          <LinkIcon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+                       </div>
+                       <button
+                         type="button"
+                         onClick={handleAddImageUrl}
+                         disabled={!imageUrl.trim()}
+                         className="px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+                       >
+                         Agregar
+                       </button>
+                    </div>
+                    {imageError && <p className="text-xs text-red-500 mt-1">{imageError}</p>}
+                 </div>
+              </div>
+            </div>
           </div>
+
+          {/* Form Actions */}
+          <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-6 border-t border-gray-200">
+             <Link
+               href="/dashboard/school/classes"
+               className="w-full sm:w-auto px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors text-center shadow-sm"
+             >
+               Cancelar
+             </Link>
+             <button
+               type="submit"
+               disabled={saving}
+               className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
+             >
+               {saving ? (
+                 <>
+                   <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                   </svg>
+                   Guardando...
+                 </>
+               ) : (
+                 <>
+                   <CheckCircle2 className="w-5 h-5" />
+                   Crear Clase
+                 </>
+               )}
+             </button>
+          </div>
+
         </form>
 
         {/* Modal para agregar nueva playa */}
