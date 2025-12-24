@@ -10,6 +10,8 @@ async function main() {
   console.log('🗑️  Clearing existing data...');
   await prisma.payment.deleteMany();
   await prisma.reservation.deleteMany();
+  await prisma.classSession.deleteMany();
+  await prisma.classSchedule.deleteMany();
   await prisma.class.deleteMany();
   await prisma.discountCode.deleteMany();
   await prisma.instructorReview.deleteMany();
@@ -20,6 +22,7 @@ async function main() {
   await prisma.refreshToken.deleteMany();
   await prisma.school.deleteMany();
   await prisma.user.deleteMany();
+
 
   console.log('✅ Existing data cleared');
 
@@ -232,90 +235,120 @@ async function main() {
 
   console.log('✅ Beaches created');
 
-  // Create Classes
-  console.log('📚 Creating classes...');
+  // Create Classes (as Products)
+  console.log('📚 Creating classes (Products)...');
   const now = new Date();
-  const classes = [];
 
-  // School 1 Classes (Lima)
-  for (let i = 0; i < 8; i++) {
-    const classDate = new Date(now);
-    classDate.setDate(classDate.getDate() + i + 1);
-    classDate.setHours(i % 2 === 0 ? 9 : 15, 0, 0, 0);
-
-    const level = i < 3 ? ClassLevel.BEGINNER : i < 6 ? ClassLevel.INTERMEDIATE : ClassLevel.ADVANCED;
-    const price = level === ClassLevel.BEGINNER ? 80 : level === ClassLevel.INTERMEDIATE ? 100 : 120;
-
-    const cls = await prisma.class.create({
-      data: {
-        title: `Clase de Surf ${level === ClassLevel.BEGINNER ? 'Principiante' : level === ClassLevel.INTERMEDIATE ? 'Intermedio' : 'Avanzado'} - ${i % 2 === 0 ? 'Mañana' : 'Tarde'}`,
-        description: `Clase de surf nivel ${level.toLowerCase()} con instructor certificado. Incluye tabla y traje de neopreno.`,
-        date: classDate,
-        duration: 120,
-        capacity: 8,
-        price: price,
-        level: level,
-        schoolId: school1.id,
-        instructor: 'Juan Pérez',
-        beachId: i % 2 === 0 ? beach1.id : beach2.id,
-        images: [
-          '/uploads/classes/surf-class-1.jpg',
-          '/uploads/classes/surf-class-2.jpg'
-        ]
-      }
-    });
-    classes.push(cls);
-  }
-
-  // School 2 Classes (Máncora)
-  for (let i = 0; i < 6; i++) {
-    const classDate = new Date(now);
-    classDate.setDate(classDate.getDate() + i + 2);
-    classDate.setHours(i % 2 === 0 ? 10 : 16, 0, 0, 0);
-
-    const level = i < 2 ? ClassLevel.BEGINNER : i < 4 ? ClassLevel.INTERMEDIATE : ClassLevel.ADVANCED;
-    const price = level === ClassLevel.BEGINNER ? 90 : level === ClassLevel.INTERMEDIATE ? 110 : 130;
-
-    const cls = await prisma.class.create({
-      data: {
-        title: `Surf en Máncora ${level === ClassLevel.BEGINNER ? 'Principiante' : level === ClassLevel.INTERMEDIATE ? 'Intermedio' : 'Avanzado'}`,
-        description: `Aprende surf en las mejores olas del norte. Nivel ${level.toLowerCase()}.`,
-        date: classDate,
-        duration: 150,
-        capacity: 6,
-        price: price,
-        level: level,
-        schoolId: school2.id,
-        instructor: 'Ana Torres',
-        beachId: beach3.id,
-        images: [
-          '/uploads/classes/mancora-1.jpg',
-          '/uploads/classes/mancora-2.jpg'
-        ]
-      }
-    });
-    classes.push(cls);
-  }
-
-  // Create one deleted class
-  const deletedClass = await prisma.class.create({
-    data: {
-      title: 'Clase Cancelada - Mal Tiempo',
-      description: 'Esta clase fue cancelada debido a condiciones climáticas adversas.',
-      date: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+  // School 1 Products
+  const products1 = [
+    {
+      title: 'Clase de Surf Principiante - Miraflores',
+      description: 'Aprende las bases del surf en la Playa Makaha. Incluye tabla, wetsuit e instrucción de 2 horas.',
       duration: 120,
-      capacity: 8,
-      price: 80,
+      defaultCapacity: 8,
+      defaultPrice: 80,
       level: ClassLevel.BEGINNER,
       schoolId: school1.id,
       instructor: 'Juan Pérez',
       beachId: beach1.id,
-      deletedAt: new Date(), // Soft deleted
-      images: []
+      type: 'SURF_LESSON',
+      images: ['/uploads/classes/surf-class-1.jpg', '/uploads/classes/surf-class-2.jpg']
+    },
+    {
+      title: 'Surf Coaching Intermedio - Waikiki',
+      description: 'Perfecciona tu técnica y lectura de olas. Grupos reducidos.',
+      duration: 120,
+      defaultCapacity: 6,
+      defaultPrice: 100,
+      level: ClassLevel.INTERMEDIATE,
+      schoolId: school1.id,
+      instructor: 'Juan Pérez',
+      beachId: beach2.id,
+      type: 'SURF_LESSON',
+      images: ['/uploads/classes/surf-class-3.jpg']
+    }
+  ];
+
+  const createdProducts = [];
+  for (const p of products1) {
+    const product = await prisma.class.create({ data: p });
+    createdProducts.push(product);
+
+    // Create a few sessions (instances) for each product
+    for (let i = 0; i < 5; i++) {
+      const sessionDate = new Date(now);
+      sessionDate.setDate(sessionDate.getDate() + i + 1);
+      sessionDate.setHours(0, 0, 0, 0);
+
+      const times = ["08:00", "15:00"];
+      for (const t of times) {
+        await prisma.classSession.create({
+          data: {
+            classId: product.id,
+            date: sessionDate,
+            time: t,
+            capacity: product.defaultCapacity,
+            price: product.defaultPrice
+          }
+        });
+      }
+    }
+  }
+
+  // School 2 Products
+  const products2 = [
+    {
+      title: 'Surf Experience Máncora',
+      description: 'Vive el surf en el paraíso del norte. Olas tibias todo el año.',
+      duration: 150,
+      defaultCapacity: 6,
+      defaultPrice: 90,
+      level: ClassLevel.BEGINNER,
+      schoolId: school2.id,
+      instructor: 'Ana Torres',
+      beachId: beach3.id,
+      type: 'SURF_LESSON',
+      images: ['/uploads/classes/mancora-1.jpg']
+    }
+  ];
+
+  for (const p of products2) {
+    const product = await prisma.class.create({ data: p });
+    createdProducts.push(product);
+
+    // 10 sessions for Mancora
+    for (let i = 0; i < 7; i++) {
+      const sessionDate = new Date(now);
+      sessionDate.setDate(sessionDate.getDate() + i + 1);
+      sessionDate.setHours(0, 0, 0, 0);
+
+      await prisma.classSession.create({
+        data: {
+          classId: product.id,
+          date: sessionDate,
+          time: "10:00",
+          capacity: product.defaultCapacity,
+          price: product.defaultPrice
+        }
+      });
+    }
+  }
+
+  // Soft deleted product example
+  await prisma.class.create({
+    data: {
+      title: 'Antiguo Programa de Surf',
+      description: 'Este producto ya no se ofrece.',
+      duration: 120,
+      defaultCapacity: 0,
+      defaultPrice: 50,
+      level: ClassLevel.BEGINNER,
+      schoolId: school1.id,
+      deletedAt: new Date()
     }
   });
 
-  console.log('✅ Classes created:', classes.length + 1);
+  console.log('✅ Products and Sessions created');
 
   // Create Discount Codes
   console.log('🎟️  Creating discount codes...');
@@ -354,60 +387,53 @@ async function main() {
   let reservationCount = 0;
   let paymentCount = 0;
 
-  for (let i = 0; i < Math.min(classes.length, 6); i++) {
-    const cls = classes[i];
-    const numReservations = Math.floor(Math.random() * 4) + 1; // 1-4 reservations per class
+  for (let i = 0; i < createdProducts.length; i++) {
+    const product = createdProducts[i];
 
-    for (let j = 0; j < numReservations; j++) {
-      const student = students[Math.floor(Math.random() * students.length)];
-      const statuses: ReservationStatus[] = [ReservationStatus.PENDING, ReservationStatus.CONFIRMED, ReservationStatus.CONFIRMED, ReservationStatus.CONFIRMED]; // More confirmed
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
+    // Find sessions for this product to book
+    const sessions = await prisma.classSession.findMany({
+      where: { classId: product.id },
+      take: 3
+    });
 
-      const reservation = await prisma.reservation.create({
-        data: {
-          userId: student.id,
-          classId: cls.id,
-          status: status,
-          specialRequest: j === 0 ? 'Necesito tabla más grande' : undefined
-        }
-      });
-      reservationCount++;
+    for (const session of sessions) {
+      const numReservations = Math.floor(Math.random() * 2) + 1;
 
-      // Create payment for reservation
-      const useDiscount = Math.random() > 0.7; // 30% chance of using discount
-      const discount = useDiscount && cls.schoolId === school1.id ? discount1 : useDiscount ? discount2 : null;
+      for (let j = 0; j < numReservations; j++) {
+        const student = students[Math.floor(Math.random() * students.length)];
 
-      let originalAmount = cls.price;
-      let discountAmount = 0;
-      let finalAmount = originalAmount;
+        const reservation = await prisma.reservation.create({
+          data: {
+            userId: student.id,
+            classId: product.id,
+            status: ReservationStatus.CONFIRMED,
+            date: session.date,
+            time: session.time,
+            specialRequest: j === 0 ? 'Necesito tabla más grande' : undefined
+          }
+        });
+        reservationCount++;
 
-      if (discount) {
-        discountAmount = (originalAmount * discount.discountPercentage) / 100;
-        finalAmount = originalAmount - discountAmount;
+        // Payment
+        const finalPrice = session.price || product.defaultPrice;
+        await prisma.payment.create({
+          data: {
+            reservationId: reservation.id,
+            amount: finalPrice,
+            status: PaymentStatus.PAID,
+            paymentMethod: 'transfer',
+            transactionId: `TXN${Date.now()}${j}`,
+            paidAt: new Date()
+          }
+        });
+        paymentCount++;
       }
-
-      const paymentStatuses = [PaymentStatus.PENDING, PaymentStatus.PAID, PaymentStatus.PAID, PaymentStatus.PAID]; // More paid
-      const paymentStatus = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
-
-      await prisma.payment.create({
-        data: {
-          reservationId: reservation.id,
-          amount: finalAmount,
-          originalAmount: useDiscount ? originalAmount : undefined,
-          discountAmount: useDiscount ? discountAmount : undefined,
-          status: paymentStatus,
-          paymentMethod: ['transfer', 'yape', 'cash'][Math.floor(Math.random() * 3)],
-          transactionId: paymentStatus === PaymentStatus.PAID ? `TXN${Date.now()}${j}` : undefined,
-          paidAt: paymentStatus === PaymentStatus.PAID ? new Date() : undefined,
-          discountCodeId: discount?.id
-        }
-      });
-      paymentCount++;
     }
   }
 
   console.log('✅ Reservations created:', reservationCount);
   console.log('✅ Payments created:', paymentCount);
+
 
   // Create Reviews
   console.log('⭐ Creating reviews...');
@@ -451,7 +477,7 @@ async function main() {
   console.log(`   - Users: ${1 + 2 + 2 + students.length} (1 admin, 2 school admins, 2 instructors, ${students.length} students)`);
   console.log(`   - Schools: 2`);
   console.log(`   - Beaches: 3`);
-  console.log(`   - Classes: ${classes.length + 1} (${classes.length} active, 1 deleted)`);
+  console.log(`   - Classes: ${createdProducts.length + 1} (${createdProducts.length} active, 1 deleted)`);
   console.log(`   - Discount Codes: 2`);
   console.log(`   - Reservations: ${reservationCount}`);
   console.log(`   - Payments: ${paymentCount}`);

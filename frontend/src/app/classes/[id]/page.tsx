@@ -131,7 +131,7 @@ export default function ClassDetailsPage() {
 
   const handleWidgetReserve = (participants: number, dateData?: any) => {
     setBookingParticipants(participants);
-    if (classDetails?.isRecurring && dateData) {
+    if (dateData) {
        setSelectedDate(dateData);
     }
     setShowReservationModal(true);
@@ -194,42 +194,40 @@ export default function ClassDetailsPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
         const errorMessage = errorData.message || `Error ${response.status}: ${response.statusText}`;
-        console.error('[Class Details] API Error:', errorMessage, response.status);
         throw new Error(errorMessage);
       }
 
       const classData = await response.json();
       
       if (!classData || !classData.id) {
-        console.error('[Class Details] Invalid data received:', classData);
         throw new Error('Datos de clase inválidos recibidos del servidor');
       }
 
-      // Process times
-      const classDate = new Date(classData.date);
-      const startTime = classDate.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
-
+      // Find first upcoming session for representative times/prices
+      const nextSession = classData.sessions?.[0];
+      const classDateStr = nextSession?.date || new Date().toISOString();
+      const nextSessionDate = new Date(classDateStr);
+      
+      const startTime = nextSession?.startTime || '09:00';
       const duration = classData.duration || 120;
-      const endDate = new Date(classDate.getTime() + duration * 60000);
-      const endTime = endDate.toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
+      
+      // Calculate endTime from startTime and duration
+      const [sh, sm] = startTime.split(':').map(Number);
+      const endD = new Date(nextSessionDate);
+      endD.setHours(sh, sm + duration);
+      const endTime = endD.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
 
       // Process class data to match expected format
       const processedClass: ClassDetails = {
         ...classData,
         description: classData.description || 'Clase de surf',
+        date: classDateStr, // For backward compatibility
         startTime,
         endTime,
         duration,
-        enrolled: classData.reservations?.filter((r: any) => r.status !== 'CANCELED').length || 0,
-        price: Number(classData.price),
+        enrolled: nextSession?.enrolled || 0,
+        price: Number(nextSession?.price || classData.defaultPrice),
+        capacity: nextSession?.capacity || classData.defaultCapacity,
         level: classData.level || 'BEGINNER',
         location: classData.location || 'Por definir',
         status: classData.status || 'ACTIVE',
@@ -241,38 +239,28 @@ export default function ClassDetailsPage() {
           location: classData.school?.location || 'Lima, Perú',
           phone: classData.school?.phone || '',
           email: classData.school?.email || '',
-          rating: 4.8, // Fallback defaults
+          rating: 4.8,
           totalReviews: 0
         },
         instructor: {
-          id: 1,
-          name: classData.instructor || 'Instructor',
-          bio: 'Instructor profesional de surf',
+          id: classData.instructor?.id || 1,
+          name: classData.instructor?.name || 'Instructor',
+          bio: classData.instructor?.bio || 'Instructor profesional de surf',
           rating: 4.9,
           totalReviews: 0,
           yearsExperience: 5,
           specialties: [],
-          profileImage: undefined
+          profileImage: classData.instructor?.profileImage
         },
-        reservations: classData.reservations?.map((r: any) => ({
-          id: r.id,
-          userId: r.userId,
-          status: r.status,
-          specialRequest: r.specialRequest,
-          createdAt: r.createdAt,
-          user: {
-            id: r.user?.id || 0,
-            name: r.user?.name || 'Usuario',
-            email: r.user?.email || ''
-          }
-        })) || []
+        reservations: classData.reservations || [] 
       };
 
       setClassDetails(processedClass);
 
-      if (session?.user?.id) {
-        const userRes = processedClass.reservations.find(
-          (r: any) => r.userId === parseInt(session.user.id as string)
+      // Check for user reservation (best effort)
+      if (session?.user?.id && classData.reservations) {
+        const userRes = classData.reservations.find(
+          (r: any) => r.userId === parseInt(session.user.id as string) && r.status !== 'CANCELED'
         );
         setUserReservation(userRes);
       }
@@ -280,6 +268,7 @@ export default function ClassDetailsPage() {
       setLoading(false);
 
     } catch (err) {
+      console.error('[Class Details] Error:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar detalles');
     } finally {
       setLoading(false);
@@ -302,51 +291,37 @@ export default function ClassDetailsPage() {
          const end = new Date();
          end.setDate(end.getDate() + 90); // Fetch next 3 months
 
-         // For single class, we might strictly check its date, but calendar endpoint handles it too.
-         // If single class date is far in future, ensure we cover it.
-         if (!classDetails.isRecurring && new Date(classDetails.date) > end) {
-             end.setTime(new Date(classDetails.date).getTime() + 86400000); // Add 1 day buffer
-         }
-
          const res = await fetch(`/api/classes/${classId}/calendar?start=${start.toISOString()}&end=${end.toISOString()}`);
          if (res.ok) {
-            const slots = await res.json();
+            const data = await res.json();
+            const slots = Array.isArray(data) ? data : (data.availableDates || []);
             
             // Map slots to availableDates format
             const dates = slots
-              .filter((s: any) => !s.isClosed && s.available > 0)
+              .filter((s: any) => !s.isClosed && s.availableSpots > 0)
               .map((s: any) => {
                   const [hours, mins] = s.time.split(':').map(Number);
                   const slotDate = new Date(s.date);
                   const startTime = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
                   
-                  // Calculate end time based on duration
                   const slotEndTimeStr = new Date(slotDate.getTime() + (classDetails.duration || 120) * 60000)
                     .toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
 
                   return {
-                      id: `${s.date}_${s.time}`,
-                      date: new Date(s.date).toISOString(), // Ensure ISO string for consistency
+                      id: s.id,
+                      date: new Date(s.date).toISOString(),
                       startTime: startTime,
                       endTime: slotEndTimeStr,
-                      isRecurringInstance: classDetails.isRecurring,
-                      price: s.price, // Use override price if exists
-                      availableSpots: s.available
+                      price: s.price,
+                      availableSpots: s.availableSpots
                   };
               })
               .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
             
             setAvailableDates(dates);
             
-            // If we have dates and no selection, select first
             if (dates.length > 0 && !selectedDate) {
-                // If single class, try to match the exact date
-                if (!classDetails.isRecurring) {
-                    const match = dates.find((d: any) => d.date.startsWith(classDetails.date.split('T')[0]));
-                    setSelectedDate(match || dates[0]);
-                } else {
-                    setSelectedDate(dates[0]);
-                }
+                setSelectedDate(dates[0]);
             }
          }
        } catch (err) {
@@ -536,11 +511,10 @@ export default function ClassDetailsPage() {
 
     setReservationLoading(true);
     try {
-      // For recurring classes, use the selected date/time
-      // For single classes, use the class default date/time
-      const reservationDate = classDetails.isRecurring && selectedDate ? selectedDate.date : classDetails.date;
-      const reservationStartTime = classDetails.isRecurring && selectedDate ? selectedDate.startTime : classDetails.startTime;
-      const reservationEndTime = classDetails.isRecurring && selectedDate ? selectedDate.endTime : classDetails.endTime;
+      // Use selectedDate if available (it represents the classSession)
+      const reservationDate = selectedDate ? selectedDate.date : classDetails.date;
+      const reservationStartTime = selectedDate ? selectedDate.startTime : classDetails.startTime;
+      const reservationEndTime = selectedDate ? selectedDate.endTime : classDetails.endTime;
 
       // Preparar datos de reserva para la página de confirmación
       const reservationData = {
@@ -555,14 +529,14 @@ export default function ClassDetailsPage() {
           endTime: reservationEndTime,
           level: classDetails.level,
           location: classDetails.location,
-          school: classDetails.school,
-          isRecurring: classDetails.isRecurring
+          school: classDetails.school
         },
         bookingData: {
           ...bookingData,
+          sessionId: selectedDate?.id,
           email: session.user.email || bookingData.email,
           name: session.user.name || bookingData.name,
-          date: reservationDate, // Explicitly pass selected date
+          date: reservationDate, 
           time: reservationStartTime,
           totalAmount: (selectedDate && selectedDate.price ? selectedDate.price : classDetails.price) * (bookingData.participants || 1)
         },
@@ -946,18 +920,17 @@ export default function ClassDetailsPage() {
                                classData={{
                                  ...classDetails,
                                  currency: 'PEN',
-                                 availableSpots: classDetails.capacity - classDetails.enrolled
+                                 availableSpots: (selectedDate?.availableSpots ?? (classDetails!.capacity - classDetails!.enrolled)),
+                                 price: selectedDate?.price ?? classDetails!.price
                                }}
                                initialParticipants={bookingParticipants}
                                onReserve={(p) => handleWidgetReserve(p, selectedDate)}
                                availableDates={availableDates}
-                               selectedDateId={selectedDate ? selectedDate.id : classDetails.id}
+                               selectedDateId={selectedDate ? selectedDate.id : undefined}
                                onDateChange={(val) => {
                                   const selected = availableDates.find(d => d.id.toString() === val.toString());
-                                  if (selected?.isRecurringInstance) {
+                                  if (selected) {
                                       setSelectedDate(selected);
-                                  } else {
-                                      router.push(`/classes/${val}?participants=${bookingParticipants}`);
                                   }
                                }}
                           />
@@ -998,21 +971,21 @@ export default function ClassDetailsPage() {
               id: classDetails.id.toString(),
               title: classDetails.title,
               description: classDetails.description,
-              date: new Date(classDetails.date),
-              startTime: new Date(`${classDetails.date.split('T')[0]}T${classDetails.startTime}`),
-              endTime: new Date(`${classDetails.date.split('T')[0]}T${classDetails.endTime}`),
-              price: classDetails.price,
+              date: selectedDate ? new Date(selectedDate.date) : new Date(classDetails.date),
+              startTime: selectedDate ? selectedDate.startTime : classDetails.startTime,
+              endTime: selectedDate ? selectedDate.endTime : classDetails.endTime,
+              price: selectedDate?.price ?? classDetails.price,
               currency: 'PEN',
               level: classDetails.level,
               type: 'GROUP',
               location: classDetails.location,
-              capacity: classDetails.capacity,
-              availableSpots: classDetails.capacity - classDetails.enrolled,
+              capacity: selectedDate?.capacity ?? classDetails.capacity,
+              availableSpots: selectedDate?.availableSpots ?? (classDetails.capacity - classDetails.enrolled),
               images: classDetails.images,
               school: classDetails.school
             }}
             onSubmit={handleBookingSubmit}
-            initialParticipants={initialParticipants}
+            initialParticipants={bookingParticipants}
           />
         )}
 

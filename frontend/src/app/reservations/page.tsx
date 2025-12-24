@@ -303,7 +303,7 @@ export default function ReservationsPage() {
               : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
           >
-            PrÃ³ximas
+            Próximas
           </button>
           <button
             onClick={() => setFilter('past')}
@@ -352,9 +352,9 @@ export default function ReservationsPage() {
               No hay reservas
             </h3>
             <p className="mt-2 text-gray-500">
-              {filter === 'upcoming' && 'No tienes clases prÃ³ximas reservadas.'}
+              {filter === 'upcoming' && 'No tienes clases próximas reservadas.'}
               {filter === 'past' && 'No tienes clases pasadas.'}
-              {filter === 'all' && 'AÃºn no has reservado ninguna clase.'}
+              {filter === 'all' && 'Aún no has reservado ninguna clase.'}
             </p>
             <button
               onClick={() => router.push('/classes')}

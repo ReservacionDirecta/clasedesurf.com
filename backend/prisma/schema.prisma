@@ -143,10 +143,8 @@ model Class {
   id           Int           @id @default(autoincrement())
   title        String
   description  String?
-  date         DateTime
-  duration     Int
-  capacity     Int
-  price        Float
+  duration     Int           @default(120)
+  defaultPrice Float         @default(0) // Renamed from price to clarify it's the base price
   level        ClassLevel    @default(BEGINNER)
   schoolId     Int
   createdAt    DateTime      @default(now())
@@ -159,33 +157,46 @@ model Class {
   school       School        @relation(fields: [schoolId], references: [id])
   reservations Reservation[]
 
-  // Recurring Class Fields
-  isRecurring       Boolean   @default(false)
-  recurrencePattern Json? // e.g. { days: [1,3,5], times: ["08:00", "15:00"] }
-  startDate         DateTime? // Valid from
-  endDate           DateTime? // Valid until
-  type              String    @default("SURF_LESSON") // e.g. SURF_LESSON, YOGA, etc.
+  // Product settings
+  type              String    @default("SURF_LESSON")
+  defaultCapacity     Int       @default(8)
 
-  availability      ClassAvailability[] // Inventory overrides
+  // Scheduling & Inventory
+  schedules         ClassSchedule[] // Recurrence rules
+  sessions          ClassSession[]  // Specific instances
 
   @@map("classes")
 }
 
-model ClassAvailability {
+model ClassSchedule {
+  id          Int      @id @default(autoincrement())
+  classId     Int
+  dayOfWeek   Int      // 0-6 (Sunday to Saturday)
+  startTime   String   // "HH:mm"
+  endTime     String?  // Optional "HH:mm"
+  isActive    Boolean  @default(true)
+  class       Class    @relation(fields: [classId], references: [id])
+
+  @@map("class_schedules")
+}
+
+model ClassSession {
   id        Int      @id @default(autoincrement())
   classId   Int
-  date      DateTime // Specific date for the override
-  time      String?  // Specific time (e.g. "08:00")
-  capacity  Int?     // Override default capacity
-  price     Float?   // Override default price
-  isClosed  Boolean  @default(false) // Master switch to close this slot
+  date      DateTime // Specific date
+  time      String   // Specific time "HH:mm"
+  capacity  Int      // Total slots for this session
+  price     Float?   // Optional price override
+  isClosed  Boolean  @default(false)
+  
   class     Class    @relation(fields: [classId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([classId, date, time]) // One override per slot
-  @@map("class_availability")
+  @@unique([classId, date, time])
+  @@map("class_sessions")
 }
+
 
 model Reservation {
   id             Int               @id @default(autoincrement())

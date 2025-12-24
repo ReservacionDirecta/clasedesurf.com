@@ -48,60 +48,27 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
 
     // Filter by locality (school location)
     if (locality && typeof locality === 'string') {
-      // If we already have a school filter, merge it
       if (where.school) {
-        where.school.location = {
-          contains: locality,
-          mode: 'insensitive'
-        };
+        where.school.location = { contains: locality, mode: 'insensitive' };
       } else {
-        where.school = {
-          location: {
-            contains: locality,
-            mode: 'insensitive'
-          }
-        };
+        where.school = { location: { contains: locality, mode: 'insensitive' } };
       }
     }
 
-    // Filter by date (exact date match)
-    const targetDate = date && typeof date === 'string' ? new Date(date) : null;
-
-    if (targetDate) {
+    // Filter by date (if date provided, only return products that have a session on that date)
+    if (date && typeof date === 'string') {
+      const targetDate = new Date(date);
       const startOfDay = new Date(targetDate);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(targetDate);
       endOfDay.setHours(23, 59, 59, 999);
 
-      where.OR = [
-        {
-          // Single classes on this date
-          isRecurring: false,
-          date: {
-            gte: startOfDay,
-            lte: endOfDay
-          }
-        },
-        {
-          // Recurring classes active during this date
-          isRecurring: true,
-          startDate: { lte: endOfDay },
-          endDate: { gte: startOfDay }
+      where.sessions = {
+        some: {
+          date: { gte: startOfDay, lte: endOfDay },
+          isClosed: false
         }
-      ];
-    } else {
-      // Default: show only future/current classes (from now onwards)
-      const now = new Date();
-      where.OR = [
-        {
-          isRecurring: false,
-          date: { gte: now }
-        },
-        {
-          isRecurring: true,
-          endDate: { gte: now }
-        }
-      ];
+      };
     }
 
     // Filter by level
@@ -114,18 +81,16 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       where.type = type.toUpperCase();
     }
 
-    // Filter by price range
+    // Filter by price range (using defaultPrice)
     if (minPrice || maxPrice) {
-      where.price = {};
-      if (minPrice) where.price.gte = Number(minPrice);
-      if (maxPrice) where.price.lte = Number(maxPrice);
+      where.defaultPrice = {};
+      if (minPrice) where.defaultPrice.gte = Number(minPrice);
+      if (maxPrice) where.defaultPrice.lte = Number(maxPrice);
     }
 
-    // Filter by participants (capacity check in DB)
+    // Filter by participants (using defaultCapacity as proxy)
     if (participants) {
-      where.capacity = {
-        gte: Number(participants)
-      };
+      where.defaultCapacity = { gte: Number(participants) };
     }
 
     // Generic Search (q)
@@ -135,24 +100,14 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         OR: [
           { title: { contains: search, mode: 'insensitive' } },
           { description: { contains: search, mode: 'insensitive' } },
-          { location: { contains: search, mode: 'insensitive' } },
-          {
-            school: {
-              name: { contains: search, mode: 'insensitive' }
-            }
-          }
+          { school: { name: { contains: search, mode: 'insensitive' } } }
         ]
       };
 
-      // Combine with existing OR or AND
-      if (where.OR) {
-        where.AND = [
-          { OR: where.OR },
-          searchWhere
-        ];
-        delete where.OR;
+      if (where.AND) {
+        where.AND.push(searchWhere);
       } else {
-        Object.assign(where, searchWhere);
+        where.AND = [searchWhere];
       }
     }
 
@@ -165,62 +120,23 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
             name: true,
             location: true,
             description: true,
-            phone: true,
-            email: true,
-            website: true,
-            instagram: true,
-            facebook: true,
-            whatsapp: true,
-            address: true,
             logo: true,
             coverImage: true,
-            foundedYear: true,
             rating: true,
-            totalReviews: true,
-            createdAt: true,
-            updatedAt: true
+            totalReviews: true
           }
         },
-        reservations: {
-          include: {
-            payment: true,
-            user: true
-          }
+        sessions: {
+          where: { isClosed: false },
+          orderBy: [{ date: 'asc' }, { time: 'asc' }],
+          take: 10 // Show some upcoming sessions info
         }
       },
-      orderBy: { date: 'asc' }
+      orderBy: { createdAt: 'desc' }
     });
 
-    // Post-filter recurring classes if a specific date was requested
-    // to ensure the day of week matches the pattern
-    let finalClasses = classes;
-    if (targetDate) {
-      const targetDay = targetDate.getDay(); // 0 = Sunday
-      finalClasses = classes.filter(cls => {
-        if (!cls.isRecurring) return true;
-        // Check if recurrencePattern exists and has days
-        const pattern = cls.recurrencePattern as any;
-        if (pattern && Array.isArray(pattern.days)) {
-          return pattern.days.includes(targetDay);
-        }
-        return true; // If no pattern defined but marked recurring, show it? Or hide? Let's show.
-      });
-    }
-
-    // Calculate payment info and available spots for each class
-    let classesWithInfo = finalClasses.map(cls => {
-      // ... existing mapping logic ...
-      const activeReservations = cls.reservations.filter(r => r.status !== 'CANCELED');
-      const totalReservations = activeReservations.length;
-      const paidReservations = cls.reservations.filter(r => r.payment?.status === 'PAID').length;
-      const totalRevenue = cls.reservations
-        .filter(r => r.payment?.status === 'PAID')
-        .reduce((sum, r) => sum + (r.payment?.amount || 0), 0);
-
-      // Calculate available spots
-      const availableSpots = Math.max(0, cls.capacity - totalReservations);
-      const occupancyRate = cls.capacity > 0 ? (totalReservations / cls.capacity) * 100 : 0;
-
+    // Map to include summary info for the UI
+    const productsWithInfo = classes.map(cls => {
       // Normalize images
       let normalizedImages: string[] = [];
       if (cls.images && Array.isArray(cls.images)) {
@@ -237,27 +153,16 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
 
       return {
         ...cls,
-        availableSpots,
-        paymentInfo: {
-          totalReservations,
-          paidReservations,
-          totalRevenue,
-          occupancyRate
-        },
-        images: normalizedImages
+        price: cls.defaultPrice, // Compatibility with existing frontend
+        capacity: cls.defaultCapacity, // Compatibility with existing frontend
+        images: normalizedImages,
+        nextSession: cls.sessions[0] || null,
+        availableSlotsCount: cls.sessions.length
       };
     });
 
-    // ... rest of filtering ...
-    // Filter by available spots if participants filter is provided
-    if (participants) {
-      const neededSpots = Number(participants);
-      classesWithInfo = classesWithInfo.filter(cls => cls.availableSpots >= neededSpots);
-    }
-
-    res.json(classesWithInfo);
+    res.json(productsWithInfo);
   } catch (err: any) {
-    // ... existing error handling ...
     console.error('[GET /classes] Error:', err);
     res.status(500).json({
       message: 'Internal server error',
@@ -266,7 +171,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
   }
 });
 
-// GET /classes/:id - get class details
+// GET /classes/:id - get class details (Product info)
 router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
@@ -275,696 +180,354 @@ router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: Auth
     const classItem = await prisma.class.findUnique({
       where: { id: classId },
       include: {
-        school: {
-          select: {
-            id: true,
-            name: true,
-            location: true,
-            description: true,
-            phone: true,
-            email: true,
-            address: true,
-            logo: true,
-            coverImage: true,
-            createdAt: true,
-            updatedAt: true,
-            rating: true,
-            totalReviews: true,
-            instagram: true,
-            facebook: true,
-            whatsapp: true,
-            website: true
-          }
-        },
-        reservations: {
-          include: {
-            payment: true,
-            user: true
-          }
-        },
-        beach: true
+        school: true,
+        beach: true,
+        schedules: true,
+        sessions: {
+          where: { isClosed: false, date: { gte: new Date() } },
+          orderBy: [{ date: 'asc' }, { time: 'asc' }],
+          take: 10
+        }
       }
     });
 
-    if (!classItem) {
-      return res.status(404).json({ message: 'Class not found' });
-    }
-
-    // Process availability
-    const activeReservations = classItem.reservations.filter(r => r.status !== 'CANCELED');
-    const totalReservations = activeReservations.length;
-    const availableSpots = Math.max(0, classItem.capacity - totalReservations);
-    const paidReservations = classItem.reservations.filter(r => r.payment?.status === 'PAID').length;
-    const totalRevenue = classItem.reservations
-      .filter(r => r.payment?.status === 'PAID')
-      .reduce((sum, r) => sum + (r.payment?.amount || 0), 0);
-    const occupancyRate = classItem.capacity > 0 ? (totalReservations / classItem.capacity) * 100 : 0;
+    if (!classItem) return res.status(404).json({ message: 'Class not found' });
 
     // Normalize images
     let normalizedImages: string[] = [];
     if (classItem.images && Array.isArray(classItem.images)) {
       normalizedImages = classItem.images
-        .filter((img: string) => img && typeof img === 'string' && img.trim() !== '')
+        .filter((img: string) => img && typeof img === 'string')
         .map((img: string) => {
-          const trimmedImg = img.trim();
-          if (trimmedImg.startsWith('http') || trimmedImg.startsWith('/')) {
-            return trimmedImg;
-          }
-          return `/uploads/classes/${trimmedImg}`;
+          if (img.startsWith('http') || img.startsWith('/')) return img;
+          return `/uploads/classes/${img}`;
         });
     }
 
-    const responseData = {
+    res.json({
       ...classItem,
       images: normalizedImages,
-      availableSpots,
-      paymentInfo: {
-        totalReservations,
-        paidReservations,
-        totalRevenue,
-        occupancyRate
-      }
-    };
-
-    res.json(responseData);
-
+      price: classItem.defaultPrice, // Frontend compat
+      capacity: classItem.defaultCapacity, // Frontend compat
+    });
   } catch (err: any) {
     console.error('[GET /classes/:id] Error:', err);
-    res.status(500).json({
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? err?.message : undefined
-    });
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// POST /classes - Create a new Class Product
 router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createClassSchema), async (req: AuthRequest, res) => {
   try {
     const {
-      title, description, date, duration, capacity, price, level,
-      instructor, images, schoolId, studentDetails, beachId,
-      isRecurring, recurrencePattern, startDate, endDate
+      title, description, duration, capacity, price, level,
+      instructor, images, schoolId, beachId, schedules
     } = req.body;
 
-    console.log('📝 Creando clase:', { title, isRecurring, recurrencePattern });
-
-    // Use date provided OR startDate if recurring (fallback)
-    const classDate = date ? new Date(date) : (startDate ? new Date(startDate) : new Date());
-
-    // Determine final schoolId
     let finalSchoolId: number | undefined = schoolId ? Number(schoolId) : undefined;
     if (req.role === 'SCHOOL_ADMIN') {
       if (!req.schoolId) return res.status(404).json({ message: 'No school found for this user' });
       finalSchoolId = req.schoolId;
     }
-    if (!finalSchoolId) return res.status(400).json({ message: 'School ID is required' });
 
     const newClass = await prisma.class.create({
       data: {
         title,
         description,
-        date: classDate,
-        duration: Number(duration),
-        capacity: Number(capacity),
-        price: Number(price),
+        duration: duration ? Number(duration) : 120,
+        defaultCapacity: capacity ? Number(capacity) : 8,
+        defaultPrice: price ? Number(price) : 0,
         level,
         instructor,
         images: images || [],
         school: { connect: { id: Number(finalSchoolId) } },
         ...(beachId && { beach: { connect: { id: Number(beachId) } } }),
-        isRecurring: isRecurring || false,
-        recurrencePattern: recurrencePattern,
-        startDate: startDate ? new Date(startDate) : classDate,
-        endDate: endDate ? new Date(endDate) : classDate
+        ...(schedules && Array.isArray(schedules) && {
+          schedules: {
+            create: schedules.map((s: any) => ({
+              dayOfWeek: Number(s.dayOfWeek),
+              startTime: s.startTime,
+              endTime: s.endTime,
+              isActive: s.isActive !== undefined ? s.isActive : true
+            }))
+          }
+        })
       }
     });
 
-    // Normalize images paths if needed
-    if (images && Array.isArray(images)) {
-      const normalizedImages = images.map((img: string) => {
-        if (!img.startsWith('http') && !img.startsWith('/')) {
-          return `/uploads/${img}`;
-        }
-        return img;
-      });
-
-      // Update with normalized images if any change
-      if (JSON.stringify(normalizedImages) !== JSON.stringify(images)) {
-        await prisma.class.update({
-          where: { id: newClass.id },
-          data: { images: normalizedImages }
-        });
-        newClass.images = normalizedImages;
-      }
-    }
-
-    console.log('✅ Clase creada exitosamente:', newClass.id);
     res.status(201).json(newClass);
   } catch (err) {
-    console.error('❌ Error al crear clase:', err);
-    res.status(500).json({ message: 'Internal server error', error: String(err) });
+    console.error('❌ Error creating class:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// POST /classes/bulk - create multiple classes at once
-router.post('/bulk', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createBulkClassesSchema), async (req: AuthRequest, res) => {
+// POST /classes/bulk-sessions - create multiple SESSIONS for a product
+router.post('/bulk-sessions', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, async (req: AuthRequest, res) => {
   try {
-    const { baseData, schoolId, occurrences, beachId } = req.body as { baseData: any; schoolId?: number; occurrences: Array<{ date: string; time: string; }>; beachId?: number };
+    const { classId, occurrences } = req.body as { classId: number; occurrences: Array<{ date: string; time: string; capacity?: number; price?: number; }>; };
 
-    if (!occurrences || occurrences.length === 0) {
-      return res.status(400).json({ message: 'No occurrences provided' });
-    }
+    if (!occurrences || occurrences.length === 0) return res.status(400).json({ message: 'No occurrences provided' });
 
-    let finalSchoolId: number | undefined = schoolId ? Number(schoolId) : undefined;
-    if (req.role === 'SCHOOL_ADMIN') {
-      if (!req.schoolId) {
-        return res.status(404).json({ message: 'No school found for this user' });
-      }
-      finalSchoolId = req.schoolId;
-    }
-    if (!finalSchoolId) {
-      return res.status(400).json({ message: 'School ID is required' });
-    }
+    const product = await prisma.class.findUnique({ where: { id: Number(classId) } });
+    if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    const now = new Date();
-    const uniqueOccurrences: Array<{ date: Date; isoKey: string; }> = [];
-    const seenKeys = new Set<string>();
-
-    for (const occurrence of occurrences) {
-      const { date, time } = occurrence;
-      const dateTime = new Date(`${date}T${time}`);
-      if (Number.isNaN(dateTime.getTime())) {
-        return res.status(400).json({ message: `Invalid occurrence date or time: ${date} ${time}` });
-      }
-      if (dateTime.getTime() < now.getTime()) {
-        return res.status(400).json({ message: `Occurrence ${date} ${time} must be in the future` });
-      }
-
-      const isoKey = dateTime.toISOString();
-      if (seenKeys.has(isoKey)) {
-        continue;
-      }
-      seenKeys.add(isoKey);
-      uniqueOccurrences.push({ date: dateTime, isoKey });
-    }
-
-    if (uniqueOccurrences.length === 0) {
-      return res.status(400).json({ message: 'No valid occurrences were provided' });
-    }
-
-    const createdClasses = await prisma.$transaction(async (tx) => {
-      const results: any[] = [];
-      for (const occurrence of uniqueOccurrences) {
-        const created = await tx.class.create({
-          data: {
-            title: baseData.title,
-            description: baseData.description ?? null,
-            date: occurrence.date,
-            duration: Number(baseData.duration),
-            capacity: Number(baseData.capacity),
-            price: Number(baseData.price),
-            level: baseData.level,
-            instructor: baseData.instructor ?? null,
-            images: baseData.images || [],
-            school: { connect: { id: Number(finalSchoolId) } },
-            ...(beachId && { beach: { connect: { id: Number(beachId) } } })
+    const createdSessions = await prisma.$transaction(
+      occurrences.map(occ =>
+        prisma.classSession.upsert({
+          where: {
+            classId_date_time: { classId: product.id, date: new Date(occ.date), time: occ.time }
+          },
+          update: {
+            capacity: occ.capacity ?? product.defaultCapacity,
+            price: occ.price ?? product.defaultPrice
+          },
+          create: {
+            classId: product.id,
+            date: new Date(occ.date),
+            time: occ.time,
+            capacity: occ.capacity ?? product.defaultCapacity,
+            price: occ.price ?? product.defaultPrice
           }
-        });
-        results.push(created);
-      }
-      return results;
-    });
+        })
+      )
+    );
 
-    res.status(201).json({
-      message: 'Classes created successfully',
-      createdCount: createdClasses.length,
-      classes: createdClasses
-    });
+    res.status(201).json({ count: createdSessions.length, sessions: createdSessions });
   } catch (err) {
-    console.error('❌ Error al crear clases en lote:', err);
-    res.status(500).json({ message: 'Internal server error', error: String(err) });
+    console.error('❌ Error in bulk-sessions:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// PUT /classes/:id - update class (ADMIN or SCHOOL_ADMIN)
-router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), validateBody(updateClassSchema), async (req: AuthRequest, res) => {
+// PUT /classes/:id - update class product
+router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
-    const data = req.body;
+    const { images, capacity, price, schedules, ...restData } = req.body;
 
-    // If SCHOOL_ADMIN, verify class belongs to their school
-    if (req.role === 'SCHOOL_ADMIN') {
-      if (!req.schoolId) return res.status(404).json({ message: 'No school found for this user' });
-      const existing = await prisma.class.findUnique({ where: { id: Number(id) } });
-      if (!existing) return res.status(404).json({ message: 'Class not found' });
-      if (existing.schoolId !== req.schoolId) {
-        return res.status(403).json({ message: 'You can only update classes from your school' });
-      }
+    const existing = await prisma.class.findUnique({ where: { id: Number(id) } });
+    if (!existing) return res.status(404).json({ message: 'Class not found' });
+
+    if (req.role === 'SCHOOL_ADMIN' && existing.schoolId !== req.schoolId) {
+      return res.status(403).json({ message: 'Forbidden' });
     }
 
-    // Handle images separately if provided
-    const { images, ...restData } = data;
     const updateData: any = { ...restData };
-
-    // Explicitly convert date strings to Date objects for Prisma
-    if (updateData.date) updateData.date = new Date(updateData.date);
-    if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
-    if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);
-
-    // Transform relation fields (Prisma expects nested writes for relations in updates)
-    if (updateData.schoolId) {
-      updateData.school = { connect: { id: Number(updateData.schoolId) } };
-      delete updateData.schoolId;
-    }
-
-    if (updateData.beachId) {
-      updateData.beach = { connect: { id: Number(updateData.beachId) } };
-      delete updateData.beachId;
-    }
-
-    // Remove studentDetails as it is not in the Class model
-    if (updateData.studentDetails !== undefined) {
-      delete updateData.studentDetails;
-    }
+    if (capacity !== undefined) updateData.defaultCapacity = Number(capacity);
+    if (price !== undefined) updateData.defaultPrice = Number(price);
 
     if (images !== undefined) {
-      // Normalize images paths
-      if (Array.isArray(images)) {
-        updateData.images = images.map((img: string) => {
-          if (!img.startsWith('http') && !img.startsWith('/')) {
-            return `/uploads/${img}`;
-          }
-          return img;
-        });
-      } else {
-        updateData.images = images;
-      }
+      updateData.images = Array.isArray(images) ? images.map((img: string) => {
+        if (img.startsWith('http') || img.startsWith('/')) return img;
+        return `/uploads/classes/${img}`;
+      }) : images;
     }
 
-    const updated = await prisma.class.update({ where: { id: Number(id) }, data: updateData });
-    res.json(updated);
-  } catch (err: any) {
-    console.error('[PUT /classes/:id] Error updating class:', err);
-    console.error('[PUT /classes/:id] Request Body:', req.body);
-    res.status(500).json({
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? err?.message : undefined
+    if (schedules && Array.isArray(schedules)) {
+      await prisma.classSchedule.deleteMany({ where: { classId: Number(id) } });
+      updateData.schedules = {
+        create: schedules.map((s: any) => ({
+          dayOfWeek: Number(s.dayOfWeek),
+          startTime: s.startTime,
+          endTime: s.endTime,
+          isActive: s.isActive !== undefined ? s.isActive : true
+        }))
+      };
+    }
+
+    const updated = await prisma.class.update({
+      where: { id: Number(id) },
+      data: updateData,
+      include: { school: true, schedules: true }
     });
+    res.json(updated);
+  } catch (err) {
+    console.error('[PUT /classes/:id] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// DELETE /classes/:id (ADMIN or SCHOOL_ADMIN)
+// DELETE /classes/:id - Soft delete
 router.delete('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
     const classId = Number(id);
 
-    console.log('[DELETE /classes/:id] Attempting to delete class:', classId);
-    console.log('[DELETE /classes/:id] User role:', req.role, 'User ID:', req.userId);
+    const existing = await prisma.class.findUnique({ where: { id: classId } });
+    if (!existing) return res.status(404).json({ message: 'Class not found' });
 
-    // Find the class first - Get ALL reservations to check their status
-    const existing = await prisma.class.findUnique({
-      where: { id: classId },
-      include: {
-        reservations: {
-          select: {
-            id: true,
-            status: true
-          }
-        }
-      }
-    });
-
-    if (!existing) {
-      console.log('[DELETE /classes/:id] Class not found:', classId);
-      return res.status(404).json({ message: 'Class not found' });
+    if (req.role === 'SCHOOL_ADMIN' && existing.schoolId !== req.schoolId) {
+      return res.status(403).json({ message: 'Forbidden' });
     }
 
-    // If SCHOOL_ADMIN, verify ownership
-    if (req.role === 'SCHOOL_ADMIN') {
-      if (!req.schoolId) {
-        console.log('[DELETE /classes/:id] No school found for SCHOOL_ADMIN');
-        return res.status(404).json({ message: 'No school found for this user' });
-      }
-      if (existing.schoolId !== req.schoolId) {
-        console.log('[DELETE /classes/:id] School mismatch. Class school:', existing.schoolId, 'User school:', req.schoolId);
-        return res.status(403).json({ message: 'You can only delete classes from your school' });
-      }
-    }
-
-    // Check if class has active reservations (not CANCELED)
-    const allReservations = existing.reservations || [];
-    const activeReservations = allReservations.filter(r => r.status !== 'CANCELED');
-
-    console.log('[DELETE /classes/:id] Total reservations:', allReservations.length);
-    console.log('[DELETE /classes/:id] Active reservations:', activeReservations.length);
-    console.log('[DELETE /classes/:id] Reservation statuses:', allReservations.map(r => ({ id: r.id, status: r.status })));
-
-    // Check for force delete parameter
-    const forceDelete = req.query.force === 'true';
-
-    if (activeReservations.length > 0) {
-      if (!forceDelete) {
-        console.log('[DELETE /classes/:id] Class has active reservations:', activeReservations.length);
-        const statusCounts = activeReservations.reduce((acc: any, r) => {
-          acc[r.status] = (acc[r.status] || 0) + 1;
-          return acc;
-        }, {});
-        console.log('[DELETE /classes/:id] Active reservation status breakdown:', statusCounts);
-
-        return res.status(400).json({
-          message: `No se puede eliminar la clase porque tiene ${activeReservations.length} reserva(s) activa(s). Debes cancelar las reservas primero o usar eliminación forzada.`,
-          reservationsCount: activeReservations.length,
-          statusBreakdown: statusCounts,
-          canForceDelete: true
-        });
-      }
-
-      // Force delete: First delete payments, then reservations
-      console.log('[DELETE /classes/:id] Force deleting - canceling all reservations first');
-
-      // Get all reservation IDs for this class to delete their payments
-      const reservationIds = allReservations.map(r => r.id);
-
-      // Delete payments first (due to foreign key constraints)
-      await prisma.payment.deleteMany({
-        where: {
-          reservationId: { in: reservationIds }
-        }
-      });
-      console.log('[DELETE /classes/:id] Deleted payments for reservations:', reservationIds);
-
-      // Then delete all reservations
-      await prisma.reservation.deleteMany({
-        where: {
-          classId: classId
-        }
-      });
-      console.log('[DELETE /classes/:id] Deleted all reservations for class:', classId);
-    }
-
-    // If there are no active reservations, also delete canceled reservations to satisfy FK constraints
-    await prisma.reservation.deleteMany({
-      where: {
-        classId: classId,
-        status: 'CANCELED'
-      }
-    });
-
-    // Soft delete the class by setting deletedAt timestamp
-    await prisma.class.update({
-      where: { id: classId },
-      data: { deletedAt: new Date() }
-    });
-
-    console.log('[DELETE /classes/:id] Class soft deleted successfully:', classId);
-    res.json({ message: 'Clase eliminada exitosamente. Puedes recuperarla desde la papelera.' });
-  } catch (err: any) {
+    await prisma.class.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+    res.json({ message: 'Product deleted' });
+  } catch (err) {
     console.error('[DELETE /classes/:id] Error:', err);
-    console.error('[DELETE /classes/:id] Error name:', err?.name);
-    console.error('[DELETE /classes/:id] Error message:', err?.message);
-    console.error('[DELETE /classes/:id] Error code:', err?.code);
-
-    // Handle Prisma record not found errors
-    if (err?.code === 'P2025') {
-      return res.status(404).json({ message: 'Clase no encontrada' });
-    }
-
-    res.status(500).json({
-      message: 'Error interno del servidor',
-      error: process.env.NODE_ENV === 'development' ? err?.message : undefined
-    });
-  }
-});
-
-// POST /classes/:id/restore - Restore a deleted class (ADMIN or SCHOOL_ADMIN)
-router.post('/:id/restore', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params as any;
-    const classId = Number(id);
-
-    // Find the deleted class
-    const existing = await prisma.class.findUnique({
-      where: { id: classId }
-    });
-
-    if (!existing) {
-      return res.status(404).json({ message: 'Clase no encontrada' });
-    }
-
-    if (!existing.deletedAt) {
-      return res.status(400).json({ message: 'Esta clase no está eliminada' });
-    }
-
-    // If SCHOOL_ADMIN, verify ownership
-    if (req.role === 'SCHOOL_ADMIN') {
-      if (!req.schoolId) {
-        return res.status(404).json({ message: 'No school found for this user' });
-      }
-      if (existing.schoolId !== req.schoolId) {
-        return res.status(403).json({ message: 'You can only restore classes from your school' });
-      }
-    }
-
-    // Restore the class
-    const restoredClass = await prisma.class.update({
-      where: { id: classId },
-      data: { deletedAt: null }
-    });
-
-    res.json(restoredClass);
-  } catch (err) {
-    console.error('[POST /classes/:id/restore] Error:', err);
-    res.status(500).json({ message: 'Error al restaurar la clase' });
-  }
-});
-
-// POST /classes/:id/duplicate - Duplicate a class (ADMIN or SCHOOL_ADMIN)
-router.post('/:id/duplicate', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params as any;
-    const classId = Number(id);
-
-    // Find the class to duplicate
-    const existing = await prisma.class.findUnique({
-      where: { id: classId }
-    });
-
-    if (!existing) {
-      return res.status(404).json({ message: 'Clase no encontrada' });
-    }
-
-    // If SCHOOL_ADMIN, verify ownership
-    if (req.role === 'SCHOOL_ADMIN') {
-      if (!req.schoolId) {
-        return res.status(404).json({ message: 'No school found for this user' });
-      }
-      if (existing.schoolId !== req.schoolId) {
-        return res.status(403).json({ message: 'You can only duplicate classes from your school' });
-      }
-    }
-
-    // Create duplicate with new date (7 days from original)
-    const originalDate = new Date(existing.date);
-    const newDate = new Date(originalDate);
-    newDate.setDate(newDate.getDate() + 7);
-
-    const duplicatedClass = await prisma.class.create({
-      data: {
-        title: `${existing.title} (Copia)`,
-        description: existing.description,
-        date: newDate,
-        duration: existing.duration,
-        capacity: existing.capacity,
-        price: existing.price,
-        level: existing.level,
-        schoolId: existing.schoolId,
-        instructor: existing.instructor,
-        images: existing.images,
-        beachId: existing.beachId,
-        deletedAt: null
-      }
-    });
-
-    res.json(duplicatedClass);
-  } catch (err) {
-    console.error('[POST /classes/:id/duplicate] Error:', err);
-    res.status(500).json({ message: 'Error al duplicar la clase' });
-  }
-});
-
-// GET /classes/:id/calendar - Get availability calendar for a range
-router.get('/:id/calendar', optionalAuth, validateParams(classIdSchema), async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params as any;
-    const { start, end } = req.query;
-
-    if (!start || !end) {
-      return res.status(400).json({ message: 'Start and end dates are required' });
-    }
-
-    const startDate = new Date(String(start));
-    const endDate = new Date(String(end));
-    const classId = Number(id);
-
-    // 1. Fetch Class
-    const classItem = await prisma.class.findUnique({
-      where: { id: classId }
-    });
-
-    if (!classItem) return res.status(404).json({ message: 'Class not found' });
-
-    // 2. Fetch Availabilities (Overrides)
-    const availabilities = await prisma.classAvailability.findMany({
-      where: {
-        classId,
-        date: { gte: startDate, lte: endDate }
-      }
-    });
-
-    // 3. Fetch Reservations
-    const reservations = await prisma.reservation.findMany({
-      where: {
-        classId,
-        status: { not: 'CANCELED' },
-        OR: [
-          { date: { gte: startDate, lte: endDate } },
-          // Include reservations that might not have date set but stick to class date if single?
-          // For recurring inventory, we rely on 'date' field in reservation.
-        ]
-      }
-    });
-
-    // 4. Generate Slots
-    let slots: any[] = [];
-    const current = new Date(startDate);
-
-    // Helper map for fast lookup
-    const availabilityMap = new Map();
-    availabilities.forEach((a: any) => {
-      const key = `${a.date.toISOString().split('T')[0]}_${a.time || 'ALL'}`;
-      availabilityMap.set(key, a);
-    });
-
-    const reservationMap = new Map(); // key: "YYYY-MM-DD_HH:mm" -> count
-    reservations.forEach((r: any) => {
-      if (r.date) {
-        const d = new Date(r.date).toISOString().split('T')[0];
-        const t = r.time || 'ALL';
-        const key = `${d}_${t}`;
-        reservationMap.set(key, (reservationMap.get(key) || 0) + (typeof r.participants === 'number' ? r.participants : 1)); // Simplified count
-      }
-    });
-
-    while (current <= endDate) {
-      const dateStr = current.toISOString().split('T')[0];
-      const dayOfWeek = current.getDay();
-
-      if (classItem.isRecurring) {
-        // Recurring Logic
-        const pattern = classItem.recurrencePattern as any;
-        if (pattern && Array.isArray(pattern.days) && pattern.days.includes(dayOfWeek)) {
-          // For each time defined in pattern
-          if (pattern.times && Array.isArray(pattern.times)) {
-            pattern.times.forEach((time: string) => {
-              const key = `${dateStr}_${time}`;
-              const override = availabilityMap.get(key);
-              const reserved = reservationMap.get(key) || 0;
-
-              // Default values from class
-              let capacity = classItem.capacity;
-              let price = classItem.price;
-              let isClosed = false;
-
-              // Apply override
-              if (override) {
-                if (override.capacity !== null) capacity = override.capacity;
-                if (override.price !== null) price = override.price;
-                if (override.isClosed) isClosed = true;
-              }
-
-              const available = Math.max(0, capacity - reserved);
-
-              slots.push({
-                date: dateStr,
-                time,
-                price,
-                capacity,
-                reserved,
-                available,
-                isClosed,
-                hasOverride: !!override
-              });
-            });
-          }
-        }
-      } else {
-        // Single Class Logic - Only appears on its specific date
-        const classDateStr = new Date(classItem.date).toISOString().split('T')[0];
-        if (dateStr === classDateStr) {
-          const time = classItem.date.toISOString().split('T')[1].substring(0, 5); // default time
-          const key = `${dateStr}_${time}`; // or ALL
-          // ... logic similar to above ...
-          // For simplicity in single class, we usually don't use the calendar endpoint as much, 
-          // but let's return it for consistency if single class is requested.
-
-          const override = availabilityMap.get(`${dateStr}_ALL`) || availabilityMap.get(`${dateStr}_${time}`);
-          const reserved = reservations.length; // Simple count for single class
-
-          slots.push({
-            date: dateStr,
-            time,
-            price: override?.price ?? classItem.price,
-            capacity: override?.capacity ?? classItem.capacity,
-            reserved,
-            available: Math.max(0, (override?.capacity ?? classItem.capacity) - reserved),
-            isClosed: override?.isClosed ?? false
-          });
-        }
-      }
-      current.setDate(current.getDate() + 1);
-    }
-
-    res.json(slots);
-  } catch (err) {
-    console.error(err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// POST /classes/:id/availability - Set override for a specific slot
-router.post('/:id/availability', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
+// GET /classes/:id/calendar
+router.get('/:id/calendar', optionalAuth, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
-    const { date, time, price, capacity, isClosed } = req.body;
+    const { start, end } = req.query;
+    const classId = Number(id);
 
-    if (!date) return res.status(400).json({ message: 'Date is required' });
+    const startDate = start ? new Date(start as string) : new Date();
+    // Default to 60 days ahead if no end date provided
+    const endDate = end ? new Date(end as string) : new Date(startDate.getTime() + 60 * 24 * 60 * 60 * 1000);
 
-    // Upsert availability
-    const availability = await prisma.classAvailability.upsert({
-      where: {
-        classId_date_time: {
-          classId: Number(id),
-          date: new Date(date),
-          time: time || null
+    const classItem = await prisma.class.findUnique({
+      where: { id: classId },
+      include: {
+        schedules: { where: { isActive: true } },
+        sessions: {
+          where: { date: { gte: startDate, lte: endDate } }
+        },
+        reservations: {
+          where: { date: { gte: startDate, lte: endDate }, status: { not: 'CANCELED' } }
         }
-      },
+      }
+    });
+
+    if (!classItem) return res.status(404).json({ message: 'Class not found' });
+
+    // 1. Map explicit sessions for quick lookup
+    const sessionMap = new Map();
+    classItem.sessions.forEach(session => {
+      const key = `${session.date.toISOString().split('T')[0]}_${session.time}`;
+      sessionMap.set(key, session);
+    });
+
+    // 2. Generate all potential dates in range
+    const slots: any[] = [];
+    const currentDate = new Date(startDate);
+    currentDate.setHours(0, 0, 0, 0);
+
+    const rangeEndDate = new Date(endDate);
+    rangeEndDate.setHours(23, 59, 59, 999);
+
+    while (currentDate <= rangeEndDate) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const dayOfWeek = currentDate.getDay(); // 0 (Sun) - 6 (Sat)
+
+      // Find schedules for this day
+      const dailySchedules = classItem.schedules.filter(s => s.dayOfWeek === dayOfWeek);
+
+      // Process each schedule slot
+      dailySchedules.forEach(schedule => {
+        const key = `${dateStr}_${schedule.startTime}`;
+        const sessionOverride = sessionMap.get(key);
+
+        // If session exists and is closed, we skip it (or mark as closed)
+        if (sessionOverride && sessionOverride.isClosed) return;
+
+        const capacity = sessionOverride?.capacity ?? classItem.defaultCapacity;
+        const price = sessionOverride?.price ?? classItem.defaultPrice;
+        const time = sessionOverride?.time ?? schedule.startTime;
+
+        // Calculate reserved spots for this specific date and time
+        const reserved = classItem.reservations
+          .filter(r => r.date?.toISOString().split('T')[0] === dateStr && r.time === time)
+          .reduce((sum, r) => sum + (typeof r.participants === 'number' ? r.participants : 1), 0);
+
+        slots.push({
+          id: sessionOverride?.id || `v_${key}`, // Virtual ID if no override
+          sessionId: sessionOverride?.id || null,
+          date: dateStr,
+          time: time,
+          startTime: time,
+          price: price,
+          capacity: capacity,
+          reserved,
+          available: Math.max(0, capacity - reserved),
+          availableSpots: Math.max(0, capacity - reserved),
+          isClosed: false,
+          classId: classItem.id,
+          isVirtual: !sessionOverride
+        });
+      });
+
+      // Also add explicit sessions that DON'T match a schedule (one-off sessions)
+      // We already handled sessions that match a schedule in the loop above.
+      // So we need to find sessions for THIS DATE that were NOT used.
+      classItem.sessions
+        .filter(s => s.date.toISOString().split('T')[0] === dateStr)
+        .forEach(session => {
+          const key = `${dateStr}_${session.time}`;
+          const alreadyAdded = slots.some(slot => slot.date === dateStr && slot.time === session.time);
+
+          if (!alreadyAdded && !session.isClosed) {
+            const reserved = classItem.reservations
+              .filter(r => r.date?.toISOString().split('T')[0] === dateStr && r.time === session.time)
+              .reduce((sum, r) => sum + (typeof r.participants === 'number' ? r.participants : 1), 0);
+
+            slots.push({
+              id: session.id,
+              sessionId: session.id,
+              date: dateStr,
+              time: session.time,
+              startTime: session.time,
+              price: session.price || classItem.defaultPrice,
+              capacity: session.capacity,
+              reserved,
+              available: Math.max(0, session.capacity - reserved),
+              availableSpots: Math.max(0, session.capacity - reserved),
+              isClosed: false,
+              classId: classItem.id,
+              isVirtual: false
+            });
+          }
+        });
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Sort slots by date and time
+    slots.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.time.localeCompare(b.time);
+    });
+
+    res.json({
+      classId: classItem.id,
+      availableDates: slots
+    });
+  } catch (err) {
+    console.error('[GET /calendar] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// POST /classes/:id/sessions
+router.post('/:id/sessions', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as any;
+    const { date, time, capacity, price, isClosed } = req.body;
+
+    const session = await prisma.classSession.upsert({
+      where: { classId_date_time: { classId: Number(id), date: new Date(date), time } },
       update: {
-        price: price !== undefined ? price : undefined,
-        capacity: capacity !== undefined ? capacity : undefined,
-        isClosed: isClosed !== undefined ? isClosed : undefined
+        capacity: capacity !== undefined ? Number(capacity) : undefined,
+        price: price !== undefined ? Number(price) : undefined,
+        isClosed: isClosed !== undefined ? Boolean(isClosed) : undefined
       },
       create: {
         classId: Number(id),
         date: new Date(date),
-        time: time || null,
-        price,
-        capacity,
+        time,
+        capacity: capacity !== undefined ? Number(capacity) : 8,
+        price: price !== undefined ? Number(price) : undefined,
         isClosed: isClosed || false
       }
     });
 
-    res.json(availability);
+    res.json(session);
   } catch (err) {
-    console.error(err);
+    console.error('[POST /sessions] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

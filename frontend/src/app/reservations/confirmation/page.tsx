@@ -270,6 +270,7 @@ function ReservationConfirmationContent() {
         },
         body: JSON.stringify({
           classId: parseInt(reservationData.classId),
+          sessionId: (reservationData.bookingData as any).sessionId,
           specialRequest: reservationData.bookingData.specialRequest,
           participants: participants  // Enviar datos completos de participantes
         })

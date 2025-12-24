@@ -84,7 +84,7 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
       where: { ownerId: Number(userId) },
       include: {
         classes: {
-          orderBy: { date: 'asc' },
+          orderBy: { title: 'asc' },
           take: 10
         },
         instructors: {
@@ -133,7 +133,7 @@ router.get('/:id/classes', validateParams(schoolIdSchema), async (req, res) => {
     const { id } = req.params as any;
     const classes = await prisma.class.findMany({
       where: { schoolId: Number(id) },
-      orderBy: { date: 'asc' }
+      orderBy: { title: 'asc' }
     });
     res.json(classes);
   } catch (err) {

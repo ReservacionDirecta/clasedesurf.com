@@ -5,13 +5,12 @@ export interface ApiClass {
   id: number;
   title: string;
   description: string | null;
-  date: string;
   duration: number;
-  capacity: number;
-  price: number;
+  defaultCapacity: number;
+  defaultPrice: number;
   level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
   instructor: string | null;
-  images?: string[];  // Array de URLs de imágenes
+  images?: string[];
   schoolId: number;
   beachId?: number | null;
   beach?: {
@@ -22,7 +21,16 @@ export interface ApiClass {
   } | null;
   createdAt: string;
   updatedAt: string;
-  availableSpots: number;
+  price?: number; // legacy/compat
+  capacity?: number; // legacy/compat
+  availableSpots?: number; // legacy/compat
+  nextSession?: {
+    id: number;
+    date: string;
+    time: string;
+    capacity: number;
+    price: number | null;
+  } | null;
   school: {
     id: number;
     name: string;
@@ -41,34 +49,9 @@ export interface ApiClass {
     createdAt: string;
     updatedAt: string;
   };
-  reservations: Array<{
-    id: number;
-    userId: number;
-    classId: number;
-    status: 'PENDING' | 'CONFIRMED' | 'PAID' | 'CANCELED' | 'COMPLETED';
-    specialRequest: string | null;
-    createdAt: string;
-    updatedAt: string;
-    payment?: {
-      id: number;
-      amount: number;
-      status: 'UNPAID' | 'PAID' | 'REFUNDED';
-      paymentMethod: string | null;
-      transactionId: string | null;
-      paidAt: string | null;
-    };
-    user: {
-      id: number;
-      name: string;
-      email: string;
-    };
-  }>;
-  paymentInfo?: {
-    totalReservations: number;
-    paidReservations: number;
-    totalRevenue: number;
-    occupancyRate: number;
-  };
+  reservations?: any[];
+  sessions?: any[];
+  schedules?: any[];
 }
 
 export interface ApiSchool {
@@ -186,19 +169,22 @@ class ApiService {
 
 // Transform API class to frontend format
 export function transformApiClassToFrontend(apiClass: ApiClass) {
+  const nextSession = apiClass.nextSession;
+  const price = nextSession?.price ?? apiClass.price ?? apiClass.defaultPrice ?? 0;
+  const capacity = nextSession?.capacity ?? apiClass.capacity ?? apiClass.defaultCapacity ?? 8;
+  const dateStr = nextSession?.date || new Date().toISOString();
+
   // Calculate rating and reviews from school data or use defaults
   const schoolRating = 4.5 + (Math.random() * 0.5); // Random between 4.5-5.0
   const totalReviews = Math.floor(Math.random() * 200) + 50; // Random between 50-250
 
-  // Generate instructor info
   const instructorName = apiClass.instructor || 'Instructor Asignado';
-  const instructorRating = 4.6 + (Math.random() * 0.4); // Random between 4.6-5.0
+  const instructorRating = 4.6 + (Math.random() * 0.4);
 
-  // Map class type based on capacity and other factors
   let classType: 'GROUP' | 'PRIVATE' | 'SEMI_PRIVATE' | 'INTENSIVE' | 'KIDS' = 'GROUP';
-  if (apiClass.capacity === 1) {
+  if (capacity === 1) {
     classType = 'PRIVATE';
-  } else if (apiClass.capacity <= 3) {
+  } else if (capacity <= 3) {
     classType = 'SEMI_PRIVATE';
   } else if (apiClass.duration > 180) {
     classType = 'INTENSIVE';
@@ -206,7 +192,6 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
     classType = 'KIDS';
   }
 
-  // Generate specialties based on level and type
   const specialties = [];
   if (apiClass.level === 'BEGINNER') {
     specialties.push('Iniciación', 'Técnica básica', 'Seguridad acuática');
@@ -220,19 +205,19 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
     id: apiClass.id.toString(),
     title: apiClass.title,
     description: apiClass.description || 'Clase de surf profesional con instructor certificado.',
-    date: new Date(apiClass.date),
-    startTime: new Date(apiClass.date),
-    endTime: new Date(new Date(apiClass.date).getTime() + apiClass.duration * 60000),
+    date: new Date(dateStr),
+    startTime: new Date(dateStr),
+    endTime: new Date(new Date(dateStr).getTime() + apiClass.duration * 60000),
     duration: apiClass.duration,
-    capacity: apiClass.capacity,
-    price: apiClass.price, // Precio en PEN (soles peruanos) - moneda base
+    capacity,
+    price,
     currency: 'PEN',
     level: apiClass.level,
     type: classType,
-    location: apiClass.school.location || 'Lima, Perú',
+    location: apiClass.school?.location || 'Lima, Perú',
     beach: apiClass.beach ? {
       name: apiClass.beach.name,
-      location: apiClass.beach.location || apiClass.school.location || 'Lima, Perú'
+      location: apiClass.beach.location || apiClass.school?.location || 'Lima, Perú'
     } : undefined,
     instructorName: instructorName,
     includesBoard: true,
@@ -243,29 +228,29 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
     createdAt: new Date(apiClass.createdAt),
     updatedAt: new Date(apiClass.updatedAt),
     schoolId: apiClass.schoolId.toString(),
-    availableSpots: apiClass.availableSpots,
+    availableSpots: apiClass.availableSpots || capacity,
     school: {
-      id: apiClass.school.id.toString(),
-      name: apiClass.school.name,
-      location: apiClass.school.location || 'Lima, Perú',
-      phone: apiClass.school.phone || undefined,
-      email: apiClass.school.email || undefined,
+      id: apiClass.school?.id?.toString() || '0',
+      name: apiClass.school?.name || 'Escuela de Surf',
+      location: apiClass.school?.location || 'Lima, Perú',
+      phone: apiClass.school?.phone || undefined,
+      email: apiClass.school?.email || undefined,
       city: 'Lima',
       rating: Number(schoolRating.toFixed(1)),
       totalReviews: totalReviews,
       verified: true,
-      yearsExperience: Math.floor(Math.random() * 10) + 3, // Random between 3-13 years
-      description: apiClass.school.description || `Escuela de surf profesional especializada en ${apiClass.level.toLowerCase()} con instructores certificados.`,
-      shortReview: 'Excelente escuela con instructores muy profesionales y metodología probada.'
+      yearsExperience: Math.floor(Math.random() * 10) + 3,
+      description: apiClass.school?.description || '',
+      shortReview: 'Excelente escuela.'
     },
     instructor: {
       name: instructorName,
       rating: Number(instructorRating.toFixed(1)),
-      experience: `${Math.floor(Math.random() * 8) + 3} años de experiencia, Instructor calificado`,
+      experience: `Instructor calificado`,
       specialties: specialties
     },
     images: apiClass.images || [],
-    classImage: `https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`
+    classImage: apiClass.images?.[0] || 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=crop'
   };
 }
 

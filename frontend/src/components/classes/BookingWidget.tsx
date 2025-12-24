@@ -8,6 +8,8 @@ interface AvailableDate {
   id: string | number;
   startTime: string;
   endTime: string;
+  price?: number;
+  availableSpots?: number;
 }
 
 interface BookingWidgetProps {
@@ -34,12 +36,18 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
   useEffect(() => {
     setParticipants(initialParticipants);
   }, [initialParticipants]);
+
+  // Determine effective class data based on selection
+  const selectedDateObj = availableDates.find(d => d.id.toString() === (selectedDateId?.toString() || classData.id.toString()));
   
+  const effectivePrice = selectedDateObj?.price ?? classData.price;
+  const effectiveAvailableSpots = selectedDateObj?.availableSpots ?? classData.availableSpots;
+
   // Ensure strict participants limit based on available spots
-  const maxParticipants = Math.min(classData.availableSpots, 10);
+  const maxParticipants = Math.min(effectiveAvailableSpots, 10);
   
   // Calculate total price
-  const totalPrice = classData.price * participants; // Precio base es por persona
+  const totalPrice = effectivePrice * participants; // Precio base es por persona
   const prices = formatDualCurrency(totalPrice);
 
   const handleParticipantsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -57,8 +65,8 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
     
     // Helper to extract time string
     const formatTimeStr = (t: string | Date) => {
-      if (t instanceof Date) return t.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-      if (typeof t === 'string' && t.includes('T')) return new Date(t).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      if (t instanceof Date) return t.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+      if (typeof t === 'string' && t.includes('T')) return new Date(t).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
       return String(t).substring(0, 5); // Assume HH:mm or HH:mm:ss
     };
 
@@ -96,6 +104,7 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
                     onChange={handleDateChange}
                     className="block w-full pl-10 pr-10 py-3 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:bg-gray-100 transition-colors"
                   >
+                    {!selectedDateId && <option value="" disabled>Selecciona una fecha</option>}
                     {availableDates.map((date) => (
                       <option key={date.id} value={date.id.toString()}>
                          {formatDateLabel(date.date, date.startTime, date.endTime)}
@@ -117,10 +126,7 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
                      <p className="text-xs text-gray-600">
                         {typeof classData.startTime === 'string' && !classData.startTime.includes('T') 
                            ? classData.startTime.substring(0, 5) 
-                           : new Date(classData.startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })} - 
-                        {typeof classData.endTime === 'string' && !classData.endTime.includes('T') 
-                           ? classData.endTime.substring(0, 5) 
-                           : new Date(classData.endTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                           : new Date(classData.startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                      </p>
                    </div>
                 </div>
@@ -141,13 +147,18 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
               id="participants-widget"
               value={participants}
               onChange={handleParticipantsChange}
-              className="block w-full pl-10 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg border hover:border-gray-400 transition-colors bg-white appearance-none cursor-pointer"
+              disabled={maxParticipants === 0}
+              className="block w-full pl-10 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg border hover:border-gray-400 transition-colors bg-white appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
             >
-              {Array.from({ length: Math.min(maxParticipants, 5) }, (_, i) => i + 1).map((num) => (
-                <option key={num} value={num}>
-                  {num} {num === 1 ? 'persona' : 'personas'}
-                </option>
-              ))}
+              {maxParticipants > 0 ? (
+                  Array.from({ length: Math.min(maxParticipants, 5) }, (_, i) => i + 1).map((num) => (
+                    <option key={num} value={num}>
+                      {num} {num === 1 ? 'persona' : 'personas'}
+                    </option>
+                  ))
+              ) : (
+                  <option value="0">0 personas</option>
+              )}
             </select>
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
               <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -162,7 +173,7 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
           {maxParticipants === 0 && (
              <p className="text-xs text-red-600 mt-2 flex items-center gap-1 font-medium">
               <Info className="w-3 h-3" />
-              Agotado
+              Agotado para esta fecha
             </p>
           )}
         </div>

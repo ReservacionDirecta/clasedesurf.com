@@ -11,316 +11,82 @@ const router = express.Router();
  */
 router.get('/classes', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId;
-    const role = req.role;
+    if (req.role !== 'INSTRUCTOR') return res.status(403).json({ message: 'Forbidden' });
+    if (!req.schoolId) return res.status(404).json({ message: 'No school' });
 
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    // Only INSTRUCTOR role can access this endpoint
-    if (role !== 'INSTRUCTOR') {
-      return res.status(403).json({ message: 'Only instructors can access this endpoint' });
-    }
-
-    if (!req.schoolId) {
-      return res.status(404).json({ message: 'No school found for this instructor' });
-    }
-
-    // Get instructor profile
-    const instructor = await prisma.instructor.findUnique({
-      where: { userId: Number(userId) },
-      include: { 
-        user: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
+    const classes = await prisma.class.findMany({
+      where: { schoolId: req.schoolId, deletedAt: null },
+      include: {
+        sessions: {
+          where: { date: { gte: new Date() } },
+          orderBy: { date: 'asc' },
+          take: 20
+        },
+        _count: { select: { reservations: true } }
       }
     });
 
-    if (!instructor) {
-      return res.status(404).json({ message: 'Instructor profile not found' });
-    }
-
-    // Get classes from the instructor's school
-    const classes = await prisma.class.findMany({
-      where: {
-        schoolId: req.schoolId,
-        // Optionally filter by instructor name if stored in class
-        // instructor: instructor.user.name
-      },
-      include: {
-        school: {
-          select: {
-            id: true,
-            name: true,
-            location: true
-          }
-        },
-        reservations: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                phone: true
-              }
-            },
-            payment: true
-          }
-        }
-      },
-      orderBy: { date: 'asc' }
-    });
-
-    res.json({
-      instructor: {
-        id: instructor.id,
-        name: instructor.user.name,
-        email: instructor.user.email,
-        schoolId: instructor.schoolId
-      },
-      classes
-    });
+    res.json({ classes });
   } catch (err) {
-    console.error('Error fetching instructor classes:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Error' });
   }
 });
 
-/**
- * GET /instructor/profile - Get instructor profile
- */
 router.get('/profile', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    if (req.role !== 'INSTRUCTOR') {
-      return res.status(403).json({ message: 'Only instructors can access this endpoint' });
-    }
-
     const instructor = await prisma.instructor.findUnique({
-      where: { userId: Number(userId) },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            role: true
-          }
-        },
-        school: {
-          select: {
-            id: true,
-            name: true,
-            location: true,
-            description: true,
-            phone: true,
-            email: true
-          }
-        },
-        reviews: {
-          orderBy: { createdAt: 'desc' },
-          take: 10
-        }
-      }
+      where: { userId: Number(req.userId) },
+      include: { user: true, school: true }
     });
-
-    if (!instructor) {
-      return res.status(404).json({ message: 'Instructor profile not found' });
-    }
-
+    if (!instructor) return res.status(404).json({ message: 'Not found' });
     res.json(instructor);
   } catch (err) {
-    console.error('Error fetching instructor profile:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Error' });
   }
 });
 
-/**
- * GET /instructor/students - Get students from instructor's classes
- * Returns only students who have reservations in the instructor's school
- */
 router.get('/students', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId;
+    if (!req.schoolId) return res.status(404).json({ message: 'No school' });
 
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    if (req.role !== 'INSTRUCTOR') {
-      return res.status(403).json({ message: 'Only instructors can access this endpoint' });
-    }
-
-    if (!req.schoolId) {
-      return res.status(404).json({ message: 'No school found for this instructor' });
-    }
-
-    // Get all reservations from classes in the instructor's school
     const reservations = await prisma.reservation.findMany({
-      where: {
-        class: {
-          schoolId: req.schoolId
-        },
-        status: {
-          not: 'CANCELED'
-        }
-      },
+      where: { class: { schoolId: req.schoolId }, status: { not: 'CANCELED' } },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            age: true,
-            weight: true,
-            height: true,
-            canSwim: true,
-            injuries: true
-          }
-        },
-        class: {
-          select: {
-            id: true,
-            title: true,
-            date: true,
-            level: true
-          }
-        },
-        payment: {
-          select: {
-            status: true,
-            amount: true
-          }
-        }
+        user: true,
+        class: { select: { id: true, title: true, level: true } }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
 
-    // Group by student
     const studentsMap = new Map();
-    reservations.forEach(reservation => {
-      const studentId = reservation.user.id;
-      if (!studentsMap.has(studentId)) {
-        studentsMap.set(studentId, {
-          ...reservation.user,
-          classes: [],
-          totalReservations: 0
-        });
+    reservations.forEach(r => {
+      if (!studentsMap.has(r.userId)) {
+        studentsMap.set(r.userId, { ...r.user, classes: [], total: 0 });
       }
-      const student = studentsMap.get(studentId);
-      student.classes.push({
-        id: reservation.class.id,
-        title: reservation.class.title,
-        date: reservation.class.date,
-        level: reservation.class.level,
-        reservationStatus: reservation.status,
-        paymentStatus: reservation.payment?.status
-      });
-      student.totalReservations++;
+      const s = studentsMap.get(r.userId);
+      s.classes.push({ id: r.class.id, title: r.class.title, date: r.date, status: r.status });
+      s.total++;
     });
 
-    const students = Array.from(studentsMap.values());
-
-    res.json(students);
+    res.json(Array.from(studentsMap.values()));
   } catch (err) {
-    console.error('Error fetching students:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Error' });
   }
 });
 
-/**
- * GET /instructor/earnings - Get earnings summary for instructor
- * Only shows earnings from their school
- */
 router.get('/earnings', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId;
+    if (!req.schoolId) return res.status(404).json({ message: 'No school' });
 
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    if (req.role !== 'INSTRUCTOR') {
-      return res.status(403).json({ message: 'Only instructors can access this endpoint' });
-    }
-
-    if (!req.schoolId) {
-      return res.status(404).json({ message: 'No school found for this instructor' });
-    }
-
-    // Get all paid reservations from classes in the instructor's school
     const payments = await prisma.payment.findMany({
-      where: {
-        status: 'PAID',
-        reservation: {
-          class: {
-            schoolId: req.schoolId
-          }
-        }
-      },
-      include: {
-        reservation: {
-          include: {
-            class: {
-              select: {
-                id: true,
-                title: true,
-                date: true,
-                price: true
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        paidAt: 'desc'
-      }
+      where: { status: 'PAID', reservation: { class: { schoolId: req.schoolId } } },
+      include: { reservation: { include: { class: true } } }
     });
 
-    const totalEarnings = payments.reduce((sum, payment) => sum + payment.amount, 0);
-    const totalClasses = new Set(payments.map(p => p.reservation.class.id)).size;
-
-    // Group by month
-    const earningsByMonth = payments.reduce((acc: any, payment) => {
-      const month = new Date(payment.paidAt || payment.createdAt).toISOString().slice(0, 7);
-      if (!acc[month]) {
-        acc[month] = { month, total: 0, count: 0 };
-      }
-      acc[month].total += payment.amount;
-      acc[month].count++;
-      return acc;
-    }, {});
-
-    res.json({
-      totalEarnings,
-      totalClasses,
-      totalPayments: payments.length,
-      earningsByMonth: Object.values(earningsByMonth),
-      recentPayments: payments.slice(0, 10).map(p => ({
-        id: p.id,
-        amount: p.amount,
-        date: p.paidAt || p.createdAt,
-        className: p.reservation.class.title,
-        classDate: p.reservation.class.date
-      }))
-    });
+    const total = payments.reduce((sum, p) => sum + p.amount, 0);
+    res.json({ total, count: payments.length, payments });
   } catch (err) {
-    console.error('Error fetching earnings:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: 'Error' });
   }
 });
 

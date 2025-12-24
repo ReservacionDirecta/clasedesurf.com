@@ -202,23 +202,16 @@ export default function Home() {
       setLoading(true)
       setError(null)
       
-      const apiClasses = await apiService.getClasses() // No params = all classes
+      const apiClasses = await apiService.getClasses() // No params = all products
       const transformedClasses = apiClasses.map(transformApiClassToFrontend)
       
-      const now = new Date()
-      // By default show only future classes
-      const futureClasses = transformedClasses.filter(c => c.startTime > now)
-      
-      setClasses(futureClasses)
-      setFilteredClasses(futureClasses)
+      setClasses(transformedClasses)
+      setFilteredClasses(transformedClasses)
       
     } catch (err) {
       console.warn('⚠️ Failed to load from API, using mock data:', err)
-      const now = new Date()
-      const futureMockClasses = mockClasses.filter(c => c.startTime > now)
-      
-      setClasses(futureMockClasses)
-      setFilteredClasses(futureMockClasses)
+      setClasses(mockClasses)
+      setFilteredClasses(mockClasses)
       setError('Usando datos de ejemplo (Modo Offline)')
     } finally {
       setLoading(false)
@@ -226,47 +219,26 @@ export default function Home() {
   }
 
   const handleClassSelect = (classData: any) => {
-    setSelectedClass(classData)
-    setIsModalOpen(true)
+    router.push(`/classes/${classData.id}`);
   }
 
+  // Remove Modal handlers as we redirect to page now
   const handleCloseModal = () => {
     setIsModalOpen(false)
     setSelectedClass(null)
   }
 
   const handleBookingSubmit = async (bookingData: any) => {
-    try {
-      // Prepare reservation data
-      const reservationData = {
-        classId: selectedClass?.id?.toString() || bookingData.classId,
-        classData: selectedClass,
-        bookingData: {
-            ...bookingData,
-            totalAmount: bookingData.totalAmount || (selectedClass?.price || 0) * (bookingData.participants || 1)
-        },
-        status: 'pending' as const
-      }
-
-      sessionStorage.setItem('pendingReservation', JSON.stringify(reservationData))
-      handleCloseModal()
-      setTimeout(() => {
-        window.location.href = '/reservations/confirmation'
-      }, 150)
-    } catch (err) {
-      console.error('Error preparing reservation:', err)
-      alert('Error al procesar la reserva.')
-    }
+     // Legacy handler - keeping for type safety if referenced elsewhere, but unused now
   }
 
   const handleFiltersChange = async (newFilters: any) => {
-    setLoading(true); // Explicit loading state for search
+    setLoading(true); 
     setFilters(newFilters)
 
     try {
       const apiFilters: ClassFilters = { ...newFilters }
       
-      // Ensure number/string mapping for price
       if (newFilters.priceRange) {
         apiFilters.minPrice = newFilters.priceRange[0]
         apiFilters.maxPrice = newFilters.priceRange[1]
@@ -277,52 +249,13 @@ export default function Home() {
 
       console.log('🔍 Searching with filters:', apiFilters);
       
-      // Fetch directly from API with the new filters
       const apiClasses = await apiService.getClasses(apiFilters)
-      let transformedClasses = apiClasses.map(transformApiClassToFrontend)
+      const transformedClasses = apiClasses.map(transformApiClassToFrontend)
 
-      // --- Client Side Logic Fix ---
-      // When strictly searching by name ('q'), we should NOT enforce strictly future dates
-      // unless specifically asked. Sometimes users search for a past memorable class or
-      // the backend returns exact matches that are technically 'yesterday' but relevant.
-      // However, for booking, we usually want future.
-      
-      // Strategy: 
-      // 1. If 'date' filter is provided, enforce it strictly.
-      // 2. If 'q' is provided, relax date constraint slightly OR trust backend results mostly.
-      // 3. Otherwise, default to future classes only.
-
-      const matchStrictDate = (classItem: any) => {
-         if (!newFilters.date) return true; // Pass if no date filter
-         const candidates = [classItem.date, classItem.startTime, classItem.scheduledDate]
-         return candidates.some((c) => {
-             if (!c) return false;
-             const d = c instanceof Date ? c : new Date(c);
-             return !Number.isNaN(d.getTime()) && d.toISOString().split('T')[0] === newFilters.date;
-         });
-      }
-
-      transformedClasses = transformedClasses.filter(classItem => {
-         // Strict date check if filter exists
-         if (newFilters.date && !matchStrictDate(classItem)) {
-             return false;
-         }
-         
-         // If no date filter AND no search query, perform default "future only" cleanup
-         // This prevents showing old classes on generic category clicks if API returns them
-         const isGenericBrowsing = !newFilters.q && !newFilters.date;
-         if (isGenericBrowsing) {
-             if (classItem.startTime < new Date()) return false;
-         }
-
-         return true;
-      })
-      
       setFilteredClasses(transformedClasses)
     } catch (err) {
       console.error('❌ Error applying filters:', err)
-      // Fallback: Filter the ALREADY LOADED classes (from initial load)
-      // This handles the "Offline" or "API Error" case gracefully
+       // Basic client fallback
        const filtered = classes.filter(classItem => {
           if (newFilters.q) {
              const q = newFilters.q.toLowerCase();
