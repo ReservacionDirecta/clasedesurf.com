@@ -30,18 +30,22 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
       let session;
       const classIdNum = Number(classId);
 
+      // Determine if sessionId is numeric or virtual
+      const isNumericSessionId = sessionId && !isNaN(Number(sessionId)) && !String(sessionId).startsWith('v_');
+      const numericSessionId = isNumericSessionId ? Number(sessionId) : null;
+
       // 1. Fetch class product details
       const cls = await tx.class.findUnique({
         where: { id: classIdNum },
         include: {
-          sessions: sessionId ? { where: { id: Number(sessionId) } } : false,
+          sessions: numericSessionId ? { where: { id: numericSessionId } } : undefined,
           school: true
         }
       });
       if (!cls) throw new Error('Class not found');
 
       // 2. Determine session data (explicit session or fallback to product)
-      if (sessionId) {
+      if (numericSessionId) {
         session = (cls as any).sessions?.[0];
         if (!session) throw new Error('Session not found');
       } else if (date && time) {

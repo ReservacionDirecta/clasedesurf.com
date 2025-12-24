@@ -6,9 +6,24 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession, signIn } from 'next-auth/react';
 import Link from 'next/link';
-import { CheckCircle } from 'lucide-react';
+import { 
+  CheckCircle, 
+  Check,
+  ChevronRight, 
+  User, 
+  Users, 
+  Calendar, 
+  Clock, 
+  MapPin, 
+  ArrowLeft,
+  CreditCard,
+  ShieldCheck,
+  Zap,
+  Info
+} from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { formatDualCurrency } from '@/lib/currency';
 import PaymentUpload from '@/components/payments/PaymentUpload';
 
@@ -68,8 +83,8 @@ function ReservationConfirmationContent() {
   const [showParticipantsForm, setShowParticipantsForm] = useState(true); // Mostrar por defecto
   const [participantsError, setParticipantsError] = useState<string | null>(null);
 
-  // Estado para el formulario de pago
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  // Estado para el flujo de pasos
+  const [currentStep, setCurrentStep] = useState(1);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
 
@@ -107,10 +122,11 @@ function ReservationConfirmationContent() {
 
         setParticipants(initialParticipants);
 
-        // Mostrar automáticamente el formulario de participantes si el usuario está autenticado
-        // y hay participantes pendientes de completar
-        if (sessionStatus === 'authenticated' && initialParticipants.length > 0) {
-          setShowParticipantsForm(true);
+        // Determinar el paso inicial
+        if (sessionStatus === 'authenticated') {
+          setCurrentStep(2);
+        } else {
+          setCurrentStep(1);
         }
 
         setLoading(false);
@@ -271,6 +287,8 @@ function ReservationConfirmationContent() {
         body: JSON.stringify({
           classId: parseInt(reservationData.classId),
           sessionId: (reservationData.bookingData as any).sessionId,
+          date: (reservationData.bookingData as any).date,
+          time: (reservationData.bookingData as any).time,
           specialRequest: reservationData.bookingData.specialRequest,
           participants: participants  // Enviar datos completos de participantes
         })
@@ -293,8 +311,8 @@ function ReservationConfirmationContent() {
         status: 'created'
       });
 
-      // Mostrar formulario de pago inmediatamente después de crear la reserva
-      setShowPaymentForm(true);
+      // Avanzar al paso de pago
+      setCurrentStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear la reserva');
       console.error(err);
@@ -492,709 +510,437 @@ function ReservationConfirmationContent() {
 
   const isAuthenticated = sessionStatus === 'authenticated' && session;
   const totalPrices = formatDualCurrency(reservationData.bookingData.totalAmount);
+  const times = getClassTimes();
+
+  // Componente de Indicador de Pasos
+  const StepIndicator = () => (
+    <div className="mb-10">
+      <div className="flex items-center justify-between max-w-2xl mx-auto">
+        <div className="flex flex-col items-center">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${currentStep >= 1 ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' : 'bg-gray-200 text-gray-500'}`}>
+            <span className="font-bold">1</span>
+          </div>
+          <span className={`text-xs mt-2 font-semibold ${currentStep >= 1 ? 'text-indigo-600' : 'text-gray-400'}`}>Revisión</span>
+        </div>
+        <div className={`h-1 flex-1 mx-4 transition-all duration-500 ${currentStep >= 2 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
+        <div className="flex flex-col items-center">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${currentStep >= 2 ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' : 'bg-gray-200 text-gray-500'}`}>
+            <span className="font-bold">2</span>
+          </div>
+          <span className={`text-xs mt-2 font-semibold ${currentStep >= 2 ? 'text-indigo-600' : 'text-gray-400'}`}>Participantes</span>
+        </div>
+        <div className={`h-1 flex-1 mx-4 transition-all duration-500 ${currentStep >= 3 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
+        <div className="flex flex-col items-center">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${currentStep >= 3 ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' : 'bg-gray-200 text-gray-500'}`}>
+            <span className="font-bold">3</span>
+          </div>
+          <span className={`text-xs mt-2 font-semibold ${currentStep >= 3 ? 'text-indigo-600' : 'text-gray-400'}`}>Pago</span>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Confirmación de Reserva</h1>
-              <p className="text-gray-600 mt-1">
-                {reservationData.status === 'created' || reservationData.status === 'confirmed'
-                  ? 'Tu reserva ha sido confirmada'
-                  : 'Revisa los detalles y completa tu reserva'}
-              </p>
-            </div>
-            {reservationData.status === 'created' || reservationData.status === 'confirmed' ? (
-              <div className="bg-green-100 text-green-800 px-4 py-2 rounded-full font-semibold">
-                ✓ Confirmada
-              </div>
-            ) : (
-              <div className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-semibold">
-                Pendiente
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-[#F8FAFC] py-8 px-4 sm:py-12">
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#011627] tracking-tight mb-3">
+            Completa tu Reserva
+          </h1>
+          <p className="text-gray-500 max-w-lg mx-auto">
+            Estás a solo unos pasos de vivir una experiencia increíble en el mar.
+          </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Class Information */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Información de la Clase</h2>
+        <StepIndicator />
 
-              {reservationData.classData && (
-                <>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {reservationData.classData.title || 'Clase de Surf'}
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    {reservationData.classData.description || 'Sin descripción'}
-                  </p>
+        <div className="grid lg:grid-cols-12 gap-8 items-start">
+          {/* Main Content Areas */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* STEP 1: REVIEW & ACCOUNT */}
+            {currentStep === 1 && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                  <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+                    <Zap className="w-5 h-5 text-indigo-600" />
+                    <h2 className="text-xl font-bold text-slate-900">Resumen del Servicio</h2>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex flex-col sm:flex-row gap-6">
+                      <div className="w-full sm:w-48 h-36 rounded-2xl overflow-hidden shrink-0 border-4 border-indigo-50/50 shadow-inner">
+                        <ImageWithFallback 
+                          src={reservationData.classData?.images?.[0] || '/images/placeholder-class.jpg'} 
+                          alt={reservationData.classData?.title || 'Clase'}
+                          fill
+                          className="object-cover transition-transform hover:scale-105 duration-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold text-slate-900 mb-2">{reservationData.classData?.title}</h3>
+                        <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+                           <div className="flex items-center gap-2">
+                             <Calendar className="w-4 h-4 text-indigo-500" />
+                             <span>{formatDate(reservationData.classData?.date || reservationData.classData?.startTime)}</span>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <Clock className="w-4 h-4 text-indigo-500" />
+                             <span>{times.startTime} - {times.endTime}</span>
+                           </div>
+                           <div className="flex items-center gap-2">
+                             <MapPin className="w-4 h-4 text-indigo-500" />
+                             <span>{reservationData.classData?.location}</span>
+                           </div>
+                        </div>
+                        <div className="mt-4 p-3 bg-indigo-50 rounded-lg inline-flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                          <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">Nivel: {reservationData.classData?.level}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Fecha:</span>
-                      <p className="text-gray-900 capitalize">
-                        {formatDate(reservationData.classData.date || reservationData.classData.startTime)}
+                {!isAuthenticated && (
+                  <div className="bg-white rounded-2xl shadow-xl border-2 border-indigo-600 p-8 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-16 -mt-16 opacity-50"></div>
+                    <div className="relative z-10">
+                      <h2 className="text-2xl font-bold text-slate-900 mb-2">Crear tu cuenta</h2>
+                      <p className="text-slate-600 mb-8">
+                        Para poder gestionar tus reservas y acceder a tu perfil, necesitamos que definas una contraseña.
                       </p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Horario:</span>
-                      <p className="text-gray-900">
-                        {(() => {
-                          const times = getClassTimes();
-                          return `${times.startTime} - ${times.endTime}`;
-                        })()}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Nivel:</span>
-                      <p className="text-gray-900 capitalize">
-                        {reservationData.classData.level || 'Principiante'}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Participantes:</span>
-                      <p className="text-gray-900">
-                        {reservationData.bookingData.participants}
-                      </p>
-                    </div>
-                  </div>
+                      
+                      {registerError && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-700 rounded-xl flex items-center gap-3">
+                          <Info className="w-5 h-5 shrink-0" />
+                          <p className="text-sm">{registerError}</p>
+                        </div>
+                      )}
 
-                  {reservationData.classData.location && (
-                    <div className="mt-4">
-                      <span className="text-sm font-medium text-gray-700">Ubicación:</span>
-                      <p className="text-gray-900">{reservationData.classData.location}</p>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* School Information */}
-            {reservationData.classData?.school && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Información de la Escuela</h2>
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Nombre:</span>
-                    <p className="text-gray-900 font-semibold">{reservationData.classData.school.name || 'Escuela de Surf'}</p>
-                  </div>
-                  {reservationData.classData.school.location && (
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Ubicación:</span>
-                      <p className="text-gray-900">{reservationData.classData.school.location}</p>
-                    </div>
-                  )}
-                  {reservationData.classData.school.phone && (
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Teléfono:</span>
-                      <p className="text-gray-900">{reservationData.classData.school.phone}</p>
-                    </div>
-                  )}
-                  {reservationData.classData.school.email && (
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Email:</span>
-                      <p className="text-gray-900">{reservationData.classData.school.email}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Booking Information */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Información de Reserva</h2>
-
-              <div className="space-y-4">
-                <div>
-                  <span className="text-sm font-medium text-gray-700">Nombre:</span>
-                  <p className="text-gray-900">{reservationData.bookingData.name}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-700">Email:</span>
-                  <p className="text-gray-900">{reservationData.bookingData.email}</p>
-                </div>
-
-                {reservationData.bookingData.age && (
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Edad:</span>
-                      <p className="text-gray-900">{reservationData.bookingData.age} años</p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Altura:</span>
-                      <p className="text-gray-900">{reservationData.bookingData.height} cm</p>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Peso:</span>
-                      <p className="text-gray-900">{reservationData.bookingData.weight} kg</p>
-                    </div>
-                  </div>
-                )}
-
-                {reservationData.bookingData.specialRequest && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Solicitud especial:</span>
-                    <p className="text-gray-900">{reservationData.bookingData.specialRequest}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-red-800">{error}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Registration Form - Moved from sidebar */}
-            {showRegisterForm && !isAuthenticated && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold text-gray-900">Crear Cuenta</h2>
-                  <button
-                    onClick={() => setShowRegisterForm(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                <p className="text-sm text-gray-600 mb-6">
-                  Crea una cuenta para confirmar tu reserva. Usaremos el email y nombre que proporcionaste.
-                </p>
-
-                {registerError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center">
-                      <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-red-800">{registerError}</span>
-                    </div>
-                  </div>
-                )}
-
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre
-                    </label>
-                    <Input
-                      type="text"
-                      value={reservationData?.bookingData.name || ''}
-                      disabled
-                      className="bg-gray-50"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Este nombre se usará para tu cuenta</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <Input
-                      type="email"
-                      value={reservationData?.bookingData.email || ''}
-                      disabled
-                      className="bg-gray-50"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Este email se usará para iniciar sesión</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Contraseña *
-                    </label>
-                    <Input
-                      type="password"
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="Mínimo 6 caracteres"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirmar Contraseña *
-                    </label>
-                    <Input
-                      type="password"
-                      value={registerData.confirmPassword}
-                      onChange={(e) => setRegisterData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      placeholder="Repite tu contraseña"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      className="flex-1"
-                      disabled={registering}
-                    >
-                      {registering ? 'Creando cuenta...' : 'Crear Cuenta y Reservar'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowRegisterForm(false)}
-                      disabled={registering}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Formulario de Pago - Ahora se muestra en un modal, no en la página */}
-
-            {/* Formulario de Participantes */}
-            {isAuthenticated && reservationData.status === 'pending' && !showPaymentForm && (
-              <div className="bg-white rounded-lg shadow-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Datos de Participantes</h2>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Completa la información de cada participante para continuar con tu reserva
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowParticipantsForm(!showParticipantsForm)}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    {showParticipantsForm ? 'Ocultar' : 'Mostrar'}
-                  </button>
-                </div>
-
-                {!showParticipantsForm && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <p className="text-sm text-blue-800">
-                      <strong>Importante:</strong> Debes completar los datos de todos los participantes antes de confirmar la reserva.
-                    </p>
-                  </div>
-                )}
-
-                {participantsError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                    <div className="flex items-center">
-                      <svg className="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-red-800">{participantsError}</span>
-                    </div>
-                  </div>
-                )}
-
-                {showParticipantsForm && (
-                  <div className="space-y-6">
-                    {participants.map((participant, index) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                          {index === 0 ? 'Titular de la Reserva' : `Participante ${index + 1}`}
-                        </h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid sm:grid-cols-2 gap-6">
+                        <div className="space-y-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Nombre completo *
-                            </label>
-                            <input
-                              type="text"
-                              value={participant.name}
-                              onChange={(e) => updateParticipant(index, 'name', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Nombre del participante"
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Nombre</label>
+                            <Input value={reservationData.bookingData.name} disabled className="bg-slate-50 border-slate-200" />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Email</label>
+                            <Input value={reservationData.bookingData.email} disabled className="bg-slate-50 border-slate-200" />
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Contraseña</label>
+                            <Input 
+                              type="password" 
+                              placeholder="Mínimo 6 caracteres"
+                              value={registerData.password}
+                              onChange={e => setRegisterData(prev => ({...prev, password: e.target.value}))}
                             />
                           </div>
-
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Edad *
-                            </label>
-                            <input
-                              type="number"
-                              value={participant.age}
-                              onChange={(e) => updateParticipant(index, 'age', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Edad"
-                              min="8"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Altura (cm) *
-                            </label>
-                            <input
-                              type="number"
-                              value={participant.height}
-                              onChange={(e) => updateParticipant(index, 'height', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Altura en cm"
-                              min="100"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Peso (kg) *
-                            </label>
-                            <input
-                              type="number"
-                              value={participant.weight}
-                              onChange={(e) => updateParticipant(index, 'weight', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Peso en kg"
-                              min="20"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={participant.canSwim}
-                                onChange={(e) => updateParticipant(index, 'canSwim', e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-sm font-medium text-gray-700">¿Sabe nadar?</span>
-                            </label>
-                          </div>
-
-                          {participant.canSwim && (
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Nivel de natación
-                              </label>
-                              <select
-                                value={participant.swimmingLevel}
-                                onChange={(e) => updateParticipant(index, 'swimmingLevel', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              >
-                                <option value="BEGINNER">Principiante</option>
-                                <option value="INTERMEDIATE">Intermedio</option>
-                                <option value="ADVANCED">Avanzado</option>
-                              </select>
-                            </div>
-                          )}
-
-                          <div className="md:col-span-2">
-                            <label className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={participant.hasSurfedBefore}
-                                onChange={(e) => updateParticipant(index, 'hasSurfedBefore', e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                              />
-                              <span className="text-sm font-medium text-gray-700">¿Ha practicado surf antes?</span>
-                            </label>
-                          </div>
-
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Lesiones o condiciones médicas
-                            </label>
-                            <textarea
-                              value={participant.injuries}
-                              onChange={(e) => updateParticipant(index, 'injuries', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Describe cualquier lesión o condición médica relevante"
-                              rows={2}
-                            />
-                          </div>
-
-                          <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Comentarios adicionales
-                            </label>
-                            <textarea
-                              value={participant.comments}
-                              onChange={(e) => updateParticipant(index, 'comments', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="Cualquier información adicional que el coach deba saber"
-                              rows={2}
+                            <label className="block text-sm font-bold text-slate-700 mb-2">Confirmar Contraseña</label>
+                            <Input 
+                              type="password"
+                              placeholder="Repite tu contraseña"
+                              value={registerData.confirmPassword}
+                              onChange={e => setRegisterData(prev => ({...prev, confirmPassword: e.target.value}))}
                             />
                           </div>
                         </div>
+                      </div>
+                      
+                      <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                        <Button 
+                          onClick={handleRegister} 
+                          className="px-10 h-14 text-lg bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200"
+                          disabled={registering}
+                        >
+                          {registering ? 'Procesando...' : 'Crear Cuenta y Continuar'}
+                        </Button>
+                        <div className="flex items-center px-4">
+                          <span className="text-sm text-slate-500">¿Ya tienes cuenta? <Link href="/login" className="text-indigo-600 font-bold hover:underline">Inicia sesión</Link></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isAuthenticated && (
+                  <div className="flex justify-end">
+                    <Button onClick={() => setCurrentStep(2)} className="h-14 px-10 text-lg group bg-[#011627] text-white">
+                      Siguiente Paso
+                      <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 2: PARTICIPANTS */}
+            {currentStep === 2 && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center">
+                      <Users className="w-6 h-6 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-slate-900">Datos de los Alumnos</h2>
+                      <p className="text-slate-500">Esta información es vital para que los coaches preparen el equipo adecuado.</p>
+                    </div>
+                  </div>
+
+                  {participantsError && (
+                    <div className="mb-8 p-4 bg-red-50 border border-red-100 text-red-700 rounded-xl flex items-center gap-2">
+                       <Info className="w-5 h-5" />
+                       <span className="text-sm font-medium">{participantsError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-8">
+                    {participants.map((p, idx) => (
+                      <div key={idx} className="p-6 rounded-2xl border border-slate-100 bg-slate-50/30">
+                        <div className="flex items-center gap-3 mb-6">
+                          <span className="w-8 h-8 rounded-full bg-[#011627] text-white flex items-center justify-center text-sm font-bold">{idx + 1}</span>
+                          <h3 className="text-lg font-bold text-slate-900">{idx === 0 ? 'Titular' : `Acompañante ${idx + 1}`}</h3>
+                        </div>
+                        
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                           <div className="sm:col-span-2 lg:col-span-1">
+                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Nombre completo</label>
+                             <Input 
+                                placeholder="Ej: Juan Pérez"
+                                value={p.name}
+                                onChange={e => updateParticipant(idx, 'name', e.target.value)}
+                                className="bg-white border-slate-200 h-12"
+                             />
+                           </div>
+                           <div>
+                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Edad</label>
+                             <Input 
+                                type="number"
+                                placeholder="8+"
+                                value={p.age}
+                                onChange={e => updateParticipant(idx, 'age', e.target.value)}
+                                className="bg-white border-slate-200 h-12"
+                             />
+                           </div>
+                           <div className="grid grid-cols-2 gap-4">
+                             <div>
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Altura (cm)</label>
+                               <Input 
+                                  type="number"
+                                  placeholder="cm"
+                                  value={p.height}
+                                  onChange={e => updateParticipant(idx, 'height', e.target.value)}
+                                  className="bg-white border-slate-200 h-12"
+                               />
+                             </div>
+                             <div>
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Peso (kg)</label>
+                               <Input 
+                                  type="number"
+                                  placeholder="kg"
+                                  value={p.weight}
+                                  onChange={e => updateParticipant(idx, 'weight', e.target.value)}
+                                  className="bg-white border-slate-200 h-12"
+                               />
+                             </div>
+                           </div>
+                        </div>
+
+                        <div className="mt-6 flex flex-wrap gap-6 border-t border-slate-100 pt-6">
+                          <label className="flex items-center gap-3 cursor-pointer group">
+                             <div className={`w-6 h-6 rounded-md border-2 transition-colors flex items-center justify-center ${p.canSwim ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300'}`}>
+                               <input type="checkbox" className="hidden" checked={p.canSwim} onChange={e => updateParticipant(idx, 'canSwim', e.target.checked)} />
+                               {p.canSwim && <Check className="w-4 h-4" />}
+                             </div>
+                             <span className="text-sm font-semibold text-slate-700">Sabe Nadar</span>
+                          </label>
+
+                          <label className="flex items-center gap-3 cursor-pointer group">
+                             <div className={`w-6 h-6 rounded-md border-2 transition-colors flex items-center justify-center ${p.hasSurfedBefore ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-300'}`}>
+                               <input type="checkbox" className="hidden" checked={p.hasSurfedBefore} onChange={e => updateParticipant(idx, 'hasSurfedBefore', e.target.checked)} />
+                               {p.hasSurfedBefore && <Check className="w-4 h-4" />}
+                             </div>
+                             <span className="text-sm font-semibold text-slate-700">Experiencia previa</span>
+                          </label>
+                        </div>
+                        
+                        {(p.injuries || true) && (
+                           <div className="mt-6">
+                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Observaciones Médicas / Comentarios</label>
+                              <textarea 
+                                value={p.injuries}
+                                onChange={e => updateParticipant(idx, 'injuries', e.target.value)}
+                                placeholder="Lesiones, condiciones especiales o comentarios para el coach..."
+                                className="w-full rounded-xl border-slate-200 focus:ring-indigo-500 focus:border-indigo-500 text-sm p-4 min-h-[100px]"
+                              />
+                           </div>
+                        )}
                       </div>
                     ))}
                   </div>
-                )}
+
+                  <div className="mt-10 flex flex-col sm:flex-row gap-4 border-t border-slate-100 pt-8">
+                     <Button variant="outline" onClick={() => setCurrentStep(1)} className="h-14 px-8 border-slate-200 text-slate-600">
+                        <ArrowLeft className="mr-2 w-4 h-4" />
+                        Atrás
+                     </Button>
+                     <Button 
+                       onClick={handleCreateReservation} 
+                       className="flex-1 h-14 text-lg bg-[#011627] shadow-xl"
+                       disabled={creating}
+                     >
+                        {creating ? 'Procesando...' : 'Confirmar Datos y Reservar'}
+                     </Button>
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* STEP 3: PAYMENT & SUCCESS */}
+            {currentStep === 3 && (
+              <div className="space-y-6 animate-in zoom-in-95 duration-500">
+                 <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 sm:p-12 text-center overflow-hidden relative">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-1 bg-linear-to-r from-green-400 via-blue-500 to-indigo-600"></div>
+                    
+                    <div className="inline-flex items-center justify-center w-24 h-24 bg-green-100 rounded-full mb-8">
+                       <CheckCircle className="w-12 h-12 text-green-600" />
+                    </div>
+
+                    <h2 className="text-3xl font-black text-[#011627] mb-4">¡Tu lugar está casi listo!</h2>
+                    <p className="text-slate-500 text-lg mb-10 max-w-md mx-auto">
+                       Hemos creado tu reserva. Para garantizar tu cupo, por favor completa el pago a continuación.
+                    </p>
+
+                    <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                       <div className="p-6 rounded-2xl bg-indigo-50 border border-indigo-100 text-left">
+                          <CreditCard className="w-8 h-8 text-indigo-600 mb-4" />
+                          <h4 className="font-bold text-indigo-900 mb-2">Métodos de Pago</h4>
+                          <p className="text-sm text-indigo-700/80 leading-relaxed mb-4">
+                             Aceptamos Transferencia, Yape, Plin o pago en efectivo en la oficina de la escuela.
+                          </p>
+                          <Button 
+                            variant="primary" 
+                            className="w-full bg-indigo-600 shadow-md"
+                            onClick={() => setShowPaymentModal(true)}
+                          >
+                             Información de Pago
+                          </Button>
+                       </div>
+                       
+                       <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-left">
+                          <User className="w-8 h-8 text-slate-400 mb-4" />
+                          <h4 className="font-bold text-slate-900 mb-2">Siguiente Paso</h4>
+                          <p className="text-sm text-slate-600 leading-relaxed mb-4">
+                             Sube tu comprobante si ya pagaste, o ven a visitarnos en la playa antes de tu clase.
+                          </p>
+                          <Link href="/reservations" className="block w-full">
+                            <Button variant="outline" className="w-full border-slate-300">
+                               Ver Mis Reservas
+                            </Button>
+                          </Link>
+                       </div>
+                    </div>
+                 </div>
+
+                 {paymentSubmitted && (
+                   <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 flex items-center gap-4 text-green-800">
+                      <Zap className="w-8 h-8 text-green-600 animate-pulse" />
+                      <div>
+                        <p className="font-bold text-lg">Comprobante recibido</p>
+                        <p className="text-sm opacity-90">Nuestro equipo verificará el pago en las próximas horas. Recibirás un correo de confirmación.</p>
+                      </div>
+                   </div>
+                 )}
+              </div>
+            )}
+
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Price Summary - Sticky en móvil y desktop */}
-            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 sticky top-4 sm:top-6 z-10 safe-area-bottom">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Resumen de Precio</h3>
-
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Precio unitario:</span>
-                  <span className="text-gray-900 font-medium">
-                    {(() => {
-                      const unitPrice = formatDualCurrency(reservationData.classData?.price || 0);
-                      return unitPrice.pen;
-                    })()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Participantes:</span>
-                  <span className="text-gray-900 font-medium">
-                    {reservationData.bookingData.participants}
-                  </span>
-                </div>
-                <div className="border-t pt-3 flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-900">Total:</span>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-blue-600">
-                      {totalPrices.pen}
-                    </div>
+          {/* Sidebar Area: Sticky Summary */}
+          <div className="lg:col-span-4 lg:sticky lg:top-8">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+               <div className="p-6 bg-[#011627] text-white">
+                  <h3 className="text-lg font-bold opacity-80 uppercase tracking-widest mb-1">Costo Estimado</h3>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black">{totalPrices.pen}</span>
                   </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              {reservationData.status !== 'created' && reservationData.status !== 'confirmed' && (
-                <div className="space-y-3 mt-4">
-                  {!isAuthenticated ? (
-                    <>
-                      <Button
-                        onClick={() => setShowRegisterForm(true)}
-                        variant="primary"
-                        className="w-full"
-                        disabled={creating || registering}
-                      >
-                        Registrarse y Confirmar Reserva
-                      </Button>
-                      <Button
-                        onClick={handleCreateReservation}
-                        variant="outline"
-                        className="w-full"
-                        disabled={creating || registering}
-                      >
-                        {creating ? 'Creando...' : 'Completar Reserva'}
-                      </Button>
-                      <p className="text-xs text-gray-500 text-center mt-2">
-                        Nota: Debes estar registrado para completar la reserva. Si haces clic aquí, te guiaremos para registrarte.
-                      </p>
-                      <Link href="/login" className="block">
-                        <Button variant="outline" className="w-full">
-                          Ya tengo cuenta - Iniciar Sesión
-                        </Button>
-                      </Link>
-                    </>
-                  ) : (
-                    <Button
-                      onClick={handleCreateReservation}
-                      variant="primary"
-                      className="w-full"
-                      disabled={creating}
-                    >
-                      {creating ? 'Creando Reserva...' : 'Confirmar Reserva'}
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {/* Payment Status & Next Steps - Enhanced */}
-              {(reservationData.status === 'created' || reservationData.status === 'confirmed') && (
-                <div className="mt-6 space-y-4">
-                  {/* Payment Status Indicator */}
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 mb-1">Estado de Pago</h4>
-                        {paymentSubmitted ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                              <span className="text-sm font-medium text-green-700">Comprobante enviado</span>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              Tu pago está siendo verificado. Te notificaremos cuando sea confirmado.
-                            </p>
+               </div>
+               
+               <div className="p-6 space-y-4">
+                  <div className="flex justify-between items-center text-sm font-medium">
+                     <span className="text-slate-500">Subtotal por persona</span>
+                     <span className="text-slate-900">{formatDualCurrency(reservationData.classData?.price || 0).pen}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-medium">
+                     <span className="text-slate-500">Cantidad alumnos</span>
+                     <span className="text-slate-900">x {reservationData.bookingData.participants}</span>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-slate-100">
+                    <div className="bg-slate-50 rounded-xl p-4">
+                       <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Tu Selección</h4>
+                       <div className="space-y-3">
+                          <div className="flex gap-3">
+                             <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+                             <span className="text-sm font-bold text-slate-700">{formatDate(reservationData.classData?.date || reservationData.classData?.startTime)}</span>
                           </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
-                              <span className="text-sm font-medium text-yellow-700">Pendiente de pago</span>
-                            </div>
-                            <p className="text-sm text-gray-600">
-                              Completa el pago para confirmar tu reserva
-                            </p>
+                          <div className="flex gap-3">
+                             <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+                             <span className="text-sm font-bold text-slate-700">{times.startTime} - {times.endTime}</span>
                           </div>
-                        )}
-                      </div>
+                       </div>
                     </div>
                   </div>
 
-                  {/* Payment Options */}
-                  {!paymentSubmitted && (
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-900 mb-3">Opciones de Pago</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                          <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900 text-sm">Efectivo en persona</p>
-                            <p className="text-xs text-gray-600 mt-1">Paga directamente en la escuela antes de la clase</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                          <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                          </svg>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900 text-sm">Transferencia / Yape / Plin</p>
-                            <p className="text-xs text-gray-600 mt-1">Sube tu comprobante de pago aquí</p>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => setShowPaymentModal(true)}
-                        variant="primary"
-                        className="w-full mt-4"
-                      >
-                        Subir Comprobante de Pago
-                      </Button>
+                  <div className="pt-4 px-2 space-y-3">
+                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                       <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                       <span>Confirmación inmediata</span>
                     </div>
-                  )}
-
-                  {/* Next Steps */}
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                      </svg>
-                      Próximos Pasos
-                    </h4>
-                    <ol className="space-y-3">
-                      <li className="flex items-start gap-3">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${paymentSubmitted ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                          }`}>
-                          {paymentSubmitted ? '✓' : '1'}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">
-                            {paymentSubmitted ? 'Pago enviado' : 'Completa el pago'}
-                          </p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {paymentSubmitted
-                              ? 'Tu comprobante está siendo verificado'
-                              : 'Sube tu comprobante de pago o paga en persona'}
-                          </p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">
-                          2
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">Recibe confirmación</p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Te enviaremos un email cuando tu pago sea verificado
-                          </p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-3">
-                        <div className="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center flex-shrink-0 text-xs font-bold">
-                          3
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">Prepárate para tu clase</p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            Llega 15 minutos antes. Trae protector solar y toalla
-                          </p>
-                        </div>
-                      </li>
-                    </ol>
+                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                       <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                       <span>Cancelación flexible (24h)</span>
+                    </div>
                   </div>
-
-                  {/* Action Button */}
-                  <Link href="/reservations">
-                    <Button variant="primary" className="w-full">
-                      Ver Mis Reservas
-                    </Button>
-                  </Link>
-                </div>
-              )}
+               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal de Pago */}
-      {showPaymentModal && reservationData.status === 'created' && reservationData.reservationId && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowPaymentModal(false);
-            }
-          }}
+      {/* Payment Modal Refined */}
+      {showPaymentModal && reservationData.reservationId && (
+        <div 
+          className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-300"
+          onClick={e => e.target === e.currentTarget && setShowPaymentModal(false)}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
+          <div className="bg-white rounded-4xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                  <CreditCard className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">¡Reserva Creada!</h2>
-                  <p className="text-sm text-gray-600">Completa el pago para confirmar</p>
+                  <h2 className="text-2xl font-black text-slate-900 leading-tight">Canales de Pago</h2>
+                  <p className="text-sm text-slate-500 font-medium tracking-wide uppercase">Reserva ID: #{reservationData.reservationId}</p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl p-2 -mr-2"
-                aria-label="Cerrar"
-              >
-                ✕
-              </button>
+              <button onClick={() => setShowPaymentModal(false)} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">✕</button>
             </div>
-
-            <div className="p-6">
+            
+            <div className="p-8 overflow-y-auto custom-scrollbar">
               <PaymentUpload
                 reservationId={parseInt(reservationData.reservationId)}
                 amount={reservationData.bookingData.totalAmount}
                 onPaymentSubmitted={() => {
                   setPaymentSubmitted(true);
                   setShowPaymentModal(false);
-                  // Actualizar estado de la reserva
-                  setReservationData({
-                    ...reservationData,
-                    status: 'confirmed'
-                  });
+                  setReservationData({...reservationData, status: 'confirmed'});
                 }}
               />
             </div>

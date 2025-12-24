@@ -529,7 +529,8 @@ export default function ClassDetailsPage() {
           endTime: reservationEndTime,
           level: classDetails.level,
           location: classDetails.location,
-          school: classDetails.school
+          school: classDetails.school,
+          images: classDetails.images
         },
         bookingData: {
           ...bookingData,

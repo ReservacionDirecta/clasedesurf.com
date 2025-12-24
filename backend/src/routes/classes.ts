@@ -262,6 +262,83 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
   }
 });
 
+// POST /classes/bulk - Create a Class Product AND its sessions atomically
+router.post('/bulk', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createBulkClassesSchema), async (req: AuthRequest, res) => {
+  try {
+    console.log('[POST /bulk] START - Body:', JSON.stringify(req.body, null, 2));
+    const { baseData, occurrences, beachId } = req.body;
+
+    // Resolve School ID
+    let finalSchoolId: number | undefined = req.body.schoolId ? Number(req.body.schoolId) : undefined;
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) {
+        console.error('[POST /bulk] No school found for SCHOOL_ADMIN user');
+        return res.status(404).json({ message: 'No school found for this user' });
+      }
+      finalSchoolId = req.schoolId;
+    }
+    console.log('[POST /bulk] Resolved School ID:', finalSchoolId);
+
+    // Use transaction to ensure both Product and Sessions are created or neither
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create the Class (Product)
+      console.log('[POST /bulk] Creating Class Product...');
+      const classData: any = {
+        title: baseData.title,
+        description: baseData.description,
+        duration: baseData.duration ? Number(baseData.duration) : 120,
+        defaultCapacity: baseData.capacity ? Number(baseData.capacity) : 8,
+        defaultPrice: baseData.price ? Number(baseData.price) : 0,
+        level: baseData.level,
+        instructor: baseData.instructor,
+        studentDetails: baseData.studentDetails,
+        images: baseData.images || [],
+        school: { connect: { id: Number(finalSchoolId) } }
+      };
+
+      if (beachId) {
+        console.log('[POST /bulk] Connecting beach ID:', beachId);
+        classData.beach = { connect: { id: Number(beachId) } };
+      }
+
+      const newClass = await tx.class.create({
+        data: classData
+      });
+      console.log('[POST /bulk] Class Created. ID:', newClass.id);
+
+      // 2. Create the Sessions
+      if (occurrences && occurrences.length > 0) {
+        console.log(`[POST /bulk] Creating ${occurrences.length} sessions...`);
+        const sessionData = occurrences.map((occ: any) => ({
+          classId: newClass.id,
+          date: new Date(occ.date),
+          time: occ.time,
+          capacity: newClass.defaultCapacity,
+          price: newClass.defaultPrice,
+          isClosed: false
+        }));
+
+        await tx.classSession.createMany({
+          data: sessionData
+        });
+        console.log('[POST /bulk] Sessions created successfully.');
+      }
+
+      return newClass;
+    });
+
+    console.log('[POST /bulk] Transaction completed successfully.');
+    res.status(201).json(result);
+  } catch (err: any) {
+    console.error('❌ Error creating bulk class [POST /bulk]:', err);
+    console.error('Stack Trace:', err.stack);
+    res.status(500).json({
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? err?.message : undefined
+    });
+  }
+});
+
 // POST /classes/bulk-sessions - create multiple SESSIONS for a product
 router.post('/bulk-sessions', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, async (req: AuthRequest, res) => {
   try {

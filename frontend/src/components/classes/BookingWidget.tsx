@@ -90,48 +90,119 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
       <div className="p-6 space-y-6">
         {/* Date & Time Selector */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Fecha y Hora</label>
-          <div className="relative">
-             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
-               <Calendar className="w-5 h-5 text-blue-600" />
-             </div>
-             
-             {/* If we have available dates, show a Select, otherwise just a read-only-like div */}
-             {availableDates && availableDates.length > 0 ? (
-                <div className="relative">
-                  <select
-                    value={selectedDateId ? selectedDateId.toString() : classData.id.toString()}
-                    onChange={handleDateChange}
-                    className="block w-full pl-10 pr-10 py-3 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:bg-gray-100 transition-colors"
-                  >
-                    {!selectedDateId && <option value="" disabled>Selecciona una fecha</option>}
-                    {availableDates.map((date) => (
-                      <option key={date.id} value={date.id.toString()}>
-                         {formatDateLabel(date.date, date.startTime, date.endTime)}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                     <ChevronDown className="w-4 h-4 text-gray-500" />
-                  </div>
-                </div>
-             ) : (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 pl-10 flex items-center justify-between">
-                   <div>
-                     <p className="text-sm font-semibold text-gray-900">
-                        {new Date(classData.date).toLocaleDateString('es-ES', { 
-                          weekday: 'short', day: 'numeric', month: 'short' 
-                        })}
-                     </p>
-                     <p className="text-xs text-gray-600">
-                        {typeof classData.startTime === 'string' && !classData.startTime.includes('T') 
-                           ? classData.startTime.substring(0, 5) 
-                           : new Date(classData.startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
-                     </p>
-                   </div>
-                </div>
-             )}
-          </div>
+           <label className="block text-sm font-bold text-gray-700 mb-2">Fecha y Hora</label>
+           
+           {/* If we have available dates, show split selectors */}
+           {availableDates && availableDates.length > 0 ? (
+              <div className="space-y-4">
+                 {/* 1. Date Selector */}
+                 <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                      <Calendar className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <select
+                      value={(() => {
+                         // Find the date string of the currently selected session
+                         const currentSession = availableDates.find(d => d.id.toString() === selectedDateId?.toString());
+                         if (currentSession) return new Date(currentSession.date).toDateString();
+                         // Default to first available date string if nothing selected
+                         return availableDates.length > 0 ? new Date(availableDates[0].date).toDateString() : '';
+                      })()}
+                      onChange={(e) => {
+                         // When date changes, auto-select the first time slot for that new date
+                         // Or just switch the view??
+                         // Better UX: Switch view to that date, let user pick time? 
+                         // But we need to trigger onDateChange with a VALID session ID.
+                         // Let's find the first session of the new date.
+                         const newDateStr = e.target.value; // timestamp string or date string?
+                         // e.target.value will be the one we set in <option value=...>
+                         
+                         const firstSessionOfDate = availableDates.find(d => new Date(d.date).toDateString() === newDateStr);
+                         if (firstSessionOfDate && onDateChange) {
+                            onDateChange(firstSessionOfDate.id);
+                         }
+                      }}
+                      className="block w-full pl-10 pr-10 py-3 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                       {/* Get Unique Dates */}
+                       {Array.from(new Set(availableDates.map(d => new Date(d.date).toDateString()))).map(dateStr => {
+                          // Display Label
+                          const dateObj = new Date(dateStr); // This might be approximate if dateStr is simple
+                          // We need a robust way. Let's find the first session with this dateStr to use its date object for formatting
+                          const repSession = availableDates.find(d => new Date(d.date).toDateString() === dateStr);
+                          if (!repSession) return null;
+                          
+                          const d = new Date(repSession.date);
+                          const label = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                          return (
+                             <option key={dateStr} value={dateStr}>
+                                {label.charAt(0).toUpperCase() + label.slice(1)}
+                             </option>
+                          );
+                       })}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                       <ChevronDown className="w-4 h-4 text-gray-500" />
+                    </div>
+                 </div>
+
+                 {/* 2. Time Selector (Buttons) */}
+                 <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Horarios disponibles</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                       {(() => {
+                           // Filter sessions for the currently selected date
+                           const currentSelectedSession = availableDates.find(d => d.id.toString() === selectedDateId?.toString());
+                           const targetDateString = currentSelectedSession 
+                              ? new Date(currentSelectedSession.date).toDateString()
+                              : (availableDates.length > 0 ? new Date(availableDates[0].date).toDateString() : '');
+                           
+                           const sessionsOnDate = availableDates.filter(d => new Date(d.date).toDateString() === targetDateString);
+                           
+                           return sessionsOnDate.map(session => {
+                              const isSelected = selectedDateId?.toString() === session.id.toString();
+                              const timeLabel = session.startTime.substring(0, 5);
+                              
+                              return (
+                                 <button
+                                    key={session.id}
+                                    onClick={() => onDateChange && onDateChange(session.id)}
+                                    className={`
+                                       py-2 px-3 rounded-lg text-sm font-bold border transition-all relative
+                                       ${isSelected 
+                                          ? 'bg-blue-600 text-white border-blue-600 shadow-md transform scale-105' 
+                                          : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600'}
+                                    `}
+                                 >
+                                    {timeLabel}
+                                    {isSelected && <Check className="w-3 h-3 absolute top-1 right-1 text-white/80" />}
+                                 </button>
+                              );
+                           });
+                       })()}
+                    </div>
+                 </div>
+              </div>
+           ) : (
+              // Single date display (fallback)
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 pl-10 flex items-center justify-between">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <Calendar className="w-5 h-5 text-gray-400" />
+                 </div>
+                 <div>
+                   <p className="text-sm font-semibold text-gray-900">
+                      {new Date(classData.date).toLocaleDateString('es-ES', { 
+                        weekday: 'short', day: 'numeric', month: 'short' 
+                      })}
+                   </p>
+                   <p className="text-xs text-gray-600">
+                      {typeof classData.startTime === 'string' && !classData.startTime.includes('T') 
+                         ? classData.startTime.substring(0, 5) 
+                         : new Date(classData.startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                   </p>
+                 </div>
+              </div>
+           )}
         </div>
 
         {/* Participants Selector */}

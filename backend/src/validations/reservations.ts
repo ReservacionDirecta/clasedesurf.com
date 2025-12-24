@@ -56,7 +56,8 @@ export const createReservationSchema = z.object({
     .optional()
     .nullable(),
   date: z.string().optional(),
-  time: z.string().optional()
+  time: z.string().optional(),
+  sessionId: z.union([z.number(), z.string()]).optional().transform(val => val ? Number(val) : undefined)
 });
 
 // Schema for updating reservation status (admin only)

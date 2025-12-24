@@ -14,7 +14,7 @@ interface Class {
   id: number;
   title: string;
   description: string;
-  date: string;
+  date?: string; // Made optional
   duration: number;
   capacity: number;
   enrolled?: number;
@@ -28,13 +28,25 @@ interface Class {
   isRecurring?: boolean;
   type?: string;
   images?: string[];
+  nextSession?: { date: string; time: string }; // Added nextSession
   paymentInfo?: {
     totalReservations: number;
     paidReservations: number;
     totalRevenue: number;
     occupancyRate: number;
   };
+  createdAt?: string; // Add createdAt to interface
 }
+
+// Helper to get a valid date for sorting/grouping
+const getClassDate = (cls: Class): Date => {
+  if (cls.date) return new Date(cls.date);
+  if (cls.nextSession?.date) return new Date(cls.nextSession.date);
+  if (cls.createdAt) return new Date(cls.createdAt);
+  return new Date(); // Fallback
+};
+
+
 
 interface School {
   id: number;
@@ -76,11 +88,11 @@ export default function ClassesManagementPage() {
     classes.forEach(cls => {
         let key = '';
         if (method === 'month') {
-          const date = new Date(cls.date);
+          const date = getClassDate(cls);
           const dateKey = date.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
           key = dateKey.charAt(0).toUpperCase() + dateKey.slice(1);
         } else if (method === 'date') {
-          const date = new Date(cls.date);
+          const date = getClassDate(cls);
           const dateKey = date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
            key = dateKey.charAt(0).toUpperCase() + dateKey.slice(1);
         } else {
@@ -101,14 +113,14 @@ export default function ClassesManagementPage() {
           // Actually, if we are in 'date' view, the Date is already same. So just Title.
           // If we are in 'name' view, grouping by Date makes sense.
           // Let's make a universal cluster key: Title + Date(YMD).
-          const d = new Date(cls.date);
+          const d = getClassDate(cls);
           const dateStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
           const key = `${cls.title}||${dateStr}`; 
           
           if (!clusters[key]) clusters[key] = [];
           clusters[key].push(cls);
       });
-      return Object.values(clusters).sort((a,b) => new Date(a[0].date).getTime() - new Date(b[0].date).getTime());
+      return Object.values(clusters).sort((a,b) => getClassDate(a[0]).getTime() - getClassDate(b[0]).getTime());
   };
 
   const fetchClasses = useCallback(async () => {
@@ -408,7 +420,7 @@ export default function ClassesManagementPage() {
         if (filter === 'all') return true;
         
         if (!cls.status) {
-          const classDate = new Date(cls.date);
+          const classDate = getClassDate(cls);
           const now = new Date();
           if (classDate < now) {
             return filter === 'completed';
@@ -421,9 +433,8 @@ export default function ClassesManagementPage() {
       : [];
   }, [classes, filter]);
 
-  // Sort classes by date
   const sortedClasses = useMemo(() => {
-    return [...filteredClasses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return [...filteredClasses].sort((a, b) => getClassDate(a).getTime() - getClassDate(b).getTime());
   }, [filteredClasses]);
 
   const groupedClasses = useMemo(() => {
@@ -704,10 +715,22 @@ export default function ClassesManagementPage() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm font-medium text-gray-900">
-                                  {new Date(cls.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                                  {cls.date ? (
+                                    new Date(cls.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+                                  ) : cls.nextSession ? (
+                                    new Date(cls.nextSession.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+                                  ) : (
+                                    <span className="text-gray-400">Recurrente</span>
+                                  )}
                                 </div>
                                 <div className="text-sm text-gray-500">
-                                  {new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                  {cls.date ? (
+                                    new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+                                  ) : cls.nextSession ? (
+                                    cls.nextSession.time
+                                  ) : (
+                                    <span className="text-xs">Ver horarios</span>
+                                  )}
                                 </div>
                               </td>
                               <td className="px-6 py-4">

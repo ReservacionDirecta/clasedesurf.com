@@ -151,6 +151,7 @@ model Class {
   updatedAt    DateTime      @updatedAt
   deletedAt    DateTime?
   instructor   String?
+  studentDetails String?
   images       String[]
   beachId      Int?
   beach        Beach?        @relation(fields: [beachId], references: [id])
