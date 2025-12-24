@@ -856,34 +856,57 @@ export default function ClassDetailsPage() {
                       <section>
                            <h2 className="text-2xl font-bold text-[#011627] mb-6">Punto de encuentro</h2>
                            <div className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 group">
-                                <div className="h-56 bg-gray-200 relative overflow-hidden">
-                                    <ImageWithFallback 
-                                        src="https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?q=80&w=2662&auto=format&fit=crop" 
-                                        alt="Map Location" 
-                                        fill 
-                                        className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
-                                    />
-                                    <div className="absolute inset-0 bg-blue-900/10"></div>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="bg-white p-4 rounded-full shadow-xl animate-bounce">
-                                            <MapPin className="w-6 h-6 text-blue-600" />
-                                        </div>
-                                    </div>
+                                <div className="h-64 bg-gray-200 relative overflow-hidden group-hover:shadow-inner transition-shadow">
+                                    <iframe 
+                                      width="100%" 
+                                      height="100%" 
+                                      style={{ border: 0 }}
+                                      loading="lazy"
+                                      allowFullScreen
+                                      referrerPolicy="no-referrer-when-downgrade"
+                                      src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                                        (classDetails.beach?.name ? `Playa ${classDetails.beach.name}, ` : '') + 
+                                        (classDetails.beach?.location || classDetails.location || classDetails.school.location)
+                                      )}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                      className="w-full h-full grayscale-[10%] group-hover:grayscale-0 transition-all duration-700"
+                                      title="Ubicación de la clase"
+                                      aria-label={`Mapa mostrando la ubicación en ${classDetails.beach?.name || classDetails.location}`}
+                                    ></iframe>
                                 </div>
                                 <div className="p-8">
                                      <div className="flex items-start justify-between gap-4">
                                          <div>
-                                            <h3 className="font-bold text-xl mb-1 text-[#011627]">{classDetails.school.name}</h3>
-                                            <p className="text-gray-600 text-lg mb-4">{classDetails.school.location}, {classDetails.location}</p>
-                                            <p className="text-sm text-gray-500 mb-6">Busca nuestras banderas y el instructor con uniforme de la escuela.</p>
+                                            <h3 className="font-bold text-xl mb-1 text-[#011627]">
+                                                {classDetails.beach?.name ? `Playa ${classDetails.beach.name}` : classDetails.school.name}
+                                            </h3>
+                                            <p className="text-gray-600 text-lg mb-4">
+                                                {classDetails.beach?.location || classDetails.location || classDetails.school.location}
+                                            </p>
+                                            <p className="text-sm text-gray-500 mb-6">Busca nuestras banderas y el instructor con uniforme de {classDetails.school.name}.</p>
                                          </div>
                                          <div className="hidden sm:block">
-                                              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(classDetails.school.location)}`} target="_blank" rel="noopener noreferrer" className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+                                              <a 
+                                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                                    (classDetails.beach?.name ? `Playa ${classDetails.beach.name} ` : '') + 
+                                                    (classDetails.beach?.location || classDetails.location || classDetails.school.location)
+                                                )}`} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+                                              >
                                                  <Share2 className="w-4 h-4" /> Cómo llegar
                                               </a>
                                          </div>
                                      </div>
-                                     <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(classDetails.school.location)}`} target="_blank" rel="noopener noreferrer" className="block w-full text-center bg-[#0071EB] text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors">
+                                     <a 
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                            (classDetails.beach?.name ? `Playa ${classDetails.beach.name} ` : '') + 
+                                            (classDetails.beach?.location || classDetails.location || classDetails.school.location)
+                                        )}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer" 
+                                        className="block w-full text-center bg-[#0071EB] text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                                     >
                                          Abrir en Google Maps
                                      </a>
                                 </div>
