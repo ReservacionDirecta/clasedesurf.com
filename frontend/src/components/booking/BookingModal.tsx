@@ -445,7 +445,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
                     Edad *
@@ -473,7 +473,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     name="participants"
                     value={formData.participants}
                     onChange={handleInputChange}
-                    className="w-full h-12 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full h-12 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   >
                     {Array.from({ length: Math.min(classData.availableSpots || 1, 10) }, (_, i) => (
                       <option key={i + 1} value={i + 1}>
@@ -492,7 +492,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Detalles Adicionales</h3>
               <p className="text-sm text-gray-600 mb-4">Estos campos son opcionales pero nos ayudan a brindarte una mejor experiencia</p>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">
                     Altura (cm)

@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import PaymentUpload from '@/components/payments/PaymentUpload';
 import { formatDualCurrency } from '@/lib/currency';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 
 interface Class {
   id: number;
@@ -23,6 +24,7 @@ interface Class {
     id: number;
     name: string;
   };
+  images?: string[];
 }
 
 interface Reservation {
@@ -32,6 +34,8 @@ interface Reservation {
   status: 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'PAID' | 'COMPLETED';
   specialRequest: string | null;
   createdAt: string;
+  date: string;
+  time: string;
   class: Class;
   payment?: {
     id: number;
@@ -73,25 +77,27 @@ export default function ReservationsPage() {
     }
   }, [session]);
 
-  // Removed auto-refresh on visibility/focus change to preserve user state
+  const handleCancelReservation = async (reservation: Reservation) => {
+    const isPaid = reservation.payment?.status === 'PAID';
+    const actionTerm = isPaid ? 'suspender' : 'cancelar';
+    const actionTermCap = isPaid ? 'Suspender' : 'Cancelar';
 
-  const handleCancelReservation = async (reservationId: number) => {
-    // Confirmar cancelaciÃ³n
-    if (!confirm('Â¿EstÃ¡s seguro de que deseas cancelar esta reserva? Esta acciÃ³n no se puede deshacer.')) {
+    // Confirmar acción
+    if (!confirm(`¿Estás seguro de que deseas ${actionTerm} esta reserva? Esta acción no se puede deshacer.`)) {
       return;
     }
 
     try {
       const token = (session as any)?.backendToken;
       if (!token) {
-        alert('Debes estar autenticado para cancelar la reserva');
+        alert(`Debes estar autenticado para ${actionTerm} la reserva`);
         return;
       }
 
       setLoading(true);
 
       // Llamar a la API para cancelar la reserva
-      const response = await fetch(`/api/reservations/${reservationId}`, {
+      const response = await fetch(`/api/reservations/${reservation.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -104,16 +110,16 @@ export default function ReservationsPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al cancelar la reserva');
+        throw new Error(errorData.message || `Error al ${actionTerm} la reserva`);
       }
 
       // Recargar las reservas para reflejar el cambio
       await fetchReservations();
 
-      alert('Reserva cancelada exitosamente');
+      alert(`Reserva ${isPaid ? 'suspendida' : 'cancelada'} exitosamente`);
     } catch (error) {
-      console.error('Error al cancelar reserva:', error);
-      alert(error instanceof Error ? error.message : 'Error al cancelar la reserva. Por favor, intÃ©ntalo de nuevo.');
+      console.error(`Error al ${actionTerm} reserva:`, error);
+      alert(error instanceof Error ? error.message : `Error al ${actionTerm} la reserva. Por favor, inténtalo de nuevo.`);
       setLoading(false);
     }
   };
@@ -143,23 +149,17 @@ export default function ReservationsPage() {
 
       const data = await response.json();
       console.log('[Reservations] Raw data from API:', data);
-      // Asegurar que los datos de payment estÃ©n incluidos
+      
       const processedData = data.map((res: any) => {
         if (!res.class) {
           console.warn('[Reservations] Reservation without class data:', res);
         }
-        const processed = {
+        return {
           ...res,
           payment: res.payment || undefined
         };
-        console.log('[Reservations] Reservation processed:', {
-          id: processed.id,
-          status: processed.status,
-          classTitle: processed.class?.title
-        });
-        return processed;
       });
-      console.log('[Reservations] Total processed reservations:', processedData.length);
+      
       setReservations(processedData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -170,30 +170,29 @@ export default function ReservationsPage() {
 
   const getFilteredReservations = () => {
     const now = new Date();
-    now.setHours(0, 0, 0, 0); // Reset to start of day for comparison
+    now.setHours(0, 0, 0, 0);
 
     const filtered = reservations.filter(reservation => {
-      if (!reservation.class || !reservation.class.date) {
-        console.warn('[Reservations] Reservation missing class or date:', reservation);
+      // Use reservation date if available, otherwise fallback to class date
+      const dateStr = reservation.date || reservation.class?.date;
+      
+      if (!dateStr) {
+        console.warn('[Reservations] Reservation missing date:', reservation);
         return false;
       }
 
-      const classDate = new Date(reservation.class.date);
-      classDate.setHours(0, 0, 0, 0); // Reset to start of day for comparison
+      const resDate = new Date(dateStr);
+      resDate.setHours(0, 0, 0, 0);
 
       if (filter === 'upcoming') {
-        // Show all non-canceled reservations that are either:
-        // 1. Future dates, OR
-        // 2. PENDING/CONFIRMED status (regardless of date - user might have just created it)
-        return reservation.status !== 'CANCELED' && (classDate >= now || reservation.status === 'PENDING' || reservation.status === 'CONFIRMED');
+        return reservation.status !== 'CANCELED' && (resDate >= now || reservation.status === 'PENDING' || reservation.status === 'CONFIRMED');
       } else if (filter === 'past') {
-        // Show only truly past reservations (date passed AND not pending/confirmed)
-        return (classDate < now && reservation.status !== 'PENDING' && reservation.status !== 'CONFIRMED') || reservation.status === 'CANCELED';
+        return (resDate < now && reservation.status !== 'PENDING' && reservation.status !== 'CONFIRMED') || reservation.status === 'CANCELED';
       }
       return true;
     });
 
-    console.log('[Reservations] Filter:', filter, 'Total reservations:', reservations.length, 'Filtered:', filtered.length);
+    console.log('[Reservations] Filter:', filter, 'Total:', reservations.length, 'Filtered:', filtered.length);
     return filtered;
   };
 
@@ -201,23 +200,28 @@ export default function ReservationsPage() {
     const styles = {
       PENDING: 'bg-yellow-100 text-yellow-800',
       CONFIRMED: 'bg-green-100 text-green-800',
-      CANCELED: 'bg-red-100 text-red-800'
+      CANCELED: 'bg-red-100 text-red-800',
+      PAID: 'bg-green-100 text-green-800',
+      COMPLETED: 'bg-blue-100 text-blue-800'
     };
 
     const labels = {
       PENDING: 'Pendiente',
       CONFIRMED: 'Confirmada',
-      CANCELED: 'Cancelada'
+      CANCELED: 'Cancelada',
+      PAID: 'Pagado',
+      COMPLETED: 'Completada'
     };
 
     return (
-      <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status as keyof typeof styles]}`}>
-        {labels[status as keyof typeof labels]}
+      <span className={`px-3 py-1 rounded-full text-sm font-medium ${styles[status as keyof typeof styles] || 'bg-gray-100'}`}>
+        {labels[status as keyof typeof labels] || status}
       </span>
     );
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Fecha no disponible';
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
       weekday: 'long',
@@ -227,21 +231,39 @@ export default function ReservationsPage() {
     });
   };
 
-  const formatTime = (time: string | Date) => {
-    if (!time) return '00:00';
-    if (time instanceof Date) {
-      return time.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const getReservationTime = (reservation: Reservation) => {
+    if (reservation.time) return reservation.time.substring(0, 5);
+    
+    // Fallback to class time if reservation time is not set
+    if (reservation.class?.date) {
+        const classDate = new Date(reservation.class.date);
+        return classDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
     }
-    return time.substring(0, 5);
+    
+    return '00:00';
+  };
+
+  const getReservationEndTime = (reservation: Reservation) => {
+      const startTime = getReservationTime(reservation);
+      const [hours, minutes] = startTime.split(':').map(Number);
+      
+      const duration = reservation.class?.duration || 120;
+      const endDate = new Date();
+      endDate.setHours(hours, minutes + duration);
+      
+      return endDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
   const getClassTimes = (classData: Class) => {
     // Calculate start and end times from date and duration
+    // If date is missing, return fallback
+    if (!classData.date) return { startTime: '00:00', endTime: '00:00' };
+
     const classDate = new Date(classData.date);
     const startTime = classDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-    // Get duration from class data or calculate from startTime/endTime if available
-    const duration = (classData as any).duration || 120; // Default 120 minutes
+    // Get duration from class data (assume 120 min if missing)
+    const duration = (classData as any).duration || 120; 
     const endDate = new Date(classDate.getTime() + duration * 60000);
     const endTime = endDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
 
@@ -368,29 +390,42 @@ export default function ReservationsPage() {
             {filteredReservations.map((reservation) => (
               <div
                 key={reservation.id}
-                className="bg-white rounded-lg shadow hover:shadow-md transition-shadow overflow-hidden"
+                className="bg-white rounded-lg shadow hover:shadow-md transition-shadow overflow-hidden group"
               >
-                <div className="p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-xl font-semibold text-gray-900">
-                            {reservation.class.title}
-                          </h3>
-                          <p className="text-sm text-gray-500 mt-1">
-                            {reservation.class.school.name}
-                          </p>
+                <div className="flex flex-col sm:flex-row">
+                  {/* Image */}
+                  <div className="relative w-full sm:w-48 h-48 sm:h-auto shrink-0 bg-gray-100">
+                    <ImageWithFallback
+                      src={reservation.class.images?.[0] || '/images/placeholder-class.jpg'}
+                      alt={reservation.class.title}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                              {reservation.class?.title || 'Clase'}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {reservation.class?.school?.name || 'Escuela'}
+                            </p>
+                          </div>
+                          {getStatusBadge(reservation.status)}
                         </div>
-                        {getStatusBadge(reservation.status)}
-                      </div>
 
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="flex items-center text-gray-600">
                           <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
-                          <span className="capitalize">{formatDate(reservation.class.date)}</span>
+                          <span className="capitalize">{formatDate(reservation.date || reservation.class?.date)}</span>
                         </div>
 
                         <div className="flex items-center text-gray-600">
@@ -398,12 +433,10 @@ export default function ReservationsPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <span>
-                            {(() => {
-                              const times = getClassTimes(reservation.class);
-                              return `${times.startTime} - ${times.endTime}`;
-                            })()}
+                            {getReservationTime(reservation)} - {getReservationEndTime(reservation)}
                           </span>
                         </div>
+
 
                         <div className="flex items-center text-gray-600">
                           <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -418,13 +451,24 @@ export default function ReservationsPage() {
                           </svg>
                           <div>
                             {(() => {
-                              const prices = formatDualCurrency(reservation.class.price);
-                              return (
-                                <>
-                                  <span className="font-semibold text-lg">{prices.pen}</span>
-                                  <span className="text-xs text-gray-500 ml-1">({prices.usd})</span>
-                                </>
-                              );
+                              const amount = reservation.payment?.amount !== undefined 
+                                ? Number(reservation.payment.amount) 
+                                : (Number(reservation.class?.price) || 0);
+                              
+                              const prices = formatDualCurrency(amount);
+                              const isPaid = reservation.payment?.status === 'PAID';
+                              
+                                return (
+                                  <div className="flex flex-col">
+                                    <div className="flex items-baseline gap-1">
+                                      <span className="font-semibold text-lg">{prices.pen}</span>
+                                      <span className="text-xs text-gray-500">({prices.usd})</span>
+                                    </div>
+                                    <span className={`text-[10px] uppercase font-bold ${isPaid ? 'text-green-600' : 'text-gray-500'}`}>
+                                      {isPaid ? 'Total Pagado' : 'Por Pagar'}
+                                    </span>
+                                  </div>
+                                );
                             })()}
                           </div>
                         </div>
@@ -488,20 +532,39 @@ export default function ReservationsPage() {
                       Ver Clase
                     </button>
 
-                    {reservation.status !== 'CANCELED' && reservation.status !== 'COMPLETED' && new Date(reservation.class.date) >= new Date() && (
-                      <button
-                        onClick={() => handleCancelReservation(reservation.id)}
-                        disabled={loading}
-                        className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Cancelar Reserva
-                      </button>
+                    {reservation.status !== 'CANCELED' && reservation.status !== 'COMPLETED' && (
+                      (() => {
+                        const dateStr = reservation.date || reservation.class.date; // Use specific date or fallback
+                        const resDate = new Date(dateStr);
+                        resDate.setHours(0,0,0,0);
+                        const now = new Date();
+                        now.setHours(0,0,0,0);
+                        
+                        if (resDate < now) return null; // Don't show for past events
+
+                        const isPaid = reservation.payment?.status === 'PAID';
+
+                        return (
+                          <button
+                            onClick={() => handleCancelReservation(reservation)}
+                            disabled={loading}
+                            className={`inline-flex items-center px-4 py-2 border rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              isPaid 
+                                ? 'border-orange-300 text-orange-700 bg-white hover:bg-orange-50' 
+                                : 'border-red-300 text-red-700 bg-white hover:bg-red-50'
+                            }`}
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            {isPaid ? 'Suspender Clase' : 'Cancelar Reserva'}
+                          </button>
+                        );
+                      })()
                     )}
                   </div>
                 </div>
+               </div>
               </div>
             ))}
           </div>
@@ -510,10 +573,10 @@ export default function ReservationsPage() {
 
       {/* Modal de Detalles de Reserva */}
       {showDetailsModal && selectedReservation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0 z-10">
+            <div className="bg-linear-to-r from-blue-600 to-cyan-600 text-white px-6 py-4 flex items-center justify-between rounded-t-lg sticky top-0 z-10">
               <h2 className="text-2xl font-bold">Detalles de la Reserva #{selectedReservation.id}</h2>
               <button
                 onClick={() => {
@@ -537,10 +600,10 @@ export default function ReservationsPage() {
 
               {/* Class Information */}
               <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">InformaciÃ³n de la Clase</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Información de la Clase</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">TÃ­tulo</p>
+                    <p className="text-sm text-gray-600">Tí­tulo</p>
                     <p className="text-lg font-medium text-gray-900">{selectedReservation.class.title}</p>
                   </div>
                   <div>
@@ -567,7 +630,8 @@ export default function ReservationsPage() {
                   <div>
                     <p className="text-sm text-gray-600">Precio</p>
                     {(() => {
-                      const prices = formatDualCurrency(selectedReservation.class.price);
+                      const price = Number(selectedReservation.class?.price) || 0;
+                      const prices = formatDualCurrency(price);
                       return (
                         <div>
                           <p className="text-lg font-bold text-gray-900">{prices.pen}</p>
@@ -579,7 +643,7 @@ export default function ReservationsPage() {
                 </div>
                 {selectedReservation.class.description && (
                   <div className="mt-4">
-                    <p className="text-sm text-gray-600 mb-2">DescripciÃ³n</p>
+                    <p className="text-sm text-gray-600 mb-2">Descripción</p>
                     <p className="text-gray-900">{selectedReservation.class.description}</p>
                   </div>
                 )}
@@ -619,13 +683,13 @@ export default function ReservationsPage() {
               {/* Payment Information */}
               {selectedReservation.payment && (
                 <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">InformaciÃ³n de Pago</h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Información de Pago</h3>
                   <div className="space-y-4">
                     {selectedReservation.payment.originalAmount && selectedReservation.payment.originalAmount !== selectedReservation.payment.amount && (
                       <div className="bg-white p-4 rounded-lg border border-gray-200">
                         <div className="flex justify-between items-center text-sm mb-2">
                           <span className="text-gray-600">Precio Original:</span>
-                          <span className="font-medium text-gray-900 line-through">{formatDualCurrency(selectedReservation.payment.originalAmount).pen}</span>
+                          <span className="font-medium text-gray-900 line-through">{formatDualCurrency(Number(selectedReservation.payment.originalAmount) || 0).pen}</span>
                         </div>
                         {selectedReservation.payment.discountAmount && selectedReservation.payment.discountAmount > 0 && (
                           <div className="flex justify-between items-center text-sm mb-2">
@@ -638,12 +702,12 @@ export default function ReservationsPage() {
                               )}
                               :
                             </span>
-                            <span className="font-semibold text-green-600">-{formatDualCurrency(selectedReservation.payment.discountAmount).pen}</span>
+                            <span className="font-semibold text-green-600">-{formatDualCurrency(Number(selectedReservation.payment.discountAmount) || 0).pen}</span>
                           </div>
                         )}
                         <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                           <span className="font-medium text-gray-700">Total Pagado:</span>
-                          <span className="text-gray-900 text-lg font-bold">{formatDualCurrency(selectedReservation.payment.amount).pen}</span>
+                          <span className="text-gray-900 text-lg font-bold">{formatDualCurrency(Number(selectedReservation.payment.amount) || 0).pen}</span>
                         </div>
                       </div>
                     )}
@@ -651,7 +715,8 @@ export default function ReservationsPage() {
                       <div>
                         <p className="text-sm text-gray-600">Monto</p>
                         {(() => {
-                          const prices = formatDualCurrency(selectedReservation.payment.amount);
+                          const amount = Number(selectedReservation.payment.amount) || 0;
+                          const prices = formatDualCurrency(amount);
                           return (
                             <div>
                               <p className="text-lg font-bold text-gray-900">{prices.pen}</p>
@@ -671,7 +736,7 @@ export default function ReservationsPage() {
                       </div>
                       {selectedReservation.payment.paymentMethod && (
                         <div>
-                          <p className="text-sm text-gray-600">MÃ©todo de Pago</p>
+                          <p className="text-sm text-gray-600">Método de Pago</p>
                           <p className="text-lg font-medium text-gray-900">{selectedReservation.payment.paymentMethod}</p>
                         </div>
                       )}
@@ -724,14 +789,14 @@ export default function ReservationsPage() {
         </div>
       )}
 
-      {/* Modal de Pago - Se muestra automÃ¡ticamente despuÃ©s de hacer click en Pagar */}
+      {/* Modal de Pago - Se muestra automáticamente después de hacer click en Pagar */}
       {showPaymentModal && selectedReservation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-100 p-0 sm:p-4 overflow-y-auto">
           <div className="bg-white rounded-t-3xl sm:rounded-lg shadow-xl max-w-3xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto flex flex-col safe-area-bottom">
-            {/* Header - Sticky en mÃ³vil */}
-            <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-lg sticky top-0 z-10">
+            {/* Header - Sticky en móvil */}
+            <div className="bg-linear-to-r from-green-600 to-green-700 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-lg sticky top-0 z-10">
               <h2 className="text-xl sm:text-2xl font-bold">
-                {selectedReservation.payment?.status === 'PAID' ? 'Ver Pago' : 'MÃ©todos de Pago'}
+                {selectedReservation.payment?.status === 'PAID' ? 'Ver Pago' : 'Métodos de Pago'}
               </h2>
               <button
                 onClick={() => {

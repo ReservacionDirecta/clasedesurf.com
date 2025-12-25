@@ -6,13 +6,13 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Clock, Users, Plus, StickyNote, X, BookOpen } from 'lucide-react';
-import ClassForm from '@/components/forms/ClassForm';
+import { ClassForm } from '@/components/forms/ClassForm';
 import { Class } from '@/types';
 import { formatCurrency } from '@/lib/currency';
 import { useToast } from '@/contexts/ToastContext';
 
 interface CalendarEvent {
-  id: number;
+  id: number | string;
   title: string;
   date: string;
   startTime: string;
@@ -22,7 +22,7 @@ interface CalendarEvent {
   capacity?: number;
   enrolled?: number;
   content?: string;
-  noteId?: number; // ID de la nota en la base de datos
+  noteId?: number;
 }
 
 export default function SchoolCalendar() {
@@ -31,8 +31,8 @@ export default function SchoolCalendar() {
   const { showSuccess, showError } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true); // Solo para carga inicial
-  const [isInitialLoad, setIsInitialLoad] = useState(true); // Flag para distinguir carga inicial
+  const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{ date: Date; hour: number; minute?: number } | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -49,68 +49,53 @@ export default function SchoolCalendar() {
 
   const fetchEvents = useCallback(async (showLoading = false) => {
     try {
-      // Solo mostrar loading si se solicita explícitamente (carga inicial)
       if (showLoading) {
-      setLoading(true);
+        setLoading(true);
       }
 
-      const schoolResponse = await fetch('/api/schools/my-school');
-      if (!schoolResponse.ok) {
-        setEvents([]);
-        if (showLoading) setLoading(false);
-        return;
-      }
+      // Calculate date range (current month +/- 1 month buffer)
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      
+      const startQuery = new Date(startOfMonth);
+      startQuery.setMonth(startQuery.getMonth() - 1); // Buffer previous month
+      
+      const endQuery = new Date(endOfMonth);
+      endQuery.setMonth(endQuery.getMonth() + 1); // Buffer next month
 
-      const school = await schoolResponse.json();
-
-      const [classesResponse, reservationsResponse, notesResponse] = await Promise.all([
-        fetch(`/api/schools/${school.id}/classes`),
-        fetch('/api/reservations'),
+      const [calendarResponse, notesResponse] = await Promise.all([
+        fetch(`/api/classes/calendar/all?start=${startQuery.toISOString()}&end=${endQuery.toISOString()}`),
         fetch('/api/notes')
       ]);
 
-      const classes = classesResponse.ok ? await classesResponse.json() : [];
-      const reservations = reservationsResponse.ok ? await reservationsResponse.json() : [];
+      const calendarSlots = calendarResponse.ok ? await calendarResponse.json() : [];
       const notesData = notesResponse.ok ? await notesResponse.json() : [];
 
-      const reservationsByClass: { [key: number]: number } = {};
-      reservations.forEach((res: any) => {
-        if (res.classId && res.status !== 'CANCELED') {
-          if (res.participants && Array.isArray(res.participants)) {
-            reservationsByClass[res.classId] = (reservationsByClass[res.classId] || 0) + res.participants.length;
-          } else {
-            reservationsByClass[res.classId] = (reservationsByClass[res.classId] || 0) + 1;
-          }
-        }
-      });
-
-      const calendarEvents: CalendarEvent[] = classes.map((cls: any) => {
-        const classDate = new Date(cls.date);
-        const startTime = classDate.toLocaleTimeString('es-ES', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-        const duration = cls.duration || 120;
-        const endDate = new Date(classDate.getTime() + duration * 60000);
+      const calendarEvents: CalendarEvent[] = calendarSlots.map((slot: any) => {
+        const dateStr = slot.date;
+        const startTime = slot.time.substring(0, 5); // Ensure HH:mm
+        
+        // Calculate end time
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const duration = 120; // Default or fetch from slot if available
+        const endDate = new Date();
+        endDate.setHours(hours, minutes + duration);
         const endTime = endDate.toLocaleTimeString('es-ES', {
           hour: '2-digit',
           minute: '2-digit',
           hour12: false
         });
-        const dateString = classDate.toISOString().split('T')[0];
-        const enrolled = reservationsByClass[cls.id] || 0;
 
         return {
-          id: cls.id,
-          title: cls.title,
-          date: dateString,
+          id: slot.id, // Can be string (v_...) or number
+          title: slot.className || 'Clase',
+          date: dateStr,
           startTime,
           endTime,
           type: 'class' as const,
-          instructor: cls.instructor || 'Por asignar',
-          capacity: cls.capacity,
-          enrolled
+          instructor: slot.instructor || 'Por asignar',
+          capacity: slot.capacity,
+          enrolled: slot.reserved
         };
       });
 
@@ -127,13 +112,14 @@ export default function SchoolCalendar() {
           endTime: time,
           type: 'note' as const,
           content: note.content || '',
-          noteId: note.id // Guardar el ID de la nota para poder editarla/eliminarla
+          noteId: note.id
         };
       });
 
       setEvents([...calendarEvents, ...noteEvents]);
+      
       if (showLoading) {
-      setLoading(false);
+        setLoading(false);
         setIsInitialLoad(false);
       }
     } catch (error) {
@@ -141,7 +127,14 @@ export default function SchoolCalendar() {
       setEvents([]);
       if (showLoading) setLoading(false);
     }
-  }, []); // Removido session de las dependencias para evitar recargas innecesarias
+  }, [currentDate]);
+
+  // Fetch events when date changes (month navigation)
+  useEffect(() => {
+    if (session?.user?.role === 'SCHOOL_ADMIN') {
+        fetchEvents(false);
+    }
+  }, [currentDate, fetchEvents, session]);
 
   // Guardar el ID del usuario para detectar cambios reales de sesión
   const lastUserId = useRef<string | null>(null);
@@ -161,28 +154,23 @@ export default function SchoolCalendar() {
 
     const currentUserId = session.user?.id?.toString() || null;
 
-    // Solo recargar eventos si el usuario realmente cambió (nueva sesión)
-    // No recargar si es el mismo usuario (solo refresco de pestaña)
     if (lastUserId.current !== currentUserId) {
       lastUserId.current = currentUserId;
-      // Carga inicial: mostrar loading
       fetchEvents(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id, status, router]); // fetchEvents es estable, no necesita estar en dependencias
+  }, [session?.user?.id, status, router, fetchEvents]);
 
-  // Listener para recargar datos silenciosamente cuando la pestaña vuelve a estar activa
+  // Listener para recargar datos silenciosamente
   useEffect(() => {
     const handleVisibilityChange = () => {
-      // Solo recargar si la pestaña vuelve a estar visible y ya pasó la carga inicial
       if (document.visibilityState === 'visible' && !isInitialLoad && !isRefreshingRef.current) {
         isRefreshingRef.current = true;
-        // Recargar silenciosamente (sin mostrar loading)
         fetchEvents(false).finally(() => {
-          isRefreshingRef.current = false;
+            isRefreshingRef.current = false;
         });
       }
     };
+
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
@@ -664,7 +652,7 @@ export default function SchoolCalendar() {
                           title={`${timeLabel} - ${event.title}${event.endTime ? ` (hasta ${event.endTime})` : ''}`}
                         >
                           <div className="flex items-start gap-1">
-                            <div className="flex-shrink-0 mt-0.5">
+                            <div className="shrink-0 mt-0.5">
                               {event.type === 'note' && <StickyNote className="w-2.5 h-2.5" />}
                               {event.type === 'class' && <BookOpen className="w-2.5 h-2.5" />}
                             </div>
@@ -721,14 +709,18 @@ export default function SchoolCalendar() {
                         </div>
             <div className="p-4 md:p-6">
               <ClassForm
-                onSubmit={handleCreateClass}
+                onSuccess={() => {
+                  fetchEvents(false);
+                  setShowCreateModal(false);
+                  setShowQuickModal(null);
+                  showSuccess('¡Clase creada!', 'La clase se creó correctamente');
+                }}
                 onCancel={() => setShowCreateModal(false)}
-                isLoading={isCreating}
               />
-                          </div>
-                          </div>
-                </div>
-              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de selección de tipo */}
       {selectedDate && selectedTimeSlot && !showQuickModal && (

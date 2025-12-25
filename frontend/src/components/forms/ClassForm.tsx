@@ -33,6 +33,7 @@ interface ClassFormData {
   studentDetails: string;
   images: string[];
   beachId?: number;
+  schoolId?: number;
   
   // Schedule data (Inventory)
   scheduleType: 'single' | 'recurring' | 'dateRange' | 'specificDates';
@@ -83,6 +84,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
     studentDetails: initialData?.studentDetails || '',
     images: initialData?.images && initialData.images.length > 0 ? initialData.images : [''],
     beachId: initialData?.beachId || undefined,
+    schoolId: initialData?.schoolId || undefined,
     scheduleType: initialData?.scheduleType || 'single',
     date: initialData?.date || '',
     time: initialData?.time || '',
@@ -97,6 +99,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
 
   const [priceInput, setPriceInput] = useState<string>(String(formData.price));
   const [beaches, setBeaches] = useState<Beach[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
   const [showAddBeachModal, setShowAddBeachModal] = useState(false);
   const [newBeachName, setNewBeachName] = useState('');
   const [newBeachLocation, setNewBeachLocation] = useState('');
@@ -108,21 +111,28 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
   const [imageError, setImageError] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Load beaches
+  // Load initial data
   useEffect(() => {
-    const fetchBeaches = async () => {
+    const fetchInitialData = async () => {
       try {
         const headers: any = {};
         const token = (session as any)?.backendToken;
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const res = await fetch('/api/beaches', { headers });
-        if (res.ok) setBeaches(await res.json());
+        // Fetch beaches
+        const beachesRes = await fetch('/api/beaches', { headers });
+        if (beachesRes.ok) setBeaches(await beachesRes.json());
+
+        // Fetch schools if admin
+        if (((session as any)?.user?.role === 'ADMIN')) {
+          const schoolsRes = await fetch('/api/schools', { headers });
+          if (schoolsRes.ok) setSchools(await schoolsRes.json());
+        }
       } catch (err) {
-        console.error('Error fetching beaches:', err);
+        console.error('Error fetching initial form data:', err);
       }
     };
-    if (session) fetchBeaches();
+    if (session) fetchInitialData();
   }, [session]);
 
   const handleAddBeach = async () => {
@@ -311,26 +321,39 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
       const productData = {
         title: formData.title,
         description: formData.description,
-        duration: Number(formData.duration),
-        capacity: Number(formData.capacity),
-        price: Number(formData.price),
+        duration: Number(formData.duration) || 120,
+        capacity: Number(formData.capacity) || 8,
+        price: Number(formData.price) || 0,
         level: formData.level,
         instructor: formData.instructor,
         studentDetails: formData.studentDetails,
         images: validImages,
-        beachId: formData.beachId ? Number(formData.beachId) : null,
       };
+
+      const beachId = formData.beachId ? Number(formData.beachId) : undefined;
+      const schoolId = formData.schoolId ? Number(formData.schoolId) : undefined;
 
       let url = isEditing ? `/api/classes/${initialData.id}` : '/api/classes/bulk';
       let method = isEditing ? 'PUT' : 'POST';
       
       let body: any;
       if (isEditing) {
-        body = productData;
+        body = {
+          ...productData,
+          beachId,
+          schoolId
+        };
       } else {
+        if (!occurrences || occurrences.length === 0) {
+          showError('Error', 'Debes seleccionar al menos una fecha para la clase.');
+          setSaving(false);
+          return;
+        }
+
         body = {
           baseData: productData,
-          beachId: productData.beachId || undefined,
+          beachId,
+          schoolId,
           occurrences
         };
       }
@@ -424,7 +447,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
               />
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className={`grid grid-cols-1 ${(session as any)?.user?.role === 'ADMIN' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-6`}>
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">Duración (minutos)</label>
                 <Input 
@@ -433,6 +456,24 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                   onChange={e => handleInputChange('duration', Number(e.target.value))}
                 />
               </div>
+
+              {(session as any)?.user?.role === 'ADMIN' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">Escuela Responsable</label>
+                  <select 
+                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm"
+                    value={formData.schoolId || ''}
+                    onChange={e => handleInputChange('schoolId', e.target.value ? Number(e.target.value) : undefined)}
+                    required
+                  >
+                    <option value="">Selecciona una escuela</option>
+                    {schools.map(school => (
+                      <option key={school.id} value={school.id}>{school.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-slate-700">Playa / Locación</label>
                 <div className="flex gap-2">

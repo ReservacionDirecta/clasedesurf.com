@@ -241,7 +241,9 @@ export function transformApiClassToFrontend(apiClass: ApiClass) {
       verified: true,
       yearsExperience: Math.floor(Math.random() * 10) + 3,
       description: apiClass.school?.description || '',
-      shortReview: 'Excelente escuela.'
+      shortReview: 'Excelente escuela.',
+      logo: apiClass.school?.logo,
+      coverImage: apiClass.school?.coverImage
     },
     instructor: {
       name: instructorName,

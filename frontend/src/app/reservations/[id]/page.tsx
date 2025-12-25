@@ -194,7 +194,7 @@ function ReservationDetailsContent() {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string; icon: any }> = {
       PENDING: {
-        label: 'Pendiente de ConfirmaciÃ³n',
+        label: 'Pendiente de Confirmación',
         className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
         icon: AlertCircle
       },
@@ -238,7 +238,7 @@ function ReservationDetailsContent() {
         className: 'bg-red-100 text-red-800'
       },
       PENDING: {
-        label: 'Pendiente de VerificaciÃ³n',
+        label: 'Pendiente de Verificación',
         className: 'bg-yellow-100 text-yellow-800'
       },
       PAID: {
@@ -263,7 +263,7 @@ function ReservationDetailsContent() {
   const getPaymentMethodLabel = (method?: string) => {
     const methods: Record<string, string> = {
       transfer: 'Transferencia Bancaria',
-      deposit: 'DepÃ³sito Bancario',
+      deposit: 'Depósito Bancario',
       yape: 'Yape',
       payment_link: 'Link de Pago',
       cash: 'Efectivo'

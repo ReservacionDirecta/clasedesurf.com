@@ -843,7 +843,7 @@ export default function ClassDetailsPage() {
                       <section>
                            <h2 className="text-2xl font-bold text-[#011627] mb-6">Qué incluye</h2>
                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                               {['Instrucción experta personalizada', 'Tabla de surf adecuada a tu nivel', 'Wetsuit / Traje de neopreno limpio', 'Seguro de accidentes', 'Acceso a duchas y vestuarios', 'Fotos de la sesión (sujeto a disponibilidad)'].map((item, idx) => (
+                               {['Instrucción experta personalizada', 'Tabla de surf adecuada a tu nivel', 'Wetsuit / Traje de neopreno limpio', 'Acceso a duchas y vestuarios', 'Fotos de la sesión (sujeto a disponibilidad)'].map((item, idx) => (
                                    <div key={idx} className="flex items-center gap-3">
                                        <div className="bg-white p-1 rounded-full border border-gray-200 shadow-sm"><Check className="w-4 h-4 text-green-600 shrink-0" /></div>
                                        <span className="text-gray-700 font-medium">{item}</span>
@@ -868,7 +868,7 @@ export default function ClassDetailsPage() {
                                         (classDetails.beach?.name ? `Playa ${classDetails.beach.name}, ` : '') + 
                                         (classDetails.beach?.location || classDetails.location || classDetails.school.location)
                                       )}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                                      className="w-full h-full grayscale-[10%] group-hover:grayscale-0 transition-all duration-700"
+                                      className="w-full h-full grayscale-10 group-hover:grayscale-0 transition-all duration-700"
                                       title="Ubicación de la clase"
                                       aria-label={`Mapa mostrando la ubicación en ${classDetails.beach?.name || classDetails.location}`}
                                     ></iframe>

@@ -42,9 +42,10 @@ interface ClassData {
     totalReviews: number;
     verified: boolean;
     yearsExperience: number;
-    logo?: string;
-    description?: string;
-    shortReview?: string;
+    logo?: string | null;
+    coverImage?: string | null;
+    description?: string | null;
+    shortReview?: string | null;
   };
   instructor?: {
     name: string;
@@ -145,6 +146,7 @@ export function ClassCard({ classData, onSelect, priority = false, searchContext
 
   const getSchoolLogo = (schoolName: string) => {
     if (classData.school.logo) return classData.school.logo;
+    if (classData.school.coverImage) return classData.school.coverImage;
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(schoolName)}&size=64&background=0066cc&color=ffffff&bold=true`;
   };
 

@@ -1,9 +1,11 @@
 import express from 'express';
 import prisma from '../prisma';
+import path from 'path';
 import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
 import { validateBody, validateParams } from '../middleware/validation';
 import { createSchoolSchema, updateSchoolSchema, schoolIdSchema } from '../validations/schools';
 import resolveSchool from '../middleware/resolve-school';
+import { normalizeSchoolImages, normalizeClassImages } from '../utils/image-utils';
 
 const router = express.Router();
 
@@ -54,10 +56,13 @@ router.get('/', async (req, res) => {
         totalReviews: true,
         createdAt: true,
         updatedAt: true,
-        status: true // Include status
+        status: true
       }
     });
-    res.json(schools);
+
+    const normalizedSchools = schools.map((school: any) => normalizeSchoolImages(school));
+
+    res.json(normalizedSchools);
   } catch (err: any) {
     console.error('[GET /schools] Error:', err);
     res.status(500).json({
@@ -98,11 +103,9 @@ router.get('/my-school', requireAuth, async (req: AuthRequest, res) => {
       }
     });
 
-    if (!school) {
-      return res.status(404).json({ message: 'No school found for this user' });
-    }
+    if (!school) return res.status(404).json({ message: 'School not found' });
 
-    res.json(school);
+    res.json(normalizeSchoolImages(school));
   } catch (err: any) {
     console.error('[GET /schools/my-school] Error:', err);
     console.error('[GET /schools/my-school] Error message:', err?.message);
@@ -120,7 +123,8 @@ router.get('/:id', validateParams(schoolIdSchema), async (req, res) => {
     const { id } = req.params as any;
     const school = await prisma.school.findUnique({ where: { id: Number(id) } });
     if (!school) return res.status(404).json({ message: 'School not found' });
-    res.json(school);
+
+    res.json(normalizeSchoolImages(school));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
@@ -132,15 +136,63 @@ router.get('/:id/classes', validateParams(schoolIdSchema), async (req, res) => {
   try {
     const { id } = req.params as any;
     const classes = await prisma.class.findMany({
-      where: { schoolId: Number(id) },
-      orderBy: { title: 'asc' }
+      where: {
+        schoolId: Number(id),
+        deletedAt: null
+      },
+      include: {
+        sessions: {
+          where: { isClosed: false, date: { gte: new Date() } },
+          orderBy: [{ date: 'asc' }, { time: 'asc' }],
+          take: 5
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     });
-    res.json(classes);
+
+    const productsWithInfo = classes.map(cls => {
+      // Normalize images
+      let normalizedImages: string[] = [];
+      if (cls.images && Array.isArray(cls.images)) {
+        normalizedImages = normalizeClassImages({ images: cls.images }).images;
+      }
+
+      const nextSession = cls.sessions[0] || null;
+
+      return {
+        ...cls,
+        price: cls.defaultPrice,
+        capacity: cls.defaultCapacity,
+        images: normalizedImages,
+        nextSession,
+        // For backwards compatibility with school detail page
+        date: nextSession ? nextSession.date : null,
+        startTime: nextSession ? nextSession.time : null,
+        endTime: nextSession ? calculateEndTime(nextSession.time, cls.duration) : null,
+        maxCapacity: cls.defaultCapacity,
+        currentEnrollment: 0 // Placeholder or calculate from reservations if needed
+      };
+    });
+
+    res.json(productsWithInfo);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// Helper to calculate end time
+function calculateEndTime(startTime: string, durationMinutes: number): string {
+  try {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const date = new Date();
+    date.setHours(hours, minutes, 0, 0);
+    date.setMinutes(date.getMinutes() + durationMinutes);
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} `;
+  } catch (e) {
+    return startTime;
+  }
+}
 
 // GET /schools/:id/reviews - get reviews for a specific school (public endpoint)
 router.get('/:id/reviews', validateParams(schoolIdSchema), async (req, res) => {
@@ -165,7 +217,7 @@ router.put('/:id/status', requireAuth, requireRole(['ADMIN']), validateParams(sc
     const { id } = req.params as any;
     const { status } = req.body;
 
-    console.log(`[PUT /schools/${id}/status] Request to update status to:`, status);
+    console.log(`[PUT / schools / ${id}/status] Request to update status to: `, status);
 
     if (!['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });

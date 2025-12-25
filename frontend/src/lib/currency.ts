@@ -24,18 +24,18 @@ async function fetchExchangeRate(): Promise<number> {
     // Intentar obtener desde una API gratuita de tipos de cambio
     // Opción 1: exchangerate-api.com (gratis, sin API key para USD a PEN)
     const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD')
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch exchange rate')
     }
-    
+
     const data = await response.json()
     const penRate = data.rates?.PEN
-    
+
     if (penRate && typeof penRate === 'number') {
       return penRate
     }
-    
+
     throw new Error('Invalid exchange rate data')
   } catch (error) {
     console.warn('No se pudo obtener el tipo de cambio del día, usando valor por defecto:', error)
@@ -48,24 +48,24 @@ async function fetchExchangeRate(): Promise<number> {
  */
 export async function getCurrentExchangeRate(): Promise<CurrencyRate> {
   const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
-  
+
   // Si tenemos cache del día de hoy, retornarlo
   if (exchangeRateCache && cacheDate === today) {
     return exchangeRateCache
   }
-  
+
   // Obtener nuevo tipo de cambio
   const rate = await fetchExchangeRate()
-  
+
   exchangeRateCache = {
     usd: 1,
     pen: rate,
     rate: rate,
     lastUpdated: new Date()
   }
-  
+
   cacheDate = today
-  
+
   return exchangeRateCache
 }
 
@@ -77,7 +77,7 @@ export function getCurrentExchangeRateSync(): CurrencyRate {
   if (exchangeRateCache) {
     return exchangeRateCache
   }
-  
+
   // Si no hay cache, retornar valor por defecto
   return {
     usd: 1,
@@ -107,14 +107,17 @@ export function convertUSDtoPEN(usdAmount: number): number {
  * Formatea una cantidad en la moneda especificada
  */
 export function formatCurrency(amount: number, currency: 'USD' | 'PEN'): string {
+  // Defensive check for NaN or non-number
+  const safeAmount = (typeof amount !== 'number' || isNaN(amount)) ? 0 : amount
+
   const formatter = new Intl.NumberFormat('es-PE', {
     style: 'currency',
     currency: currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   })
-  
-  return formatter.format(amount)
+
+  return formatter.format(safeAmount)
 }
 
 /**
@@ -128,7 +131,7 @@ export function formatDualCurrency(penAmount: number): {
   usdAmount: number
 } {
   const usdAmount = convertPENtoUSD(penAmount)
-  
+
   return {
     usd: formatCurrency(usdAmount, 'USD'),
     pen: formatCurrency(penAmount, 'PEN'),
@@ -144,7 +147,7 @@ export function formatDualCurrency(penAmount: number): {
 export function useDualCurrency(penPrice: number) {
   const rate = getCurrentExchangeRateSync()
   const usdPrice = convertPENtoUSD(penPrice)
-  
+
   return {
     pen: {
       amount: penPrice,

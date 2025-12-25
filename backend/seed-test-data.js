@@ -28,26 +28,18 @@ function log(message, color = 'reset') {
 async function cleanDatabase(client) {
   log('\n🧹 Limpiando base de datos...', 'yellow');
 
-  await client.query('DELETE FROM refresh_tokens');
-  await client.query('DELETE FROM payments');
-  await client.query('DELETE FROM reservations');
-  await client.query('DELETE FROM instructor_reviews');
-  await client.query('DELETE FROM classes');
-  await client.query('DELETE FROM instructors');
-  await client.query('DELETE FROM students');
-  await client.query('DELETE FROM users');
-  await client.query('DELETE FROM schools');
-
-  // Reset sequences
-  await client.query('ALTER SEQUENCE users_id_seq RESTART WITH 1');
-  await client.query('ALTER SEQUENCE schools_id_seq RESTART WITH 1');
-  await client.query('ALTER SEQUENCE instructors_id_seq RESTART WITH 1');
-  await client.query('ALTER SEQUENCE students_id_seq RESTART WITH 1');
-  await client.query('ALTER SEQUENCE classes_id_seq RESTART WITH 1');
-  await client.query('ALTER SEQUENCE reservations_id_seq RESTART WITH 1');
-  await client.query('ALTER SEQUENCE payments_id_seq RESTART WITH 1');
-
-  log('✓ Base de datos limpiada', 'green');
+  try {
+    // Single TRUNCATE command to clean all tables and reset sequences
+    await client.query(`
+      TRUNCATE TABLE users, schools RESTART IDENTITY CASCADE;
+    `);
+    
+    log('✓ Base de datos limpiada y secuencias reiniciadas', 'green');
+  } catch (error) {
+    // If TRUNCATE fails (e.g. table doesn't exist), try to handle or log
+    log(`! Error limpiando DB: ${error.message}`, 'red');
+    // Proceed anyway as maybe tables are empty/new
+  }
 }
 
 async function createTestData(client) {
@@ -59,11 +51,18 @@ async function createTestData(client) {
   // 1. CREAR ADMIN
   // ============================================
   log('\n1. Creando ADMIN...', 'yellow');
-  const adminResult = await client.query(`
+  let adminResult;
+  try {
+    adminResult = await client.query(`
     INSERT INTO users (email, name, password, role, "createdAt", "updatedAt")
     VALUES ($1, $2, $3, $4, NOW(), NOW())
     RETURNING id, email, name, role
   `, ['admin@test.com', 'Admin Global', password, 'ADMIN']);
+  } catch(e) {
+    log('FAILED ADMIN QUERY: ' + e.message, 'red');
+    console.error(e);
+    throw e;
+  }
 
   const admin = adminResult.rows[0];
   log(`   ✓ Admin creado: ${admin.email} (ID: ${admin.id})`, 'green');
@@ -85,8 +84,8 @@ async function createTestData(client) {
 
   // Escuela 1
   const school1Result = await client.query(`
-    INSERT INTO schools (name, location, description, "ownerId", "createdAt", "updatedAt")
-    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    INSERT INTO schools (name, location, description, "ownerId", "coverImage", "createdAt", "updatedAt")
+    VALUES ($1, $2, $3, $4, '/uploads/schools/surf-school-lima.jpg', NOW(), NOW())
     RETURNING id, name
   `, ['Surf School Lima', 'Miraflores, Lima', 'Escuela de surf en Lima', schoolAdmin1.id]);
 
@@ -205,8 +204,8 @@ async function createTestData(client) {
 
   // Escuela 2
   const school2Result = await client.query(`
-    INSERT INTO schools (name, location, description, "ownerId", "createdAt", "updatedAt")
-    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    INSERT INTO schools (name, location, description, "ownerId", "coverImage", "createdAt", "updatedAt")
+    VALUES ($1, $2, $3, $4, '/uploads/schools/mancora-surf.jpg', NOW(), NOW())
     RETURNING id, name
   `, ['Surf School Trujillo', 'Huanchaco, Trujillo', 'Escuela de surf en Trujillo', schoolAdmin2.id]);
 

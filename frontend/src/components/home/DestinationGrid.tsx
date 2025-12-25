@@ -4,12 +4,12 @@ import ImageWithFallback from '@/components/ui/ImageWithFallback';
 const DESTINATIONS = [
   {
     name: 'Costa Verde',
-    image: 'https://images.unsplash.com/photo-1533602525539-7521844b3f86?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     count: '25+ escuelas'
   },
   {
     name: 'Makaha',
-    image: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1502933691298-84f1f5ee760e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     count: 'Top spots'
   },
   {

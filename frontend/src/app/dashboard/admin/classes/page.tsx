@@ -29,7 +29,7 @@ import {
   X
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
-import ClassForm from '@/components/forms/ClassForm';
+import { ClassForm } from '@/components/forms/ClassForm';
 import { Class, School, Beach } from '@/types';
 
 
@@ -605,11 +605,12 @@ export default function AdminClassesPage() {
             </div>
             <div className="p-6">
                <ClassForm
-                  onSubmit={handleCreateSubmit}
+                  onSuccess={() => {
+                    fetchData();
+                    setShowCreateModal(false);
+                    showSuccess('¡Clase creada!', 'La clase se creó correctamente');
+                  }}
                   onCancel={() => setShowCreateModal(false)}
-                  isLoading={isSubmitting}
-                  schools={schools}
-                  beaches={beaches}
                />
             </div>
           </div>
@@ -630,12 +631,15 @@ export default function AdminClassesPage() {
             </div>
             <div className="p-6">
                 <ClassForm
-                    classData={selectedClass}
-                    onSubmit={handleEditSubmit}
+                    initialData={selectedClass}
+                    isEditing={true}
+                    onSuccess={() => {
+                        fetchData();
+                        setShowEditModal(false);
+                        setSelectedClass(null);
+                        showSuccess('¡Clase actualizada!', 'Los cambios se guardaron correctamente');
+                    }}
                     onCancel={() => setShowEditModal(false)}
-                    isLoading={isSubmitting}
-                    schools={schools}
-                    beaches={beaches}
                 />
             </div>
           </div>

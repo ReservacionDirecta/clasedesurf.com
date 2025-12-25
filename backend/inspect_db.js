@@ -1,32 +1,29 @@
+const { Client } = require('pg');
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const RAILWAY_CONFIG = {
+  host: 'hopper.proxy.rlwy.net',
+  port: 14816,
+  user: 'postgres',
+  password: 'BJrFcoAnIvEWPxvQLJHJfzYPiHMOrkhb',
+  database: 'railway'
+};
 
-async function main() {
+async function inspect() {
+  const client = new Client(RAILWAY_CONFIG);
+  await client.connect();
   try {
-    console.log('--- Schools Table Columns ---');
-    const schoolsCols = await prisma.$queryRaw`
+    const res = await client.query(`
       SELECT column_name, data_type 
       FROM information_schema.columns 
-      WHERE table_name = 'schools' 
-      ORDER BY column_name;
-    `;
-    console.log(JSON.stringify(schoolsCols, null, 2));
-
-    console.log('\n--- Classes Table Columns ---');
-    const classesCols = await prisma.$queryRaw`
-      SELECT column_name, data_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'classes'
-      ORDER BY column_name;
-    `;
-    console.log(JSON.stringify(classesCols, null, 2));
-
+      WHERE table_name = 'instructors';
+    `);
+    console.log('Columns in users table:');
+    console.log(res.rows.map(r => r.column_name));
   } catch (e) {
-    console.error('Error querying schema:', e);
+    console.error(e);
   } finally {
-    await prisma.$disconnect();
+    await client.end();
   }
 }
 
-main();
+inspect();

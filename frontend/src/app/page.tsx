@@ -70,7 +70,9 @@ const mockClasses = [
       verified: true,
       yearsExperience: 8,
       description: 'Escuela pionera en Lima con más de 8 años formando surfistas.',
-      shortReview: 'Excelente escuela, instructores muy pacientes y profesionales.'
+      shortReview: 'Excelente escuela, instructores muy pacientes y profesionales.',
+      logo: '/uploads/schools/surf-school-lima.jpg',
+      coverImage: '/uploads/schools/surf-school-lima.jpg'
     },
     instructor: {
       name: 'Carlos Mendoza',
@@ -110,7 +112,9 @@ const mockClasses = [
       rating: 5.0,
       totalReviews: 120,
       verified: true,
-      yearsExperience: 12
+      yearsExperience: 12,
+      logo: '/uploads/schools/mancora-surf.jpg',
+      coverImage: '/uploads/schools/mancora-surf.jpg'
     },
     classImage: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?q=80&w=600&auto=format&fit=crop'
   }

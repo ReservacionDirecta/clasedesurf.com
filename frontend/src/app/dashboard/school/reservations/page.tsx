@@ -29,6 +29,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import { formatDualCurrency } from '@/lib/currency';
 
 interface Reservation {
   id: number;
@@ -349,7 +350,10 @@ export default function SchoolReservations() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return 'Fecha por definir';
+    
+    return d.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -411,6 +415,7 @@ export default function SchoolReservations() {
         </div>
 
         {/* Stats */}
+        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className="bg-white rounded-lg shadow p-4 sm:p-6 border-l-4 border-blue-500">
             <div className="flex items-center">
@@ -457,7 +462,7 @@ export default function SchoolReservations() {
               <DollarSign className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 shrink-0" />
               <div className="ml-3 sm:ml-4">
                 <h3 className="text-xs sm:text-sm font-medium text-gray-600">Ingresos</h3>
-                <p className="text-lg sm:text-2xl font-bold text-purple-600">{formatCurrency(totalRevenue)}</p>
+                <p className="text-lg sm:text-2xl font-bold text-purple-600">{formatDualCurrency(totalRevenue).pen}</p>
               </div>
             </div>
           </div>
@@ -497,7 +502,11 @@ export default function SchoolReservations() {
 
         {/* Reservations List */}
         <div className="space-y-4 sm:space-y-6">
-          {filteredReservations.map((reservation) => (
+          {filteredReservations.map((reservation) => {
+            const price = Number(reservation.payment?.amount) || Number(reservation.class.price) || 0;
+            const prices = formatDualCurrency(price);
+            
+            return (
             <div key={reservation.id} className="bg-white rounded-lg shadow-lg border border-gray-100 p-4 sm:p-6">
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div className="flex-1">
@@ -520,14 +529,12 @@ export default function SchoolReservations() {
                             {getStatusIcon(reservation.status)}
                             <span className="ml-1">{getStatusLabel(reservation.status)}</span>
                           </span>
-                          {reservation.payment && (
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${reservation.payment.status === 'PAID'
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${reservation.payment?.status === 'PAID'
                               ? 'bg-green-100 text-green-800 border-green-300'
                               : 'bg-red-100 text-red-800 border-red-300'
                               }`}>
-                              {reservation.payment.status === 'PAID' ? 'Pagado' : 'Sin pagar'}
-                            </span>
-                          )}
+                            {reservation.payment?.status === 'PAID' ? 'Pagado' : 'Sin pagar'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -544,7 +551,7 @@ export default function SchoolReservations() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                       <div className="flex items-center">
                         <Calendar className="w-4 h-4 mr-2 shrink-0" />
-                        <span className="truncate">{formatDate(reservation.class.date)}</span>
+                        <span className="truncate">{reservation.class.date ? formatDate(reservation.class.date) : 'Fecha pendiente'}</span>
                       </div>
                       <div className="flex items-center">
                         <Users className="w-4 h-4 mr-2 shrink-0" />
@@ -558,7 +565,7 @@ export default function SchoolReservations() {
                       )}
                       <div className="flex items-center font-medium text-green-600">
                         <DollarSign className="w-4 h-4 mr-1 shrink-0" />
-                        {formatCurrency(reservation.class.price)}
+                        {prices.pen}
                       </div>
                     </div>
                   </div>
@@ -630,7 +637,8 @@ export default function SchoolReservations() {
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
 
         {filteredReservations.length === 0 && (
@@ -715,7 +723,12 @@ export default function SchoolReservations() {
                     </div>
                     <div className="sm:col-span-2">
                       <span className="font-medium text-gray-700">Precio:</span>
-                      <p className="text-2xl font-bold text-green-600">{formatCurrency(selectedReservation.class.price)}</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {(() => {
+                          const price = Number(selectedReservation.payment?.amount) || Number(selectedReservation.class.price) || 0;
+                          return formatDualCurrency(price).pen;
+                        })()}
+                      </p>
                     </div>
                   </div>
                 </div>

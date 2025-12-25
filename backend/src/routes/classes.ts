@@ -1,5 +1,6 @@
 import express from 'express';
 import prisma from '../prisma';
+import { normalizeClassImages, normalizeSchoolImages } from '../utils/image-utils';
 import { validateBody, validateParams } from '../middleware/validation';
 import { createClassSchema, updateClassSchema, classIdSchema, createBulkClassesSchema } from '../validations/classes';
 import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
@@ -138,24 +139,17 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
     // Map to include summary info for the UI
     const productsWithInfo = classes.map(cls => {
       // Normalize images
-      let normalizedImages: string[] = [];
-      if (cls.images && Array.isArray(cls.images)) {
-        normalizedImages = cls.images
-          .filter((img: string) => img && typeof img === 'string' && img.trim() !== '')
-          .map((img: string) => {
-            const trimmedImg = img.trim();
-            if (trimmedImg.startsWith('http://') || trimmedImg.startsWith('https://') || trimmedImg.startsWith('/')) {
-              return trimmedImg;
-            }
-            return `/uploads/classes/${trimmedImg}`;
-          });
+      cls = normalizeClassImages(cls);
+
+      // Normalize school logo and cover image
+      if (cls.school) {
+        cls.school = normalizeSchoolImages(cls.school);
       }
 
       return {
         ...cls,
         price: cls.defaultPrice, // Compatibility with existing frontend
         capacity: cls.defaultCapacity, // Compatibility with existing frontend
-        images: normalizedImages,
         nextSession: cls.sessions[0] || null,
         availableSlotsCount: cls.sessions.length
       };
@@ -194,24 +188,175 @@ router.get('/:id', optionalAuth, validateParams(classIdSchema), async (req: Auth
     if (!classItem) return res.status(404).json({ message: 'Class not found' });
 
     // Normalize images
-    let normalizedImages: string[] = [];
-    if (classItem.images && Array.isArray(classItem.images)) {
-      normalizedImages = classItem.images
-        .filter((img: string) => img && typeof img === 'string')
-        .map((img: string) => {
-          if (img.startsWith('http') || img.startsWith('/')) return img;
-          return `/uploads/classes/${img}`;
-        });
+    const normalizedClass = normalizeClassImages(classItem);
+
+    // Normalize school logo and cover image
+    if (normalizedClass.school) {
+      normalizedClass.school = normalizeSchoolImages(normalizedClass.school);
     }
 
     res.json({
-      ...classItem,
-      images: normalizedImages,
-      price: classItem.defaultPrice, // Frontend compat
-      capacity: classItem.defaultCapacity, // Frontend compat
+      ...normalizedClass,
+      price: normalizedClass.defaultPrice, // Frontend compat
+      capacity: normalizedClass.defaultCapacity, // Frontend compat
     });
   } catch (err: any) {
     console.error('[GET /classes/:id] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+// GET /classes/calendar/all - Get calendar for ALL classes of the school
+router.get('/calendar/all', optionalAuth, resolveSchool, async (req: AuthRequest, res) => {
+  try {
+    const { start, end } = req.query;
+
+    // Determine School ID
+    let schoolId: number | undefined;
+    if (req.schoolId) {
+      schoolId = req.schoolId;
+    } else if (req.query.schoolId) {
+      schoolId = Number(req.query.schoolId);
+    } else {
+      // Try to find school by user if not set in middleware
+      // But wait, resolveSchool deals with req.schoolId if params exist or if user is admin.
+      // If public, we need schoolId query param.
+      if (!schoolId) return res.status(400).json({ message: 'School ID required' });
+    }
+
+    const startDate = start ? new Date(start as string) : new Date();
+    // Default to 45 days ahead if no end date provided
+    const endDate = end ? new Date(end as string) : new Date(startDate.getTime() + 45 * 24 * 60 * 60 * 1000);
+
+    // Fetch all active classes for the school
+    const classes = await prisma.class.findMany({
+      where: {
+        schoolId: Number(schoolId),
+        deletedAt: null
+      },
+      include: {
+        schedules: { where: { isActive: true } },
+        sessions: {
+          where: { date: { gte: startDate, lte: endDate } }
+        },
+        reservations: {
+          where: { date: { gte: startDate, lte: endDate }, status: { not: 'CANCELED' } }
+        }
+      }
+    });
+
+    const allSlots: any[] = [];
+
+    // Process each class
+    for (const classItem of classes) {
+      // 1. Map explicit sessions for quick lookup
+      const sessionMap = new Map();
+      classItem.sessions.forEach(session => {
+        const key = `${session.date.toISOString().split('T')[0]}_${session.time}`;
+        sessionMap.set(key, session);
+      });
+
+      // 2. Generate all potential dates in range
+      const currentDate = new Date(startDate);
+      currentDate.setHours(0, 0, 0, 0);
+      const rangeEndDate = new Date(endDate);
+      rangeEndDate.setHours(23, 59, 59, 999);
+
+      // We clone to iterate
+      const iteratorDate = new Date(currentDate);
+
+      while (iteratorDate <= rangeEndDate) {
+        const dateStr = iteratorDate.toISOString().split('T')[0];
+        const dayOfWeek = iteratorDate.getDay(); // 0-6
+
+        // Find schedules for this day
+        const dailySchedules = classItem.schedules.filter(s => s.dayOfWeek === dayOfWeek);
+
+        // Process each schedule slot
+        dailySchedules.forEach(schedule => {
+          const key = `${dateStr}_${schedule.startTime}`;
+          const sessionOverride = sessionMap.get(key);
+
+          // If session exists and is closed, skip
+          if (sessionOverride && sessionOverride.isClosed) return;
+
+          const capacity = sessionOverride?.capacity ?? classItem.defaultCapacity;
+          const price = sessionOverride?.price ?? classItem.defaultPrice;
+          const time = sessionOverride?.time ?? schedule.startTime;
+
+          // Calculate reserved spots
+          const reserved = classItem.reservations
+            .filter(r => r.date?.toISOString().split('T')[0] === dateStr && r.time === time)
+            .reduce((sum, r) => sum + (typeof r.participants === 'number' ? r.participants : 1), 0);
+
+          allSlots.push({
+            id: sessionOverride?.id || `v_${classItem.id}_${key}`,
+            sessionId: sessionOverride?.id || null,
+            classId: classItem.id,
+            className: classItem.title,
+            instructor: classItem.instructor,
+            date: dateStr,
+            time: time,
+            startTime: time,
+            price: price,
+            capacity: capacity,
+            reserved,
+            available: Math.max(0, capacity - reserved),
+            status: reserved >= capacity ? 'full' : 'available',
+            isVirtual: !sessionOverride
+          });
+        });
+
+        // Add explicit sessions that don't match schedule
+        classItem.sessions
+          .filter(s => s.date.toISOString().split('T')[0] === dateStr)
+          .forEach(session => {
+            const key = `${dateStr}_${session.time}`;
+            // Check if we already added this time via schedule loop
+            // The schedule loop uses schedule.startTime. 
+            // If session.time matches schedule.startTime, it was handled (as override or virtual).
+            // But valid check: sessionMap keys match.
+            // We need to check if we already pushed a slot for this time.
+            const alreadyAdded = allSlots.some(s => s.classId === classItem.id && s.date === dateStr && s.time === session.time);
+
+            if (!alreadyAdded && !session.isClosed) {
+              const reserved = classItem.reservations
+                .filter(r => r.date?.toISOString().split('T')[0] === dateStr && r.time === session.time)
+                .reduce((sum, r) => sum + (typeof r.participants === 'number' ? r.participants : 1), 0);
+
+              allSlots.push({
+                id: session.id,
+                sessionId: session.id,
+                classId: classItem.id,
+                className: classItem.title,
+                instructor: classItem.instructor,
+                date: dateStr,
+                time: session.time,
+                startTime: session.time,
+                price: session.price || classItem.defaultPrice,
+                capacity: session.capacity,
+                reserved,
+                available: Math.max(0, session.capacity - reserved),
+                status: reserved >= session.capacity ? 'full' : 'available',
+                isVirtual: false
+              });
+            }
+          });
+
+        iteratorDate.setDate(iteratorDate.getDate() + 1);
+      }
+    }
+
+    // Sort all slots by date then time
+    allSlots.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.time.localeCompare(b.time);
+    });
+
+    res.json(allSlots);
+  } catch (err: any) {
+    console.error('[GET /classes/calendar/all] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -277,6 +422,12 @@ router.post('/bulk', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolv
       }
       finalSchoolId = req.schoolId;
     }
+
+    if (!finalSchoolId || isNaN(finalSchoolId)) {
+      console.error('[POST /bulk] Invalid or missing School ID:', finalSchoolId);
+      return res.status(400).json({ message: 'Se requiere un ID de escuela válido' });
+    }
+
     console.log('[POST /bulk] Resolved School ID:', finalSchoolId);
 
     // Use transaction to ensure both Product and Sessions are created or neither
@@ -293,10 +444,10 @@ router.post('/bulk', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolv
         instructor: baseData.instructor,
         studentDetails: baseData.studentDetails,
         images: baseData.images || [],
-        school: { connect: { id: Number(finalSchoolId) } }
+        school: { connect: { id: finalSchoolId } }
       };
 
-      if (beachId) {
+      if (beachId && !isNaN(Number(beachId))) {
         console.log('[POST /bulk] Connecting beach ID:', beachId);
         classData.beach = { connect: { id: Number(beachId) } };
       }

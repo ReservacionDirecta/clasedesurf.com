@@ -18,6 +18,10 @@ export default function ImageWithFallback({
   const [error, setError] = useState(false)
   const [imgSrc, setImgSrc] = useState(src)
 
+  // Determine if we should bypass Next.js image optimization
+  // ui-avatars.com often returns 400 if optimized due to query params encoding
+  const shouldBeUnoptimized = typeof src === 'string' && src.includes('ui-avatars.com');
+
   useEffect(() => {
     setImgSrc(src)
     setError(false)
@@ -29,21 +33,22 @@ export default function ImageWithFallback({
     }
     // If fallbackSrc is provided, try to use it
     if (fallbackSrc) {
+      const isFallbackUnoptimized = fallbackSrc.includes('ui-avatars.com');
       return (
         <Image
           {...props}
           src={fallbackSrc}
           alt={alt}
-          onError={() => setError(true)} // Prevent infinite loop if fallback also fails (though here we'd need another state or just giving up)
+          unoptimized={props.unoptimized || isFallbackUnoptimized}
+          onError={() => setError(true)} 
         />
       )
     }
-    // Default fallback: A simple gray placeholder with initials or icon could be better, 
-    // but here we render a generic colored div matching common card styles
+    // Default fallback
     return (
-      <div className={`flex items-center justify-center bg-gray-100 text-gray-400 ${props.className}`}>
+      <div className={`flex items-center justify-center bg-slate-100 text-slate-400 ${props.className || ''}`}>
         <svg
-          className="h-12 w-12"
+          className="h-12 w-12 opacity-20"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -65,6 +70,7 @@ export default function ImageWithFallback({
       {...props}
       src={imgSrc}
       alt={alt}
+      unoptimized={props.unoptimized || shouldBeUnoptimized}
       onError={() => {
         setError(true)
       }}

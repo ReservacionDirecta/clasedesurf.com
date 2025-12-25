@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import Link from 'next/link'
+import { formatDualCurrency } from '@/lib/currency'
 import { MobileBottomNav } from '@/components/navigation/MobileBottomNav'
 import { 
   MapPin, 
@@ -15,7 +16,13 @@ import {
   Building2,
   Award,
   Shield,
-  TrendingUp
+  TrendingUp,
+  Phone,
+  Mail,
+  Globe,
+  Instagram,
+  Facebook,
+  MessageCircle
 } from 'lucide-react'
 
 interface School {
@@ -41,19 +48,19 @@ interface Class {
   id: number
   title: string
   description?: string
-  date: string
-  startTime: string
-  endTime: string
+  date: string | null
+  startTime: string | null
+  endTime: string | null
   price: number
   maxCapacity: number
   currentEnrollment: number
   level: string
   images?: string[]
-  instructor?: {
+  duration: number
+  nextSession?: {
     id: number
-    user: {
-      name: string
-    }
+    date: string
+    time: string
   }
 }
 
@@ -244,6 +251,56 @@ export default function SchoolDetailPage() {
                       Fundada en {school.foundedYear} • <span className="font-semibold text-gray-700">{new Date().getFullYear() - school.foundedYear} años de experiencia</span>
                     </p>
                   )}
+
+                  {/* Contact Quick Links */}
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-y-3 gap-x-6 mb-6">
+                    {school.phone && (
+                      <a href={`tel:${school.phone}`} className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                        <Phone className="w-4 h-4 mr-2 text-blue-500" />
+                        {school.phone}
+                      </a>
+                    )}
+                    {school.email && (
+                      <a href={`mailto:${school.email}`} className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                        <Mail className="w-4 h-4 mr-2 text-blue-500" />
+                        {school.email}
+                      </a>
+                    )}
+                    {school.website && (
+                      <a href={school.website.startsWith('http') ? school.website : `https://${school.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                        <Globe className="w-4 h-4 mr-2 text-blue-500" />
+                        Sitio Web
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Social Buttons */}
+                  <div className="flex items-center justify-center lg:justify-start gap-3 mb-8">
+                    {school.instagram && (
+                      <a href={`https://instagram.com/${school.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" 
+                        className="p-2 bg-pink-50 text-pink-600 rounded-lg hover:bg-pink-100 transition-colors border border-pink-100 shadow-sm"
+                        title="Instagram"
+                      >
+                        <Instagram className="w-5 h-5" />
+                      </a>
+                    )}
+                    {school.facebook && (
+                      <a href={school.facebook.startsWith('http') ? school.facebook : `https://facebook.com/${school.facebook}`} target="_blank" rel="noopener noreferrer" 
+                        className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors border border-blue-100 shadow-sm"
+                        title="Facebook"
+                      >
+                        <Facebook className="w-5 h-5" />
+                      </a>
+                    )}
+                    {school.whatsapp && (
+                      <a href={`https://wa.me/${school.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" 
+                        className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors border border-green-100 shadow-sm"
+                        title="WhatsApp"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 {/* Rating Section - Destacado */}
@@ -279,8 +336,10 @@ export default function SchoolDetailPage() {
 
                 {/* Description */}
                 {school.description && (
-                  <div className="mb-6">
-                    <p className="text-base sm:text-lg text-gray-700 leading-relaxed">{school.description}</p>
+                  <div className="mb-8">
+                    <p className="text-lg sm:text-xl text-gray-700 leading-relaxed font-light">
+                      {school.description}
+                    </p>
                   </div>
                 )}
 
@@ -316,85 +375,137 @@ export default function SchoolDetailPage() {
         </div>
 
         {/* Classes Section */}
-        <div className="mt-12 mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Clases Disponibles</h2>
+        <div className="mt-16 mb-20">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+            <div>
+              <h2 className="text-3xl font-black text-gray-900 mb-2">Clases Disponibles</h2>
+              <p className="text-gray-500">Reserva tu próxima aventura en el mar</p>
+            </div>
             <Link
               href={`/classes?schoolId=${school.id}`}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 font-bold transition-all hover:translate-x-1"
             >
-              Ver todas →
+              Ver disponibilidad completa <TrendingUp className="w-4 h-4 ml-2" />
             </Link>
           </div>
 
           {classes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {classes.slice(0, 6).map((classItem) => (
                 <Link
                   key={classItem.id}
                   href={`/classes/${classItem.id}`}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden group"
+                  className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 flex flex-col h-full"
                 >
-                  {/* Class Image */}
-                  <div className="relative h-48 bg-linear-to-br from-blue-400 to-blue-600">
+                  {/* Class Image Container */}
+                  <div className="relative aspect-16/10 overflow-hidden bg-gray-100">
                     {classItem.images && classItem.images.length > 0 ? (
                       <ImageWithFallback
                         src={classItem.images[0]}
                         alt={classItem.title}
                         fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="object-cover transition-transform duration-700 group-hover:scale-110"
                         fallbackComponent={
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Users className="w-16 h-16 text-white/30" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-50">
+                            <Building2 className="w-12 h-12 text-blue-200" />
                           </div>
                         }
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Users className="w-16 h-16 text-white/30" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-50">
+                        <Building2 className="w-12 h-12 text-blue-200" />
                       </div>
                     )}
-                    <div className="absolute top-3 right-3 bg-white px-3 py-1 rounded-full text-sm font-bold text-blue-600">
-                      S/ {classItem.price}
+                    
+                    {/* Badge Overlay */}
+                    <div className="absolute top-4 left-4">
+                      <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm backdrop-blur-md ${
+                        classItem.level === 'BEGINNER' ? 'bg-green-500/90 text-white' :
+                        classItem.level === 'INTERMEDIATE' ? 'bg-blue-500/90 text-white' :
+                        'bg-purple-500/90 text-white'
+                      }`}>
+                        {classItem.level === 'BEGINNER' ? 'Principiante' : 
+                         classItem.level === 'INTERMEDIATE' ? 'Intermedio' : 
+                         classItem.level === 'ADVANCED' ? 'Avanzado' : classItem.level}
+                      </span>
+                    </div>
+
+                    {/* Price Tag */}
+                    <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-white/20 text-right">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter mb-0.5">Desde</p>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xl font-black text-blue-600 leading-none">
+                          {formatDualCurrency(Number(classItem.price) || 0).pen}
+                        </span>
+                        <span className="text-[11px] font-bold text-gray-400 leading-tight mt-1">
+                          ~ {formatDualCurrency(Number(classItem.price) || 0).usd}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Class Info */}
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1">{classItem.title}</h3>
+                  <div className="p-6 flex flex-col flex-1">
+                    <h3 className="font-extrabold text-xl text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">
+                      {classItem.title}
+                    </h3>
+                    
                     {classItem.description && (
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{classItem.description}</p>
+                      <p className="text-gray-500 text-sm mb-6 line-clamp-2 leading-relaxed flex-1">
+                        {classItem.description}
+                      </p>
                     )}
                     
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <span>{new Date(classItem.date).toLocaleDateString('es-PE')}</span>
+                    <div className="space-y-3 pt-4 border-t border-gray-50 mt-auto">
+                      <div className="flex items-center text-sm font-medium text-gray-700">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center mr-3 shrink-0">
+                          <Calendar className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <span>
+                          {classItem.date 
+                            ? new Date(classItem.date).toLocaleDateString('es-PE', { day: 'numeric', month: 'long' })
+                            : 'Próximamente'}
+                        </span>
                       </div>
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-2" />
-                        <span>{classItem.startTime} - {classItem.endTime}</span>
+                      
+                      <div className="flex items-center text-sm font-medium text-gray-700">
+                        <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center mr-3 shrink-0">
+                          <Clock className="w-4 h-4 text-indigo-600" />
+                        </div>
+                        <span>
+                          {classItem.startTime && classItem.endTime 
+                            ? `${classItem.startTime} - ${classItem.endTime}` 
+                            : `${classItem.duration} minutos`}
+                        </span>
                       </div>
-                      <div className="flex items-center">
-                        <Users className="w-4 h-4 mr-2" />
-                        <span>{classItem.currentEnrollment}/{classItem.maxCapacity} inscritos</span>
-                      </div>
-                    </div>
 
-                    <div className="mt-3 pt-3 border-t">
-                      <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                        {classItem.level}
-                      </span>
+                      <div className="flex items-center text-sm font-medium text-gray-700">
+                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center mr-3 shrink-0">
+                          <Users className="w-4 h-4 text-orange-600" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="leading-tight">Capacidad limitada</span>
+                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
+                            {classItem.maxCapacity} espacios totales
+                          </span>
+                        </div>
+                      </div>
                     </div>
+                    
+                    <button className="mt-6 w-full py-3 bg-blue-50 text-blue-600 rounded-xl font-black text-sm uppercase tracking-widest group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                      Ver detalles
+                    </button>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-md p-12 text-center">
-              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 text-lg">No hay clases disponibles en este momento</p>
-              <p className="text-gray-500 mt-2">Vuelve pronto para ver nuevas clases</p>
+            <div className="bg-white rounded-2xl shadow-sm p-20 text-center border-2 border-dashed border-gray-200">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Calendar className="w-10 h-10 text-gray-300" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">No hay clases programadas</h3>
+              <p className="text-gray-500 max-w-xs mx-auto">Esta escuela aún no tiene clases publicadas. Vuelve pronto para ver nuevas fechas.</p>
             </div>
           )}
         </div>
@@ -421,15 +532,20 @@ export default function SchoolDetailPage() {
                 >
                   {/* Review Header */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-900 mb-1">{review.studentName}</h4>
-                      <p className="text-xs text-gray-500">
-                        {new Date(review.createdAt).toLocaleDateString('es-PE', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-100 to-indigo-100 flex items-center justify-center text-blue-700 font-bold">
+                        {review.studentName.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 mb-0.5">{review.studentName}</h4>
+                        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">
+                          {new Date(review.createdAt).toLocaleDateString('es-PE', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1">
                       {[1, 2, 3, 4, 5].map((star) => (

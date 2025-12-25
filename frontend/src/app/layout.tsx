@@ -49,128 +49,72 @@ export default function RootLayout({
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-              // Protección contra errores de scripts externos (como share-modal.js)
+              // Protección ultra-agresiva contra errores de scripts externos
               (function() {
                 'use strict';
                 
-                // Interceptar errores ANTES de que se ejecuten los scripts
+                // Sobrescribir addEventListener en EventTarget y Element
                 const originalAddEventListener = EventTarget.prototype.addEventListener;
-                
-                // Sobrescribir addEventListener para prevenir errores con null
-                EventTarget.prototype.addEventListener = function(type, listener, options) {
+                const safeAddEventListener = function(type, listener, options) {
                   try {
-                    // Verificar si this es null o undefined
-                    if (this === null || this === undefined) {
-                      return; // Silenciosamente ignorar
-                    }
-                    // Verificar si this es un objeto válido
-                    if (typeof this !== 'object' && typeof this !== 'function') {
-                      return; // Silenciosamente ignorar
-                    }
-                    // Intentar llamar al método original
+                    if (!this || (typeof this !== 'object' && typeof this !== 'function')) return;
                     return originalAddEventListener.call(this, type, listener, options);
                   } catch (e) {
-                    // Silenciar todos los errores relacionados con addEventListener
-                      return;
-                    }
-                };
-                
-                // Interceptar querySelector y querySelectorAll para prevenir errores
-                const originalQuerySelector = Document.prototype.querySelector;
-                const originalQuerySelectorAll = Document.prototype.querySelectorAll;
-                
-                // Proteger querySelector
-                Document.prototype.querySelector = function(selector) {
-                  try {
-                    return originalQuerySelector.call(this, selector);
-                  } catch (e) {
-                    return null;
+                    return;
                   }
                 };
                 
-                // Proteger querySelectorAll
-                Document.prototype.querySelectorAll = function(selector) {
-                  try {
-                    return originalQuerySelectorAll.call(this, selector);
-                  } catch (e) {
-                    return [];
-                  }
+                EventTarget.prototype.addEventListener = safeAddEventListener;
+                if (window.Element) Element.prototype.addEventListener = safeAddEventListener;
+                
+                // Proteger selectores comunes
+                const protect = (proto, method, fallback) => {
+                  if (!proto || !proto[method]) return;
+                  const original = proto[method];
+                  proto[method] = function() {
+                    try {
+                      return original.apply(this, arguments);
+                    } catch (e) {
+                      return fallback;
+                    }
+                  };
                 };
                 
-                // También proteger en Element
-                if (Element.prototype.querySelector) {
-                  const originalElementQuerySelector = Element.prototype.querySelector;
-                  Element.prototype.querySelector = function(selector) {
-                    try {
-                      return originalElementQuerySelector.call(this, selector);
-                    } catch (e) {
-                      return null;
-                    }
-                  };
+                protect(Document.prototype, 'querySelector', null);
+                protect(Document.prototype, 'querySelectorAll', []);
+                if (window.Element) {
+                  protect(Element.prototype, 'querySelector', null);
+                  protect(Element.prototype, 'querySelectorAll', []);
+                  protect(Element.prototype, 'getElementById', null);
                 }
-                
-                if (Element.prototype.querySelectorAll) {
-                  const originalElementQuerySelectorAll = Element.prototype.querySelectorAll;
-                  Element.prototype.querySelectorAll = function(selector) {
-                    try {
-                      return originalElementQuerySelectorAll.call(this, selector);
-                    } catch (e) {
-                      return [];
-                    }
-                  };
-                }
-                
-                // Manejar errores globales de forma más agresiva
-                const errorHandler = function(e) {
-                  const errorMessage = e.message || '';
-                  const errorSource = e.filename || e.source || e.target?.src || '';
-                  const errorStack = e.error?.stack || '';
-                  
-                  // Verificar si el error está relacionado con share-modal o addEventListener null
-                  const isShareModalError = 
-                    errorMessage.includes('share-modal') || 
-                      errorSource.includes('share-modal') ||
-                    errorStack.includes('share-modal');
-                  
-                  const isAddEventListenerError = 
-                    (errorMessage.includes('addEventListener') && 
-                     (errorMessage.includes('null') || 
-                      errorMessage.includes('Cannot read properties') ||
-                      errorMessage.includes('undefined'))) ||
-                    (errorMessage.includes('Cannot read properties') && 
-                     errorMessage.includes('addEventListener'));
-                  
-                  if (isShareModalError || isAddEventListenerError) {
+
+                // Handler de errores global
+                const isIgnorableError = (msg, src, stack) => {
+                  const m = String(msg || '').toLowerCase();
+                  const s = String(src || '').toLowerCase();
+                  const t = String(stack || '').toLowerCase();
+                  return m.includes('share-modal') || s.includes('share-modal') || t.includes('share-modal') ||
+                         (m.includes('addeventlistener') && (m.includes('null') || m.includes('undefined')));
+                };
+
+                window.addEventListener('error', function(e) {
+                  if (isIgnorableError(e.message, e.filename, e.error?.stack)) {
                     e.preventDefault();
                     e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    return true; // Prevenir que el error se propague
                   }
-                };
-                
-                // Registrar el handler con capture para atrapar errores temprano
-                window.addEventListener('error', errorHandler, true);
-                
-                // También capturar errores no capturados
+                }, true);
+
                 window.addEventListener('unhandledrejection', function(e) {
-                  const reason = e.reason?.message || String(e.reason || '');
-                  if (reason.includes('share-modal') || 
-                      reason.includes('addEventListener')) {
+                  if (isIgnorableError(e.reason?.message || e.reason)) {
                     e.preventDefault();
-                    return true;
                   }
-                });
-                
-                // Interceptar console.error para filtrar estos errores específicos
-                const originalConsoleError = console.error;
+                }, true);
+
+                // Silenciar en consola
+                const orgError = console.error;
                 console.error = function(...args) {
-                  const message = args.join(' ');
-                  if (message.includes('share-modal') && 
-                      (message.includes('addEventListener') || 
-                       message.includes('Cannot read properties'))) {
-                    return; // No mostrar este error en consola
-                  }
-                  return originalConsoleError.apply(console, args);
+                  if (isIgnorableError(args.join(' '))) return;
+                  return orgError.apply(console, args);
                 };
               })();
             `,

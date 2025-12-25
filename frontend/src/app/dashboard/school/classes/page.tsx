@@ -832,7 +832,7 @@ export default function ClassesManagementPage() {
                                     <span className="text-xs text-gray-500 uppercase font-semibold">Fecha</span>
                                     <div className="flex items-center gap-1.5 text-gray-900 font-medium">
                                     <Calendar className="w-4 h-4 text-blue-500" />
-                                    {new Date(primaryClass.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                    {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Fecha pendiente'}
                                     </div>
                                 </div>
                              </div>
@@ -844,7 +844,7 @@ export default function ClassesManagementPage() {
                                         <div className="flex items-center gap-2">
                                             <div className="flex items-center gap-1.5 text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">
                                                 <Clock className="w-3 h-3" />
-                                                {new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                                {cls.date ? new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }) : '--:--'}
                                             </div>
                                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full uppercase ${getStatusColor(cls.status || 'upcoming')}`}>
                                                 {cls.status === 'upcoming' ? 'Activa' : cls.status === 'completed' ? 'Comp' : 'Canc'}

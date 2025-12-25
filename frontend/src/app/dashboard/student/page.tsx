@@ -160,15 +160,19 @@ export default function StudentDashboard() {
       now.setHours(0, 0, 0, 0); // Reset to start of day for comparison
       
       const completedReservations = reservations.filter((r: any) => {
-        if (!r.class || !r.class.date) return false;
-        const classDate = new Date(r.class.date);
+        const dateStr = r.date || r.class?.date;
+        if (!dateStr) return false;
+        
+        const classDate = new Date(dateStr);
         classDate.setHours(0, 0, 0, 0);
         return r.status === 'CONFIRMED' && classDate < now;
       });
       
       const upcomingReservations = reservations.filter((r: any) => {
-        if (!r.class || !r.class.date) return false;
-        const classDate = new Date(r.class.date);
+        const dateStr = r.date || r.class?.date;
+        if (!dateStr) return false;
+
+        const classDate = new Date(dateStr);
         classDate.setHours(0, 0, 0, 0);
         // Show all non-canceled reservations that are either:
         // 1. Future dates, OR
@@ -216,24 +220,37 @@ export default function StudentDashboard() {
       const realUpcomingClasses: UpcomingClass[] = upcomingReservations
         .filter((r: any) => r.class) // Filter out reservations without class data
         .sort((a: any, b: any) => {
-          const dateA = a.class?.date ? new Date(a.class.date).getTime() : 0;
-          const dateB = b.class?.date ? new Date(b.class.date).getTime() : 0;
+          const dateAStr = a.date || a.class?.date;
+          const dateBStr = b.date || b.class?.date;
+          const dateA = dateAStr ? new Date(dateAStr).getTime() : 0;
+          const dateB = dateBStr ? new Date(dateBStr).getTime() : 0;
           return dateA - dateB;
         })
         .slice(0, 5)
         .map((r: any) => {
-          const classDate = r.class?.date ? new Date(r.class.date) : new Date();
+          const dateStr = r.date || r.class?.date || new Date().toISOString();
+          const classDate = new Date(dateStr);
           const duration = r.class?.duration || 120;
-          const endTime = new Date(classDate.getTime() + duration * 60000);
           
+          let startTimeStr = '00:00';
+          if (r.time) {
+            startTimeStr = r.time.substring(0, 5);
+          } else if (r.class?.date) {
+             startTimeStr = new Date(r.class.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+          }
+           
+          const [hours, minutes] = startTimeStr.split(':').map(Number);
+          const endDate = new Date();
+          endDate.setHours(hours, minutes + duration);
+
           return {
             id: r.class?.id || 0, // Use class ID for linking to class page
             reservationId: r.id, // Keep reservation ID for reference
             classId: r.class?.id || 0, // Explicit class ID
             title: r.class?.title || 'Clase de Surf',
-            date: r.class?.date || new Date().toISOString(),
-            startTime: classDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-            endTime: endTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+            date: dateStr,
+            startTime: startTimeStr,
+            endTime: endDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
             instructor: r.class?.instructor?.name || r.class?.instructor || 'Instructor',
             location: r.class?.school?.location || r.class?.location || 'Por definir',
             level: r.class?.level || 'BEGINNER',
@@ -551,7 +568,7 @@ export default function StudentDashboard() {
             <div className="flex items-center">
               <CreditCard className="w-8 h-8 text-purple-600" />
               <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Total Gastado</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Total Invertido</h3>
                 <p className="text-3xl font-bold text-purple-600">{formatCurrency(stats.totalSpent)}</p>
               </div>
             </div>

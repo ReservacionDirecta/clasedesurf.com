@@ -7,6 +7,7 @@ import { validateBody, validateParams } from '../middleware/validation';
 import { createReservationSchema, updateReservationSchema, reservationIdSchema } from '../validations/reservations';
 import resolveSchool from '../middleware/resolve-school';
 import { buildMultiTenantWhere } from '../middleware/multi-tenant';
+import { normalizeClassImages, normalizeSchoolImages } from '../utils/image-utils';
 
 const router = express.Router();
 
@@ -159,12 +160,23 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
       where,
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
-        class: { include: { school: { select: { id: true, name: true, location: true } } } },
+        class: { include: { school: { select: { id: true, name: true, location: true, logo: true, coverImage: true } } } },
         payment: { include: { discountCode: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
-    res.json(reservations);
+
+    const normalizedReservations = reservations.map(res => {
+      if (res.class?.school) {
+        res.class.school = normalizeSchoolImages(res.class.school);
+      }
+      if (res.class) {
+        res.class = normalizeClassImages(res.class);
+      }
+      return res;
+    });
+
+    res.json(normalizedReservations);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error' });
   }
@@ -186,7 +198,6 @@ router.get('/all', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest,
   }
 });
 
-// GET /reservations/:id
 router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req: AuthRequest, res) => {
   try {
     const reservation = await prisma.reservation.findUnique({
@@ -204,6 +215,14 @@ router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req:
       return res.status(403).json({ message: 'Forbidden' });
     }
 
+    // Normalize images
+    if (reservation.class) {
+      reservation.class = normalizeClassImages(reservation.class);
+      if (reservation.class.school) {
+        reservation.class.school = normalizeSchoolImages(reservation.class.school);
+      }
+    }
+
     res.json(reservation);
   } catch (err) {
     res.status(500).json({ message: 'Internal server error' });
@@ -211,7 +230,7 @@ router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req:
 });
 
 // PUT /reservations/:id
-router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(reservationIdSchema), async (req: AuthRequest, res) => {
+router.put('/:id', requireAuth, resolveSchool, validateParams(reservationIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
     const { status, ...rest } = req.body;
@@ -222,8 +241,29 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
     });
     if (!existing) return res.status(404).json({ message: 'Not found' });
 
-    if (req.role === 'SCHOOL_ADMIN' && existing.class.schoolId !== req.schoolId) {
+    // Permission check
+    const isOwner = existing.userId === req.userId;
+    const isAdmin = req.role === 'ADMIN';
+    const isSchoolAdmin = req.role === 'SCHOOL_ADMIN';
+
+    if (isSchoolAdmin && existing.class.schoolId !== req.schoolId) {
       return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    if (!isAdmin && !isSchoolAdmin && !isOwner) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    // Students can only cancel certain reservations
+    if (!isAdmin && !isSchoolAdmin && isOwner) {
+      // Only allow setting status to CANCELED
+      if (status && status !== 'CANCELED') {
+        return res.status(403).json({ message: 'Students can only cancel reservations' });
+      }
+      // Don't allow changing other fields
+      if (Object.keys(rest).length > 0) {
+        return res.status(403).json({ message: 'Students can only update status' });
+      }
     }
 
     const updated = await prisma.reservation.update({
@@ -261,6 +301,7 @@ router.delete('/:id', requireAuth, requireRole(['ADMIN']), async (req: AuthReque
     await prisma.reservation.delete({ where: { id } });
     res.json({ message: 'Deleted' });
   } catch (err) {
+    console.error(`[DELETE /reservations/:id] Error: ${err}`);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
