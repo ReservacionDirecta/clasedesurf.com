@@ -93,7 +93,6 @@ jobs:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       working-directory: ./backend
       run: |
-        railway login --token $RAILWAY_TOKEN
         railway up --detach
 
     - name: 🚀 Deploy Frontend to Railway
@@ -101,7 +100,6 @@ jobs:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       working-directory: ./frontend
       run: |
-        railway login --token $RAILWAY_TOKEN
         railway up --detach
 
     - name: ⏳ Wait for deployment
@@ -132,7 +130,6 @@ jobs:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       working-directory: ./backend
       run: |
-        railway login --token $RAILWAY_TOKEN
         railway run npx prisma migrate deploy
 
     - name: 🌱 Seed Database (if needed)
@@ -140,7 +137,6 @@ jobs:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       working-directory: ./backend
       run: |
-        railway login --token $RAILWAY_TOKEN
         railway run npx prisma db seed || echo "Seeding skipped or failed"
 
   # Job 5: Notify Success
