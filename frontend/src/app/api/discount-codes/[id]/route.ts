@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-async function proxy(req: NextRequest, { params }: { params: { id: string } }) {
+async function proxy(req: NextRequest, paramsPromise: Promise<{ id: string }>) {
+  const params = await paramsPromise;
   try {
     const url = new URL(req.url);
     const path = `/discount-codes/${params.id}${url.search}`;
@@ -39,17 +40,18 @@ async function proxy(req: NextRequest, { params }: { params: { id: string } }) {
   }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  return proxy(req, { params });
+export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  return proxy(req, props.params);
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  return proxy(req, { params });
+export async function PUT(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  return proxy(req, props.params);
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  return proxy(req, { params });
+export async function DELETE(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  return proxy(req, props.params);
 }
+
 
 
 

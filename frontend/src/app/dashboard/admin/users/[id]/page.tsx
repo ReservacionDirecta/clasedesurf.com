@@ -3,15 +3,18 @@
 export const dynamic = 'force-dynamic';
 
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useToast } from '@/contexts/ToastContext';
 
-export default function AdminUserDetail({ params }: { params: { id: string } }) {
+export default function AdminUserDetail() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { id } = params;
+  const params = useParams();
+  // Ensure id is a string
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  
   const { showSuccess, showError } = useToast();
 
   const [user, setUser] = useState<any>(null);
@@ -28,6 +31,8 @@ export default function AdminUserDetail({ params }: { params: { id: string } }) 
     }
 
     const fetchUser = async () => {
+      if (!id) return;
+      
       setLoading(true);
       try {
         const token = (session as any)?.backendToken;
@@ -58,7 +63,9 @@ export default function AdminUserDetail({ params }: { params: { id: string } }) 
       }
     };
 
-    fetchUser();
+    if (id) {
+        fetchUser();
+    }
   }, [session, status, router, id]);
 
   const handleUpdateUser = async (e: React.FormEvent) => {

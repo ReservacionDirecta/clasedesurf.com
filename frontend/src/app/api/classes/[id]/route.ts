@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const authHeader = req.headers.get('authorization');
-    
+
     const headers: any = {
       'Content-Type': 'application/json'
     };
@@ -17,29 +18,30 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       method: 'GET',
       headers
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Backend error' }));
       return NextResponse.json(errorData, { status: response.status });
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
-    
+
   } catch (error) {
     console.error('Class proxy error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { message: 'Proxy error', error: errorMessage }, 
+      { message: 'Proxy error', error: errorMessage },
       { status: 500 }
     );
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const authHeader = req.headers.get('authorization');
-    
+
     const headers: any = {
       'Content-Type': 'application/json'
     };
@@ -48,7 +50,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     const body = await req.json();
-    
+
     const response = await fetch(`${BACKEND}/classes/${params.id}`, {
       method: 'PUT',
       headers,
@@ -62,28 +64,29 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-    
+
   } catch (error) {
     console.error('Error updating class:', error);
     return NextResponse.json(
-      { message: 'Internal server error' }, 
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const authHeader = req.headers.get('authorization');
-    
+
     if (!authHeader) {
       console.error('[DELETE /api/classes/:id] No authorization header');
       return NextResponse.json(
-        { message: 'No autorizado. Por favor, inicia sesión nuevamente.' }, 
+        { message: 'No autorizado. Por favor, inicia sesión nuevamente.' },
         { status: 401 }
       );
     }
-    
+
     const headers: any = {
       'Content-Type': 'application/json',
       'Authorization': authHeader
@@ -111,14 +114,14 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       console.error('[DELETE /api/classes/:id] Backend error:', errorData);
       console.error('[DELETE /api/classes/:id] Error status:', response.status);
       console.error('[DELETE /api/classes/:id] Error text:', errorText);
-      
+
       // Preserve the error message from backend, especially for 400 errors
       return NextResponse.json(
-        { 
+        {
           message: errorData.message || 'Error al eliminar la clase',
           reservationsCount: errorData.reservationsCount,
           ...errorData
-        }, 
+        },
         { status: response.status }
       );
     }
@@ -126,15 +129,15 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const data = await response.json();
     console.log('[DELETE /api/classes/:id] Success:', data);
     return NextResponse.json(data, { status: response.status });
-    
+
   } catch (error: any) {
     console.error('[DELETE /api/classes/:id] Error completo:', error);
     console.error('[DELETE /api/classes/:id] Error message:', error?.message);
     return NextResponse.json(
-      { 
+      {
         message: 'Error al eliminar la clase',
         error: process.env.NODE_ENV === 'development' ? error?.message : undefined
-      }, 
+      },
       { status: 500 }
     );
   }

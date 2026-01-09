@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic' as const;
+export const dynamic = 'force-dynamic';
 
 // Use same logic as next.config.js - force localhost:4000 in development
 const BACKEND = process.env.NODE_ENV === 'development'
@@ -14,7 +14,7 @@ export async function GET(
   try {
     const { id } = await params;
     const authHeader = req.headers.get('authorization');
-    
+
     const headers: any = {
       'Content-Type': 'application/json'
     };
@@ -27,20 +27,20 @@ export async function GET(
       headers,
       cache: 'no-store'
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Backend error' }));
       return NextResponse.json(errorData, { status: response.status });
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
-    
+
   } catch (error) {
     console.error('Reservation proxy error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { message: 'Proxy error', error: errorMessage }, 
+      { message: 'Proxy error', error: errorMessage },
       { status: 500 }
     );
   }
@@ -53,7 +53,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const authHeader = req.headers.get('authorization');
-    
+
     const headers: any = {
       'Content-Type': 'application/json'
     };
@@ -62,7 +62,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    
+
     const response = await fetch(`${BACKEND}/reservations/${id}`, {
       method: 'PUT',
       headers,
@@ -77,11 +77,11 @@ export async function PUT(
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-    
+
   } catch (error) {
     console.error('Error updating reservation:', error);
     return NextResponse.json(
-      { message: 'Internal server error' }, 
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -94,7 +94,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     const authHeader = req.headers.get('authorization');
-    
+
     const headers: any = {
       'Content-Type': 'application/json'
     };
@@ -115,11 +115,11 @@ export async function DELETE(
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-    
+
   } catch (error) {
     console.error('Error deleting reservation:', error);
     return NextResponse.json(
-      { message: 'Internal server error' }, 
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }

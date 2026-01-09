@@ -6,12 +6,13 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:400
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     console.log('[PUT /api/notes/:id] Session exists:', !!session);
-    
+
     if (!session) {
       console.error('[PUT /api/notes/:id] No session found');
       return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
@@ -19,7 +20,7 @@ export async function PUT(
 
     const token = (session as any).backendToken;
     console.log('[PUT /api/notes/:id] Token exists:', !!token);
-    
+
     if (!token) {
       console.error('[PUT /api/notes/:id] No backend token in session');
       return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
@@ -60,7 +61,7 @@ export async function PUT(
     console.error('[PUT /api/notes/:id] Error completo:', error);
     console.error('[PUT /api/notes/:id] Error message:', error?.message);
     return NextResponse.json(
-      { 
+      {
         message: 'Error al actualizar la nota',
         error: process.env.NODE_ENV === 'development' ? error?.message : undefined
       },
@@ -71,12 +72,13 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     console.log('[DELETE /api/notes/:id] Session exists:', !!session);
-    
+
     if (!session) {
       console.error('[DELETE /api/notes/:id] No session found');
       return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
@@ -84,7 +86,7 @@ export async function DELETE(
 
     const token = (session as any).backendToken;
     console.log('[DELETE /api/notes/:id] Token exists:', !!token);
-    
+
     if (!token) {
       console.error('[DELETE /api/notes/:id] No backend token in session');
       return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
@@ -123,7 +125,7 @@ export async function DELETE(
     console.error('[DELETE /api/notes/:id] Error completo:', error);
     console.error('[DELETE /api/notes/:id] Error message:', error?.message);
     return NextResponse.json(
-      { 
+      {
         message: 'Error al eliminar la nota',
         error: process.env.NODE_ENV === 'development' ? error?.message : undefined
       },

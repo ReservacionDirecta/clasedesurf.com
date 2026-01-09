@@ -17,7 +17,7 @@ const nextConfig = {
 	output: 'standalone',
 
 	// Optimize for production
-	swcMinify: true,
+
 
 	// Ignore ESLint errors during build to prevent deployment failures
 	eslint: {

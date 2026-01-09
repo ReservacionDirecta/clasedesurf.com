@@ -81,7 +81,7 @@ export const authOptions = {
             : (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '/api');
 
           // Get role from cookie if available (set during registration)
-          const cookieStore = cookies();
+          const cookieStore = await cookies();
           const roleCookie = cookieStore.get('registration_role');
           const role = roleCookie?.value;
 

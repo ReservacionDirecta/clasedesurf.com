@@ -1,27 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { notificationService, Notification } from '@/services/notificationService';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
 
-export default function AdminNotificationDetailPage({ params }: { params: { id: string } }) {
+export default function AdminNotificationDetailPage() {
+  const params = useParams();
   const [notification, setNotification] = useState<Notification | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    loadNotification();
-  }, [params.id]);
+    if (params?.id) {
+        loadNotification();
+    }
+  }, [params?.id]);
 
   const loadNotification = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await notificationService.getById(parseInt(params.id));
+      const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+      if (!id) return;
+      
+      const data = await notificationService.getById(parseInt(id));
       setNotification(data);
     } catch (err) {
       console.error('Error loading notification:', err);

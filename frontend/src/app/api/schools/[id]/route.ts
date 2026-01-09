@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const authHeader = req.headers.get('authorization');
-    
+
     const headers: any = { 'Content-Type': 'application/json' };
     if (authHeader) headers['Authorization'] = authHeader;
 
@@ -22,13 +23,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const authHeader = req.headers.get('authorization');
     const body = await req.json();
-    
+
     console.log('[API Route] Updating school:', params.id, 'with data:', JSON.stringify(body, null, 2));
-    
+
     const headers: any = { 'Content-Type': 'application/json' };
     if (authHeader) headers['Authorization'] = authHeader;
 
@@ -63,19 +65,20 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   } catch (error) {
     console.error('[API Route] Error updating school:', error);
     return NextResponse.json(
-      { 
+      {
         message: error instanceof Error ? error.message : 'Internal server error',
         error: error instanceof Error ? error.stack : String(error)
-      }, 
+      },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const authHeader = req.headers.get('authorization');
-    
+
     const headers: any = { 'Content-Type': 'application/json' };
     if (authHeader) headers['Authorization'] = authHeader;
 
