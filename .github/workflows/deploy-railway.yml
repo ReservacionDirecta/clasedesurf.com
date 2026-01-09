@@ -71,70 +71,9 @@ jobs:
       working-directory: ./frontend
       run: npm run build
 
-  # Job 2: Build Docker Images
-  build-docker:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-
-    - name: 🔐 Log in to Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: 🏷️ Extract metadata for Backend
-      id: meta-backend
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-
-    - name: 🏷️ Extract metadata for Frontend
-      id: meta-frontend
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-
-    - name: 🐳 Build and push Backend Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./backend
-        file: ./backend/Dockerfile.railway
-        push: true
-        tags: ${{ steps.meta-backend.outputs.tags }}
-        labels: ${{ steps.meta-backend.outputs.labels }}
-
-    - name: 🐳 Build and push Frontend Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./frontend
-        file: ./frontend/Dockerfile.railway
-        push: true
-        tags: ${{ steps.meta-frontend.outputs.tags }}
-        labels: ${{ steps.meta-frontend.outputs.labels }}
-
-  # Job 3: Deploy to Railway
+  # Job 2: Deploy to Railway
   deploy-railway:
-    needs: [build-and-test, build-docker]
+    needs: [build-and-test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     
