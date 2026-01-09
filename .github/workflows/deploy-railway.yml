@@ -92,15 +92,19 @@ jobs:
     - name: 🚀 Deploy Backend to Railway
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        CI: true
       working-directory: ./backend
       run: |
+        railway link ${{ env.RAILWAY_PROJECT_ID }}
         railway up --service backend --detach
 
     - name: 🚀 Deploy Frontend to Railway
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        CI: true
       working-directory: ./frontend
       run: |
+        railway link ${{ env.RAILWAY_PROJECT_ID }}
         railway up --service frontend --detach
 
     - name: ⏳ Wait for deployment
@@ -129,15 +133,19 @@ jobs:
     - name: 🗄️ Run Database Migrations
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        CI: true
       working-directory: ./backend
       run: |
+        railway link ${{ env.RAILWAY_PROJECT_ID }}
         railway run --service backend npx prisma migrate deploy
 
     - name: 🌱 Seed Database (if needed)
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        CI: true
       working-directory: ./backend
       run: |
+        railway link ${{ env.RAILWAY_PROJECT_ID }}
         railway run --service backend npx prisma db seed || echo "Seeding skipped or failed"
 
   # Job 5: Notify Success
