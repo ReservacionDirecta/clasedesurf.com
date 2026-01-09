@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken, requireSchoolAdmin, requireRole } from '../middleware/auth';
+import { requireAuth, requireRole } from '../middleware/auth';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -11,7 +11,8 @@ const prisma = new PrismaClient();
 // Configure multer for image uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../../frontend/public/uploads/products');
+        const rootDir = process.env.STORAGE_PATH || path.join(__dirname, '../../uploads');
+        const uploadDir = path.join(rootDir, 'products');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
@@ -56,7 +57,7 @@ router.get('/public', async (req, res) => {
 
 // GET /api/products
 // Get all products (Admin only)
-router.get('/', authenticateToken, requireRole(['ADMIN']), async (req, res) => {
+router.get('/', requireAuth, requireRole(['ADMIN']), async (req, res) => {
     try {
         const products = await prisma.product.findMany({
             include: { school: { select: { name: true } } },
@@ -102,7 +103,7 @@ router.get('/school/:schoolId', async (req, res) => {
 
 // POST /api/products
 // Create a new product (School Admin only)
-router.post('/', authenticateToken, requireSchoolAdmin, upload.single('image'), async (req, res) => {
+router.post('/', requireAuth, requireRole(['SCHOOL_ADMIN', 'ADMIN']), upload.single('image'), async (req, res) => {
     try {
         const { name, description, price, stock, category, schoolId } = req.body;
 
@@ -137,7 +138,7 @@ router.post('/', authenticateToken, requireSchoolAdmin, upload.single('image'), 
 
 // PUT /api/products/:id
 // Update a product (School Admin only)
-router.put('/:id', authenticateToken, requireSchoolAdmin, upload.single('image'), async (req, res) => {
+router.put('/:id', requireAuth, requireRole(['SCHOOL_ADMIN', 'ADMIN']), upload.single('image'), async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description, price, stock, category, isActive } = req.body;
@@ -179,7 +180,7 @@ router.put('/:id', authenticateToken, requireSchoolAdmin, upload.single('image')
 
 // DELETE /api/products/:id
 // Soft delete a product (School Admin only)
-router.delete('/:id', authenticateToken, requireSchoolAdmin, async (req, res) => {
+router.delete('/:id', requireAuth, requireRole(['SCHOOL_ADMIN', 'ADMIN']), async (req, res) => {
     try {
         const { id } = req.params;
 

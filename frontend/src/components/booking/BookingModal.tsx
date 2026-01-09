@@ -268,7 +268,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
       discountAmount: discountAmount,
       products: addons.map(a => ({ id: a.id, quantity: 1 }))
     }
-    }
+
 
     onSubmit(bookingData)
   }
@@ -734,8 +734,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                       <span className="text-green-700 font-bold">-{formatDualCurrency(discountAmount).pen}</span>
                     </div>
                   )}
-                    </div>
-                  )}
+
                   {addons.length > 0 && (
                      <div className="flex justify-between items-center text-sm border-t border-dashed border-gray-200 pt-2 mt-2">
                         <span className="text-gray-600">Add-ons ({addons.length}):</span>

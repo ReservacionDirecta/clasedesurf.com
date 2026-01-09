@@ -2,22 +2,45 @@ import express from 'express';
 import requireAuth, { AuthRequest } from '../middleware/auth';
 import prisma from '../prisma';
 import multer from 'multer';
-import { uploadToCloudinary } from '../config/cloudinary';
+import path from 'path';
+import fs from 'fs';
+
+// Define storage path
+const STORAGE_PATH = process.env.STORAGE_PATH || path.join(__dirname, '../../uploads');
+
+// Ensure directory exists
+if (!fs.existsSync(STORAGE_PATH)) {
+    fs.mkdirSync(STORAGE_PATH, { recursive: true });
+}
 
 const router = express.Router();
 
-// Configure multer for memory storage
+
+// Configure multer for disk storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, STORAGE_PATH);
+    },
+    filename: (req, file, cb) => {
+        // Log basic file info
+        console.log('Processing upload:', file.originalname);
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, `${uniqueSuffix}${ext}`);
+    }
+});
+
 const upload = multer({
-    storage: multer.memoryStorage(),
+    storage: storage,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB max
+        fileSize: 10 * 1024 * 1024 // 10MB max
     },
     fileFilter: (req, file, cb) => {
         // Validate file type
-        if (file.mimetype.match(/^image\/(jpeg|jpg|png|webp)$/)) {
+        if (file.mimetype.match(/^image\/(jpeg|jpg|png|webp|gif)$/)) {
             cb(null, true);
         } else {
-            cb(new Error('Solo se permiten archivos JPG, PNG o WebP'));
+            cb(new Error('Solo se permiten archivos JPG, PNG, GIF o WebP'));
         }
     }
 });
@@ -98,7 +121,7 @@ router.get('/library', requireAuth, async (req: AuthRequest, res) => {
     }
 });
 
-// POST /images/upload - Upload image to Cloudinary
+// POST /images/upload - Upload image to Local Storage
 router.post('/upload', requireAuth, upload.single('file'), async (req: AuthRequest, res) => {
     try {
         const file = req.file;
@@ -109,49 +132,39 @@ router.post('/upload', requireAuth, upload.single('file'), async (req: AuthReque
             });
         }
 
-        const folder = req.body.folder || 'classes';
-        const quality = req.body.quality || '85';
-        const width = req.body.width ? parseInt(req.body.width) : 1200;
+        const folder = req.body.folder || 'misc';
 
-        console.log('[POST /images/upload] Uploading image:', {
-            filename: file.originalname,
+        console.log('[POST /images/upload] Upload successful:', {
+            filename: file.filename,
             size: file.size,
             mimetype: file.mimetype,
             folder,
-            userId: req.userId
+            userId: req.userId,
+            path: file.path
         });
 
-        // Upload to Cloudinary
-        const result = await uploadToCloudinary(file.buffer, folder, {
-            transformation: [
-                { width, crop: 'limit' },
-                { quality: `auto:${quality}` },
-                { fetch_format: 'auto' }
-            ]
-        });
+        // Construct public URL
+        // Assuming server serves STORAGE_PATH at /uploads
+        const protocol = req.protocol; // http or https
+        const host = req.get('host'); // domain:port
 
-        console.log('[POST /images/upload] Upload successful:', {
-            url: result.secure_url,
-            publicId: result.public_id,
-            format: result.format,
-            width: result.width,
-            height: result.height,
-            bytes: result.bytes
-        });
+        // Use environment variable for public URL if set (useful for Railway)
+        const baseUrl = process.env.PUBLIC_URL || `${protocol}://${host}`;
+        const url = `${baseUrl}/uploads/${file.filename}`;
 
         res.json({
             success: true,
-            url: result.secure_url,
-            publicId: result.public_id,
-            width: result.width,
-            height: result.height,
-            format: result.format,
-            bytes: result.bytes
+            url: url,
+            publicId: file.filename, // Using filename as ID
+            width: 0, // Metadata not extracted in basic disk storage without extra libs
+            height: 0,
+            format: path.extname(file.originalname).replace('.', ''),
+            bytes: file.size
         });
     } catch (error: any) {
         console.error('[POST /images/upload] Error:', error);
 
-        if (error.message === 'Solo se permiten archivos JPG, PNG o WebP') {
+        if (error.message === 'Solo se permiten archivos JPG, PNG, GIF o WebP') {
             return res.status(400).json({
                 success: false,
                 error: error.message

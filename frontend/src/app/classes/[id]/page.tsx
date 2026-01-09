@@ -205,107 +205,107 @@ export default function ClassDetailsPage() {
     }
   };
 
-  useEffect(() => {
-    const fetchClassDetails = async () => {
-      if (!classId) return;
+  const fetchClassDetails = useCallback(async () => {
+    if (!classId) return;
 
-      try {
-        setLoading(true);
-        setError('');
+    try {
+      setLoading(true);
+      setError('');
 
-        const token = (session as any)?.backendToken;
-        const headers: any = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        // Fetch real class details from backend
-        const response = await fetch(`/api/classes/${classId}`, { headers });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
-          const errorMessage = errorData.message || `Error ${response.status}: ${response.statusText}`;
-          throw new Error(errorMessage);
-        }
-
-        const classData = await response.json();
-        
-        if (!classData || !classData.id) {
-          throw new Error('Datos de clase inválidos recibidos del servidor');
-        }
-
-        // Find first upcoming session for representative times/prices
-        const nextSession = classData.sessions?.[0];
-        const classDateStr = nextSession?.date || new Date().toISOString();
-        const nextSessionDate = new Date(classDateStr);
-        
-        const startTime = nextSession?.startTime || '09:00';
-        const duration = classData.duration || 120;
-        
-        // Calculate endTime from startTime and duration
-        const [sh, sm] = startTime.split(':').map(Number);
-        const endD = new Date(nextSessionDate);
-        endD.setHours(sh, sm + duration);
-        const endTime = endD.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-        // Process class data to match expected format
-        const processedClass: ClassDetails = {
-          ...classData,
-          description: classData.description || 'Clase de surf',
-          date: classDateStr, // For backward compatibility
-          startTime,
-          endTime,
-          duration,
-          enrolled: nextSession?.enrolled || 0,
-          price: Number(nextSession?.price || classData.defaultPrice),
-          capacity: nextSession?.capacity || classData.defaultCapacity,
-          level: classData.level || 'BEGINNER',
-          location: classData.location || 'Por definir',
-          status: classData.status || 'ACTIVE',
-          type: classData.type || 'SURF_LESSON', 
-          images: classData.images || [],
-          school: {
-            id: classData.school?.id || 0,
-            name: classData.school?.name || 'Escuela de Surf',
-            location: classData.school?.location || 'Lima, Perú',
-            phone: classData.school?.phone || '',
-            email: classData.school?.email || '',
-            rating: 4.8,
-            totalReviews: 0
-          },
-          instructor: {
-            id: classData.instructor?.id || 1,
-            name: classData.instructor?.name || 'Instructor',
-            bio: classData.instructor?.bio || 'Instructor profesional de surf',
-            rating: 4.9,
-            totalReviews: 0,
-            yearsExperience: 5,
-            specialties: [],
-            profileImage: classData.instructor?.profileImage
-          },
-          reservations: classData.reservations || [] 
-        };
-
-        setClassDetails(processedClass);
-
-        // Check for user reservation (best effort)
-        if (session?.user?.id && classData.reservations) {
-          const userRes = classData.reservations.find(
-            (r: any) => r.userId === parseInt(session.user.id as string) && r.status !== 'CANCELED'
-          );
-          setUserReservation(userRes);
-        }
-
-      } catch (err) {
-        console.error('[Class Details] Error:', err);
-        setError(err instanceof Error ? err.message : 'Error al cargar la clase');
-      } finally {
-        setLoading(false);
+      const token = (session as any)?.backendToken;
+      const headers: any = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
-    };
 
-    fetchClassDetails();
+      // Fetch real class details from backend
+      const response = await fetch(`/api/classes/${classId}`, { headers });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+        const errorMessage = errorData.message || `Error ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
+      }
+
+      const classData = await response.json();
+      
+      if (!classData || !classData.id) {
+        throw new Error('Datos de clase inválidos recibidos del servidor');
+      }
+
+      // Find first upcoming session for representative times/prices
+      const nextSession = classData.sessions?.[0];
+      const classDateStr = nextSession?.date || new Date().toISOString();
+      const nextSessionDate = new Date(classDateStr);
+      
+      const startTime = nextSession?.startTime || '09:00';
+      const duration = classData.duration || 120;
+      
+      // Calculate endTime from startTime and duration
+      const [sh, sm] = startTime.split(':').map(Number);
+      const endD = new Date(nextSessionDate);
+      endD.setHours(sh, sm + duration);
+      const endTime = endD.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+      // Process class data to match expected format
+      const processedClass: ClassDetails = {
+        ...classData,
+        description: classData.description || 'Clase de surf',
+        date: classDateStr, // For backward compatibility
+        startTime,
+        endTime,
+        duration,
+        enrolled: nextSession?.enrolled || 0,
+        price: Number(nextSession?.price || classData.defaultPrice),
+        capacity: nextSession?.capacity || classData.defaultCapacity,
+        level: classData.level || 'BEGINNER',
+        location: classData.location || 'Por definir',
+        status: classData.status || 'ACTIVE',
+        type: classData.type || 'SURF_LESSON', 
+        images: classData.images || [],
+        school: {
+          id: classData.school?.id || 0,
+          name: classData.school?.name || 'Escuela de Surf',
+          location: classData.school?.location || 'Lima, Perú',
+          phone: classData.school?.phone || '',
+          email: classData.school?.email || '',
+          rating: 4.8,
+          totalReviews: 0
+        },
+        instructor: {
+          id: classData.instructor?.id || 1,
+          name: classData.instructor?.name || 'Instructor',
+          bio: classData.instructor?.bio || 'Instructor profesional de surf',
+          rating: 4.9,
+          totalReviews: 0,
+          yearsExperience: 5,
+          specialties: [],
+          profileImage: classData.instructor?.profileImage
+        },
+        reservations: classData.reservations || [] 
+      };
+
+      setClassDetails(processedClass);
+
+      // Check for user reservation (best effort)
+      if (session?.user?.id && classData.reservations) {
+        const userRes = classData.reservations.find(
+          (r: any) => r.userId === parseInt(session.user.id as string) && r.status !== 'CANCELED'
+        );
+        setUserReservation(userRes);
+      }
+
+    } catch (err) {
+      console.error('[Class Details] Error:', err);
+      setError(err instanceof Error ? err.message : 'Error al cargar la clase');
+    } finally {
+      setLoading(false);
+    }
   }, [classId, session]);
+
+  useEffect(() => {
+    fetchClassDetails();
+  }, [fetchClassDetails]);
 
   // No leftover closing brace here
 
