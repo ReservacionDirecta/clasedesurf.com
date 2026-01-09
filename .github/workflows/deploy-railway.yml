@@ -20,6 +20,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME_BACKEND: ${{ github.repository }}-backend
   IMAGE_NAME_FRONTEND: ${{ github.repository }}-frontend
+  RAILWAY_PROJECT_ID: 5b9527ff-cf02-405e-989f-f1120848d679
 
 jobs:
   # Job 1: Build and Test
@@ -93,14 +94,14 @@ jobs:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       working-directory: ./backend
       run: |
-        railway up --detach
+        railway up --service backend --detach
 
     - name: 🚀 Deploy Frontend to Railway
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       working-directory: ./frontend
       run: |
-        railway up --detach
+        railway up --service frontend --detach
 
     - name: ⏳ Wait for deployment
       run: sleep 60
@@ -130,14 +131,14 @@ jobs:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       working-directory: ./backend
       run: |
-        railway run npx prisma migrate deploy
+        railway run --service backend npx prisma migrate deploy
 
     - name: 🌱 Seed Database (if needed)
       env:
         RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
       working-directory: ./backend
       run: |
-        railway run npx prisma db seed || echo "Seeding skipped or failed"
+        railway run --service backend npx prisma db seed || echo "Seeding skipped or failed"
 
   # Job 5: Notify Success
   notify:
