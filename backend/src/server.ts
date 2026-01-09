@@ -20,6 +20,7 @@ import notesRouter from './routes/notes';
 import discountCodesRouter from './routes/discountCodes';
 import imagesRouter from './routes/images';
 import notificationsRouter from './routes/notifications';
+import productsRouter from './routes/products';
 import { whatsappService } from './services/whatsapp.service';
 import { initializeRedis, getRedisClient } from './config/redis';
 import prisma from './prisma';
@@ -94,6 +95,7 @@ app.use('/notes', notesRouter);
 app.use('/discount-codes', discountCodesRouter);
 app.use('/images', imagesRouter);
 app.use('/notifications', notificationsRouter);
+app.use('/products', productsRouter);
 
 app.get('/', (_req, res) => res.json({
   message: 'Backend API running',

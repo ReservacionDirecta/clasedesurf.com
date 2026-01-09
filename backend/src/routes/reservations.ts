@@ -15,7 +15,7 @@ const router = express.Router();
 router.post('/', requireAuth, validateBody(createReservationSchema), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    const { classId, sessionId, specialRequest, participants, discountCodeId, discountAmount, date, time } = req.body;
+    const { classId, sessionId, specialRequest, participants, discountCodeId, discountAmount, date, time, products } = req.body;
     if (!userId) return res.status(401).json({ message: 'User not authenticated' });
 
     let requestedCount: number;
@@ -79,9 +79,44 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
         return { ok: false, reason: 'Not enough spots available' };
       }
 
+      // 3.5 Process Products (Calculate total and check validity)
+      let productsTotal = 0;
+      const productPurchasesData: any[] = [];
+      const productUpdates: any[] = [];
+
+      if (Array.isArray(products) && products.length > 0) {
+        for (const item of products) {
+          const product = await tx.product.findUnique({ where: { id: Number(item.id) } });
+          const quantity = Number(item.quantity) || 1;
+
+          if (!product) continue;
+          if (!product.isActive) throw new Error(`Product ${product.name} is not available`);
+          if (product.stock < quantity) throw new Error(`Not enough stock for ${product.name}`);
+
+          productsTotal += product.price * quantity;
+          productPurchasesData.push({
+            productId: product.id,
+            quantity: quantity,
+            unitPrice: product.price,
+            totalPrice: product.price * quantity
+          });
+
+          // Prepare stock update
+          productUpdates.push(
+            tx.product.update({
+              where: { id: product.id },
+              data: { stock: { decrement: quantity } }
+            })
+          );
+        }
+      }
+
       // 4. Calculate amount
-      const originalAmount = unitPrice * requestedCount;
+      const classSubtotal = unitPrice * requestedCount;
+      const originalAmount = classSubtotal + productsTotal;
       const finalDiscountAmount = discountAmount ? Number(discountAmount) : 0;
+      // Ensure discount doesn't exceed class subtotal (usually products aren't discounted by class coupons)
+      // But preserving existing logic structure:
       const finalAmount = Math.max(0, originalAmount - finalDiscountAmount);
 
       // 5. Create reservation
@@ -93,9 +128,15 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
           participants: participants || null,
           status: 'PENDING',
           date: reservationDate,
-          time: reservationTime
+          time: reservationTime,
+          productPurchases: productPurchasesData.length > 0 ? {
+            create: productPurchasesData
+          } : undefined
         }
       });
+
+      // 5.5 Execute stock updates
+      await Promise.all(productUpdates);
 
       // 6. Create payment
       await tx.payment.create({
@@ -115,7 +156,8 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
         include: {
           user: true,
           class: { include: { school: true } },
-          payment: { include: { discountCode: true } }
+          payment: { include: { discountCode: true } },
+          productPurchases: { include: { product: true } }
         }
       });
 
@@ -148,7 +190,7 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
     res.status(201).json(result.reservation);
   } catch (err: any) {
     console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: err.message || 'Internal server error' });
   }
 });
 

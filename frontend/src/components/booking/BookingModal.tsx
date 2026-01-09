@@ -43,7 +43,9 @@ interface BookingModalProps {
   classData: ClassData
   onSubmit: (bookingData: any) => void
   initialParticipants?: number
+  addons?: { id: number; name: string; price: number }[]
 }
+
 
 const STEPS = [
   { id: 1, name: 'Información Personal', icon: '👤' },
@@ -51,7 +53,7 @@ const STEPS = [
   { id: 3, name: 'Emergencia', icon: '🆘' }
 ]
 
-export function BookingModal({ isOpen, onClose, classData, onSubmit, initialParticipants = 1 }: BookingModalProps) {
+export function BookingModal({ isOpen, onClose, classData, onSubmit, initialParticipants = 1, addons = [] }: BookingModalProps) {
   const { data: session } = useSession()
   const { success, error: showError } = useNotifications()
   const [currentStep, setCurrentStep] = useState(1)
@@ -263,7 +265,9 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
       originalAmount: basePricePEN,
       discountCode: discountInfo?.valid ? formData.discountCode.toUpperCase() : null,
       discountCodeId: discountInfo?.valid ? discountInfo.discountCodeId : null,
-      discountAmount: discountAmount
+      discountAmount: discountAmount,
+      products: addons.map(a => ({ id: a.id, quantity: 1 }))
+    }
     }
 
     onSubmit(bookingData)
@@ -276,8 +280,11 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
   const finalPricePEN = discountInfo?.valid && typeof discountInfo.finalAmount === 'number'
     ? discountInfo.finalAmount 
     : basePricePEN
+
+  const addonsTotal = addons.reduce((sum, item) => sum + item.price, 0)
+  const totalWithAddons = (finalPricePEN || 0) + addonsTotal
   
-  const totalPrices = formatDualCurrency(finalPricePEN)
+  const totalPrices = formatDualCurrency(totalWithAddons)
   const discountAmount = discountInfo?.valid && discountInfo.discountAmount 
     ? discountInfo.discountAmount 
     : 0
@@ -726,6 +733,17 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                       </span>
                       <span className="text-green-700 font-bold">-{formatDualCurrency(discountAmount).pen}</span>
                     </div>
+                  )}
+                    </div>
+                  )}
+                  {addons.length > 0 && (
+                     <div className="flex justify-between items-center text-sm border-t border-dashed border-gray-200 pt-2 mt-2">
+                        <span className="text-gray-600">Add-ons ({addons.length}):</span>
+                        <div className="text-right">
+                           <div className="text-gray-900 font-medium">+{formatDualCurrency(addonsTotal).pen}</div>
+                           <div className="text-xs text-gray-500 max-w-[150px] truncate">{addons.map(a => a.name).join(', ')}</div>
+                        </div>
+                     </div>
                   )}
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t-2 border-blue-300">

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X, ListChecks, LayoutGrid, List } from 'lucide-react';
+import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X, ListChecks, LayoutGrid, List, Copy } from 'lucide-react';
 import { SchoolContextBanner } from '@/components/school/SchoolContextBanner';
 import { useToast } from '@/contexts/ToastContext';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
@@ -68,7 +68,8 @@ export default function ClassesManagementPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateData, setDuplicateData] = useState({ date: '', time: '' });
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [groupBy, setGroupBy] = useState<'month' | 'name' | 'date'>('month');
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
@@ -299,6 +300,49 @@ export default function ClassesManagementPage() {
     } catch (error) {
       console.error('Error deleting class:', error);
       showError('Error al eliminar', error instanceof Error ? error.message : 'Error al eliminar la clase');
+    }
+  };
+
+  const handleDuplicateClass = async () => {
+    if (!selectedClass || !duplicateData.date || !duplicateData.time) return;
+
+    try {
+      const token = (session as any)?.backendToken;
+      const headers: any = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // First, get full class details to make sure we have everything
+      const classResponse = await fetch(`/api/classes/${selectedClass.id}`, { headers });
+      if (!classResponse.ok) throw new Error('Error al obtener detalles de la clase');
+      const fullClassData = await classResponse.json();
+
+      // Create new class using duplicate data
+      const response = await fetch('/api/classes/bulk-sessions', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          classId: selectedClass.id,
+          occurrences: [{
+            date: duplicateData.date,
+            time: duplicateData.time
+          }]
+        })
+      });
+
+      if (response.ok) {
+        await fetchClasses();
+        setShowDuplicateModal(false);
+        setSelectedClass(null);
+        setDuplicateData({ date: '', time: '' });
+        showSuccess('¡Clase duplicada!', 'La nueva sesión se creó correctamente');
+      } else {
+        throw new Error('Error al duplicar la clase');
+      }
+    } catch (error) {
+      console.error('Error duplicating class:', error);
+      showError('Error al duplicar', error instanceof Error ? error.message : 'No se pudo duplicar la clase');
     }
   };
 
@@ -756,6 +800,24 @@ export default function ClassesManagementPage() {
                                   <button onClick={() => { setSelectedClass(cls); setShowEditModal(true); }} className="text-gray-600 hover:text-gray-900" title="Editar">
                                     <Edit className="w-5 h-5" />
                                   </button>
+                                  <button onClick={() => {
+                                    setSelectedClass(cls);
+                                    setShowDuplicateModal(true);
+                                    if (cls.date) {
+                                      const d = new Date(cls.date);
+                                      setDuplicateData({
+                                        date: d.toISOString().split('T')[0],
+                                        time: d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
+                                      });
+                                    } else if (cls.nextSession) {
+                                      setDuplicateData({
+                                        date: cls.nextSession.date.split('T')[0],
+                                        time: cls.nextSession.time
+                                      });
+                                    }
+                                  }} className="text-purple-600 hover:text-purple-900" title="Duplicar">
+                                    <Copy className="w-5 h-5" />
+                                  </button>
                                   <button onClick={() => { setSelectedClass(cls); setShowDeleteModal(true); }} className="text-red-600 hover:text-red-900" title="Eliminar">
                                     <Trash2 className="w-5 h-5" />
                                   </button>
@@ -863,6 +925,28 @@ export default function ClassesManagementPage() {
                                                 title="Editar"
                                              >
                                                 <Edit className="w-3 h-3" />
+                                             </button>
+                                             <button 
+                                                onClick={() => { 
+                                                  setSelectedClass(cls); 
+                                                  setShowDuplicateModal(true);
+                                                  if (cls.date) {
+                                                    const d = new Date(cls.date);
+                                                    setDuplicateData({
+                                                      date: d.toISOString().split('T')[0],
+                                                      time: d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })
+                                                    });
+                                                  } else if (cls.nextSession) {
+                                                    setDuplicateData({
+                                                      date: cls.nextSession.date.split('T')[0],
+                                                      time: cls.nextSession.time
+                                                    });
+                                                  }
+                                                }}
+                                                className="text-gray-400 hover:text-purple-600 ml-1"
+                                                title="Duplicar"
+                                             >
+                                                <Copy className="w-3 h-3" />
                                              </button>
                                         </div>
                                     </div>
@@ -1015,6 +1099,80 @@ export default function ClassesManagementPage() {
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Sí, Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showDuplicateModal && selectedClass && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4" onClick={() => setShowDuplicateModal(false)}>
+            <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg sm:text-xl font-bold text-gray-900">Duplicar Clase</h3>
+                <button
+                  onClick={() => {
+                    setShowDuplicateModal(false);
+                    setSelectedClass(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 mb-4">
+                  Se creará una nueva sesión de <span className="font-semibold text-gray-900">&quot;{selectedClass.title}&quot;</span> con los mismos detalles, pero en la fecha que elijas.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nueva Fecha</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="date"
+                        value={duplicateData.date}
+                        onChange={(e) => setDuplicateData({ ...duplicateData, date: e.target.value })}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nueva Hora</label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="time"
+                        value={duplicateData.time}
+                        onChange={(e) => setDuplicateData({ ...duplicateData, time: e.target.value })}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    setShowDuplicateModal(false);
+                    setSelectedClass(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDuplicateClass}
+                  disabled={!duplicateData.date || !duplicateData.time}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium flex items-center justify-center"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Duplicar Sesión
                 </button>
               </div>
             </div>

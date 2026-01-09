@@ -31,10 +31,23 @@ import {
   Check,
   Waves,
   Lightbulb,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Package
 } from 'lucide-react';
 import { BookingModal } from '@/components/booking/BookingModal';
 import { BookingWidget } from '@/components/classes/BookingWidget';
+import { ClassOptionsCard, generateClassOptions, type ClassOption } from '@/components/classes/ClassOptionsCard';
+
+// Product interface matching backend
+interface ProductAddOn {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  image?: string;
+  category: string;
+  stock: number;
+}
 
 interface ClassDetails {
   id: number;
@@ -123,17 +136,32 @@ export default function ClassDetailsPage() {
   const [bookingParticipants, setBookingParticipants] = useState(initialParticipants);
   const [availableDates, setAvailableDates] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<any>(null); // For recurring classes
+  
+  // New State for Add-ons and School Classes
+  const [schoolProducts, setSchoolProducts] = useState<ProductAddOn[]>([]);
+  const [schoolClasses, setSchoolClasses] = useState<ClassOption[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
+  const [fetchingExtras, setFetchingExtras] = useState(false);
 
   // Update bookingParticipants if URL changes
   useEffect(() => {
     setBookingParticipants(initialParticipants);
   }, [initialParticipants]);
 
+  const toggleProduct = (productId: number) => {
+    setSelectedProductIds(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
   const handleWidgetReserve = (participants: number, dateData?: any) => {
     setBookingParticipants(participants);
     if (dateData) {
        setSelectedDate(dateData);
     }
+    // TODO: Pass selectedProductIds to modal
     setShowReservationModal(true);
   };
 
@@ -177,109 +205,110 @@ export default function ClassDetailsPage() {
     }
   };
 
-  const fetchClassDetails = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
+  useEffect(() => {
+    const fetchClassDetails = async () => {
+      if (!classId) return;
 
-      const token = (session as any)?.backendToken;
-      const headers: any = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      try {
+        setLoading(true);
+        setError('');
+
+        const token = (session as any)?.backendToken;
+        const headers: any = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        // Fetch real class details from backend
+        const response = await fetch(`/api/classes/${classId}`, { headers });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+          const errorMessage = errorData.message || `Error ${response.status}: ${response.statusText}`;
+          throw new Error(errorMessage);
+        }
+
+        const classData = await response.json();
+        
+        if (!classData || !classData.id) {
+          throw new Error('Datos de clase inválidos recibidos del servidor');
+        }
+
+        // Find first upcoming session for representative times/prices
+        const nextSession = classData.sessions?.[0];
+        const classDateStr = nextSession?.date || new Date().toISOString();
+        const nextSessionDate = new Date(classDateStr);
+        
+        const startTime = nextSession?.startTime || '09:00';
+        const duration = classData.duration || 120;
+        
+        // Calculate endTime from startTime and duration
+        const [sh, sm] = startTime.split(':').map(Number);
+        const endD = new Date(nextSessionDate);
+        endD.setHours(sh, sm + duration);
+        const endTime = endD.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        // Process class data to match expected format
+        const processedClass: ClassDetails = {
+          ...classData,
+          description: classData.description || 'Clase de surf',
+          date: classDateStr, // For backward compatibility
+          startTime,
+          endTime,
+          duration,
+          enrolled: nextSession?.enrolled || 0,
+          price: Number(nextSession?.price || classData.defaultPrice),
+          capacity: nextSession?.capacity || classData.defaultCapacity,
+          level: classData.level || 'BEGINNER',
+          location: classData.location || 'Por definir',
+          status: classData.status || 'ACTIVE',
+          type: classData.type || 'SURF_LESSON', 
+          images: classData.images || [],
+          school: {
+            id: classData.school?.id || 0,
+            name: classData.school?.name || 'Escuela de Surf',
+            location: classData.school?.location || 'Lima, Perú',
+            phone: classData.school?.phone || '',
+            email: classData.school?.email || '',
+            rating: 4.8,
+            totalReviews: 0
+          },
+          instructor: {
+            id: classData.instructor?.id || 1,
+            name: classData.instructor?.name || 'Instructor',
+            bio: classData.instructor?.bio || 'Instructor profesional de surf',
+            rating: 4.9,
+            totalReviews: 0,
+            yearsExperience: 5,
+            specialties: [],
+            profileImage: classData.instructor?.profileImage
+          },
+          reservations: classData.reservations || [] 
+        };
+
+        setClassDetails(processedClass);
+
+        // Check for user reservation (best effort)
+        if (session?.user?.id && classData.reservations) {
+          const userRes = classData.reservations.find(
+            (r: any) => r.userId === parseInt(session.user.id as string) && r.status !== 'CANCELED'
+          );
+          setUserReservation(userRes);
+        }
+
+      } catch (err) {
+        console.error('[Class Details] Error:', err);
+        setError(err instanceof Error ? err.message : 'Error al cargar la clase');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // Fetch real class details from backend
-      const response = await fetch(`/api/classes/${classId}`, { headers });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
-        const errorMessage = errorData.message || `Error ${response.status}: ${response.statusText}`;
-        throw new Error(errorMessage);
-      }
-
-      const classData = await response.json();
-      
-      if (!classData || !classData.id) {
-        throw new Error('Datos de clase inválidos recibidos del servidor');
-      }
-
-      // Find first upcoming session for representative times/prices
-      const nextSession = classData.sessions?.[0];
-      const classDateStr = nextSession?.date || new Date().toISOString();
-      const nextSessionDate = new Date(classDateStr);
-      
-      const startTime = nextSession?.startTime || '09:00';
-      const duration = classData.duration || 120;
-      
-      // Calculate endTime from startTime and duration
-      const [sh, sm] = startTime.split(':').map(Number);
-      const endD = new Date(nextSessionDate);
-      endD.setHours(sh, sm + duration);
-      const endTime = endD.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-      // Process class data to match expected format
-      const processedClass: ClassDetails = {
-        ...classData,
-        description: classData.description || 'Clase de surf',
-        date: classDateStr, // For backward compatibility
-        startTime,
-        endTime,
-        duration,
-        enrolled: nextSession?.enrolled || 0,
-        price: Number(nextSession?.price || classData.defaultPrice),
-        capacity: nextSession?.capacity || classData.defaultCapacity,
-        level: classData.level || 'BEGINNER',
-        location: classData.location || 'Por definir',
-        status: classData.status || 'ACTIVE',
-        type: classData.type || 'SURF_LESSON', 
-        images: classData.images || [],
-        school: {
-          id: classData.school?.id || 0,
-          name: classData.school?.name || 'Escuela de Surf',
-          location: classData.school?.location || 'Lima, Perú',
-          phone: classData.school?.phone || '',
-          email: classData.school?.email || '',
-          rating: 4.8,
-          totalReviews: 0
-        },
-        instructor: {
-          id: classData.instructor?.id || 1,
-          name: classData.instructor?.name || 'Instructor',
-          bio: classData.instructor?.bio || 'Instructor profesional de surf',
-          rating: 4.9,
-          totalReviews: 0,
-          yearsExperience: 5,
-          specialties: [],
-          profileImage: classData.instructor?.profileImage
-        },
-        reservations: classData.reservations || [] 
-      };
-
-      setClassDetails(processedClass);
-
-      // Check for user reservation (best effort)
-      if (session?.user?.id && classData.reservations) {
-        const userRes = classData.reservations.find(
-          (r: any) => r.userId === parseInt(session.user.id as string) && r.status !== 'CANCELED'
-        );
-        setUserReservation(userRes);
-      }
-
-      setLoading(false);
-
-    } catch (err) {
-      console.error('[Class Details] Error:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar detalles');
-    } finally {
-      setLoading(false);
-    }
+    fetchClassDetails();
   }, [classId, session]);
 
-  useEffect(() => {
-    if (classId) {
-      fetchClassDetails();
-    }
-  }, [classId, fetchClassDetails]);
+  // No leftover closing brace here
+
 
   // Handle Dates logic (Recurring vs Single)
   useEffect(() => {
@@ -851,8 +880,94 @@ export default function ClassDetailsPage() {
                                ))}
                            </div>
                       </section>
-                      
-                      {/* Meeting Point */}
+                       
+                       {/* Class Options Section - GYG Style */}
+                       <section className="bg-gradient-to-br from-gray-50 to-blue-50/30 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-10 rounded-3xl border border-gray-100 mb-8">
+                            <ClassOptionsCard
+                              options={schoolClasses.length > 0 
+                                ? [
+                                    // Always include current class as option 1 (or mix them appropriately)
+                                    // For now, let's mix the generated current one with fetched ones
+                                    ...generateClassOptions({
+                                        title: classDetails.title,
+                                        price: classDetails.price,
+                                        duration: classDetails.duration,
+                                        location: classDetails.beach?.name 
+                                          ? `Playa ${classDetails.beach.name}, ${classDetails.beach.location || classDetails.location}`
+                                          : classDetails.location
+                                      }).filter(o => o.type === 'GROUP'), // Keep only main var
+                                    ...schoolClasses
+                                  ]
+                                : generateClassOptions({
+                                title: classDetails.title,
+                                price: classDetails.price,
+                                duration: classDetails.duration,
+                                location: classDetails.beach?.name 
+                                  ? `Playa ${classDetails.beach.name}, ${classDetails.beach.location || classDetails.location}`
+                                  : classDetails.location
+                              })}
+                              onSelect={(option: ClassOption) => {
+                                // Update price based on selected option and open booking modal
+                                handleWidgetReserve(bookingParticipants, {
+                                  ...selectedDate,
+                                  price: option.price,
+                                  optionType: option.type,
+                                  optionTitle: option.title
+                                });
+                              }}
+                            />
+                       </section>
+
+                       {/* Products Add-ons Section */}
+                       {schoolProducts.length > 0 && (
+                          <section className="mb-10">
+                              <h2 className="text-2xl font-bold text-[#011627] mb-6">Mejora tu experiencia</h2>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                  {schoolProducts.map(product => {
+                                    const isSelected = selectedProductIds.includes(product.id);
+                                    return (
+                                      <div 
+                                        key={product.id} 
+                                        className={`
+                                          relative border rounded-xl overflow-hidden transition-all duration-200 cursor-pointer
+                                          ${isSelected ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50/30' : 'border-gray-200 hover:border-gray-300 hover:shadow-md'}
+                                        `}
+                                        onClick={() => toggleProduct(product.id)}
+                                      >
+                                        <div className="flex h-full">
+                                          <div className="w-24 bg-gray-100 relative shrink-0">
+                                            {product.image ? (
+                                              <ImageWithFallback src={product.image} alt={product.name} fill className="object-cover" />
+                                            ) : (
+                                              <div className="flex items-center justify-center h-full text-gray-300">
+                                                <Package className="w-12 h-12" />
+                                              </div>
+                                            )}
+                                          </div>
+                                          <div className="p-3 flex-1 flex flex-col justify-between">
+                                            <div>
+                                              <div className="flex justify-between items-start">
+                                                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">{product.name}</h3>
+                                                {isSelected && <CheckCircle className="w-5 h-5 text-blue-500 shrink-0 ml-2" />}
+                                              </div>
+                                              <p className="text-xs text-gray-500 mt-1 line-clamp-2">{product.description}</p>
+                                            </div>
+                                            <div className="flex justify-between items-end mt-2">
+                                              <span className="font-bold text-gray-900">S/ {product.price}</span>
+                                              <button className={`text-xs font-bold px-2 py-1 rounded transition-colors ${isSelected ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-blue-600 bg-blue-50 hover:bg-blue-100'}`}>
+                                                 {isSelected ? 'Quitar' : 'Agregar'}
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                          </section>
+                       )}
+                       
+                       {/* Meeting Point */}
                       <section>
                            <h2 className="text-2xl font-bold text-[#011627] mb-6">Punto de encuentro</h2>
                            <div className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 group">
@@ -991,6 +1106,7 @@ export default function ClassDetailsPage() {
           <BookingModal
             isOpen={showReservationModal}
             onClose={() => setShowReservationModal(false)}
+            addons={schoolProducts.filter(p => selectedProductIds.includes(p.id))}
             classData={{
               id: classDetails.id.toString(),
               title: classDetails.title,

@@ -1,0 +1,92 @@
+name: 💾 Database Backup
+
+on:
+  schedule:
+    # Run daily at 05:00 UTC (Adjust as needed)
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    # Allow manual trigger
+
+jobs:
+  backup:
+    name: 🛡️ Backup Database
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚂 Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: 🐘 Create Backup
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          # Create backups directory
+          mkdir -p backups
+
+          # Generate timestamp
+          TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+          FILENAME="backup_${TIMESTAMP}.sql"
+          FILEPATH="backups/${FILENAME}"
+
+          echo "Generating backup: $FILENAME"
+
+          # Login and Dump
+          # We use the DATABASE_URL variable from Railway
+          # Note: Ensure you have the 'postgresql-client' if specifically needed, 
+          # but usually Railway CLI handles the connection or we use a separate step to get the URL
+
+          # Option A: Using Railway CLI 'run' to execute pg_dump inside the deployment (if pg_dump is available there)
+          # Option B: Getting the connection URL and running pg_dump from the runner
+
+          # Let's try getting the URL and running locally on the runner
+          # First, install pg_dump on the runner
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+
+          # Get Database URL
+          # IMPORTANT: Replace 'YOUR_SERVICE_NAME' or rely on default project scope if token is scoped
+          DATABASE_URL=$(railway variables get DATABASE_URL)
+
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Could not retreive DATABASE_URL"
+            exit 1
+          fi
+
+          echo "Dumping database..."
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges --clean --if-exists --file="$FILEPATH"
+
+          # Compress
+          echo "Compressing..."
+          gzip "$FILEPATH"
+          echo "Backup created: ${FILEPATH}.gz"
+
+      - name: ☁️ Upload to S3/R2
+        if: success()
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }} # e.g., us-east-1 (required even for R2/others)
+
+      - name: 📤 Copy to Bucket
+        if: success()
+        env:
+          BUCKET: ${{ secrets.AWS_BUCKET_NAME }}
+        run: |
+          # Sync or Copy
+          # Assuming 'backups' folder contains the .gz file
+          aws s3 cp backups/ s3://$BUCKET/backups/ --recursive --exclude "*" --include "*.gz"
+
+          echo "✅ Upload completed"
+
+      - name: 🧹 Retention Policy (Optional)
+        if: success()
+        env:
+          BUCKET: ${{ secrets.AWS_BUCKET_NAME }}
+          RETENTION_DAYS: 30
+        run: |
+          # Simple script to delete old backups could go here
+          # For S3, it's better to use Lifecycle Policies on the bucket itself
+          echo "ℹ️ Configure Lifecycle Rules on your S3 bucket for auto-deletion > 30 days"

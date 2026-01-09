@@ -24,6 +24,7 @@ import { AirbnbSearchBar, type FilterValues as AirbnbFilterValues } from '@/comp
 import { CategoryRail, type CategoryId } from '@/components/home/CategoryRail'
 import { CuratedSection } from '@/components/home/CuratedSection'
 import { DestinationGrid } from '@/components/home/DestinationGrid'
+import { ProductHomeCard } from '@/components/products/ProductHomeCard'
 
 // Datos de ejemplo como fallback (Offline Mode)
 const getMockDate = () => {
@@ -127,6 +128,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   
   const [classes, setClasses] = useState<any[]>([])
+  const [products, setProducts] = useState<any[]>([])
   const [filteredClasses, setFilteredClasses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -199,7 +201,19 @@ export default function Home() {
   // Load classes from API on mount
   useEffect(() => {
     loadClasses()
+    loadProducts()
   }, [])
+
+  const loadProducts = async () => {
+    try {
+      const res = await fetch('/api/products/public');
+      if (res.ok) {
+        setProducts(await res.json());
+      }
+    } catch (error) {
+      console.error('Failed to load products', error);
+    }
+  }
 
   const loadClasses = async () => {
     try {
@@ -285,6 +299,7 @@ export default function Home() {
         <AirbnbSearchBar 
           onFilterChange={handleAirbnbFilterChange}
           onReset={handleAirbnbReset}
+          classes={classes}
         />
       </Hero>
       
@@ -330,7 +345,18 @@ export default function Home() {
                   ))}
                </CuratedSection>
                
-               {/* 5. Why Us Section */}
+               {/* 5. Products Section */}
+               {products.length > 0 && (
+                 <CuratedSection title="Equipamiento y Complementos" subtitle="Mejora tu experiencia de surf" bgWhite>
+                    {products.map((item) => (
+                        <div key={item.id} className="min-w-[240px] sm:min-w-[280px] max-w-[280px] snap-center">
+                            <ProductHomeCard product={item} />
+                        </div>
+                    ))}
+                 </CuratedSection>
+               )}
+               
+               {/* 6. Why Us Section */}
                <div className="mt-12 bg-white py-16">
                   <div className="container mx-auto px-4">
                      <div className="text-center max-w-2xl mx-auto mb-12">

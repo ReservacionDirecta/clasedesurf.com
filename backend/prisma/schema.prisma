@@ -122,6 +122,7 @@ model School {
   students      Student[]
   notes         CalendarNote[]
   discountCodes DiscountCode[]
+  products      Product[]
   status        SchoolStatus   @default(PENDING)
 
   @@map("schools")
@@ -211,6 +212,9 @@ model Reservation {
   payment        Payment?
   class          Class             @relation(fields: [classId], references: [id])
   user           User              @relation(fields: [userId], references: [id])
+  
+  // Products purchased with reservation
+  productPurchases ProductPurchase[]
 
   // Specifics for Recurring Bookings
   date DateTime? // The specific date booked
@@ -249,6 +253,41 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id])
 
   @@map("refresh_tokens")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  schoolId    Int
+  name        String
+  description String?
+  price       Float
+  currency    String   @default("PEN")
+  stock       Int      @default(0)
+  image       String?
+  category    String?  // "EQUIPMENT", "MERCH", "FOOD"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  school      School   @relation(fields: [schoolId], references: [id])
+  purchases   ProductPurchase[]
+
+  @@map("products")
+}
+
+model ProductPurchase {
+  id            Int         @id @default(autoincrement())
+  reservationId Int
+  productId     Int
+  quantity      Int
+  unitPrice     Float       // Precio al momento de la compra
+  totalPrice    Float
+  createdAt     DateTime    @default(now())
+
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  product       Product     @relation(fields: [productId], references: [id])
+
+  @@map("product_purchases")
 }
 
 enum UserRole {
