@@ -2,19 +2,19 @@ name: 🚀 Deploy to Railway
 
 on:
   push:
-    branches: [ main, production ]
+    branches: [main, production]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy to'
+        description: "Environment to deploy to"
         required: true
-        default: 'production'
+        default: "production"
         type: choice
         options:
-        - production
-        - staging
+          - production
+          - staging
 
 env:
   REGISTRY: ghcr.io
@@ -26,96 +26,94 @@ jobs:
   # Job 1: Build and Test
   build-and-test:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
 
-    - name: 🔧 Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: |
-          backend/package-lock.json
-          frontend/package-lock.json
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
 
-    - name: 📦 Install Backend Dependencies
-      working-directory: ./backend
-      run: npm ci
+      - name: 📦 Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
 
-    - name: 📦 Install Frontend Dependencies
-      working-directory: ./frontend
-      run: npm ci
+      - name: 📦 Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
 
-    - name: 🔍 Lint Backend
-      working-directory: ./backend
-      run: npm run lint || true
+      - name: 🔍 Lint Backend
+        working-directory: ./backend
+        run: npm run lint || true
 
-    - name: 🔍 Lint Frontend
-      working-directory: ./frontend
-      run: npm run lint || true
+      - name: 🔍 Lint Frontend
+        working-directory: ./frontend
+        run: npm run lint || true
 
-    - name: 🧪 Test Backend
-      working-directory: ./backend
-      run: npm test || true
+      - name: 🧪 Test Backend
+        working-directory: ./backend
+        run: npm test || true
 
-    - name: 🧪 Test Frontend
-      working-directory: ./frontend
-      run: npm test || true
+      - name: 🧪 Test Frontend
+        working-directory: ./frontend
+        run: npm test || true
 
-    - name: 🏗️ Build Backend
-      working-directory: ./backend
-      run: npm run build
+      - name: 🏗️ Build Backend
+        working-directory: ./backend
+        run: npm run build
 
-    - name: 🏗️ Build Frontend
-      working-directory: ./frontend
-      run: npm run build
+      - name: 🏗️ Build Frontend
+        working-directory: ./frontend
+        run: npm run build
 
   # Job 2: Deploy to Railway
   deploy-railway:
     needs: [build-and-test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    
-    environment: 
+
+    environment:
       name: ${{ github.event.inputs.environment || 'production' }}
       url: ${{ steps.deploy.outputs.url }}
 
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
 
-    - name: 🚂 Install Railway CLI
-      run: npm install -g @railway/cli
+      - name: 🚂 Install Railway CLI
+        run: npm install -g @railway/cli
 
-    - name: 🚀 Deploy Backend to Railway
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        CI: true
-      working-directory: ./backend
-      run: |
-        railway link ${{ env.RAILWAY_PROJECT_ID }}
-        railway up --service backend --detach
+      - name: 🚀 Deploy Backend to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
+          CI: true
+        working-directory: ./backend
+        run: railway up --service backend --detach
 
-    - name: 🚀 Deploy Frontend to Railway
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        CI: true
-      working-directory: ./frontend
-      run: |
-        railway link ${{ env.RAILWAY_PROJECT_ID }}
-        railway up --service frontend --detach
+      - name: 🚀 Deploy Frontend to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
+          CI: true
+        working-directory: ./frontend
+        run: railway up --service frontend --detach
 
-    - name: ⏳ Wait for deployment
-      run: sleep 60
+      - name: ⏳ Wait for deployment
+        run: sleep 60
 
-    - name: 🔍 Verify deployment
-      id: verify
-      run: |
-        # Aquí puedes agregar scripts de verificación
-        echo "Deployment verification would go here"
-        echo "url=https://your-app.railway.app" >> $GITHUB_OUTPUT
+      - name: 🔍 Verify deployment
+        id: verify
+        run: |
+          # Aquí puedes agregar scripts de verificación
+          echo "Deployment verification would go here"
+          echo "url=https://your-app.railway.app" >> $GITHUB_OUTPUT
 
   # Job 4: Run Database Migrations
   migrate-database:
@@ -124,29 +122,27 @@ jobs:
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
 
-    - name: 🚂 Install Railway CLI
-      run: npm install -g @railway/cli
+      - name: 🚂 Install Railway CLI
+        run: npm install -g @railway/cli
 
-    - name: 🗄️ Run Database Migrations
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        CI: true
-      working-directory: ./backend
-      run: |
-        railway link ${{ env.RAILWAY_PROJECT_ID }}
-        railway run --service backend npx prisma migrate deploy
+      - name: 🗄️ Run Database Migrations
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
+          CI: true
+        working-directory: ./backend
+        run: railway run --service backend npx prisma migrate deploy
 
-    - name: 🌱 Seed Database (if needed)
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        CI: true
-      working-directory: ./backend
-      run: |
-        railway link ${{ env.RAILWAY_PROJECT_ID }}
-        railway run --service backend npx prisma db seed || echo "Seeding skipped or failed"
+      - name: 🌱 Seed Database (if needed)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
+          CI: true
+        working-directory: ./backend
+        run: railway run --service backend npx prisma db seed || echo "Seeding skipped or failed"
 
   # Job 5: Notify Success
   notify:
@@ -155,18 +151,18 @@ jobs:
     if: always()
 
     steps:
-    - name: 📊 Deployment Status
-      run: |
-        if [ "${{ needs.deploy-railway.result }}" == "success" ] && [ "${{ needs.migrate-database.result }}" == "success" ]; then
-          echo "🎉 Deployment successful!"
-          echo "✅ Backend deployed"
-          echo "✅ Frontend deployed"
-          echo "✅ Database migrated"
-        else
-          echo "❌ Deployment failed"
-          echo "Backend: ${{ needs.deploy-railway.result }}"
-          echo "Database: ${{ needs.migrate-database.result }}"
-        fi
+      - name: 📊 Deployment Status
+        run: |
+          if [ "${{ needs.deploy-railway.result }}" == "success" ] && [ "${{ needs.migrate-database.result }}" == "success" ]; then
+            echo "🎉 Deployment successful!"
+            echo "✅ Backend deployed"
+            echo "✅ Frontend deployed"
+            echo "✅ Database migrated"
+          else
+            echo "❌ Deployment failed"
+            echo "Backend: ${{ needs.deploy-railway.result }}"
+            echo "Database: ${{ needs.migrate-database.result }}"
+          fi
 
     # Opcional: Notificar a Slack, Discord, etc.
     # - name: 📢 Notify Slack
