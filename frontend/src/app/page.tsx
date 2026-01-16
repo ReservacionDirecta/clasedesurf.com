@@ -241,9 +241,17 @@ export default function Home() {
 
   const loadProducts = async () => {
     try {
-      const res = await fetch('/api/products/public');
+      // Use configured API URL if available to ensure correct backend targeting
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const endpoint = apiUrl.startsWith('http') 
+        ? `${apiUrl}/products/public` 
+        : '/api/products/public';
+        
+      const res = await fetch(endpoint);
       if (res.ok) {
         setProducts(await res.json());
+      } else {
+        console.warn('Failed to load products: ' + res.status);
       }
     } catch (error) {
       console.error('Failed to load products', error);
