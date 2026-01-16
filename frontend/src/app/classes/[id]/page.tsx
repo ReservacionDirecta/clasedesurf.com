@@ -1084,24 +1084,7 @@ export default function ClassDetailsPage() {
             </div>
       </div>
       
-      {/* Mobile Sticky Action Bar - Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 lg:hidden z-50 safe-area-bottom shadow-[0_-5px_20px_rgba(0,0,0,0.15)]">
-           <div className="flex items-center justify-between gap-4 max-w-7xl mx-auto">
-               <div className="flex flex-col">
-                   <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">Precio total desde</span>
-                   <div className="flex items-baseline gap-1">
-                       <span className="text-xl font-bold text-[#011627]">{formatDualCurrency(classDetails.price).pen}</span>
-                       <span className="text-xs text-gray-500 font-medium">/ persona</span>
-                   </div>
-               </div>
-               <button 
-                  onClick={() => handleWidgetReserve(bookingParticipants)}
-                  className="bg-[#0071EB] text-white px-8 py-3.5 rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-blue-600/30 shadow-lg active:scale-95 transform"
-               >
-                  Reservar ahora
-               </button>
-           </div>
-      </div>
+
 
       <div className="max-w-7xl mx-auto px-4">  {showReservationModal && classDetails && (
           <BookingModal
