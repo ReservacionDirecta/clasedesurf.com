@@ -74,61 +74,48 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden lg:sticky lg:top-24">
+    <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden lg:sticky lg:top-24 transition-all hover:shadow-2xl duration-300">
       {/* Header: Price */}
-      <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-        <p className="text-sm text-gray-500 font-medium mb-1">Precio total</p>
+      <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+        <p className="text-sm text-slate-500 font-bold uppercase tracking-wider mb-1">Precio total</p>
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-bold text-[#011627]">{prices.pen}</span>
-          <span className="text-lg text-gray-500">{prices.usd}</span>
+          <span className="text-4xl font-black text-slate-900 tracking-tight">{prices.pen}</span>
+          <span className="text-lg text-slate-500 font-medium">{prices.usd}</span>
         </div>
-        <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
-          <Check className="w-3 h-3" /> Sin cargos ocultos
+        <p className="text-xs text-green-600 font-bold mt-2 flex items-center gap-1.5">
+          <Check className="w-3.5 h-3.5" /> Sin cargos ocultos
         </p>
       </div>
 
       <div className="p-6 space-y-6">
         {/* Date & Time Selector */}
         <div>
-           <label className="block text-sm font-bold text-gray-700 mb-2">Fecha y Hora</label>
+           <label className="block text-sm font-bold text-slate-700 mb-2">Fecha y Hora</label>
            
            {/* If we have available dates, show split selectors */}
            {availableDates && availableDates.length > 0 ? (
               <div className="space-y-4">
                  {/* 1. Date Selector */}
                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
                       <Calendar className="w-5 h-5 text-blue-600" />
                     </div>
                     <select
                       value={(() => {
-                         // Find the date string of the currently selected session
                          const currentSession = availableDates.find(d => d.id.toString() === selectedDateId?.toString());
                          if (currentSession) return new Date(currentSession.date).toDateString();
-                         // Default to first available date string if nothing selected
                          return availableDates.length > 0 ? new Date(availableDates[0].date).toDateString() : '';
                       })()}
                       onChange={(e) => {
-                         // When date changes, auto-select the first time slot for that new date
-                         // Or just switch the view??
-                         // Better UX: Switch view to that date, let user pick time? 
-                         // But we need to trigger onDateChange with a VALID session ID.
-                         // Let's find the first session of the new date.
-                         const newDateStr = e.target.value; // timestamp string or date string?
-                         // e.target.value will be the one we set in <option value=...>
-                         
+                         const newDateStr = e.target.value;
                          const firstSessionOfDate = availableDates.find(d => new Date(d.date).toDateString() === newDateStr);
                          if (firstSessionOfDate && onDateChange) {
                             onDateChange(firstSessionOfDate.id);
                          }
                       }}
-                      className="block w-full pl-10 pr-10 py-3 text-sm font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="block w-full h-14 pl-12 pr-10 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold shadow-sm focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 appearance-none cursor-pointer hover:border-blue-300 transition-all text-base"
                     >
-                       {/* Get Unique Dates */}
                        {Array.from(new Set(availableDates.map(d => new Date(d.date).toDateString()))).map(dateStr => {
-                          // Display Label
-                          const dateObj = new Date(dateStr); // This might be approximate if dateStr is simple
-                          // We need a robust way. Let's find the first session with this dateStr to use its date object for formatting
                           const repSession = availableDates.find(d => new Date(d.date).toDateString() === dateStr);
                           if (!repSession) return null;
                           
@@ -141,17 +128,16 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
                           );
                        })}
                     </select>
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                       <ChevronDown className="w-4 h-4 text-gray-500" />
+                    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                       <ChevronDown className="w-5 h-5 text-slate-400" />
                     </div>
                  </div>
 
                  {/* 2. Time Selector (Buttons) */}
                  <div>
-                    <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Horarios disponibles</label>
+                    <label className="block text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">Horarios disponibles</label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                        {(() => {
-                           // Filter sessions for the currently selected date
                            const currentSelectedSession = availableDates.find(d => d.id.toString() === selectedDateId?.toString());
                            const targetDateString = currentSelectedSession 
                               ? new Date(currentSelectedSession.date).toDateString()
@@ -160,24 +146,24 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
                            const sessionsOnDate = availableDates.filter(d => new Date(d.date).toDateString() === targetDateString);
                            
                            return sessionsOnDate.map(session => {
-                              const isSelected = selectedDateId?.toString() === session.id.toString();
-                              const timeLabel = session.startTime.substring(0, 5);
-                              
-                              return (
-                                 <button
-                                    key={session.id}
-                                    onClick={() => onDateChange && onDateChange(session.id)}
-                                    className={`
-                                       py-2 px-3 rounded-lg text-sm font-bold border transition-all relative
-                                       ${isSelected 
-                                          ? 'bg-blue-600 text-white border-blue-600 shadow-md transform scale-105' 
-                                          : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600'}
-                                    `}
-                                 >
-                                    {timeLabel}
-                                    {isSelected && <Check className="w-3 h-3 absolute top-1 right-1 text-white/80" />}
-                                 </button>
-                              );
+                               const isSelected = selectedDateId?.toString() === session.id.toString();
+                               const timeLabel = session.startTime.substring(0, 5);
+                               
+                               return (
+                                  <button
+                                     key={session.id}
+                                     onClick={() => onDateChange && onDateChange(session.id)}
+                                     className={`
+                                        h-12 rounded-xl text-sm font-bold border-2 transition-all relative flex items-center justify-center
+                                        ${isSelected 
+                                           ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-200 transform scale-[1.02]' 
+                                           : 'bg-white text-slate-600 border-slate-100 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600'}
+                                     `}
+                                  >
+                                     {timeLabel}
+                                     {isSelected && <Check className="w-3.5 h-3.5 absolute top-1 right-1 text-white/80" />}
+                                  </button>
+                               );
                            });
                        })()}
                     </div>
@@ -185,17 +171,17 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
               </div>
            ) : (
               // Single date display (fallback)
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 pl-10 flex items-center justify-between">
-                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                     <Calendar className="w-5 h-5 text-gray-400" />
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-100 shadow-sm text-blue-600">
+                     <Calendar className="w-5 h-5" />
                  </div>
                  <div>
-                   <p className="text-sm font-semibold text-gray-900">
+                   <p className="font-bold text-slate-900">
                       {new Date(classData.date).toLocaleDateString('es-ES', { 
                         weekday: 'short', day: 'numeric', month: 'short' 
                       })}
                    </p>
-                   <p className="text-xs text-gray-600">
+                   <p className="text-sm text-slate-500 font-medium">
                       {typeof classData.startTime === 'string' && !classData.startTime.includes('T') 
                          ? classData.startTime.substring(0, 5) 
                          : new Date(classData.startTime).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
@@ -207,19 +193,19 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
 
         {/* Participants Selector */}
         <div>
-          <label htmlFor="participants-widget" className="block text-sm font-bold text-gray-700 mb-2">
+          <label htmlFor="participants-widget" className="block text-sm font-bold text-slate-700 mb-2">
             Participantes
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Users className="w-5 h-5 text-gray-400" />
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Users className="w-5 h-5 text-slate-400" />
             </div>
             <select
               id="participants-widget"
               value={participants}
               onChange={handleParticipantsChange}
               disabled={maxParticipants === 0}
-              className="block w-full pl-10 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg border hover:border-gray-400 transition-colors bg-white appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="block w-full h-14 pl-12 pr-10 text-base bg-white border border-slate-200 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 rounded-xl text-slate-900 font-bold shadow-sm transition-all appearance-none cursor-pointer hover:border-blue-300 disabled:bg-slate-50 disabled:cursor-not-allowed"
             >
               {maxParticipants > 0 ? (
                   Array.from({ length: Math.min(maxParticipants, 5) }, (_, i) => i + 1).map((num) => (
@@ -231,19 +217,19 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
                   <option value="0">0 personas</option>
               )}
             </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+            <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+              <ChevronDown className="w-5 h-5 text-slate-400" />
             </div>
           </div>
           {maxParticipants <= 3 && maxParticipants > 0 && (
-            <p className="text-xs text-orange-600 mt-2 flex items-center gap-1 font-medium">
-              <Info className="w-3 h-3" />
+            <p className="text-xs text-orange-600 mt-2 flex items-center gap-1.5 font-bold animate-pulse">
+              <Info className="w-3.5 h-3.5" />
               ¡Solo quedan {maxParticipants} lugares!
             </p>
           )}
           {maxParticipants === 0 && (
-             <p className="text-xs text-red-600 mt-2 flex items-center gap-1 font-medium">
-              <Info className="w-3 h-3" />
+             <p className="text-xs text-red-600 mt-2 flex items-center gap-1.5 font-bold">
+              <Info className="w-3.5 h-3.5" />
               Agotado para esta fecha
             </p>
           )}
@@ -253,25 +239,17 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
         <Button 
           onClick={() => onReserve(participants)}
           disabled={maxParticipants === 0}
-          className="w-full bg-[#0071EB] hover:bg-[#005bbd] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transition-all h-auto text-lg touch-target"
+          className="w-full h-16 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-lg rounded-xl shadow-xl shadow-blue-200 hover:shadow-2xl hover:shadow-blue-300 transition-all transform active:scale-[0.98]"
         >
           {maxParticipants === 0 ? 'Agotado' : 'Reservar ahora'}
         </Button>
 
         {/* Trust signals */}
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-            <span>Reserva gratuita - Paga luego</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-            <span>Cancelación gratuita hasta 24h antes</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
-            <span>Confirmación inmediata</span>
-          </div>
+        <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
+           <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
+              <span className="flex items-center gap-1.5"><Check className="w-3 h-3 text-green-500" /> Reserva flexible</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3 h-3 text-green-500" /> Pago seguro</span>
+           </div>
         </div>
       </div>
     </div>
