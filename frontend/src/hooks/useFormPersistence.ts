@@ -43,3 +43,17 @@ export function useFormPersistence<T>(key: string, initialValues: T) {
 
     return { data, setData, isLoaded, clearPersistence }
 }
+
+export function useUnsavedChangesWarning(shouldWarn: boolean) {
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (shouldWarn) {
+                e.preventDefault()
+                e.returnValue = ''
+            }
+        }
+
+        window.addEventListener('beforeunload', handleBeforeUnload)
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    }, [shouldWarn])
+}
