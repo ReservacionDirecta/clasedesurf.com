@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/contexts/ToastContext';
 import { useSession } from 'next-auth/react';
+import { EditDatesModal } from './EditDatesModal';
 
 type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
@@ -34,7 +35,7 @@ interface ClassFormData {
   images: string[];
   beachId?: number;
   schoolId?: number;
-  
+
   // Schedule data (Inventory)
   scheduleType: 'single' | 'recurring' | 'dateRange' | 'specificDates';
   // Specific date/time for 'single'
@@ -42,7 +43,7 @@ interface ClassFormData {
   time: string;
   // Options for 'recurring'
   selectedDays: DayOfWeek[];
-  times: string[]; // Array of times for recurring or range
+  times: string[]; // Array of times for all types
   startDate: string;
   weeksCount: number;
   // Options for 'dateRange'
@@ -110,6 +111,9 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
+  const [showRequirements, setShowRequirements] = useState(!!formData.studentDetails);
+  const [showInlineBeachAdd, setShowInlineBeachAdd] = useState(false);
+  const [showEditDatesModal, setShowEditDatesModal] = useState(false);
 
   // Load initial data
   useEffect(() => {
@@ -314,10 +318,54 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
         return;
       }
 
-      const occurrences = generateOccurrences();
-      console.log('XXX Generated occurrences:', occurrences);
       console.log('XXX Current Form Data:', formData);
-      
+
+      // Convert form data to schedules
+      const schedules: any[] = [];
+      const validTimes = formData.times.filter(t => t.trim() !== '');
+
+      if (formData.scheduleType === 'single') {
+        if (formData.date && validTimes.length > 0) {
+          schedules.push({
+            type: 'SINGLE',
+            startTime: validTimes[0],
+            times: validTimes,
+            specificDate: formData.date
+          });
+        }
+      } else if (formData.scheduleType === 'recurring') {
+        if (formData.selectedDays.length > 0 && validTimes.length > 0) {
+          formData.selectedDays.forEach(day => {
+            const dayIndex = DAYS.findIndex(d => d.value === day);
+            schedules.push({
+              type: 'RECURRING',
+              dayOfWeek: dayIndex,
+              startTime: validTimes[0],
+              times: validTimes
+            });
+          });
+        }
+      } else if (formData.scheduleType === 'dateRange') {
+        if (formData.dateRangeStart && formData.dateRangeEnd && validTimes.length > 0) {
+          schedules.push({
+            type: 'DATE_RANGE',
+            startTime: validTimes[0],
+            times: validTimes,
+            rangeStart: formData.dateRangeStart,
+            rangeEnd: formData.dateRangeEnd
+          });
+        }
+      } else if (formData.scheduleType === 'specificDates') {
+        if (formData.specificDates.length > 0 && validTimes.length > 0) {
+          schedules.push({
+            type: 'SPECIFIC_DATES',
+            startTime: validTimes[0],
+            times: validTimes,
+            dates: formData.specificDates
+          });
+        }
+      }
+
       const productData = {
         title: formData.title,
         description: formData.description,
@@ -328,35 +376,20 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
         instructor: formData.instructor,
         studentDetails: formData.studentDetails,
         images: validImages,
+        schedules
       };
 
       const beachId = formData.beachId ? Number(formData.beachId) : undefined;
       const schoolId = formData.schoolId ? Number(formData.schoolId) : undefined;
 
-      let url = isEditing ? `/api/classes/${initialData.id}` : '/api/classes/bulk';
+      let url = isEditing ? `/api/classes/${initialData.id}` : '/api/classes';
       let method = isEditing ? 'PUT' : 'POST';
-      
-      let body: any;
-      if (isEditing) {
-        body = {
-          ...productData,
-          beachId,
-          schoolId
-        };
-      } else {
-        if (!occurrences || occurrences.length === 0) {
-          showError('Error', 'Debes seleccionar al menos una fecha para la clase.');
-          setSaving(false);
-          return;
-        }
 
-        body = {
-          baseData: productData,
-          beachId,
-          schoolId,
-          occurrences
-        };
-      }
+      let body: any = {
+        ...productData,
+        beachId,
+        schoolId
+      };
 
       const token = (session as any)?.backendToken;
       const headers: any = { 'Content-Type': 'application/json' };
@@ -385,7 +418,20 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
   return (
     <div className="max-w-5xl mx-auto">
       {/* ProgressBar/Steps indicator could go here */}
-      
+
+      {/* Edit Dates Action */}
+      <div className="mb-6 flex justify-end">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowEditDatesModal(true)}
+          className="flex items-center gap-2"
+        >
+          <Calendar className="w-4 h-4" />
+          Editar Horarios de Clases Existentes
+        </Button>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* SECTION 1: DETALLES BASICOS */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -394,19 +440,28 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
             <h2 className="text-lg font-bold text-slate-900">1. Detalles de la Clase</h2>
           </div>
           <div className="p-6 space-y-6">
+            {/* Título - Campo requerido */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Título de la Clase *</label>
-              <Input 
-                value={formData.title} 
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold text-slate-700">Título de la Clase</label>
+                <span className="text-red-500 text-sm">*</span>
+              </div>
+              <Input
+                value={formData.title}
                 onChange={e => handleInputChange('title', e.target.value)}
                 placeholder="Ej: Curso de Surf Pro"
+                className={formData.title.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
                 required
               />
+              {formData.title.trim() === '' && (
+                <p className="text-xs text-red-600">El título es obligatorio</p>
+              )}
             </div>
-            
+
+            {/* Descripción */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Descripción</label>
-              <textarea 
+              <textarea
                 className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 min-h-[120px] p-4 text-sm"
                 value={formData.description}
                 onChange={e => handleInputChange('description', e.target.value)}
@@ -414,82 +469,190 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Nivel</label>
-                <select 
-                  className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm"
-                  value={formData.level}
-                  onChange={e => handleInputChange('level', e.target.value)}
-                >
-                  <option value="BEGINNER">Principiante</option>
-                  <option value="INTERMEDIATE">Intermedio</option>
-                  <option value="ADVANCED">Avanzado</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Instructor</label>
-                <Input 
-                  value={formData.instructor}
-                  onChange={e => handleInputChange('instructor', e.target.value)}
-                  placeholder="Nombre del instructor"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Requisitos para el Estudiante (opcional)</label>
-              <textarea 
-                className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 min-h-[80px] p-4 text-sm"
-                value={formData.studentDetails}
-                onChange={e => handleInputChange('studentDetails', e.target.value)}
-                placeholder="Ej: Traer protector solar, saber nadar, etc."
-              />
-            </div>
-            
-            <div className={`grid grid-cols-1 ${(session as any)?.user?.role === 'ADMIN' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-6`}>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Duración (minutos)</label>
-                <Input 
-                  type="number"
-                  value={formData.duration}
-                  onChange={e => handleInputChange('duration', Number(e.target.value))}
-                />
-              </div>
-
-              {(session as any)?.user?.role === 'ADMIN' && (
+            {/* Instructor y Nivel - Agrupados */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-2">Instructor y Nivel</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-700">Escuela Responsable</label>
-                  <select 
+                  <label className="text-sm font-medium text-slate-600">Nivel de Dificultad</label>
+                  <select
                     className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm"
-                    value={formData.schoolId || ''}
-                    onChange={e => handleInputChange('schoolId', e.target.value ? Number(e.target.value) : undefined)}
-                    required
+                    value={formData.level}
+                    onChange={e => handleInputChange('level', e.target.value)}
                   >
-                    <option value="">Selecciona una escuela</option>
-                    {schools.map(school => (
-                      <option key={school.id} value={school.id}>{school.name}</option>
-                    ))}
+                    <option value="BEGINNER">Principiante</option>
+                    <option value="INTERMEDIATE">Intermedio</option>
+                    <option value="ADVANCED">Avanzado</option>
                   </select>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-600">Instructor a Cargo</label>
+                  <Input
+                    value={formData.instructor}
+                    onChange={e => handleInputChange('instructor', e.target.value)}
+                    placeholder="Nombre del instructor"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Requisitos para el Estudiante - Collapsible */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-semibold text-slate-700">Requisitos para el Estudiante</label>
+                  <Info className="w-4 h-4 text-slate-400" />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRequirements(!showRequirements)}
+                  className="text-xs text-slate-500 hover:text-slate-700"
+                >
+                  {showRequirements ? 'Ocultar' : 'Agregar requisitos'}
+                  <ChevronRight className={`w-3 h-3 ml-1 transition-transform ${showRequirements ? 'rotate-90' : ''}`} />
+                </Button>
+              </div>
+              {showRequirements && (
+                <div className="animate-in slide-in-from-top-2 duration-200">
+                  <textarea
+                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 min-h-[80px] p-4 text-sm"
+                    value={formData.studentDetails}
+                    onChange={e => handleInputChange('studentDetails', e.target.value)}
+                    placeholder="Ej: Traer protector solar, saber nadar, tener buena condición física, etc."
+                  />
+                </div>
               )}
-              
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Playa / Locación</label>
-                <div className="flex gap-2">
-                  <select 
-                    className="flex-1 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm"
-                    value={formData.beachId || ''}
-                    onChange={e => handleInputChange('beachId', e.target.value ? Number(e.target.value) : undefined)}
+            </div>
+            
+            {/* Duración, Escuela (si admin), y Locación */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-700 border-b border-slate-100 pb-2">Duración y Locación</h3>
+              <div className={`grid grid-cols-1 ${(session as any)?.user?.role === 'ADMIN' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-6`}>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-slate-600">Duración</label>
+                    <span className="text-red-500 text-sm">*</span>
+                  </div>
+                  <select
+                    className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm ${
+                      !formData.duration || formData.duration < 30 || formData.duration > 480 ? 'border-red-300' : ''
+                    }`}
+                    value={formData.duration}
+                    onChange={e => handleInputChange('duration', Number(e.target.value))}
+                    required
                   >
-                    <option value="">Selecciona una playa</option>
-                    {beaches.map(beach => (
-                      <option key={beach.id} value={beach.id}>{beach.name}</option>
-                    ))}
+                    <option value="">Seleccionar duración</option>
+                    <option value="60">1 hora (60 min)</option>
+                    <option value="90">1.5 horas (90 min)</option>
+                    <option value="120">2 horas (120 min)</option>
+                    <option value="180">3 horas (180 min)</option>
+                    <option value="240">4 horas (240 min)</option>
                   </select>
-                  <Button type="button" variant="outline" size="sm" onClick={() => setShowAddBeachModal(true)}>
-                    <Plus className="w-4 h-4" />
-                  </Button>
+                  {(!formData.duration || formData.duration < 30 || formData.duration > 480) && (
+                    <p className="text-xs text-red-600">La duración debe ser entre 30 y 480 minutos</p>
+                  )}
+                </div>
+
+                {(session as any)?.user?.role === 'ADMIN' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-slate-600">Escuela Responsable</label>
+                      <span className="text-red-500 text-sm">*</span>
+                    </div>
+                    <select
+                      className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm ${
+                        !formData.schoolId ? 'border-red-300' : ''
+                      }`}
+                      value={formData.schoolId || ''}
+                      onChange={e => handleInputChange('schoolId', e.target.value ? Number(e.target.value) : undefined)}
+                      required
+                    >
+                      <option value="">Selecciona una escuela</option>
+                      {schools.map(school => (
+                        <option key={school.id} value={school.id}>{school.name}</option>
+                      ))}
+                    </select>
+                    {!formData.schoolId && (
+                      <p className="text-xs text-red-600">Debes seleccionar una escuela</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium text-slate-600">Playa / Locación</label>
+                    <span className="text-red-500 text-sm">*</span>
+                  </div>
+                  {!showInlineBeachAdd ? (
+                    <div className="space-y-2">
+                      <select
+                        className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm ${
+                          !formData.beachId ? 'border-red-300' : ''
+                        }`}
+                        value={formData.beachId || ''}
+                        onChange={e => handleInputChange('beachId', e.target.value ? Number(e.target.value) : undefined)}
+                      >
+                        <option value="">Selecciona una playa</option>
+                        {beaches
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map(beach => (
+                            <option key={beach.id} value={beach.id}>
+                              {beach.name}{beach.location ? ` - ${beach.location}` : ''}
+                            </option>
+                          ))}
+                      </select>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowInlineBeachAdd(true)}
+                        className="text-xs text-indigo-600 hover:text-indigo-700 p-0 h-auto"
+                      >
+                        No encuentro mi playa
+                      </Button>
+                      {!formData.beachId && (
+                        <p className="text-xs text-red-600">Debes seleccionar una playa</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-700">Nueva Playa</label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowInlineBeachAdd(false)}
+                          className="text-xs text-slate-500"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      <Input
+                        value={newBeachName}
+                        onChange={e => setNewBeachName(e.target.value)}
+                        placeholder="Nombre de la playa"
+                        className="text-sm"
+                      />
+                      <Input
+                        value={newBeachLocation}
+                        onChange={e => setNewBeachLocation(e.target.value)}
+                        placeholder="Ubicación (opcional)"
+                        className="text-sm"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleAddBeach}
+                        disabled={!newBeachName.trim() || addingBeach}
+                        size="sm"
+                        className="w-full"
+                      >
+                        {addingBeach ? 'Agregando...' : 'Agregar Playa'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -653,19 +816,37 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                 ))}
               </div>
 
-              {/* SINGLE */}
-              {formData.scheduleType === 'single' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in duration-300">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">Fecha</label>
-                    <Input type="date" value={formData.date} onChange={e => handleInputChange('date', e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">Hora</label>
-                    <Input type="time" value={formData.time} onChange={e => handleInputChange('time', e.target.value)} />
-                  </div>
-                </div>
-              )}
+               {/* SINGLE */}
+               {formData.scheduleType === 'single' && (
+                 <div className="space-y-6 animate-in fade-in duration-300">
+                   <div className="space-y-2">
+                     <label className="text-sm font-semibold text-slate-700">Fecha</label>
+                     <Input type="date" value={formData.date} onChange={e => handleInputChange('date', e.target.value)} />
+                   </div>
+                   <div className="space-y-4">
+                     <label className="text-sm font-semibold text-slate-700">Horarios</label>
+                     <div className="flex flex-wrap gap-3">
+                       {formData.times.map((t, idx) => (
+                         <div key={idx} className="flex gap-2">
+                           <Input type="time" value={t} onChange={e => {
+                             const nt = [...formData.times]; nt[idx] = e.target.value; handleInputChange('times', nt);
+                           }} className="w-32" />
+                           <Button
+                             type="button" variant="outline" size="sm"
+                             disabled={formData.times.length === 1}
+                             onClick={() => handleInputChange('times', formData.times.filter((_, i) => i !== idx))}
+                           >
+                             <Trash2 className="w-4 h-4 text-red-500" />
+                           </Button>
+                         </div>
+                       ))}
+                       <Button type="button" variant="secondary" onClick={() => handleInputChange('times', [...formData.times, ''])}>
+                         <Plus className="w-4 h-4 mr-1" /> Más hora
+                       </Button>
+                     </div>
+                   </div>
+                 </div>
+               )}
 
               {/* RECURRING */}
               {formData.scheduleType === 'recurring' && (
@@ -732,56 +913,90 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                 </div>
               )}
 
-              {/* DATE RANGE */}
-              {formData.scheduleType === 'dateRange' && (
-                <div className="space-y-6 animate-in fade-in duration-300">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700">Fecha Inicio</label>
-                      <Input type="date" value={formData.dateRangeStart} onChange={e => handleInputChange('dateRangeStart', e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700">Fecha Fin</label>
-                      <Input type="date" value={formData.dateRangeEnd} onChange={e => handleInputChange('dateRangeEnd', e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700">Hora</label>
-                      <Input type="time" value={formData.time} onChange={e => handleInputChange('time', e.target.value)} />
-                    </div>
-                  </div>
-                  <div className="p-4 bg-blue-50 rounded-2xl flex gap-3 text-blue-700 text-sm italic">
-                    <Info className="w-5 h-5 shrink-0" />
-                    <span>Se creará una sesión para cada día calendario entre las fechas seleccionadas.</span>
-                  </div>
-                </div>
-              )}
+               {/* DATE RANGE */}
+               {formData.scheduleType === 'dateRange' && (
+                 <div className="space-y-6 animate-in fade-in duration-300">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                     <div className="space-y-2">
+                       <label className="text-sm font-semibold text-slate-700">Fecha Inicio</label>
+                       <Input type="date" value={formData.dateRangeStart} onChange={e => handleInputChange('dateRangeStart', e.target.value)} />
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-sm font-semibold text-slate-700">Fecha Fin</label>
+                       <Input type="date" value={formData.dateRangeEnd} onChange={e => handleInputChange('dateRangeEnd', e.target.value)} />
+                     </div>
+                   </div>
+                   <div className="space-y-4">
+                     <label className="text-sm font-semibold text-slate-700">Horarios</label>
+                     <div className="flex flex-wrap gap-3">
+                       {formData.times.map((t, idx) => (
+                         <div key={idx} className="flex gap-2">
+                           <Input type="time" value={t} onChange={e => {
+                             const nt = [...formData.times]; nt[idx] = e.target.value; handleInputChange('times', nt);
+                           }} className="w-32" />
+                           <Button
+                             type="button" variant="outline" size="sm"
+                             disabled={formData.times.length === 1}
+                             onClick={() => handleInputChange('times', formData.times.filter((_, i) => i !== idx))}
+                           >
+                             <Trash2 className="w-4 h-4 text-red-500" />
+                           </Button>
+                         </div>
+                       ))}
+                       <Button type="button" variant="secondary" onClick={() => handleInputChange('times', [...formData.times, ''])}>
+                         <Plus className="w-4 h-4 mr-1" /> Más hora
+                       </Button>
+                     </div>
+                   </div>
+                   <div className="p-4 bg-blue-50 rounded-2xl flex gap-3 text-blue-700 text-sm italic">
+                     <Info className="w-5 h-5 shrink-0" />
+                     <span>Se creará una sesión para cada día calendario entre las fechas seleccionadas, con todos los horarios especificados.</span>
+                   </div>
+                 </div>
+               )}
 
-              {/* SPECIFIC DATES */}
-              {formData.scheduleType === 'specificDates' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-300">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-slate-700">Días específicos</label>
-                    <MultiDatePicker 
-                      selectedDates={formData.specificDates}
-                      onChange={dates => handleInputChange('specificDates', dates)}
-                    />
-                  </div>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700">Hora para estos días</label>
-                      <Input type="time" value={formData.time} onChange={e => handleInputChange('time', e.target.value)} />
-                    </div>
-                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
-                       <h4 className="text-sm font-bold text-indigo-900 mb-2">Resumen de selección</h4>
-                       <p className="text-xs text-indigo-700">
-                         {formData.specificDates.length > 0 
-                           ? `Se crearán sesiones para ${formData.specificDates.length} días específicos a las ${formData.time || '--:--'}.`
-                           : 'No has seleccionado ninguna fecha aún.'}
-                       </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+               {/* SPECIFIC DATES */}
+               {formData.scheduleType === 'specificDates' && (
+                 <div className="space-y-6 animate-in fade-in duration-300">
+                   <div className="space-y-2">
+                     <label className="text-sm font-semibold text-slate-700">Días específicos</label>
+                     <MultiDatePicker
+                       selectedDates={formData.specificDates}
+                       onChange={dates => handleInputChange('specificDates', dates)}
+                     />
+                   </div>
+                   <div className="space-y-4">
+                     <label className="text-sm font-semibold text-slate-700">Horarios</label>
+                     <div className="flex flex-wrap gap-3">
+                       {formData.times.map((t, idx) => (
+                         <div key={idx} className="flex gap-2">
+                           <Input type="time" value={t} onChange={e => {
+                             const nt = [...formData.times]; nt[idx] = e.target.value; handleInputChange('times', nt);
+                           }} className="w-32" />
+                           <Button
+                             type="button" variant="outline" size="sm"
+                             disabled={formData.times.length === 1}
+                             onClick={() => handleInputChange('times', formData.times.filter((_, i) => i !== idx))}
+                           >
+                             <Trash2 className="w-4 h-4 text-red-500" />
+                           </Button>
+                         </div>
+                       ))}
+                       <Button type="button" variant="secondary" onClick={() => handleInputChange('times', [...formData.times, ''])}>
+                         <Plus className="w-4 h-4 mr-1" /> Más hora
+                       </Button>
+                     </div>
+                   </div>
+                   <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                      <h4 className="text-sm font-bold text-indigo-900 mb-2">Resumen de selección</h4>
+                      <p className="text-xs text-indigo-700">
+                        {formData.specificDates.length > 0
+                          ? `Se crearán sesiones para ${formData.specificDates.length} días específicos con ${formData.times.filter(t => t.trim()).length} horarios cada uno.`
+                          : 'No has seleccionado ninguna fecha aún.'}
+                      </p>
+                   </div>
+                 </div>
+               )}
             </div>
           </div>
         )}
@@ -796,6 +1011,15 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
            </Button>
         </div>
       </form>
+
+      {/* Edit Dates Modal */}
+      <EditDatesModal
+        isOpen={showEditDatesModal}
+        onClose={() => setShowEditDatesModal(false)}
+        onSuccess={() => {
+          showSuccess('Éxito', 'Horarios actualizados correctamente');
+        }}
+      />
     </div>
   );
 }

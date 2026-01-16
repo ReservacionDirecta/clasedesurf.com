@@ -270,42 +270,63 @@ router.get('/calendar/all', optionalAuth, resolveSchool, async (req: AuthRequest
         const dateStr = iteratorDate.toISOString().split('T')[0];
         const dayOfWeek = iteratorDate.getDay(); // 0-6
 
-        // Find schedules for this day
-        const dailySchedules = classItem.schedules.filter(s => s.dayOfWeek === dayOfWeek);
+        // Find schedules for this day based on type
+        const dailySchedules = classItem.schedules.filter(schedule => {
+          switch (schedule.type) {
+            case 'RECURRING':
+              return schedule.dayOfWeek === dayOfWeek;
+            case 'SINGLE':
+              return schedule.specificDate?.toISOString().split('T')[0] === dateStr;
+            case 'DATE_RANGE':
+              return schedule.rangeStart && schedule.rangeEnd &&
+                     iteratorDate >= schedule.rangeStart && iteratorDate <= schedule.rangeEnd;
+            case 'SPECIFIC_DATES':
+              return schedule.dates?.includes(dateStr);
+            default:
+              return false;
+          }
+        });
+
+        // Helper function to generate slots for times
+        const generateSlotsForTimes = (times: string[], schedule: any) => {
+          times.forEach(time => {
+            const key = `${dateStr}_${time}`;
+            const sessionOverride = sessionMap.get(key);
+
+            // If session exists and is closed, skip
+            if (sessionOverride && sessionOverride.isClosed) return;
+
+            const capacity = sessionOverride?.capacity ?? classItem.defaultCapacity;
+            const price = sessionOverride?.price ?? classItem.defaultPrice;
+
+            // Calculate reserved spots
+            const reserved = classItem.reservations
+              .filter(r => r.date?.toISOString().split('T')[0] === dateStr && r.time === time)
+              .reduce((sum, r) => sum + (typeof r.participants === 'number' ? r.participants : 1), 0);
+
+            allSlots.push({
+              id: sessionOverride?.id || `v_${classItem.id}_${key}`,
+              sessionId: sessionOverride?.id || null,
+              classId: classItem.id,
+              className: classItem.title,
+              instructor: classItem.instructor,
+              date: dateStr,
+              time: time,
+              startTime: time,
+              price: price,
+              capacity: capacity,
+              reserved,
+              available: Math.max(0, capacity - reserved),
+              status: reserved >= capacity ? 'full' : 'available',
+              isVirtual: !sessionOverride
+            });
+          });
+        };
 
         // Process each schedule slot
         dailySchedules.forEach(schedule => {
-          const key = `${dateStr}_${schedule.startTime}`;
-          const sessionOverride = sessionMap.get(key);
-
-          // If session exists and is closed, skip
-          if (sessionOverride && sessionOverride.isClosed) return;
-
-          const capacity = sessionOverride?.capacity ?? classItem.defaultCapacity;
-          const price = sessionOverride?.price ?? classItem.defaultPrice;
-          const time = sessionOverride?.time ?? schedule.startTime;
-
-          // Calculate reserved spots
-          const reserved = classItem.reservations
-            .filter(r => r.date?.toISOString().split('T')[0] === dateStr && r.time === time)
-            .reduce((sum, r) => sum + (typeof r.participants === 'number' ? r.participants : 1), 0);
-
-          allSlots.push({
-            id: sessionOverride?.id || `v_${classItem.id}_${key}`,
-            sessionId: sessionOverride?.id || null,
-            classId: classItem.id,
-            className: classItem.title,
-            instructor: classItem.instructor,
-            date: dateStr,
-            time: time,
-            startTime: time,
-            price: price,
-            capacity: capacity,
-            reserved,
-            available: Math.max(0, capacity - reserved),
-            status: reserved >= capacity ? 'full' : 'available',
-            isVirtual: !sessionOverride
-          });
+          const times = schedule.times && schedule.times.length > 0 ? schedule.times : [schedule.startTime];
+          generateSlotsForTimes(times, schedule);
         });
 
         // Add explicit sessions that don't match schedule
@@ -390,9 +411,15 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
         ...(schedules && Array.isArray(schedules) && {
           schedules: {
             create: schedules.map((s: any) => ({
-              dayOfWeek: Number(s.dayOfWeek),
+              type: s.type,
+              dayOfWeek: s.dayOfWeek !== undefined ? Number(s.dayOfWeek) : undefined,
               startTime: s.startTime,
               endTime: s.endTime,
+              times: s.times,
+              specificDate: s.specificDate ? new Date(s.specificDate) : undefined,
+              rangeStart: s.rangeStart ? new Date(s.rangeStart) : undefined,
+              rangeEnd: s.rangeEnd ? new Date(s.rangeEnd) : undefined,
+              dates: s.dates,
               isActive: s.isActive !== undefined ? s.isActive : true
             }))
           }
@@ -556,9 +583,15 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
       await prisma.classSchedule.deleteMany({ where: { classId: Number(id) } });
       updateData.schedules = {
         create: schedules.map((s: any) => ({
-          dayOfWeek: Number(s.dayOfWeek),
+          type: s.type,
+          dayOfWeek: s.dayOfWeek !== undefined ? Number(s.dayOfWeek) : undefined,
           startTime: s.startTime,
           endTime: s.endTime,
+          times: s.times,
+          specificDate: s.specificDate ? new Date(s.specificDate) : undefined,
+          rangeStart: s.rangeStart ? new Date(s.rangeStart) : undefined,
+          rangeEnd: s.rangeEnd ? new Date(s.rangeEnd) : undefined,
+          dates: s.dates,
           isActive: s.isActive !== undefined ? s.isActive : true
         }))
       };
@@ -642,41 +675,62 @@ router.get('/:id/calendar', optionalAuth, validateParams(classIdSchema), async (
       const dateStr = currentDate.toISOString().split('T')[0];
       const dayOfWeek = currentDate.getDay(); // 0 (Sun) - 6 (Sat)
 
-      // Find schedules for this day
-      const dailySchedules = classItem.schedules.filter(s => s.dayOfWeek === dayOfWeek);
+      // Find schedules for this day based on type
+      const dailySchedules = classItem.schedules.filter(schedule => {
+        switch (schedule.type) {
+          case 'RECURRING':
+            return schedule.dayOfWeek === dayOfWeek;
+          case 'SINGLE':
+            return schedule.specificDate?.toISOString().split('T')[0] === dateStr;
+          case 'DATE_RANGE':
+            return schedule.rangeStart && schedule.rangeEnd &&
+                   currentDate >= schedule.rangeStart && currentDate <= schedule.rangeEnd;
+          case 'SPECIFIC_DATES':
+            return schedule.dates?.includes(dateStr);
+          default:
+            return false;
+        }
+      });
+
+      // Helper function to generate slots for times
+      const generateSlotsForTimes = (times: string[], schedule: any) => {
+        times.forEach(time => {
+          const key = `${dateStr}_${time}`;
+          const sessionOverride = sessionMap.get(key);
+
+          // If session exists and is closed, we skip it (or mark as closed)
+          if (sessionOverride && sessionOverride.isClosed) return;
+
+          const capacity = sessionOverride?.capacity ?? classItem.defaultCapacity;
+          const price = sessionOverride?.price ?? classItem.defaultPrice;
+
+          // Calculate reserved spots for this specific date and time
+          const reserved = classItem.reservations
+            .filter(r => r.date?.toISOString().split('T')[0] === dateStr && r.time === time)
+            .reduce((sum, r) => sum + (typeof r.participants === 'number' ? r.participants : 1), 0);
+
+          slots.push({
+            id: sessionOverride?.id || `v_${key}`, // Virtual ID if no override
+            sessionId: sessionOverride?.id || null,
+            date: dateStr,
+            time: time,
+            startTime: time,
+            price: price,
+            capacity: capacity,
+            reserved,
+            available: Math.max(0, capacity - reserved),
+            availableSpots: Math.max(0, capacity - reserved),
+            isClosed: false,
+            classId: classItem.id,
+            isVirtual: !sessionOverride
+          });
+        });
+      };
 
       // Process each schedule slot
       dailySchedules.forEach(schedule => {
-        const key = `${dateStr}_${schedule.startTime}`;
-        const sessionOverride = sessionMap.get(key);
-
-        // If session exists and is closed, we skip it (or mark as closed)
-        if (sessionOverride && sessionOverride.isClosed) return;
-
-        const capacity = sessionOverride?.capacity ?? classItem.defaultCapacity;
-        const price = sessionOverride?.price ?? classItem.defaultPrice;
-        const time = sessionOverride?.time ?? schedule.startTime;
-
-        // Calculate reserved spots for this specific date and time
-        const reserved = classItem.reservations
-          .filter(r => r.date?.toISOString().split('T')[0] === dateStr && r.time === time)
-          .reduce((sum, r) => sum + (typeof r.participants === 'number' ? r.participants : 1), 0);
-
-        slots.push({
-          id: sessionOverride?.id || `v_${key}`, // Virtual ID if no override
-          sessionId: sessionOverride?.id || null,
-          date: dateStr,
-          time: time,
-          startTime: time,
-          price: price,
-          capacity: capacity,
-          reserved,
-          available: Math.max(0, capacity - reserved),
-          availableSpots: Math.max(0, capacity - reserved),
-          isClosed: false,
-          classId: classItem.id,
-          isVirtual: !sessionOverride
-        });
+        const times = schedule.times && schedule.times.length > 0 ? schedule.times : [schedule.startTime];
+        generateSlotsForTimes(times, schedule);
       });
 
       // Also add explicit sessions that DON'T match a schedule (one-off sessions)

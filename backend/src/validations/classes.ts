@@ -3,6 +3,9 @@ import { z } from 'zod';
 // Enum validation for class levels
 const ClassLevelEnum = z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']);
 
+// Enum validation for schedule types
+const ScheduleTypeEnum = z.enum(['RECURRING', 'SINGLE', 'DATE_RANGE', 'SPECIFIC_DATES']);
+
 const dateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -15,21 +18,19 @@ export const createClassSchema = z.object({
     .max(1000, 'Description must be less than 1000 characters')
     .nullable()
     .optional(),
-  date: z.string()
-    .datetime('Invalid date format')
-    .refine((dateStr) => {
-      const date = new Date(dateStr);
-      const now = new Date();
-      return date.getTime() >= now.getTime() - (24 * 60 * 60 * 1000);
-    }, 'Class date must be today or in the future')
-    .optional(), // Made optional for recurring classes
-  isRecurring: z.boolean().default(false).optional(),
-  recurrencePattern: z.object({
-    days: z.array(z.number().min(0).max(6)),
-    times: z.array(z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/))
-  }).optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  // Scheduling fields
+  scheduleType: ScheduleTypeEnum.default('RECURRING'),
+  schedules: z.array(z.object({
+    type: ScheduleTypeEnum,
+    dayOfWeek: z.number().min(0).max(6).optional(),
+    startTime: z.string().regex(timeRegex, 'Time must be in HH:MM format'),
+    endTime: z.string().regex(timeRegex, 'Time must be in HH:MM format').optional(),
+    times: z.array(z.string().regex(timeRegex, 'Time must be in HH:MM format')).optional(),
+    specificDate: z.string().datetime().optional(),
+    rangeStart: z.string().datetime().optional(),
+    rangeEnd: z.string().datetime().optional(),
+    dates: z.array(z.string().datetime()).optional()
+  })).min(1, 'At least one schedule is required'),
   duration: z.number()
     .int('Duration must be a whole number')
     .min(30, 'Duration must be at least 30 minutes')
@@ -107,16 +108,19 @@ export const updateClassSchema = z.object({
     .max(1000, 'Description must be less than 1000 characters')
     .nullable()
     .optional(),
-  date: z.string()
-    .datetime('Invalid date format')
-    .optional(),
-  isRecurring: z.boolean().optional(),
-  recurrencePattern: z.object({
-    days: z.array(z.number().min(0).max(6)),
-    times: z.array(z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/))
-  }).optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  // Scheduling fields
+  scheduleType: ScheduleTypeEnum.optional(),
+  schedules: z.array(z.object({
+    type: ScheduleTypeEnum,
+    dayOfWeek: z.number().min(0).max(6).optional(),
+    startTime: z.string().regex(timeRegex, 'Time must be in HH:MM format'),
+    endTime: z.string().regex(timeRegex, 'Time must be in HH:MM format').optional(),
+    times: z.array(z.string().regex(timeRegex, 'Time must be in HH:MM format')).optional(),
+    specificDate: z.string().datetime().optional(),
+    rangeStart: z.string().datetime().optional(),
+    rangeEnd: z.string().datetime().optional(),
+    dates: z.array(z.string().datetime()).optional()
+  })).optional(),
   duration: z.number()
     .int('Duration must be a whole number')
     .min(30, 'Duration must be at least 30 minutes')
