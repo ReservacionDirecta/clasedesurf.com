@@ -281,7 +281,7 @@ router.get('/calendar/all', optionalAuth, resolveSchool, async (req: AuthRequest
               return schedule.rangeStart && schedule.rangeEnd &&
                 iteratorDate >= schedule.rangeStart && iteratorDate <= schedule.rangeEnd;
             case 'SPECIFIC_DATES':
-              return Array.isArray(schedule.dates) && (schedule.dates as string[]).includes(dateStr);
+              return Array.isArray(schedule.dates) && (schedule.dates as any).includes(dateStr);
             default:
               return false;
           }
@@ -324,7 +324,7 @@ router.get('/calendar/all', optionalAuth, resolveSchool, async (req: AuthRequest
         };
 
         dailySchedules.forEach(schedule => {
-          const times = Array.isArray(schedule.times) && schedule.times.length > 0
+          const times = Array.isArray(schedule.times) && (schedule.times as any).length > 0
             ? (schedule.times as string[])
             : [schedule.startTime];
           generateSlotsForTimes(times, schedule);
@@ -687,7 +687,7 @@ router.get('/:id/calendar', optionalAuth, validateParams(classIdSchema), async (
             return schedule.rangeStart && schedule.rangeEnd &&
               currentDate >= schedule.rangeStart && currentDate <= schedule.rangeEnd;
           case 'SPECIFIC_DATES':
-            return Array.isArray(schedule.dates) && (schedule.dates as string[]).includes(dateStr);
+            return Array.isArray(schedule.dates) && (schedule.dates as any).includes(dateStr);
           default:
             return false;
         }
@@ -730,7 +730,7 @@ router.get('/:id/calendar', optionalAuth, validateParams(classIdSchema), async (
 
       // Process each schedule slot
       dailySchedules.forEach(schedule => {
-        const times = Array.isArray(schedule.times) && schedule.times.length > 0
+        const times = Array.isArray(schedule.times) && (schedule.times as any).length > 0
           ? (schedule.times as string[])
           : [schedule.startTime];
         generateSlotsForTimes(times, schedule);
