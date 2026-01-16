@@ -279,9 +279,9 @@ router.get('/calendar/all', optionalAuth, resolveSchool, async (req: AuthRequest
               return schedule.specificDate?.toISOString().split('T')[0] === dateStr;
             case 'DATE_RANGE':
               return schedule.rangeStart && schedule.rangeEnd &&
-                     iteratorDate >= schedule.rangeStart && iteratorDate <= schedule.rangeEnd;
+                iteratorDate >= schedule.rangeStart && iteratorDate <= schedule.rangeEnd;
             case 'SPECIFIC_DATES':
-              return schedule.dates?.includes(dateStr);
+              return Array.isArray(schedule.dates) && (schedule.dates as string[]).includes(dateStr);
             default:
               return false;
           }
@@ -323,9 +323,10 @@ router.get('/calendar/all', optionalAuth, resolveSchool, async (req: AuthRequest
           });
         };
 
-        // Process each schedule slot
         dailySchedules.forEach(schedule => {
-          const times = schedule.times && schedule.times.length > 0 ? schedule.times : [schedule.startTime];
+          const times = Array.isArray(schedule.times) && schedule.times.length > 0
+            ? (schedule.times as string[])
+            : [schedule.startTime];
           generateSlotsForTimes(times, schedule);
         });
 
@@ -684,9 +685,9 @@ router.get('/:id/calendar', optionalAuth, validateParams(classIdSchema), async (
             return schedule.specificDate?.toISOString().split('T')[0] === dateStr;
           case 'DATE_RANGE':
             return schedule.rangeStart && schedule.rangeEnd &&
-                   currentDate >= schedule.rangeStart && currentDate <= schedule.rangeEnd;
+              currentDate >= schedule.rangeStart && currentDate <= schedule.rangeEnd;
           case 'SPECIFIC_DATES':
-            return schedule.dates?.includes(dateStr);
+            return Array.isArray(schedule.dates) && (schedule.dates as string[]).includes(dateStr);
           default:
             return false;
         }
@@ -729,7 +730,9 @@ router.get('/:id/calendar', optionalAuth, validateParams(classIdSchema), async (
 
       // Process each schedule slot
       dailySchedules.forEach(schedule => {
-        const times = schedule.times && schedule.times.length > 0 ? schedule.times : [schedule.startTime];
+        const times = Array.isArray(schedule.times) && schedule.times.length > 0
+          ? (schedule.times as string[])
+          : [schedule.startTime];
         generateSlotsForTimes(times, schedule);
       });
 
