@@ -103,7 +103,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', requireAuth, validateBody(beachSchema), async (req: AuthRequest, res) => {
   try {
     // Check if user is admin
-    if (req.user?.role !== 'ADMIN') {
+    if (req.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Solo administradores pueden crear playas' });
     }
 
@@ -158,7 +158,7 @@ router.post('/', requireAuth, validateBody(beachSchema), async (req: AuthRequest
 // PUT /beaches/:id - actualizar playa (requiere admin)
 router.put('/:id', requireAuth, validateBody(beachSchema.partial()), async (req: AuthRequest, res) => {
   try {
-    if (req.user?.role !== 'ADMIN') {
+    if (req.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Solo administradores pueden editar playas' });
     }
 
@@ -213,7 +213,7 @@ router.put('/:id', requireAuth, validateBody(beachSchema.partial()), async (req:
 // DELETE /beaches/:id - eliminar playa (requiere admin)
 router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
   try {
-    if (req.user?.role !== 'ADMIN') {
+    if (req.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Solo administradores pueden eliminar playas' });
     }
 
@@ -252,7 +252,7 @@ router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {
 // PUT /beaches/:id/conditions - actualizar solo condiciones (para integración con APIs externas)
 router.put('/:id/conditions', requireAuth, async (req: AuthRequest, res) => {
   try {
-    if (req.user?.role !== 'ADMIN') {
+    if (req.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Solo administradores pueden actualizar condiciones' });
     }
 
