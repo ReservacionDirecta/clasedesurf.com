@@ -3,13 +3,13 @@ FROM node:20-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    openssl \
-    openssl-dev \
-    libc6-compat \
-    curl
+  python3 \
+  make \
+  g++ \
+  openssl \
+  openssl-dev \
+  libc6-compat \
+  curl
 
 # Set working directory
 WORKDIR /app
@@ -19,7 +19,8 @@ COPY package*.json ./
 COPY tsconfig.json ./
 
 # Install dependencies
-RUN npm ci --no-audit --no-fund
+RUN npm ci --no-audit --no-fund && \
+  chmod -R +x node_modules/.bin
 
 # Copy source code
 COPY . .
@@ -35,7 +36,7 @@ RUN npm prune --production
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S backend -u 1001 -G nodejs
+  adduser -S backend -u 1001 -G nodejs
 
 # Change ownership
 RUN chown -R backend:nodejs /app
