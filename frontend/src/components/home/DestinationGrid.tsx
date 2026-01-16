@@ -29,12 +29,16 @@ interface DestinationData {
   bestTime: string;
   hazards: string[];
   conditions: SurfConditions;
+  lat?: number;
+  lng?: number;
 }
 
 const DESTINATIONS: DestinationData[] = [
   {
     name: 'Costa Verde',
     slug: 'costa-verde',
+    lat: -12.119, 
+    lng: -77.043,
     image: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     count: '25+ escuelas',
     description: 'La playa más accesible de Lima para surfear. Se extiende desde Miraflores hasta Barranco con múltiples picos que funcionan casi todo el año. Perfecta para aprender y practicar.',
@@ -63,6 +67,8 @@ const DESTINATIONS: DestinationData[] = [
   {
     name: 'Makaha',
     slug: 'makaha',
+    lat: -12.126, 
+    lng: -77.038,
     image: 'https://images.unsplash.com/photo-1455729552865-3658a5d39692?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     count: 'Top spots',
     description: 'Icónica playa en el corazón de Miraflores. Makaha es conocida por sus olas consistentes y su ambiente surfero. Aquí nacieron muchos de los mejores surfistas peruanos.',
@@ -89,8 +95,190 @@ const DESTINATIONS: DestinationData[] = [
     }
   },
   {
+    name: 'La Pampilla',
+    slug: 'la-pampilla',
+    lat: -12.115, 
+    lng: -77.045,
+    image: 'https://images.unsplash.com/photo-1537519646099-335112f03225?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Clásico derecho',
+    description: 'Derecha clásica de la Costa Verde. Ola larga y noble que permite maniobrar con comodidad. Es la favorita de los longboarders y tablistas que buscan estilo.',
+    waveType: 'Point break de derecha con fondo de piedras. Rompe lejos de la orilla y ofrece un recorrido largo hasta la orilla. Aguanta bastante tamaño.',
+    level: 'Intermedio',
+    entryTips: [
+      'Ingresa por la playa de piedras frente al estacionamiento',
+      'Calcula bien los tiempos entre series para entrar',
+      'Ten cuidado con las rocas al salir',
+      'Respeta a los longboarders locales'
+    ],
+    bestTime: 'Todo el año, especialmente con crecidas del sur',
+    hazards: ['Fondo de rocas', 'Erizos', 'Crowd los fines de semana'],
+    conditions: {
+      waveHeight: '1.0 - 1.8m',
+      wavePeriod: '15s',
+      windSpeed: '10 km/h',
+      windDirection: 'S',
+      tide: 'mid',
+      tideTime: 'Estable',
+      waterTemp: '17°C',
+      rating: 4,
+      lastUpdated: 'Hace 30 min'
+    }
+  },
+  {
+    name: 'Punta Roquitas',
+    slug: 'punta-roquitas',
+    lat: -12.112, 
+    lng: -77.046,
+    image: 'https://images.unsplash.com/photo-1505566089201-72f3e8f5223c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Acción constante',
+    description: 'Spot versátil y divertido que ofrece tanto izquierdas como derechas. Rompe cerca de la orilla y es conocido por su constancia. Ideal para quienes buscan mejorar maniobras rápidas.',
+    waveType: 'Reef break de piedras que ofrece picos variables. La ola es rápida y a veces tubular en la orilla. Funciona con casi cualquier marea.',
+    level: 'Intermedio',
+    entryTips: [
+      'Entrada directa por la orilla de piedras',
+      'Usa escarpines si no estás acostumbrado a las piedras',
+      'Cuidado con la corriente lateral hacia el espigón',
+      'Observa bien dónde rompe el pico antes de entrar'
+    ],
+    bestTime: 'Todo el año, muy consistente',
+    hazards: ['Rocas resbaladizas', 'Corrientes fuertes', 'Espigones cercanos'],
+    conditions: {
+      waveHeight: '0.8 - 1.5m',
+      wavePeriod: '13s',
+      windSpeed: '14 km/h',
+      windDirection: 'SSW',
+      tide: 'high',
+      tideTime: 'Bajando',
+      waterTemp: '16°C',
+      rating: 3,
+      lastUpdated: 'Hace 25 min'
+    }
+  },
+  {
+    name: 'Playa Redondo',
+    slug: 'playa-redondo',
+    lat: -12.130, 
+    lng: -77.035,
+    image: 'https://images.unsplash.com/photo-1415931633537-351070d20b81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Ideal aprendizaje',
+    description: 'La continuación natural de Makaha. Ofrece condiciones similares pero suele estar menos concurrida. Sus olas nobles son perfectas para dar el salto de principiante a intermedio.',
+    waveType: 'Beach break con secciones de piedras. Olas izquierdas predominantemente, suaves pero con recorrido. Menos fuerza que Pampilla o Roquitas.',
+    level: 'Principiante',
+    entryTips: [
+      'Entrada fácil por la orilla',
+      'Busca los canales definidos',
+      'Ideal para primeras clases fuera de la espuma',
+      'Estacionamiento disponible en el malecón'
+    ],
+    bestTime: 'Verano y media estación',
+    hazards: ['Fondo mixto arena/piedra', 'Principiantes con tablas grandes'],
+    conditions: {
+      waveHeight: '0.5 - 1.0m',
+      wavePeriod: '12s',
+      windSpeed: '8 km/h',
+      windDirection: 'SW',
+      tide: 'mid',
+      tideTime: 'Subiendo',
+      waterTemp: '19°C',
+      rating: 3,
+      lastUpdated: 'Hace 45 min'
+    }
+  },
+  {
+    name: 'Barranquito',
+    slug: 'barranquito',
+    lat: -12.146, 
+    lng: -77.025,
+    image: 'https://images.unsplash.com/photo-1471922694854-ff1b63b20054?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Longboard spot',
+    description: 'El spot clásico de Barranco. Conocido por su ambiente relajado y sus olas largas ideales para tablón (longboard) y SUP. Un rincón con mucha historia y mística.',
+    waveType: 'Point break izquierdo muy suave y largo. No es una ola agresiva, lo que la hace perfecta para estilos clásicos y relajados.',
+    level: 'Principiante',
+    entryTips: [
+      'Ingreso por la playa de arena/piedra chica',
+      'Rema con paciencia, el pico está algo adentro',
+      'Respeta el estilo relajado del lineup',
+      'Disfruta la vista de los acantilados de Barranco'
+    ],
+    bestTime: 'Invierno para tamaño, Verano para relax',
+    hazards: ['Rocas sumergidas', 'Remada larga'],
+    conditions: {
+      waveHeight: '0.6 - 1.2m',
+      wavePeriod: '13s',
+      windSpeed: '10 km/h',
+      windDirection: 'S',
+      tide: 'high',
+      tideTime: 'Alta',
+      waterTemp: '17°C',
+      rating: 4,
+      lastUpdated: 'Hace 1h'
+    }
+  },
+  {
+    name: 'La Herradura',
+    slug: 'la-herradura',
+    lat: -12.169, 
+    lng: -77.029,
+    image: 'https://images.unsplash.com/photo-1522055620701-081699709db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Solo expertos',
+    description: 'La leyenda de Lima. Un point break izquierdo de clase mundial ubicado en Chorrillos. Cuando entra el crecidón, ofrece tubos y secciones rápidas solo para los más experimentados.',
+    waveType: 'Point break izquierdo sobre fondo de rocas. Ola muy potente, rápida y tubular. Puede alcanzar 3-4 metros en días grandes. Requiere lectura experta.',
+    level: 'Avanzado',
+    entryTips: [
+      'Entrada complicada por las rocas (el "salto")',
+      'Calcula perfectamente el timing de la serie',
+      'Si dudas, mejor no entres',
+      'Localismo fuerte: respeto absoluto'
+    ],
+    bestTime: 'Creces grandes del Sur (Invierno)',
+    hazards: ['Rocas afiladas', 'Corrientes muy fuertes', 'Localismo', 'Fondos bajos'],
+    conditions: {
+      waveHeight: '2.0 - 3.0m',
+      wavePeriod: '17s',
+      windSpeed: '15 km/h',
+      windDirection: 'SE',
+      tide: 'low',
+      tideTime: 'Baja',
+      waterTemp: '15°C',
+      rating: 5,
+      lastUpdated: 'Hace 10 min'
+    }
+  },
+  {
+    name: 'El Triángulo',
+    slug: 'el-triangulo',
+    lat: -12.398, 
+    lng: -76.780,
+    image: 'https://images.unsplash.com/photo-1481190566236-40742a785e05?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Pico potente',
+    description: 'Ubicado en las playas del sur (San Bartolo/Santa María). Un pico definido que rompe con fuerza en forma triangular, ofreciendo paredes para ambos lados.',
+    waveType: 'Reef break potente. Ofrece una "A-frame" (pico triangular) con derechas e izquierdas. Ola con fuerza y buena pared para maniobras.',
+    level: 'Avanzado',
+    entryTips: [
+      'Requiere buena remada para llegar al pico',
+      'Posiciónate justo en el vértice del triángulo',
+      'Cuidado con la serie sorpresa',
+      'Mejor ir acompañado'
+    ],
+    bestTime: 'Todo el año, consistente',
+    hazards: ['Fondo de roca', 'Corrientes de retorno', 'Olas con fuerza'],
+    conditions: {
+      waveHeight: '1.2 - 2.0m',
+      wavePeriod: '14s',
+      windSpeed: '12 km/h',
+      windDirection: 'S',
+      tide: 'mid',
+      tideTime: 'Subiendo',
+      waterTemp: '16°C',
+      rating: 4,
+      lastUpdated: 'Hace 40 min'
+    }
+  },
+  {
     name: 'Punta Hermosa',
     slug: 'punta-hermosa',
+    lat: -12.338, 
+    lng: -76.820,
     image: 'https://images.unsplash.com/photo-1520699697851-3dc68aa3a474?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     count: 'Pro surfing',
     description: 'El destino de surf más completo al sur de Lima. Con más de 10 picos diferentes, Punta Hermosa ofrece olas para todos los niveles, desde la suave Playa Norte hasta el poderoso Pico Alto.',
@@ -119,6 +307,8 @@ const DESTINATIONS: DestinationData[] = [
   {
     name: 'San Bartolo',
     slug: 'san-bartolo',
+    lat: -12.392, 
+    lng: -76.782,
     image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
     count: 'Para todos',
     description: 'Balneario familiar con excelentes olas para aprender. Su playa principal ofrece olas suaves y agua más cálida que Lima. Ambiente relajado y escuelas para todos los niveles.',
@@ -145,6 +335,53 @@ const DESTINATIONS: DestinationData[] = [
     }
   }
 ];
+
+const BEACH_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  'costa-verde': { lat: -12.119, lng: -77.043 },
+  'makaha': { lat: -12.126, lng: -77.038 },
+  'la-pampilla': { lat: -12.115, lng: -77.045 },
+  'punta-roquitas': { lat: -12.112, lng: -77.046 },
+  'playa-redondo': { lat: -12.130, lng: -77.035 },
+  'barranquito': { lat: -12.146, lng: -77.025 },
+  'la-herradura': { lat: -12.169, lng: -77.029 },
+  'el-triangulo': { lat: -12.398, lng: -76.780 },
+  'punta-hermosa': { lat: -12.338, lng: -76.820 },
+  'san-bartolo': { lat: -12.392, lng: -76.782 },
+  'default': { lat: -12.12, lng: -77.04 }
+};
+
+function getCardinalDirection(angle: number): string {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  return directions[Math.round(angle / 22.5) % 16];
+}
+
+async function fetchRealTimeData(lat: number, lng: number) {
+  try {
+    const [marineRes, weatherRes] = await Promise.all([
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&current=wave_height,wave_period,wave_direction&timezone=auto`),
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_direction_10m&timezone=auto`)
+    ]);
+
+    if (!marineRes.ok || !weatherRes.ok) return null;
+
+    const marine = await marineRes.json();
+    const weather = await weatherRes.json();
+
+    if (!marine.current || !weather.current) return null;
+
+    return {
+      waveHeight: `${marine.current.wave_height.toFixed(1)} m`,
+      wavePeriod: `${marine.current.wave_period.toFixed(0)}s`,
+      windSpeed: `${Math.round(weather.current.wind_speed_10m)} km/h`,
+      windDirection: getCardinalDirection(weather.current.wind_direction_10m),
+      waterTemp: `${Math.round(weather.current.temperature_2m)}°C`,
+      lastUpdated: 'En vivo'
+    };
+  } catch (error) {
+    console.error('Error fetching conditions:', error);
+    return null;
+  }
+}
 
 function TideIndicator({ tide }: { tide: 'low' | 'mid' | 'high' }) {
   const levels = { low: 1, mid: 2, high: 3 };
@@ -335,46 +572,66 @@ export function DestinationGrid() {
   const [selectedDestination, setSelectedDestination] = useState<DestinationData | null>(null);
   const [destinations, setDestinations] = useState<DestinationData[]>(DESTINATIONS);
 
-  // Try to fetch beaches from API
+  // Derive active destination from state (to show live updates in modal)
+  const activeDestination = selectedDestination 
+    ? destinations.find(d => d.slug === selectedDestination.slug) || selectedDestination 
+    : null;
+
   useEffect(() => {
-    async function fetchBeaches() {
+    async function initData() {
+      // 1. Fetch DB data and merge with static
+      let currentDestinations = [...DESTINATIONS];
       try {
         const res = await fetch('/api/beaches?active=true');
         if (res.ok) {
           const data = await res.json();
           if (data && data.length > 0) {
-            // Transform API data to match DestinationData format
-            const apiDestinations = data.map((beach: any) => ({
-              name: beach.name,
-              slug: beach.slug,
-              image: beach.image || DESTINATIONS.find(d => d.name === beach.name)?.image || '',
-              count: beach.count || '',
-              description: beach.description || '',
-              waveType: beach.waveType || '',
-              level: beach.level || 'Todos los niveles',
-              bestTime: beach.bestTime || '',
-              entryTips: Array.isArray(beach.entryTips) ? beach.entryTips : [],
-              hazards: Array.isArray(beach.hazards) ? beach.hazards : [],
-              conditions: beach.conditions || {
-                waveHeight: '---',
-                wavePeriod: '---',
-                windSpeed: '---',
-                windDirection: '---',
-                tide: 'mid',
-                tideTime: '---',
-                waterTemp: '---',
-                rating: 3,
-                lastUpdated: 'Sin datos'
-              }
-            }));
-            setDestinations(apiDestinations);
+            currentDestinations = data.map((apiBeach: any) => {
+               // Find static match to preserve high-res images/tips if DB is empty
+               const staticMatch = DESTINATIONS.find(d => d.slug === apiBeach.slug || d.name === apiBeach.name);
+               return {
+                 ...staticMatch, // Defaults
+                 ...apiBeach,    // Overrides
+                 slug: apiBeach.slug || staticMatch?.slug,
+                 lat: apiBeach.lat || staticMatch?.lat, // Preserve static coords if DB missing
+                 lng: apiBeach.lng || staticMatch?.lng,
+                 image: apiBeach.image || staticMatch?.image || '', // Ensure image
+                 conditions: { ...staticMatch?.conditions, ...apiBeach.conditions }
+               };
+            });
           }
         }
       } catch (error) {
-        console.log('Using static destinations data');
+        console.log('Using static destinations data', error);
       }
+
+      // 2. Fetch Live Weather for all destinations
+      // We do this AFTER merging DB data so we have the full list
+      const updatedDestinations = await Promise.all(currentDestinations.map(async (dest) => {
+         // Determine coordinates: prefer dest lat/lng, fallback to map
+         const coord = (dest.lat && dest.lng) 
+            ? { lat: dest.lat, lng: dest.lng }
+            : (dest.slug && BEACH_COORDINATES[dest.slug]) || BEACH_COORDINATES['default'];
+         
+         if (coord) {
+             const weather = await fetchRealTimeData(coord.lat, coord.lng);
+             if (weather) {
+                 return {
+                     ...dest,
+                     conditions: {
+                         ...dest.conditions,
+                         ...weather
+                     }
+                 };
+             }
+         }
+         return dest;
+      }));
+      
+      setDestinations(updatedDestinations);
     }
-    fetchBeaches();
+    
+    initData();
   }, []);
 
   return (
@@ -420,9 +677,9 @@ export function DestinationGrid() {
       </section>
 
       {/* Modal */}
-      {selectedDestination && (
+      {activeDestination && (
         <BeachModal 
-          destination={selectedDestination} 
+          destination={activeDestination} 
           onClose={() => setSelectedDestination(null)} 
         />
       )}
