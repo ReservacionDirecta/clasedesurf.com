@@ -5,14 +5,15 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
+import { STORAGE_PATH } from '../config/storage';
+
 const router = Router();
 const prisma = new PrismaClient();
 
 // Configure multer for image uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const rootDir = process.env.STORAGE_PATH || path.join(__dirname, '../../uploads');
-        const uploadDir = path.join(rootDir, 'products');
+        const uploadDir = path.join(STORAGE_PATH, 'products');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }

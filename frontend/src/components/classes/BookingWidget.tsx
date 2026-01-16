@@ -74,7 +74,7 @@ export function BookingWidget({ classData, initialParticipants = 1, onReserve, a
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden sticky top-24">
+    <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden lg:sticky lg:top-24">
       {/* Header: Price */}
       <div className="p-6 border-b border-gray-100 bg-gray-50/50">
         <p className="text-sm text-gray-500 font-medium mb-1">Precio total</p>

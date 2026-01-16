@@ -5,15 +5,16 @@ export const normalizeSchoolImages = (school: any) => {
     if (!school) return school;
 
     const fixPath = (imgPath: string) => {
-        if (!imgPath || imgPath.startsWith('http') || imgPath.startsWith('/api/images')) return imgPath;
+        if (!imgPath) return imgPath;
+        // If it sends a full URL or already correct path, return it
+        if (imgPath.startsWith('http') || imgPath.startsWith('/uploads')) return imgPath;
 
-        // If it starts with /uploads/schools/, convert to /api/images/uploads/schools/
-        if (imgPath.startsWith('/uploads/schools/')) {
-            return `/api/images${imgPath}`;
-        }
+        // Legacy/Fallback: try to fix older paths or bare filenames
+        // If it has /api/images, keep it (legacy)
+        if (imgPath.startsWith('/api/images')) return imgPath;
 
-        // Otherwise just prefix
-        return `/api/images/uploads/schools/${imgPath.replace(/^\//, '')}`;
+        // Assume it's a filename in the root of uploads (new behavior)
+        return `/uploads/${imgPath.replace(/^\//, '')}`;
     };
 
     school.logo = fixPath(school.logo);
@@ -37,13 +38,16 @@ export const normalizeClassImages = (cls: any) => {
         .filter((img: string) => img && typeof img === 'string' && img.trim() !== '')
         .map((img: string) => {
             const trimmedImg = img.trim();
-            if (trimmedImg.startsWith('http') || trimmedImg.startsWith('/api/images')) return trimmedImg;
+            if (trimmedImg.startsWith('http')) return trimmedImg;
 
-            if (trimmedImg.startsWith('/uploads/classes/')) {
-                return `/api/images${trimmedImg}`;
-            }
+            // If it already points to the storage volume, keep it
+            if (trimmedImg.startsWith('/uploads')) return trimmedImg;
 
-            return `/api/images/uploads/classes/${trimmedImg.replace(/^\//, '')}`;
+            // Legacy paths
+            if (trimmedImg.startsWith('/api/images')) return trimmedImg;
+
+            // Otherwise assume it's a filename in the persistent storage
+            return `/uploads/${trimmedImg.replace(/^\//, '')}`;
         });
 
     return cls;

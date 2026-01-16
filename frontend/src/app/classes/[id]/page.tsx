@@ -1054,8 +1054,8 @@ export default function ClassDetailsPage() {
                  </div>
                  
                  {/* Right Column: Booking Widget */}
-                 <div className="hidden lg:block lg:col-span-1 relative">
-                      <div className="sticky top-28 space-y-4">
+                 <div className="lg:col-span-1 relative mt-8 lg:mt-0">
+                      <div className="lg:sticky lg:top-28 space-y-4">
                           <BookingWidget 
                                classData={{
                                  ...classDetails,
