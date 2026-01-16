@@ -814,10 +814,37 @@ function ReservationConfirmationContent() {
                        <CheckCircle className="w-12 h-12 text-green-600" />
                     </div>
 
-                    <h2 className="text-3xl font-black text-[#011627] mb-4">¡Tu lugar está casi listo!</h2>
-                    <p className="text-slate-500 text-lg mb-10 max-w-md mx-auto">
+                     <h2 className="text-3xl font-black text-[#011627] mb-4">¡Tu lugar está casi listo!</h2>
+                    <p className="text-slate-500 text-lg mb-8 max-w-md mx-auto">
                        Hemos creado tu reserva. Para garantizar tu cupo, por favor completa el pago a continuación.
                     </p>
+
+                    {/* Resumen Visible de la Reserva */}
+                    <div className="bg-slate-50 rounded-2xl p-6 mb-10 max-w-xl mx-auto border border-slate-100">
+                      <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Resumen de Reserva</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500 mb-1">Fecha</p>
+                          <div className="flex items-center gap-2 text-slate-900 font-bold">
+                            <Calendar className="w-4 h-4 text-indigo-500" />
+                            <span>{formatDate(reservationData.classData?.date || reservationData.classData?.startTime)}</span>
+                          </div>
+                        </div>
+                        <div>
+                           <p className="text-xs font-semibold text-slate-500 mb-1">Horario</p>
+                           <div className="flex items-center gap-2 text-slate-900 font-bold">
+                             <Clock className="w-4 h-4 text-indigo-500" />
+                             <span>{times.startTime} - {times.endTime}</span>
+                           </div>
+                        </div>
+                        <div>
+                           <p className="text-xs font-semibold text-slate-500 mb-1">Total a Pagar</p>
+                           <div className="flex items-center gap-2 text-slate-900 font-black text-lg">
+                             <span className="text-indigo-600">{totalPrices.pen}</span>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
 
                     <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
                        <div className="p-6 rounded-2xl bg-indigo-50 border border-indigo-100 text-left">
