@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { formatDualCurrency } from '@/lib/currency'
-import { ChevronRight, ChevronLeft, Check, Tag, Sparkles, X, Loader2 } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, Tag, Sparkles, X, Loader2, ChevronDown, AlertCircle } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
 
 interface School {
