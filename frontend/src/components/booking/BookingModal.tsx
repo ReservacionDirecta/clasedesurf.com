@@ -353,63 +353,43 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black bg-opacity-50 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md transition-opacity duration-300"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
       <div
-        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-full sm:h-auto sm:max-h-[95vh] sm:max-w-2xl overflow-hidden flex flex-col"
+        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-[95dvh] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl flex flex-col transform transition-transform duration-300 max-h-[100dvh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with Progress */}
-        <div className="bg-white border-b border-gray-200 p-4 sm:p-6 sticky top-0 z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1 min-w-0 pr-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Reservar Clase</h2>
-              <p className="text-sm text-gray-600 truncate">{classData.title}</p>
+        <div className="bg-white border-b border-gray-100 p-5 shrink-0">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex-1 min-w-0 pr-4">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Reservar Clase</h2>
+              <p className="text-sm text-slate-500 truncate font-medium">{classData.title}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0 touch-target"
+              className="p-2.5 hover:bg-slate-100/80 rounded-full transition-colors flex-shrink-0 text-slate-400 hover:text-slate-600 active:scale-95"
               aria-label="Cerrar modal"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-6 h-6" />
             </button>
           </div>
 
-          {/* Progress Steps */}
-          <div className="flex items-center justify-between mb-2">
-            {STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center flex-1">
-                <div className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${currentStep === step.id
-                      ? 'bg-blue-600 text-white scale-110'
-                      : currentStep > step.id || isStepComplete(step.id)
-                        ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 text-gray-600'
-                      }`}
-                  >
-                    {currentStep > step.id || isStepComplete(step.id) ? (
-                      <Check className="w-5 h-5" />
-                    ) : (
-                      step.icon
-                    )}
-                  </div>
-                  <span className={`text-xs mt-1 hidden sm:block ${currentStep === step.id ? 'text-blue-600 font-semibold' : 'text-gray-600'
-                    }`}>
+          {/* Enterprise Progress Steps */}
+          <div className="relative">
+            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-slate-100">
+               <div style={{ width: `${(currentStep / STEPS.length) * 100}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500 ease-out"></div>
+            </div>
+            <div className="flex justify-between text-xs font-medium text-slate-500 px-1">
+               {STEPS.map((step) => (
+                 <span key={step.id} className={`${currentStep >= step.id ? 'text-blue-600 font-bold' : ''}`}>
                     {step.name}
-                  </span>
-                </div>
-                {index < STEPS.length - 1 && (
-                  <div className={`h-1 flex-1 mx-2 rounded transition-all ${currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
-                    }`} />
-                )}
-              </div>
-            ))}
+                 </span>
+               ))}
+            </div>
           </div>
         </div>
 
@@ -417,77 +397,85 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
         <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
           {/* Step 1: Personal Information */}
           {currentStep === 1 && (
-            <div className="space-y-4 animate-fadeIn">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
-
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre completo *
-                </label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={`h-12 ${errors.name ? 'border-red-500' : touchedFields.has('name') && formData.name ? 'border-green-500' : ''}`}
-                  placeholder="Tu nombre completo"
-                />
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            <div className="space-y-6 animate-fadeIn">
+              <div className="space-y-1 mb-6">
+                 <h3 className="text-lg font-bold text-slate-900">Cuéntanos sobre ti</h3>
+                 <p className="text-slate-500 text-sm">Necesitamos tus datos para asegurar tu lugar en la clase.</p>
               </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email *
-                </label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`h-12 ${errors.email ? 'border-red-500' : touchedFields.has('email') && formData.email.includes('@') ? 'border-green-500' : ''}`}
-                  placeholder="tu@email.com"
-                />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-5">
                 <div>
-                  <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
-                    Edad *
+                  <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
+                    Nombre completo <span className="text-red-500">*</span>
                   </label>
                   <Input
-                    id="age"
-                    name="age"
-                    type="number"
-                    min="8"
-                    max="100"
-                    value={formData.age}
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={formData.name}
                     onChange={handleInputChange}
-                    className={`h-12 ${errors.age ? 'border-red-500' : touchedFields.has('age') && parseInt(formData.age) >= 8 ? 'border-green-500' : ''}`}
-                    placeholder="25"
+                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.name ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    placeholder="Ej. Juan Pérez"
                   />
-                  {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
+                  {errors.name && <p className="text-red-500 text-sm mt-1.5 font-medium flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-red-500 block"></span>{errors.name}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="participants" className="block text-sm font-medium text-gray-700 mb-1">
-                    Participantes
+                  <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-2">
+                    Correo electrónico <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="participants"
-                    name="participants"
-                    value={formData.participants}
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full h-12 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-                  >
-                    {Array.from({ length: Math.min(classData.availableSpots || 1, 10) }, (_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1} {i === 0 ? 'persona' : 'personas'}
-                      </option>
-                    ))}
-                  </select>
+                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.email ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    placeholder="juan@ejemplo.com"
+                  />
+                  {errors.email && <p className="text-red-500 text-sm mt-1.5 font-medium flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-red-500 block"></span>{errors.email}</p>}
+                </div>
+
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <label htmlFor="age" className="block text-sm font-bold text-slate-700 mb-2">
+                      Edad <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      id="age"
+                      name="age"
+                      type="number"
+                      min="8"
+                      max="100"
+                      value={formData.age}
+                      onChange={handleInputChange}
+                      className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.age ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                      placeholder="25"
+                    />
+                    {errors.age && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.age}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="participants" className="block text-sm font-bold text-slate-700 mb-2">
+                      Participantes
+                    </label>
+                    <div className="relative">
+                        <select
+                          id="participants"
+                          name="participants"
+                          value={formData.participants}
+                          onChange={handleInputChange}
+                          className="w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer hover:bg-slate-100"
+                        >
+                          {Array.from({ length: Math.min(classData.availableSpots || 1, 10) }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>
+                              {i + 1} {i === 0 ? 'persona' : 'personas'}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -495,13 +483,15 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
           {/* Step 2: Additional Details */}
           {currentStep === 2 && (
-            <div className="space-y-4 animate-fadeIn">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Detalles Adicionales</h3>
-              <p className="text-sm text-gray-600 mb-4">Estos campos son opcionales pero nos ayudan a brindarte una mejor experiencia</p>
+            <div className="space-y-6 animate-fadeIn">
+               <div className="space-y-1 mb-6">
+                 <h3 className="text-lg font-bold text-slate-900">Personaliza tu experiencia</h3>
+                 <p className="text-slate-500 text-sm">Ayúdanos a preparar el equipo adecuado para ti.</p>
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="height" className="block text-sm font-bold text-slate-700 mb-2">
                     Altura (cm)
                   </label>
                   <Input
@@ -512,13 +502,13 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     max="250"
                     value={formData.height}
                     onChange={handleInputChange}
-                    className="h-12"
+                    className="h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base"
                     placeholder="170"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="weight" className="block text-sm font-bold text-slate-700 mb-2">
                     Peso (kg)
                   </label>
                   <Input
@@ -529,49 +519,45 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     max="200"
                     value={formData.weight}
                     onChange={handleInputChange}
-                    className="h-12"
+                    className="h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base"
                     placeholder="70"
                   />
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <input
-                    id="canSwim"
-                    name="canSwim"
-                    type="checkbox"
-                    checked={formData.canSwim}
-                    onChange={handleInputChange}
-                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="canSwim" className="text-sm font-medium text-gray-700">
-                    Sé nadar
-                  </label>
-                </div>
+              <div className="space-y-4">
+                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setFormData(prev => ({...prev, canSwim: !prev.canSwim}))}>
+                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${formData.canSwim ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}>
+                        {formData.canSwim && <Check className="w-4 h-4 text-white" />}
+                    </div>
+                    <span className="font-bold text-slate-700">Sé nadar</span>
+                 </div>
 
                 <div>
-                  <label htmlFor="swimmingLevel" className="block text-sm font-medium text-gray-700 mb-1">
-                    Nivel de natación
+                  <label htmlFor="swimmingLevel" className="block text-sm font-bold text-slate-700 mb-2">
+                    Nivel de experiencia
                   </label>
-                  <select
-                    id="swimmingLevel"
-                    name="swimmingLevel"
-                    value={formData.swimmingLevel}
-                    onChange={handleInputChange}
-                    className="w-full h-12 px-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="BEGINNER">Principiante</option>
-                    <option value="INTERMEDIATE">Intermedio</option>
-                    <option value="ADVANCED">Avanzado</option>
-                    <option value="EXPERT">Experto</option>
-                  </select>
+                   <div className="relative">
+                      <select
+                        id="swimmingLevel"
+                        name="swimmingLevel"
+                        value={formData.swimmingLevel}
+                        onChange={handleInputChange}
+                        className="w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer"
+                      >
+                        <option value="BEGINNER">Principiante (Primera vez)</option>
+                        <option value="INTERMEDIATE">Intermedio (Algunas veces)</option>
+                        <option value="ADVANCED">Avanzado (Consistente)</option>
+                        <option value="EXPERT">Experto</option>
+                      </select>
+                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                   </div>
                 </div>
               </div>
 
               <div>
-                <label htmlFor="injuries" className="block text-sm font-medium text-gray-700 mb-1">
-                  Lesiones o condiciones médicas
+                <label htmlFor="injuries" className="block text-sm font-bold text-slate-700 mb-2">
+                  ¿Alguna lesión o condición médica?
                 </label>
                 <textarea
                   id="injuries"
@@ -579,8 +565,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                   rows={3}
                   value={formData.injuries}
                   onChange={handleInputChange}
-                  placeholder="Describe cualquier lesión o condición que debamos conocer..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej. Lesión antigua en hombro derecho..."
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-base resize-none"
                 />
               </div>
             </div>
