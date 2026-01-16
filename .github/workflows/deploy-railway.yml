@@ -126,53 +126,22 @@ jobs:
           echo "Deployment verification would go here"
           echo "url=https://your-app.railway.app" >> $GITHUB_OUTPUT
 
-  # Job 4: Run Database Migrations
-  migrate-database:
-    needs: deploy-railway
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🚂 Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: 🗄️ Run Database Migrations
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
-          CI: true
-        working-directory: ./backend
-        run: railway run --service surfschool-backend npx prisma migrate deploy
-
-      - name: 🌱 Seed Database (if needed)
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
-          CI: true
-        working-directory: ./backend
-        run: railway run --service surfschool-backend npx prisma db seed || echo "Seeding skipped or failed"
-
-  # Job 5: Notify Success
   notify:
-    needs: [deploy-railway, migrate-database]
+    needs: [deploy-railway]
     runs-on: ubuntu-latest
     if: always()
 
     steps:
       - name: 📊 Deployment Status
         run: |
-          if [ "${{ needs.deploy-railway.result }}" == "success" ] && [ "${{ needs.migrate-database.result }}" == "success" ]; then
+          if [ "${{ needs.deploy-railway.result }}" == "success" ]; then
             echo "🎉 Deployment successful!"
             echo "✅ Backend deployed"
             echo "✅ Frontend deployed"
-            echo "✅ Database migrated"
+            echo "ℹ️ Database migrations are handled by the backend container on startup"
           else
             echo "❌ Deployment failed"
-            echo "Backend: ${{ needs.deploy-railway.result }}"
-            echo "Database: ${{ needs.migrate-database.result }}"
+            echo "Deployment Result: ${{ needs.deploy-railway.result }}"
           fi
 
     # Opcional: Notificar a Slack, Discord, etc.
