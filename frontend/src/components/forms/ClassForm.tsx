@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/contexts/ToastContext';
 import { useSession } from 'next-auth/react';
 import { EditDatesModal } from './EditDatesModal';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 
 type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
@@ -74,7 +75,16 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
   const { data: session } = useSession();
   const { showSuccess, showError, showWarning } = useToast();
   
-  const [formData, setFormData] = useState<ClassFormData>({
+  // Determine persistence key: unique for edits (if ID available), constant for new creation
+  const persistenceKey = isEditing && initialData?.id 
+    ? `class-form-edit-${initialData.id}` 
+    : 'class-form-create-new';
+
+  const { 
+    data: formData, 
+    setData: setFormData, 
+    clearPersistence 
+  } = useFormPersistence<ClassFormData>(persistenceKey, {
     title: initialData?.title || '',
     description: initialData?.description || '',
     duration: initialData?.duration || 120,
@@ -407,6 +417,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
       }
 
       showSuccess(isEditing ? 'Clase actualizada' : 'Clase creada', 'Los cambios se han guardado con éxito.');
+      clearPersistence();
       onSuccess();
     } catch (err: any) {
       showError('Error', err.message);

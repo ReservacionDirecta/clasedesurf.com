@@ -204,7 +204,6 @@ export const authOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? '.clasedesurf.com' : undefined,
         maxAge: 30 * 24 * 60 * 60 // 30 days
       }
     }
