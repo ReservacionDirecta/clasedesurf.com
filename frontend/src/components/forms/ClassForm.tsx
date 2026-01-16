@@ -12,7 +12,8 @@ import { Input } from '@/components/ui/Input';
 import { useToast } from '@/contexts/ToastContext';
 import { useSession } from 'next-auth/react';
 import { EditDatesModal } from './EditDatesModal';
-import { useFormPersistence } from '@/hooks/useFormPersistence';
+import { TimeSlotPicker } from './TimeSlotPicker';
+import { useFormPersistence, useUnsavedChangesWarning } from '@/hooks/useFormPersistence';
 
 type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
@@ -124,6 +125,15 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
   const [showRequirements, setShowRequirements] = useState(!!formData.studentDetails);
   const [showInlineBeachAdd, setShowInlineBeachAdd] = useState(false);
   const [showEditDatesModal, setShowEditDatesModal] = useState(false);
+  
+  // Warn on unsaved changes
+  // We consider it dirty if we haven't just saved AND (it is a new form OR we have made edits to persistence)
+  // For simplicity, let's track a dirty state or just check if persistence has data and we are not saving.
+  // Actually, useFormPersistence handles data loading. We can assume if there's data in the form that differs from initial, it's dirty.
+  // But a simple approach is: if we are in this route, we have "unsaved changes" until we submit.
+  // Use a state for isDirty that is set to true on first change?
+  const [isDirty, setIsDirty] = useState(false);
+  useUnsavedChangesWarning(isDirty && !saving);
 
   // Load initial data
   useEffect(() => {
@@ -185,6 +195,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
 
   const handleInputChange = (field: keyof ClassFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    setIsDirty(true);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -418,6 +429,9 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
 
       showSuccess(isEditing ? 'Clase actualizada' : 'Clase creada', 'Los cambios se han guardado con éxito.');
       clearPersistence();
+      showSuccess(isEditing ? 'Clase actualizada' : 'Clase creada', 'Los cambios se han guardado con éxito.');
+      clearPersistence();
+      setIsDirty(false); // Reset dirty state
       onSuccess();
     } catch (err: any) {
       showError('Error', err.message);
@@ -431,17 +445,20 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
       {/* ProgressBar/Steps indicator could go here */}
 
       {/* Edit Dates Action */}
-      <div className="mb-6 flex justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setShowEditDatesModal(true)}
-          className="flex items-center gap-2"
-        >
-          <Calendar className="w-4 h-4" />
-          Editar Horarios de Clases Existentes
-        </Button>
-      </div>
+      {/* Edit Dates Action - Only when editing */}
+      {isEditing && (
+        <div className="mb-6 flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowEditDatesModal(true)}
+            className="flex items-center gap-2"
+          >
+            <Calendar className="w-4 h-4" />
+            Gestionar Horarios Existentes
+          </Button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* SECTION 1: DETALLES BASICOS */}
@@ -795,13 +812,20 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
           </div>
         </div>
 
-        {/* SECTION 4: PROGRAMACION (INVENTORY) */}
-        {!isEditing && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-amber-600" />
-              <h2 className="text-lg font-bold text-slate-900">4. Programación (Inventario)</h2>
+        {/* SECTION 4: PROGRAMACION (INVENTORY) - Visible always now, but with different context if editing */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className={`p-6 border-b border-slate-100 ${isEditing ? 'bg-amber-50/50' : 'bg-slate-50/50'} flex items-center gap-3`}>
+              <Calendar className={`w-5 h-5 ${isEditing ? 'text-amber-600' : 'text-indigo-600'}`} />
+              <h2 className="text-lg font-bold text-slate-900">
+                {isEditing ? '4. Agregar Nueva Programación (Opcional)' : '4. Programación (Inventario)'}
+              </h2>
             </div>
+            {isEditing && (
+              <div className="px-6 pt-4 text-sm text-amber-700 bg-amber-50 mx-6 mt-4 rounded-xl border border-amber-100 p-3">
+                 <p className="font-bold mb-1">Nota para edición:</p>
+                 Configura aquí nuevos horarios si deseas agregar más disponibilidad. Los horarios existentes no se verán afectados salvo que los edites desde "Gestionar Horarios Existentes".
+              </div>
+            )}
             
             <div className="p-6 space-y-8">
               <div className="flex flex-wrap gap-2">
@@ -900,26 +924,10 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                   </div>
 
                   <div className="space-y-4">
-                    <label className="text-sm font-semibold text-slate-700">Horarios</label>
-                    <div className="flex flex-wrap gap-3">
-                      {formData.times.map((t, idx) => (
-                        <div key={idx} className="flex gap-2">
-                          <Input type="time" value={t} onChange={e => {
-                            const nt = [...formData.times]; nt[idx] = e.target.value; handleInputChange('times', nt);
-                          }} className="w-32" />
-                          <Button 
-                            type="button" variant="outline" size="sm"
-                            disabled={formData.times.length === 1}
-                            onClick={() => handleInputChange('times', formData.times.filter((_, i) => i !== idx))}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                          </Button>
-                        </div>
-                      ))}
-                      <Button type="button" variant="secondary" onClick={() => handleInputChange('times', [...formData.times, ''])}>
-                        <Plus className="w-4 h-4 mr-1" /> Más hora
-                      </Button>
-                    </div>
+                    <TimeSlotPicker
+                        times={formData.times}
+                        onChange={(times) => handleInputChange('times', times)}
+                    />
                   </div>
                 </div>
               )}
@@ -938,26 +946,12 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                      </div>
                    </div>
                    <div className="space-y-4">
-                     <label className="text-sm font-semibold text-slate-700">Horarios</label>
-                     <div className="flex flex-wrap gap-3">
-                       {formData.times.map((t, idx) => (
-                         <div key={idx} className="flex gap-2">
-                           <Input type="time" value={t} onChange={e => {
-                             const nt = [...formData.times]; nt[idx] = e.target.value; handleInputChange('times', nt);
-                           }} className="w-32" />
-                           <Button
-                             type="button" variant="outline" size="sm"
-                             disabled={formData.times.length === 1}
-                             onClick={() => handleInputChange('times', formData.times.filter((_, i) => i !== idx))}
-                           >
-                             <Trash2 className="w-4 h-4 text-red-500" />
-                           </Button>
-                         </div>
-                       ))}
-                       <Button type="button" variant="secondary" onClick={() => handleInputChange('times', [...formData.times, ''])}>
-                         <Plus className="w-4 h-4 mr-1" /> Más hora
-                       </Button>
-                     </div>
+                     <div className="space-y-4">
+                     <TimeSlotPicker
+                        times={formData.times}
+                        onChange={(times) => handleInputChange('times', times)}
+                     />
+                   </div>
                    </div>
                    <div className="p-4 bg-blue-50 rounded-2xl flex gap-3 text-blue-700 text-sm italic">
                      <Info className="w-5 h-5 shrink-0" />
@@ -977,26 +971,12 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                      />
                    </div>
                    <div className="space-y-4">
-                     <label className="text-sm font-semibold text-slate-700">Horarios</label>
-                     <div className="flex flex-wrap gap-3">
-                       {formData.times.map((t, idx) => (
-                         <div key={idx} className="flex gap-2">
-                           <Input type="time" value={t} onChange={e => {
-                             const nt = [...formData.times]; nt[idx] = e.target.value; handleInputChange('times', nt);
-                           }} className="w-32" />
-                           <Button
-                             type="button" variant="outline" size="sm"
-                             disabled={formData.times.length === 1}
-                             onClick={() => handleInputChange('times', formData.times.filter((_, i) => i !== idx))}
-                           >
-                             <Trash2 className="w-4 h-4 text-red-500" />
-                           </Button>
-                         </div>
-                       ))}
-                       <Button type="button" variant="secondary" onClick={() => handleInputChange('times', [...formData.times, ''])}>
-                         <Plus className="w-4 h-4 mr-1" /> Más hora
-                       </Button>
-                     </div>
+                     <div className="space-y-4">
+                     <TimeSlotPicker
+                        times={formData.times}
+                        onChange={(times) => handleInputChange('times', times)}
+                     />
+                   </div>
                    </div>
                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">
                       <h4 className="text-sm font-bold text-indigo-900 mb-2">Resumen de selección</h4>
@@ -1010,7 +990,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                )}
             </div>
           </div>
-        )}
+
 
         <div className="flex items-center justify-end gap-4 pb-12">
            <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
