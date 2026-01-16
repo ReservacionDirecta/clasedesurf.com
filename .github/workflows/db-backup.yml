@@ -22,6 +22,8 @@ jobs:
       - name: 🐘 Create Backup
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: 5b9527ff-cf02-405e-989f-f1120848d679
+          CI: true
         run: |
           # Create backups directory
           mkdir -p backups
