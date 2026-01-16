@@ -572,241 +572,156 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
             </div>
           )}
 
-          {/* Step 3: Emergency Contact */}
+          {/* Step 3: Emergency Contact & Payment */}
           {currentStep === 3 && (
-            <div className="space-y-4 animate-fadeIn">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Contacto de Emergencia</h3>
-
-              <div>
-                <label htmlFor="emergencyContact" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre completo *
-                </label>
-                <Input
-                  id="emergencyContact"
-                  name="emergencyContact"
-                  type="text"
-                  value={formData.emergencyContact}
-                  onChange={handleInputChange}
-                  className={`h-12 ${errors.emergencyContact ? 'border-red-500' : touchedFields.has('emergencyContact') && formData.emergencyContact ? 'border-green-500' : ''}`}
-                  placeholder="Nombre del contacto de emergencia"
-                />
-                {errors.emergencyContact && <p className="text-red-500 text-sm mt-1">{errors.emergencyContact}</p>}
+            <div className="space-y-8 animate-fadeIn pb-4">
+              <div className="space-y-1">
+                 <h3 className="text-lg font-bold text-slate-900">Seguridad y Pago</h3>
+                 <p className="text-slate-500 text-sm">Ya casi terminamos. Revisa los detalles finales.</p>
               </div>
-
-              <div>
-                <label htmlFor="emergencyPhone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono *
-                </label>
-                <Input
-                  id="emergencyPhone"
-                  name="emergencyPhone"
-                  type="tel"
-                  value={formData.emergencyPhone}
-                  onChange={handleInputChange}
-                  className={`h-12 ${errors.emergencyPhone ? 'border-red-500' : touchedFields.has('emergencyPhone') && formData.emergencyPhone ? 'border-green-500' : ''}`}
-                  placeholder="+51 999 999 999"
-                />
-                {errors.emergencyPhone && <p className="text-red-500 text-sm mt-1">{errors.emergencyPhone}</p>}
-              </div>
-
-              {/* Discount Code */}
-              <div>
-                <label htmlFor="discountCode" className="block text-sm font-medium text-gray-700 mb-2">
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-blue-600" />
-                    <span>Código de Descuento</span>
-                    <span className="text-xs text-gray-500 font-normal">(Opcional)</span>
-                  </div>
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Input
-                      id="discountCode"
-                      name="discountCode"
-                      type="text"
-                      value={formData.discountCode}
-                      onChange={(e) => {
-                        setFormData({ ...formData, discountCode: e.target.value.toUpperCase() })
-                        setDiscountInfo(null)
-                      }}
-                      onBlur={handleValidateDiscount}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && formData.discountCode.trim()) {
-                          e.preventDefault()
-                          handleValidateDiscount()
-                        }
-                      }}
-                      className={`h-12 flex-1 font-mono pr-10 transition-all ${
-                        discountInfo?.valid 
-                          ? 'border-green-500 bg-green-50 focus:ring-green-500' 
-                          : discountInfo?.valid === false
-                          ? 'border-red-500 bg-red-50 focus:ring-red-500'
-                          : ''
-                      }`}
-                      placeholder="EJEMPLO2024"
-                    />
-                    {discountInfo?.valid && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600 animate-pulse">
-                        <Check className="w-5 h-5" />
-                      </div>
-                    )}
-                    {discountInfo?.valid === false && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-red-600">
-                        <X className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleValidateDiscount}
-                    disabled={validatingDiscount || !formData.discountCode.trim()}
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2 font-medium"
-                  >
-                    {validatingDiscount ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Validando...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4" />
-                        <span>Aplicar</span>
-                      </>
-                    )}
-                  </button>
+              
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="emergencyContact" className="block text-sm font-bold text-slate-700 mb-2">
+                    Contacto de Emergencia <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="emergencyContact"
+                    name="emergencyContact"
+                    type="text"
+                    value={formData.emergencyContact}
+                    onChange={handleInputChange}
+                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.emergencyContact ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    placeholder="Nombre del contacto"
+                  />
+                  {errors.emergencyContact && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.emergencyContact}</p>}
                 </div>
-                {discountInfo && (
-                  <div className={`mt-2 p-3 rounded-lg transition-all animate-fadeIn ${
-                    discountInfo.valid 
-                      ? 'bg-green-50 border border-green-200' 
-                      : 'bg-red-50 border border-red-200'
-                  }`}>
-                    <p className={`text-sm font-medium flex items-center gap-2 ${
-                      discountInfo.valid ? 'text-green-800' : 'text-red-800'
-                    }`}>
-                      {discountInfo.valid ? (
-                        <>
-                          <Check className="w-4 h-4" />
-                          {discountInfo.message}
-                        </>
-                      ) : (
-                        <>
-                          <X className="w-4 h-4" />
-                          {discountInfo.message}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                )}
-              </div>
 
-              {/* Price Summary */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-lg border border-blue-200 mt-6 shadow-sm">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  <span>💰</span>
-                  <span>Resumen de Precio</span>
-                </h3>
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Subtotal ({formData.participants} {formData.participants === 1 ? 'persona' : 'personas'}):</span>
-                    <span className="text-gray-900 font-medium">{formatDualCurrency(basePricePEN).pen}</span>
-                  </div>
-                  {discountInfo?.valid && discountAmount > 0 && (
-                    <div className="flex justify-between items-center text-sm bg-green-50 p-2 rounded-md border border-green-200 animate-fadeIn">
-                      <span className="text-green-700 font-medium flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        Descuento aplicado:
-                      </span>
-                      <span className="text-green-700 font-bold">-{formatDualCurrency(discountAmount).pen}</span>
+                <div>
+                  <label htmlFor="emergencyPhone" className="block text-sm font-bold text-slate-700 mb-2">
+                    Teléfono de Emergencia <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    id="emergencyPhone"
+                    name="emergencyPhone"
+                    type="tel"
+                    value={formData.emergencyPhone}
+                    onChange={handleInputChange}
+                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.emergencyPhone ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    placeholder="+51 999 999 999"
+                  />
+                  {errors.emergencyPhone && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.emergencyPhone}</p>}
+                </div>
+
+                 {/* Discount Code */}
+                 <div className="pt-2">
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Código de Descuento</label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                         <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                         <Input
+                           value={formData.discountCode}
+                           onChange={(e) => {
+                             setFormData({ ...formData, discountCode: e.target.value.toUpperCase() })
+                             setDiscountInfo(null)
+                           }}
+                           onBlur={handleValidateDiscount}
+                           onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleValidateDiscount();
+                                }
+                           }}
+                           className={`h-12 pl-10 uppercase font-mono tracking-wider rounded-xl border-slate-200 focus:ring-4 focus:ring-blue-500/10 ${discountInfo?.valid ? 'border-green-500 bg-green-50/30 text-green-700' : ''}`}
+                           placeholder="CODIGO2026"
+                         />
+                         {validatingDiscount && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-500 animate-spin" />}
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleValidateDiscount}
+                        disabled={!formData.discountCode || validatingDiscount}
+                        variant="ghost"
+                        className="h-12 px-4 font-bold text-blue-600 hover:bg-blue-50"
+                      >
+                        Aplicar
+                      </Button>
                     </div>
-                  )}
-
-                  {addons.length > 0 && (
-                     <div className="flex justify-between items-center text-sm border-t border-dashed border-gray-200 pt-2 mt-2">
-                        <span className="text-gray-600">Add-ons ({addons.length}):</span>
-                        <div className="text-right">
-                           <div className="text-gray-900 font-medium">+{formatDualCurrency(addonsTotal).pen}</div>
-                           <div className="text-xs text-gray-500 max-w-[150px] truncate">{addons.map(a => a.name).join(', ')}</div>
+                    {discountInfo && (
+                        <div className={`mt-2 text-xs font-bold flex items-center gap-1.5 animate-fadeIn ${discountInfo.valid ? 'text-green-600' : 'text-red-500'}`}>
+                            {discountInfo.valid ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                            {discountInfo.message}
                         </div>
-                     </div>
-                  )}
-                </div>
-                <div className="flex justify-between items-center pt-3 border-t-2 border-blue-300">
-                  <span className="text-lg font-semibold text-gray-900">Total a pagar:</span>
-                  <div className="text-right">
-                    <div className={`text-2xl font-bold transition-all ${
-                      discountInfo?.valid && discountAmount > 0 
-                        ? 'text-green-600 animate-pulse' 
-                        : 'text-blue-600'
-                    }`}>
-                      {totalPrices.pen}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {totalPrices.usd}
-                    </div>
-                    {discountInfo?.valid && discountAmount > 0 && (
-                      <div className="text-xs text-green-600 mt-1 font-medium">
-                        ¡Ahorras {formatDualCurrency(discountAmount).pen}!
-                      </div>
                     )}
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Opciones de pago:</p>
-                  <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <span>💵</span>
-                      <span>Efectivo</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span>💳</span>
-                      <span>Tarjeta</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span>📱</span>
-                      <span>Yape/Plin</span>
-                    </div>
-                  </div>
+                 </div>
+              </div>
+
+              {/* Order Summary Card */}
+              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+                <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-4">Resumen de Orden</h4>
+                
+                <div className="space-y-3">
+                   <div className="flex justify-between items-center text-sm text-slate-600">
+                      <span>Subtotal ({formData.participants} {formData.participants === 1 ? 'persona' : 'personas'})</span>
+                      <span className="font-semibold text-slate-900">{formatDualCurrency(basePricePEN).pen}</span>
+                   </div>
+                   
+                   {addons.length > 0 && (
+                       <div className="flex justify-between items-start text-sm text-slate-600">
+                          <span>Adicionales ({addons.length})</span>
+                          <span className="font-semibold text-slate-900">+{formatDualCurrency(addonsTotal).pen}</span>
+                       </div>
+                   )}
+
+                   {discountInfo?.valid && discountAmount > 0 && (
+                      <div className="flex justify-between items-center text-sm text-green-600 bg-green-50 p-2 rounded-lg border border-green-100">
+                         <span className="flex items-center gap-1.5 font-bold"><Sparkles className="w-3 h-3" /> Descuento</span>
+                         <span className="font-bold">-{formatDualCurrency(discountAmount).pen}</span>
+                      </div>
+                   )}
+
+                   <div className="h-px bg-slate-200 my-2"></div>
+
+                   <div className="flex justify-between items-end">
+                      <div>
+                         <span className="text-base font-bold text-slate-900">Total a Pagar</span>
+                         <p className="text-xs text-slate-500 font-medium">Incluye impuestos y tasas</p>
+                      </div>
+                      <div className="text-right">
+                         <div className="text-2xl font-black text-slate-900 leading-none">{totalPrices.pen}</div>
+                         <div className="text-sm font-medium text-slate-500 mt-1">{totalPrices.usd}</div>
+                      </div>
+                   </div>
                 </div>
               </div>
             </div>
           )}
         </form>
 
-        {/* Sticky Footer with Navigation */}
-        <div className="bg-white border-t border-gray-200 p-4 sm:p-6 sticky bottom-0 safe-area-bottom">
-          <div className="flex gap-3">
+        {/* Sticky Footer */}
+        <div className="bg-white/80 backdrop-blur-md border-t border-slate-100 p-4 sm:p-6 shrink-0 safe-area-bottom">
+          <div className="flex items-center gap-3 max-w-2xl mx-auto">
             {currentStep > 1 && (
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={handlePrevious}
-                className="flex-1 h-12 touch-target"
+                className="h-14 w-14 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors active:scale-95"
               >
-                <ChevronLeft className="w-5 h-5 mr-1" />
-                Anterior
-              </Button>
+                <ChevronLeft className="w-6 h-6" />
+              </button>
             )}
-
-            {currentStep < STEPS.length ? (
-              <Button
-                type="button"
-                onClick={handleNext}
-                className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white touch-target"
-              >
-                Siguiente
-                <ChevronRight className="w-5 h-5 ml-1" />
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                onClick={handleSubmit}
-                className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white touch-target"
-              >
-                <Check className="w-5 h-5 mr-2" />
-                Confirmar Reserva
-              </Button>
-            )}
+            
+            <Button
+              type="button" // Controlled by onClick logic, simpler than form submit
+              onClick={currentStep < STEPS.length ? handleNext : (e) => handleSubmit(e as any)}
+              className="flex-1 h-14 text-lg font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              {currentStep < STEPS.length ? (
+                 <>Siguiente <ChevronRight className="w-5 h-5 opacity-60" /></> 
+              ) : (
+                 <>Confirmar Reserva <Check className="w-5 h-5 ml-1" /></>
+              )}
+            </Button>
           </div>
         </div>
       </div>
