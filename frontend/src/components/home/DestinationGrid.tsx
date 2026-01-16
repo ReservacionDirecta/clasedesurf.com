@@ -530,7 +530,7 @@ function BeachModal({ destination, onClose }: { destination: DestinationData; on
               🏊 Cómo Ingresar al Mar
             </h4>
             <ul className="space-y-2">
-              {destination.entryTips.map((tip, i) => (
+              {(destination.entryTips || []).map((tip, i) => (
                 <li key={i} className="flex items-start gap-3 text-gray-600">
                   <span className="w-5 h-5 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                     {i + 1}
@@ -538,6 +538,9 @@ function BeachModal({ destination, onClose }: { destination: DestinationData; on
                   {tip}
                 </li>
               ))}
+              {(!destination.entryTips || destination.entryTips.length === 0) && (
+                <p className="text-gray-500 text-sm italic">No hay información de ingreso disponible.</p>
+              )}
             </ul>
           </div>
 
@@ -547,11 +550,14 @@ function BeachModal({ destination, onClose }: { destination: DestinationData; on
               ⚠️ Precauciones
             </h4>
             <div className="flex flex-wrap gap-2">
-              {destination.hazards.map((hazard, i) => (
+              {(destination.hazards || []).map((hazard, i) => (
                 <span key={i} className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium border border-amber-200">
                   {hazard}
                 </span>
               ))}
+              {(!destination.hazards || destination.hazards.length === 0) && (
+                <span className="text-gray-500 text-sm italic">Sin precauciones específicas registradas.</span>
+              )}
             </div>
           </div>
 
