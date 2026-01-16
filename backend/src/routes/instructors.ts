@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../prisma';
 import { validateBody, validateParams } from '../middleware/validation';
-import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
+import requireAuth, { AuthRequest, requireRole, optionalAuth } from '../middleware/auth';
 import resolveSchool from '../middleware/resolve-school';
 import { buildMultiTenantWhere, enforceSchoolAccess } from '../middleware/multi-tenant';
 import { z } from 'zod';
@@ -157,7 +157,7 @@ const instructorIdSchema = z.object({
 });
 
 // GET /instructors - List instructors (filtered by role)
-router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
+router.get('/', optionalAuth, resolveSchool, async (req: AuthRequest, res) => {
   try {
     const { schoolId, isActive } = req.query;
 
@@ -165,7 +165,7 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
     const where = await buildMultiTenantWhere(req, 'instructor');
 
     // Additional filters
-    if (schoolId && req.role === 'ADMIN') {
+    if (schoolId && (req.role === 'ADMIN' || !req.role)) {
       where.schoolId = Number(schoolId);
     }
 
