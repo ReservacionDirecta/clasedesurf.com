@@ -40,7 +40,7 @@ jobs:
 
           # Get Database URL
           # Use json output to parse cleaner if needed, but 'variables get' usually returns raw value
-          DATABASE_URL=$(railway variables get DATABASE_URL)
+          DATABASE_URL=$(railway variables get DATABASE_URL --service surfschool-backend)
 
           if [ -z "$DATABASE_URL" ]; then
             echo "::error::Could not retreive DATABASE_URL"

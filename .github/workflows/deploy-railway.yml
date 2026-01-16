@@ -96,7 +96,7 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
           CI: true
         working-directory: ./backend
-        run: railway up --service backend --detach || (echo "FAILED_BACKEND=true" >> $GITHUB_ENV && exit 1)
+        run: railway up --service surfschool-backend --detach || (echo "FAILED_BACKEND=true" >> $GITHUB_ENV && exit 1)
 
       - name: 🔍 Diagnose Railway Services
         if: failure()
@@ -114,7 +114,7 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
           CI: true
         working-directory: ./frontend
-        run: railway up --service frontend --detach
+        run: railway up --service "clasedesurf.com frontend" --detach
 
       - name: ⏳ Wait for deployment
         run: sleep 60
@@ -145,7 +145,7 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
           CI: true
         working-directory: ./backend
-        run: railway run --service backend npx prisma migrate deploy
+        run: railway run --service surfschool-backend npx prisma migrate deploy
 
       - name: 🌱 Seed Database (if needed)
         env:
@@ -153,7 +153,7 @@ jobs:
           RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
           CI: true
         working-directory: ./backend
-        run: railway run --service backend npx prisma db seed || echo "Seeding skipped or failed"
+        run: railway run --service surfschool-backend npx prisma db seed || echo "Seeding skipped or failed"
 
   # Job 5: Notify Success
   notify:
