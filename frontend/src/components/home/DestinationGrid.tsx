@@ -383,39 +383,47 @@ async function fetchRealTimeData(lat: number, lng: number) {
   }
 }
 
-function TideIndicator({ tide }: { tide: 'low' | 'mid' | 'high' }) {
-  const levels = { low: 1, mid: 2, high: 3 };
-  const labels = { low: 'Baja', mid: 'Media', high: 'Alta' };
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-0.5">
-        {[1, 2, 3].map(level => (
-          <div 
-            key={level} 
-            className={`w-2 rounded-sm ${level <= levels[tide] ? 'bg-blue-500' : 'bg-gray-200'}`}
-            style={{ height: `${level * 6 + 4}px` }}
-          />
-        ))}
-      </div>
-      <span className="text-sm font-medium text-gray-700">{labels[tide]}</span>
-    </div>
-  );
-}
 
-function ConditionRating({ rating }: { rating: number }) {
-  const colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-lime-500', 'bg-green-500'];
-  const labels = ['Mala', 'Regular', 'Buena', 'Muy buena', 'Excelente'];
+function WeatherIcon({ type, className }: { type: 'wave' | 'wind' | 'temp' | 'time'; className?: string }) {
+  const icons = {
+    wave: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />,
+    wind: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />, // Simplified wind/face like
+    temp: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />, // Sun
+    time: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+  };
+  
+  // Custom refined icons
+  if (type === 'wave') {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15C3 15 5.5 12 7.5 12C9.5 12 11 15 13 15C15 15 17 12 19 12C21 12 23 15 23 15" />
+         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9C3 9 5.5 6 7.5 6C9.5 6 11 9 13 9C15 9 17 6 19 6C21 6 23 9 23 9" />
+      </svg>
+    )
+  }
+  
+  if (type === 'wind') {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16h6a3 3 0 000-6h1a4 4 0 110 8h-2" />
+         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.5 12H19" />
+      </svg>
+    )
+  }
+
+  if (type === 'temp') {
+    return (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2 6 6 0 00-4 0 5 5 0 0010 0 6 6 0 00-4 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9l-1 1-1-1m2-2l-1 1-1-1" />
+      </svg>
+    ); // Placeholder, simplified
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className={`w-3 h-3 rounded-full ${i <= rating ? colors[rating - 1] : 'bg-gray-200'}`} />
-        ))}
-      </div>
-      <span className={`text-sm font-bold ${rating >= 4 ? 'text-green-600' : rating >= 3 ? 'text-yellow-600' : 'text-orange-600'}`}>
-        {labels[rating - 1]}
-      </span>
-    </div>
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      {icons[type]}
+    </svg>
   );
 }
 
@@ -428,146 +436,192 @@ function BeachModal({ destination, onClose }: { destination: DestinationData; on
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" onClick={onClose}>
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" />
       
       {/* Modal */}
       <div 
-        className="relative bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 fade-in duration-200"
+        className="relative bg-white rounded-[2rem] max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 fade-in duration-300 flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header Image */}
-        <div className="relative h-48 sm:h-56">
-          <img src={destination.image} alt={destination.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+        {/* Header Image Area */}
+        <div className="relative h-64 sm:h-72 w-full flex-shrink-0">
+          <img 
+            src={destination.image || 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'} 
+            alt={destination.name} 
+            className="w-full h-full object-cover" 
+          />
+          {/* Enhanced Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
+          
+          {/* Close Button */}
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+            className="absolute top-4 right-4 w-10 h-10 bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all hover:scale-105 active:scale-95 border border-white/20"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-          <div className="absolute bottom-4 left-6 text-white">
-            <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-              destination.level === 'Principiante' ? 'bg-green-500' :
-              destination.level === 'Intermedio' ? 'bg-yellow-500' :
-              destination.level === 'Avanzado' ? 'bg-red-500' : 'bg-blue-500'
-            }`}>
-              {destination.level}
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black mt-2">{destination.name}</h2>
+
+          {/* Header Content */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                  destination.level === 'Principiante' ? 'bg-emerald-500 text-emerald-950' :
+                  destination.level === 'Intermedio' ? 'bg-yellow-400 text-yellow-950' :
+                  destination.level === 'Avanzado' ? 'bg-orange-500 text-white' : 'bg-blue-500 text-white'
+                }`}>
+                  {destination.level}
+                </span>
+                {destination.conditions.lastUpdated === 'En vivo' && (
+                   <span className="flex items-center gap-1.5 px-3 py-1 bg-red-500/90 backdrop-blur-sm rounded-full text-xs font-bold uppercase tracking-wider text-white">
+                      <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                      En vivo
+                   </span>
+                )}
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{destination.name}</h2>
+              <p className="text-gray-300 font-medium text-lg max-w-xl line-clamp-2">{destination.description}</p>
+            </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-14rem)]">
-          {/* Live Conditions Card */}
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-4 mb-6 border border-blue-100">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-[#011627] flex items-center gap-2">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                Condiciones Actuales
-              </h3>
-              <span className="text-xs text-gray-500">{destination.conditions.lastUpdated}</span>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Olas</p>
-                <p className="font-bold text-lg text-[#011627]">{destination.conditions.waveHeight}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Período</p>
-                <p className="font-bold text-lg text-[#011627]">{destination.conditions.wavePeriod}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Viento</p>
-                <p className="font-bold text-lg text-[#011627]">{destination.conditions.windSpeed} {destination.conditions.windDirection}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Agua</p>
-                <p className="font-bold text-lg text-[#011627]">{destination.conditions.waterTemp}</p>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-blue-200/50">
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Marea</p>
-                  <TideIndicator tide={destination.conditions.tide} />
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto bg-gray-50">
+           <div className="p-6 sm:p-8 space-y-8">
+             
+             {/* Live Conditions Grid */}
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-28">
+                   <div className="flex items-center gap-2 text-blue-600 mb-1">
+                      <WeatherIcon type="wave" className="w-5 h-5" />
+                      <span className="text-xs font-bold uppercase text-gray-400">Oleaje</span>
+                   </div>
+                   <div>
+                      <span className="text-2xl font-black text-gray-900 block">{destination.conditions.waveHeight}</span>
+                      <span className="text-sm text-gray-500 font-medium">{destination.conditions.wavePeriod} periodo</span>
+                   </div>
                 </div>
-                <span className="text-sm text-gray-600 bg-white/60 px-2 py-1 rounded-lg">
-                  {destination.conditions.tideTime}
-                </span>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Calidad</p>
-                <ConditionRating rating={destination.conditions.rating} />
-              </div>
-            </div>
-          </div>
 
-          {/* Description */}
-          <div className="mb-6">
-            <h4 className="font-bold text-[#011627] mb-2">Sobre esta playa</h4>
-            <p className="text-gray-600 leading-relaxed">{destination.description}</p>
-          </div>
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-28">
+                   <div className="flex items-center gap-2 text-cyan-500 mb-1">
+                      <WeatherIcon type="wind" className="w-5 h-5" />
+                      <span className="text-xs font-bold uppercase text-gray-400">Viento</span>
+                   </div>
+                   <div>
+                      <span className="text-2xl font-black text-gray-900 block">{destination.conditions.windSpeed}</span>
+                      <span className="text-sm text-gray-500 font-medium">Dir: {destination.conditions.windDirection}</span>
+                   </div>
+                </div>
 
-          {/* Wave Type */}
-          <div className="mb-6">
-            <h4 className="font-bold text-[#011627] mb-2 flex items-center gap-2">
-              🌊 Tipo de Ola
-            </h4>
-            <p className="text-gray-600 leading-relaxed">{destination.waveType}</p>
-            <p className="text-sm text-blue-600 mt-2 font-medium">Mejor época: {destination.bestTime}</p>
-          </div>
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-28">
+                   <div className="flex items-center gap-2 text-indigo-500 mb-1">
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                       <span className="text-xs font-bold uppercase text-gray-400">Marea</span>
+                   </div>
+                   <div>
+                      <span className="text-xl font-black text-gray-900 block capitalize">{destination.conditions.tideTime}</span>
+                      <div className="flex items-center gap-1 mt-1">
+                         <div className={`h-1.5 w-1.5 rounded-full ${destination.conditions.tide === 'low' ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                         <div className={`h-1.5 w-1.5 rounded-full ${destination.conditions.tide === 'mid' ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                         <div className={`h-1.5 w-1.5 rounded-full ${destination.conditions.tide === 'high' ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                      </div>
+                   </div>
+                </div>
+                
+                 <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-28">
+                   <div className="flex items-center gap-2 text-orange-500 mb-1">
+                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                      <span className="text-xs font-bold uppercase text-gray-400">Agua</span>
+                   </div>
+                   <div>
+                      <span className="text-2xl font-black text-gray-900 block">{destination.conditions.waterTemp}</span>
+                      <span className="text-sm text-gray-500 font-medium">Rating: {destination.conditions.rating}/5</span>
+                   </div>
+                </div>
+             </div>
 
-          {/* Entry Tips */}
-          <div className="mb-6">
-            <h4 className="font-bold text-[#011627] mb-3 flex items-center gap-2">
-              🏊 Cómo Ingresar al Mar
-            </h4>
-            <ul className="space-y-2">
-              {(destination.entryTips || []).map((tip, i) => (
-                <li key={i} className="flex items-start gap-3 text-gray-600">
-                  <span className="w-5 h-5 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                    {i + 1}
-                  </span>
-                  {tip}
-                </li>
-              ))}
-              {(!destination.entryTips || destination.entryTips.length === 0) && (
-                <p className="text-gray-500 text-sm italic">No hay información de ingreso disponible.</p>
-              )}
-            </ul>
-          </div>
+             <div className="grid md:grid-cols-2 gap-8">
+                {/* Left Column: Info */}
+                <div className="space-y-6">
+                   <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                      <h3 className="font-bold text-lg text-[#011627] mb-4 flex items-center gap-2">
+                         🌊 Tipo de Ola
+                      </h3>
+                      <p className="text-gray-600 leading-relaxed mb-4">{destination.waveType}</p>
+                      <div className="flex items-center gap-2 text-sm font-medium text-blue-800 bg-blue-50 px-4 py-2 rounded-xl inline-block w-full">
+                         <span>📅 Mejor época:</span>
+                         <span>{destination.bestTime}</span>
+                      </div>
+                   </div>
 
-          {/* Hazards */}
-          <div className="mb-6">
-            <h4 className="font-bold text-[#011627] mb-3 flex items-center gap-2">
-              ⚠️ Precauciones
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {(destination.hazards || []).map((hazard, i) => (
-                <span key={i} className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium border border-amber-200">
-                  {hazard}
-                </span>
-              ))}
-              {(!destination.hazards || destination.hazards.length === 0) && (
-                <span className="text-gray-500 text-sm italic">Sin precauciones específicas registradas.</span>
-              )}
-            </div>
-          </div>
+                   <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                     <h3 className="font-bold text-lg text-[#011627] mb-4 flex items-center gap-2">
+                        ⚠️ Precauciones
+                     </h3>
+                     <div className="flex flex-wrap gap-2">
+                       {(destination.hazards || []).map((hazard, i) => (
+                         <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-sm font-bold border border-red-100">
+                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                           </svg>
+                           {hazard}
+                         </span>
+                       ))}
+                       {(!destination.hazards || destination.hazards.length === 0) && (
+                         <span className="text-gray-500 text-sm italic">Sin riesgos específicos.</span>
+                       )}
+                     </div>
+                   </div>
+                </div>
 
-          {/* CTA */}
-          <Link 
-            href={`/?q=${destination.name}`}
-            className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-center transition-colors"
-          >
-            Ver clases en {destination.name}
-          </Link>
+                {/* Right Column: Tips */}
+                <div className="space-y-6">
+                   <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 h-full">
+                      <h3 className="font-bold text-lg text-[#011627] mb-4 flex items-center gap-2">
+                         🏊 Tips de Ingreso
+                      </h3>
+                      <ul className="space-y-4">
+                        {(destination.entryTips || []).map((tip, i) => (
+                          <li key={i} className="flex gap-4 group">
+                            <span className="w-8 h-8 flex-shrink-0 bg-gray-100 text-gray-900 rounded-xl flex items-center justify-center font-black text-sm group-hover:bg-[#011627] group-hover:text-white transition-colors duration-300">
+                              {i + 1}
+                            </span>
+                            <p className="text-gray-600 text-sm leading-relaxed pt-1.5 border-b border-gray-50 pb-4 w-full">{tip}</p>
+                          </li>
+                        ))}
+                        {(!destination.entryTips || destination.entryTips.length === 0) && (
+                           <p className="text-gray-500 text-sm italic">Información general: observa el mar antes de entrar.</p>
+                        )}
+                      </ul>
+                   </div>
+                </div>
+             </div>
+           </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex-shrink-0 p-4 sm:p-6 bg-white border-t border-gray-100 flex justify-between items-center gap-4">
+           <div className="hidden sm:block">
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">¿Te gusta esta playa?</p>
+              <p className="text-[#011627] font-bold text-sm">Reserva una clase ahora</p>
+           </div>
+           <Link 
+             href={`/?q=${destination.name}`}
+             className="flex-1 sm:flex-none sm:w-1/2 bg-[#011627] hover:bg-black text-white font-bold py-3.5 px-8 rounded-xl text-center transition-all hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
+           >
+             <span>Ver Horarios Disponibles</span>
+             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+             </svg>
+           </Link>
         </div>
       </div>
     </div>
@@ -601,7 +655,7 @@ export function DestinationGrid() {
                  slug: apiBeach.slug || staticMatch?.slug,
                  lat: apiBeach.lat || staticMatch?.lat, // Preserve static coords if DB missing
                  lng: apiBeach.lng || staticMatch?.lng,
-                 image: apiBeach.image || staticMatch?.image || '', // Ensure image
+                 image: apiBeach.image || staticMatch?.image || 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80', // Ensure image
                  conditions: { ...staticMatch?.conditions, ...apiBeach.conditions }
                };
             });
