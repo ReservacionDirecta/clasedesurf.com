@@ -90,12 +90,23 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: 🚀 Deploy Backend to Railway
+        id: deploy-backend
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
           CI: true
         working-directory: ./backend
-        run: railway up --service backend --detach
+        run: railway up --service backend --detach || (echo "FAILED_BACKEND=true" >> $GITHUB_ENV && exit 1)
+
+      - name: 🔍 Diagnose Railway Services
+        if: failure()
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ env.RAILWAY_PROJECT_ID }}
+          CI: true
+        run: |
+          echo "Listing available services in project..."
+          railway status
 
       - name: 🚀 Deploy Frontend to Railway
         env:
