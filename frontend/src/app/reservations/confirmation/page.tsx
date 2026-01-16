@@ -45,6 +45,8 @@ interface ReservationData {
     participants: number;
     specialRequest: string;
     totalAmount: number;
+    products?: { id: number; quantity: number }[];
+    selectedProducts?: any[];
   };
   reservationId?: string;
   status?: 'pending' | 'created' | 'confirmed';
@@ -290,7 +292,8 @@ function ReservationConfirmationContent() {
           date: (reservationData.bookingData as any).date,
           time: (reservationData.bookingData as any).time,
           specialRequest: reservationData.bookingData.specialRequest,
-          participants: participants  // Enviar datos completos de participantes
+          participants: participants,  // Enviar datos completos de participantes
+          products: reservationData.bookingData.products // Enviar productos seleccionados
         })
       });
 
@@ -880,6 +883,17 @@ function ReservationConfirmationContent() {
                      <span className="text-slate-500">Cantidad alumnos</span>
                      <span className="text-slate-900">x {reservationData.bookingData.participants}</span>
                   </div>
+                  
+                  {reservationData.bookingData.selectedProducts && reservationData.bookingData.selectedProducts.length > 0 && (
+                    <div className="pt-2 space-y-2">
+                       {reservationData.bookingData.selectedProducts.map((p: any) => (
+                         <div key={p.id} className="flex justify-between items-center text-xs font-medium">
+                            <span className="text-slate-500 truncate mr-2">{p.name}</span>
+                            <span className="text-slate-900 font-bold whitespace-nowrap">+{formatDualCurrency(p.price).pen}</span>
+                         </div>
+                       ))}
+                    </div>
+                  )}
                   
                   <div className="pt-4 border-t border-slate-100">
                     <div className="bg-slate-50 rounded-xl p-4">

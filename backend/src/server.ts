@@ -34,9 +34,10 @@ app.use('/images/uploads', express.static(path.join(frontendUploads))); // Maps 
 app.use('/api/images/uploads', express.static(path.join(frontendUploads))); // Fallback for requests that keep the /api prefix
 
 // Serve uploaded files from Volume/Disk
-const storagePath = process.env.STORAGE_PATH || path.join(__dirname, '../uploads');
-app.use('/uploads', express.static(storagePath));
-console.log(`📂 Serving static files from: ${storagePath}`);
+// Serve uploaded files from Volume/Disk
+import { STORAGE_PATH } from './config/storage';
+app.use('/uploads', express.static(STORAGE_PATH));
+console.log(`📂 Serving static files from: ${STORAGE_PATH}`);
 
 
 const port = process.env.PORT || 4000;

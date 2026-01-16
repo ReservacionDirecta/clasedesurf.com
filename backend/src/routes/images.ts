@@ -6,12 +6,8 @@ import path from 'path';
 import fs from 'fs';
 
 // Define storage path
-const STORAGE_PATH = process.env.STORAGE_PATH || path.join(__dirname, '../../uploads');
-
-// Ensure directory exists
-if (!fs.existsSync(STORAGE_PATH)) {
-    fs.mkdirSync(STORAGE_PATH, { recursive: true });
-}
+// Define storage path
+import { STORAGE_PATH } from '../config/storage';
 
 const router = express.Router();
 

@@ -22,7 +22,8 @@ import {
   Globe,
   Eye,
   Tag,
-  Bell
+  Bell,
+  Package
 } from 'lucide-react';
 
 export function AdminSidebar() {
@@ -95,6 +96,7 @@ export function AdminSidebar() {
     { name: 'Payments', href: '/dashboard/admin/payments', icon: CreditCard, description: 'Ver pagos' },
     { name: 'Descuentos', href: '/dashboard/admin/discounts', icon: Tag, description: 'Códigos de descuento' },
     { name: 'Reports', href: '/dashboard/admin/reports', icon: FileText, description: 'Ver reportes' },
+    { name: 'Inventario', href: '/dashboard/admin/inventory', icon: Package, description: 'Gestionar productos' },
     { name: 'Settings', href: '/dashboard/admin/settings', icon: Settings, description: 'Configuración' },
     { name: 'Notificaciones', href: '/dashboard/admin/notifications', icon: Bell, description: 'Historial de notificaciones' },
   ];

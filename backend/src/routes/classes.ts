@@ -576,7 +576,7 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
     if (images !== undefined) {
       updateData.images = Array.isArray(images) ? images.map((img: string) => {
         if (img.startsWith('http') || img.startsWith('/')) return img;
-        return `/uploads/classes/${img}`;
+        return `/uploads/${img}`;
       }) : images;
     }
 

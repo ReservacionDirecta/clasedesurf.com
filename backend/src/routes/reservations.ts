@@ -203,7 +203,8 @@ router.get('/', requireAuth, resolveSchool, async (req: AuthRequest, res) => {
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
         class: { include: { school: { select: { id: true, name: true, location: true, logo: true, coverImage: true } } } },
-        payment: { include: { discountCode: true } }
+        payment: { include: { discountCode: true } },
+        productPurchases: { include: { product: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -230,7 +231,8 @@ router.get('/all', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest,
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
         class: { include: { school: { select: { id: true, name: true, location: true } } } },
-        payment: { include: { discountCode: true } }
+        payment: { include: { discountCode: true } },
+        productPurchases: { include: { product: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -247,7 +249,8 @@ router.get('/:id', requireAuth, validateParams(reservationIdSchema), async (req:
       include: {
         user: { select: { id: true, name: true, email: true, phone: true } },
         class: { include: { school: true } },
-        payment: { include: { discountCode: true } }
+        payment: { include: { discountCode: true } },
+        productPurchases: { include: { product: true } }
       }
     });
 
@@ -308,10 +311,28 @@ router.put('/:id', requireAuth, resolveSchool, validateParams(reservationIdSchem
       }
     }
 
-    const updated = await prisma.reservation.update({
-      where: { id: Number(id) },
-      data: { status: status ? status.toUpperCase() : undefined, ...rest },
-      include: { user: true, class: { include: { school: true } } }
+    const updated = await prisma.$transaction(async (tx) => {
+      const reservation = await tx.reservation.update({
+        where: { id: Number(id) },
+        data: { status: status ? status.toUpperCase() : undefined, ...rest },
+        include: {
+          user: true,
+          class: { include: { school: true } },
+          productPurchases: true
+        }
+      });
+
+      // If status changed to CANCELED, restore stock
+      if (status && status.toUpperCase() === 'CANCELED' && existing.status !== 'CANCELED') {
+        for (const pp of (reservation as any).productPurchases || []) {
+          await tx.product.update({
+            where: { id: pp.productId },
+            data: { stock: { increment: pp.quantity } }
+          });
+        }
+      }
+
+      return reservation;
     });
 
     if (updated.status === 'CANCELED') {
@@ -339,8 +360,11 @@ router.put('/:id', requireAuth, resolveSchool, validateParams(reservationIdSchem
 router.delete('/:id', requireAuth, requireRole(['ADMIN']), async (req: AuthRequest, res) => {
   try {
     const id = Number(req.params.id);
-    await prisma.payment.deleteMany({ where: { reservationId: id } });
-    await prisma.reservation.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.payment.deleteMany({ where: { reservationId: id } }),
+      prisma.productPurchase.deleteMany({ where: { reservationId: id } }),
+      prisma.reservation.delete({ where: { id } })
+    ]);
     res.json({ message: 'Deleted' });
   } catch (err) {
     console.error(`[DELETE /reservations/:id] Error: ${err}`);

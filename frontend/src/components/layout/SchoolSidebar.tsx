@@ -17,7 +17,8 @@ import {
   ChevronRight,
   GraduationCap,
   ChevronLeft,
-  Tag
+  Tag,
+  Package
 } from 'lucide-react';
 
 export function SchoolSidebar() {
@@ -106,6 +107,12 @@ export function SchoolSidebar() {
       href: '/dashboard/school/discounts',
       icon: Tag,
       description: 'Códigos de descuento'
+    },
+    {
+      name: 'Inventario',
+      href: '/dashboard/school/inventory',
+      icon: Package,
+      description: 'Gestionar productos sugeridos'
     },
     {
       name: 'Perfil',

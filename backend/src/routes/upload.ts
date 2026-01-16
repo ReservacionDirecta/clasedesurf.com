@@ -6,10 +6,8 @@ import fs from 'fs';
 const router = express.Router();
 
 // Ensure uploads directory exists
-const uploadDir = process.env.STORAGE_PATH || path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Ensure uploads directory exists (handled by config/storage.ts)
+import { STORAGE_PATH as uploadDir } from '../config/storage';
 
 // Configuration for Multer
 const storage = multer.diskStorage({

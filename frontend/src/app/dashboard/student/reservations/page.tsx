@@ -55,6 +55,16 @@ interface StudentReservation {
       code: string;
     };
   };
+  productPurchases?: {
+    id: number;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    product: {
+      name: string;
+      image?: string;
+    };
+  }[];
 }
 
 export default function StudentReservations() {
@@ -134,7 +144,8 @@ export default function StudentReservations() {
           paymentMethod: r.payment.paymentMethod || 'N/A',
           paidAt: r.payment.paidAt,
           discountCode: r.payment.discountCode || undefined
-        } : undefined
+        } : undefined,
+        productPurchases: r.productPurchases || []
       }));
 
       setReservations(processedReservations);
@@ -252,6 +263,21 @@ export default function StudentReservations() {
                           <span className="font-medium">Total: S/ {r.payment.amount.toFixed(2)}</span>
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Add-ons Section */}
+                  {r.productPurchases && r.productPurchases.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-xs font-bold text-gray-400 uppercase mb-2">Equipamiento y Extras:</p>
+                      <div className="space-y-1.5">
+                        {r.productPurchases.map((pp) => (
+                          <div key={pp.id} className="flex items-center justify-between text-xs bg-slate-50 p-1.5 rounded">
+                            <span className="text-slate-700">{pp.product.name} (x{pp.quantity})</span>
+                            <span className="font-bold text-slate-900">S/ {pp.totalPrice.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

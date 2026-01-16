@@ -568,7 +568,8 @@ export default function ClassDetailsPage() {
           name: session.user.name || bookingData.name,
           date: reservationDate, 
           time: reservationStartTime,
-          totalAmount: (selectedDate && selectedDate.price ? selectedDate.price : classDetails.price) * (bookingData.participants || 1)
+          totalAmount: bookingData.totalAmount,
+          selectedProducts: schoolProducts.filter(p => selectedProductIds.includes(p.id))
         },
         status: 'pending' as const
       };
