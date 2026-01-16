@@ -25,6 +25,10 @@ import { CategoryRail, type CategoryId } from '@/components/home/CategoryRail'
 import { CuratedSection } from '@/components/home/CuratedSection'
 import { DestinationGrid } from '@/components/home/DestinationGrid'
 import { ProductHomeCard } from '@/components/products/ProductHomeCard'
+import { WhyChooseUs } from '@/components/home/WhyChooseUs'
+import { Testimonials } from '@/components/home/Testimonials'
+import { InstructorSpotlight } from '@/components/home/InstructorSpotlight'
+import { CallToAction } from '@/components/home/CallToAction'
 
 // Datos de ejemplo como fallback (Offline Mode)
 const getMockDate = () => {
@@ -138,10 +142,41 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState<CategoryId>('all')
   const [isSearchMode, setIsSearchMode] = useState(false)
 
-  // Derived Curated Lists
-  const trendingClasses = useMemo(() => classes.slice(0, 6), [classes]);
-  const beginnerClasses = useMemo(() => classes.filter(c => c.level === 'BEGINNER').slice(0, 6), [classes]);
-  const privateClasses = useMemo(() => classes.filter(c => c.type === 'PRIVATE').slice(0, 6), [classes]);
+  // Helper to check if a class is finished (past date)
+  const isClassFinished = (classItem: any) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (classItem.isRecurring && classItem.endDate) {
+      return new Date(classItem.endDate) < today;
+    }
+    return new Date(classItem.date) < today;
+  };
+
+  // Derived Curated Lists - prioritize active classes, only show finished if no active
+  const trendingClasses = useMemo(() => {
+    const active = classes.filter(c => !isClassFinished(c));
+    const finished = classes.filter(c => isClassFinished(c));
+    // If we have active classes, show only those. Otherwise, show finished.
+    const toShow = active.length > 0 ? active : finished;
+    return toShow.slice(0, 6);
+  }, [classes]);
+  
+  const beginnerClasses = useMemo(() => {
+    const beginners = classes.filter(c => c.level === 'BEGINNER');
+    const active = beginners.filter(c => !isClassFinished(c));
+    const finished = beginners.filter(c => isClassFinished(c));
+    const toShow = active.length > 0 ? active : finished;
+    return toShow.slice(0, 6);
+  }, [classes]);
+  
+  const privateClasses = useMemo(() => {
+    const privates = classes.filter(c => c.type === 'PRIVATE');
+    const active = privates.filter(c => !isClassFinished(c));
+    const finished = privates.filter(c => isClassFinished(c));
+    const toShow = active.length > 0 ? active : finished;
+    return toShow.slice(0, 6);
+  }, [classes]);
 
   const handleAirbnbFilterChange = (airbnbFilters: AirbnbFilterValues) => {
     const newFilters: ClassFilters = {}
@@ -223,8 +258,29 @@ export default function Home() {
       const apiClasses = await apiService.getClasses() // No params = all products
       const transformedClasses = apiClasses.map(transformApiClassToFrontend)
       
-      setClasses(transformedClasses)
-      setFilteredClasses(transformedClasses)
+      // Sort classes: active (future) first, then by date
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const sortedClasses = transformedClasses.sort((a: any, b: any) => {
+        const aDate = new Date(a.isRecurring && a.endDate ? a.endDate : a.date);
+        const bDate = new Date(b.isRecurring && b.endDate ? b.endDate : b.date);
+        const aIsActive = aDate >= today;
+        const bIsActive = bDate >= today;
+        
+        // Active classes first
+        if (aIsActive && !bIsActive) return -1;
+        if (!aIsActive && bIsActive) return 1;
+        
+        // Then sort by date (sooner first for active, more recent first for past)
+        if (aIsActive) {
+          return aDate.getTime() - bDate.getTime(); // Ascending for future
+        }
+        return bDate.getTime() - aDate.getTime(); // Descending for past
+      });
+      
+      setClasses(sortedClasses)
+      setFilteredClasses(sortedClasses)
       
     } catch (err) {
       console.warn('⚠️ Failed to load from API, using mock data:', err)
@@ -314,7 +370,7 @@ export default function Home() {
       
          {/* -- DISCOVERY MODE (Default) -- */}
          {!isSearchMode && !loading && (
-            <div className="space-y-6 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-0 pb-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
                {/* 1. Trending / Popular */}
                <CuratedSection title="Tendencia esta semana" subtitle="Las clases más reservadas en los últimos 7 días" bgWhite>
                   {trendingClasses.map((item) => (
@@ -324,10 +380,20 @@ export default function Home() {
                   ))}
                </CuratedSection>
 
-               {/* 2. Destination Grid */}
-               <DestinationGrid />
+               {/* 2. Why Choose Us (Trust) */}
+               <div className="border-y border-gray-100">
+                  <WhyChooseUs />
+               </div>
 
-               {/* 3. For Beginners */}
+               {/* 3. Destination Grid */}
+               <div className="py-12 bg-[#F6F7F8]">
+                  <DestinationGrid />
+               </div>
+
+               {/* 4. Instructor Spotlight */}
+               <InstructorSpotlight />
+
+               {/* 5. For Beginners */}
                <CuratedSection title="Ideal para Principiantes" subtitle="Clases suaves con instructores pacientes" linkHref="/?level=BEGINNER&mode=search">
                   {beginnerClasses.map((item) => (
                       <div key={item.id} className="min-w-[280px] sm:min-w-[320px] max-w-[320px] snap-center">
@@ -336,7 +402,10 @@ export default function Home() {
                   ))}
                </CuratedSection>
 
-               {/* 4. Private & Premium */}
+               {/* 6. Testimonials */}
+               <Testimonials />
+
+               {/* 7. Private & Premium */}
                <CuratedSection title="Clases Privadas & Premium" subtitle="Atención 1 a 1 para progresar más rápido" bgWhite>
                   {privateClasses.map((item) => (
                       <div key={item.id} className="min-w-[280px] sm:min-w-[320px] max-w-[320px] snap-center">
@@ -345,7 +414,7 @@ export default function Home() {
                   ))}
                </CuratedSection>
                
-               {/* 5. Products Section */}
+               {/* 8. Products Section */}
                {products.length > 0 && (
                  <CuratedSection title="Equipamiento y Complementos" subtitle="Mejora tu experiencia de surf" bgWhite>
                     {products.map((item) => (
@@ -356,37 +425,8 @@ export default function Home() {
                  </CuratedSection>
                )}
                
-               {/* 6. Why Us Section */}
-               <div className="mt-12 bg-white py-16">
-                  <div className="container mx-auto px-4">
-                     <div className="text-center max-w-2xl mx-auto mb-12">
-                        <h3 className="text-2xl sm:text-3xl font-black text-[#011627]">¿Por qué reservar con nosotros?</h3>
-                     </div>
-                     <div className="grid md:grid-cols-3 gap-8 sm:gap-12">
-                        <div className="text-center group">
-                           <div className="w-20 h-20 bg-[#FFCCD9] rounded-3xl flex items-center justify-center mx-auto mb-6 transition-transform group-hover:scale-110 group-hover:rotate-3 shadow-lg shadow-[#FF3366]/10">
-                              <CheckIcon className="w-10 h-10 text-[#FF3366]" />
-                           </div>
-                           <h3 className="text-xl font-bold text-[#011627] mb-3">Instructores Certificados</h3>
-                           <p className="text-gray-600 leading-relaxed px-4">Todos nuestros instructores están certificados y tienen años de experiencia.</p>
-                        </div>
-                        <div className="text-center group">
-                           <div className="w-20 h-20 bg-[#CCF4EF] rounded-3xl flex items-center justify-center mx-auto mb-6 transition-transform group-hover:scale-110 group-hover:-rotate-3 shadow-lg shadow-[#2EC4B6]/10">
-                              <ShieldIcon className="w-10 h-10 text-[#2EC4B6]" />
-                           </div>
-                           <h3 className="text-xl font-bold text-[#011627] mb-3">Seguridad Garantizada</h3>
-                           <p className="text-gray-600 leading-relaxed px-4">Equipamiento de seguridad incluido y protocolos estrictos de seguridad.</p>
-                        </div>
-                        <div className="text-center group">
-                           <div className="w-20 h-20 bg-[#D9E8FF] rounded-3xl flex items-center justify-center mx-auto mb-6 transition-transform group-hover:scale-110 shadow-lg shadow-blue-500/10">
-                              <EquipmentIcon className="w-10 h-10 text-[#2D5BE3]" />
-                           </div>
-                           <h3 className="text-xl font-bold text-[#011627] mb-3">Equipamiento Incluido</h3>
-                           <p className="text-gray-600 leading-relaxed px-4">Tabla, neopreno y todo el equipamiento necesario incluido en el precio.</p>
-                        </div>
-                     </div>
-                  </div>
-               </div>
+               {/* 9. CTA */}
+               <CallToAction />
             </div>
          )}
 
