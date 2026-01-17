@@ -358,6 +358,7 @@ const DESTINATIONS: DestinationData[] = [
          rating: 5,
          lastUpdated: 'Hace 50 min'
     }
+  },
   {
     name: 'Punta Negra',
     slug: 'punta-negra',
