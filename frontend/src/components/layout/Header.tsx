@@ -144,17 +144,18 @@ export const Header = (): JSX.Element => {
   const handleToggleMenu = () => setIsMenuOpen((prev) => !prev);
   
   const handleSignOut = async () => {
+    setIsSigningOut(true);
     try {
-      setIsSigningOut(true);
-      await signOut({ redirect: false });
-      // Redirección manual para evitar problemas con NEXTAUTH_URL
-      router.push('/');
-      router.refresh();
+      // Use a timeout to force redirect if signOut hangs
+      await Promise.race([
+        signOut({ redirect: false, callbackUrl: '/' }),
+        new Promise((resolve) => setTimeout(resolve, 1000))
+      ]);
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      setIsSigningOut(false);
-      // Intentar redirección manual incluso si hay error
-      router.push('/');
+    } finally {
+      // Always force a hard navigate to clear client state completely
+      window.location.href = '/';
     }
   };
   

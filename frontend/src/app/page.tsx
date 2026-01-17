@@ -492,17 +492,39 @@ export default function Home() {
                 
                 {/* Empty State */}
                 {!loading && filteredClasses.length === 0 && (
-                   <div className="text-center py-24 px-4">
+                   <div className="text-center py-24 px-4 bg-white">
                       <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 border border-gray-100 animate-bounce">
                          <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </div>
-                      <h3 className="text-2xl font-bold text-[#011627] mb-3">No encontramos resultados</h3>
+                      <h3 className="text-2xl font-bold text-[#011627] mb-3">No hay clases exactas aquí</h3>
                       <p className="text-gray-500 mb-8 max-w-md mx-auto">
-                        Intentamos buscar "{filters.q || 'tu selección'}" pero no hubo suerte. Prueba ajustando los filtros o fechas.
+                        No encontramos horarios activos para "{filters.q || 'tu búsqueda'}" en este momento, pero aquí tienes las clases más próximas disponibles:
                       </p>
-                      <Button onClick={handleAirbnbReset} variant="outline" className="px-8 py-6 text-base rounded-xl hover:bg-gray-50 border-gray-200">
-                         Ver todas las clases disponibles
-                      </Button>
+                      
+                      {/* Similar/Active Recommendations */}
+                      {trendingClasses.length > 0 && (
+                        <div className="max-w-5xl mx-auto mt-12 text-left">
+                           <h4 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
+                             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                             Clases Disponibles Cercanas
+                           </h4>
+                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {trendingClasses.slice(0, 3).map(classData => (
+                                <ClassCard
+                                   key={classData.id}
+                                   classData={classData}
+                                   onSelect={() => handleClassSelect(classData)}
+                                />
+                              ))}
+                           </div>
+                        </div>
+                      )}
+
+                      <div className="mt-12">
+                         <Button onClick={handleAirbnbReset} variant="outline" className="px-8 py-4 text-base rounded-xl hover:bg-gray-50 border-gray-200">
+                            Ver todo el calendario
+                         </Button>
+                      </div>
                    </div>
                 )}
             </div>
