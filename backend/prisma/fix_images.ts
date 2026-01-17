@@ -148,6 +148,20 @@ async function main() {
         }
     }
 
+    // 6. Fix Beaches
+    const beaches = await prisma.beach.findMany();
+    for (const beach of beaches) {
+        if (await isBroken(beach.image)) {
+            console.log(`[Beach] Broken image found for "${beach.name}": ${beach.image}`);
+            await prisma.beach.update({
+                where: { id: beach.id },
+                data: { image: getRandomImage(SURF_IMAGES) }
+            });
+            console.log(`✅ Fixed beach: ${beach.name}`);
+            totalFixed++;
+        }
+    }
+
     console.log(`\nRepair completed. Total entities fixed: ${totalFixed}`);
 }
 
