@@ -358,6 +358,105 @@ const DESTINATIONS: DestinationData[] = [
          rating: 5,
          lastUpdated: 'Hace 50 min'
     }
+  {
+    name: 'Punta Negra',
+    slug: 'punta-negra',
+    lat: -12.365, 
+    lng: -76.795,
+    image: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Pocos crowds',
+    description: 'Playa con ambiente local y olas potentes. La "Puntilla" ofrece una derecha rápida y divertida. Ideal para escapar de la multitud de Punta Hermosa.',
+    waveType: 'Point break de derecha y beach breaks variables. Fondo de arena y rocas.',
+    level: 'Intermedio',
+    entryTips: ['Cuidado con las rocas en marea baja', 'Respeta a los locales', 'Entrada por la orilla'],
+    bestTime: 'Todo el año',
+    hazards: ['Rocas escondidas', 'Corrientes'],
+    conditions: {
+         waveHeight: '1.0 - 1.8m',
+         wavePeriod: '13s',
+         windSpeed: '12 km/h',
+         windDirection: 'S',
+         tide: 'mid',
+         tideTime: 'Estable',
+         waterTemp: '17°C',
+         rating: 4,
+         lastUpdated: 'Hace 45 min'
+    }
+  },
+  {
+    name: 'San Pedro',
+    slug: 'san-pedro',
+    lat: -12.275, 
+    lng: -76.885,
+    image: 'https://images.unsplash.com/photo-1537519646099-335112f03225?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Tubos de arena',
+    description: 'Beach break clásico de Lurín. Conocido por sus tubos de arena cuando las condiciones se alinean. Ola rápida y orillera.',
+    waveType: 'Beach break potente. Rompe muy cerca de la orilla (el "shorebreak" es famoso).',
+    level: 'Avanzado',
+    entryTips: ['Cuidado con el shorebreak al entrar y salir', 'Rema rápido', 'Mejor temprano por el viento'],
+    bestTime: 'Verano (Nortes)',
+    hazards: ['Shorebreak rompehuesos', 'Resaca fuerte'],
+    conditions: {
+         waveHeight: '1.0 - 2.0m',
+         wavePeriod: '14s',
+         windSpeed: '10 km/h',
+         windDirection: 'SW',
+         tide: 'high',
+         tideTime: 'Subiendo',
+         waterTemp: '19°C',
+         rating: 4,
+         lastUpdated: 'Hace 30 min'
+    }
+  },
+  {
+    name: 'Santa María',
+    slug: 'santa-maria',
+    lat: -12.405, 
+    lng: -76.775,
+    image: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Relax total',
+    description: 'El balneario más exclusivo del sur chico. Sus playas embalsadas son piscinas grandes, pero afuera rompen olas divertidas para longboard.',
+    waveType: 'Beach break muy suave y point breaks de roca en los extremos.',
+    level: 'Principiante',
+    entryTips: ['Entrada fácil por el club o playa pública', 'Ideal para SUP', 'Agua muy tranquila'],
+    bestTime: 'Verano',
+    hazards: ['Yates y botes', 'Bañistas'],
+    conditions: {
+         waveHeight: '0.3 - 0.8m',
+         wavePeriod: '11s',
+         windSpeed: '8 km/h',
+         windDirection: 'W',
+         tide: 'high',
+         tideTime: 'Alta',
+         waterTemp: '20°C',
+         rating: 3,
+         lastUpdated: 'Hace 1h'
+    }
+  },
+  {
+    name: 'Arica',
+    slug: 'arica',
+    lat: -12.295, 
+    lng: -76.865,
+    image: 'https://images.unsplash.com/photo-1415931633537-351070d20b81?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+    count: 'Bodyboard spot',
+    description: 'Playa clásica de Lurín con olas orilleras muy potentes. Favorita de los bodyboarders por sus rampas y tubos.',
+    waveType: 'Beach break intenso. Olas huecas y rápidas.',
+    level: 'Intermedio',
+    entryTips: ['Usa aletas si vas en bodyboard', 'Cuidado con el fondo en marea baja', 'Corriente fuerte'],
+    bestTime: 'Todo el año',
+    hazards: ['Corrientes de retorno', 'Revolcones fuertes'],
+    conditions: {
+         waveHeight: '1.0 - 1.5m',
+         wavePeriod: '13s',
+         windSpeed: '11 km/h',
+         windDirection: 'SW',
+         tide: 'mid',
+         tideTime: 'Bajando',
+         waterTemp: '18°C',
+         rating: 4,
+         lastUpdated: 'Hace 20 min'
+    }
   }
 ];
 
@@ -373,7 +472,11 @@ const BEACH_COORDINATES: Record<string, { lat: number; lng: number }> = {
   'la-herradura': { lat: -12.169, lng: -77.029 },
   'el-triangulo': { lat: -12.398, lng: -76.780 },
   'punta-hermosa': { lat: -12.338, lng: -76.820 },
+  'punta-negra': { lat: -12.365, lng: -76.795 },
   'san-bartolo': { lat: -12.392, lng: -76.782 },
+  'santa-maria': { lat: -12.405, lng: -76.775 },
+  'san-pedro': { lat: -12.275, lng: -76.885 },
+  'arica': { lat: -12.295, lng: -76.865 },
   'cerro-azul': { lat: -13.023, lng: -76.483 },
   'default': { lat: -12.12, lng: -77.04 }
 };
@@ -453,6 +556,66 @@ function WeatherIcon({ type, className }: { type: 'wave' | 'wind' | 'temp' | 'ti
       {icons[type]}
     </svg>
   );
+}
+
+function parseWaveHeight(range: string): number {
+  if (!range) return 0;
+  const parts = range.replace('m', '').trim().split('-');
+  if (parts.length === 2) {
+    return (parseFloat(parts[0]) + parseFloat(parts[1])) / 2;
+  }
+  return parseFloat(parts[0]) || 0;
+}
+
+function getSurfSuitability(conditions: SurfConditions, level: string): { score: number; label: string; color: string } {
+    if (!conditions || conditions.lastUpdated !== 'En vivo') return { score: 0, label: '', color: '' };
+
+    const height = parseWaveHeight(conditions.waveHeight);
+    const period = parseInt(conditions.wavePeriod) || 0;
+    const wind = parseInt(conditions.windSpeed) || 0;
+    
+    // Logic for "Ideal Conditions" KPI
+    let score = 0;
+    let label = '';
+    let color = '';
+
+    // General quality modifiers
+    if (period > 12) score += 2;
+    if (period > 15) score += 1;
+    if (wind < 15) score += 2;
+    if (wind > 20) score -= 2;
+
+    // Level specific matching
+    if (level === 'Principiante') {
+        if (height >= 0.3 && height <= 1.0) score += 5; // Ideal beginner size
+        else if (height > 1.5) score -= 5; // Too big
+        
+        if (score >= 7) { label = '💎 Ideal Principiantes'; color = 'bg-emerald-500 text-white'; }
+        else if (score >= 4) { label = '✅ Aceptable'; color = 'bg-emerald-100 text-emerald-800'; }
+        else { label = '⚠️ Difícil hoy'; color = 'bg-orange-100 text-orange-800'; }
+    } 
+    else if (level === 'Intermedio') {
+        if (height >= 0.8 && height <= 2.0) score += 5;
+        
+        if (score >= 7) { label = '🔥 Fuego puro'; color = 'bg-orange-500 text-white'; }
+        else if (score >= 4) { label = '🌊 Divertido'; color = 'bg-blue-100 text-blue-800'; }
+        else { label = '😐 Regular'; color = 'bg-gray-100 text-gray-700'; }
+    }
+    else if (level === 'Avanzado') {
+        if (height >= 1.5) score += 5;
+        if (period > 14) score += 2;
+        
+        if (score >= 8) { label = '🚀 Épico'; color = 'bg-purple-600 text-white'; }
+        else if (score >= 5) { label = '⚡ Bueno'; color = 'bg-purple-100 text-purple-800'; }
+        else { label = '💤 Pequeño'; color = 'bg-gray-100 text-gray-600'; }
+    }
+    else { // "Todos los niveles"
+        if (height >= 0.5 && height <= 2.0 && wind < 15) {
+             label = '🌟 Condiciones Top'; color = 'bg-blue-600 text-white';
+        }
+    }
+
+    return { score, label, color };
 }
 
 function BeachModal({ destination, onClose }: { destination: DestinationData; onClose: () => void }) {
@@ -754,9 +917,22 @@ export function DestinationGrid() {
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 
-                {/* Live indicator */}
+                {/* Live Match Badge */}
+                {(() => {
+                    const match = getSurfSuitability(dest.conditions, dest.level);
+                    if (match.label) {
+                        return (
+                           <div className={`absolute top-3 left-3 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm ${match.color}`}> 
+                              {match.label} 
+                           </div>
+                        );
+                    }
+                    return null;
+                })()}
+                
+                {/* Live indicator (Wave Height) */}
                 <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                   <span className="text-[10px] text-white font-medium">
@@ -766,7 +942,9 @@ export function DestinationGrid() {
                 
                 <div className="absolute bottom-4 left-4 text-white">
                   <h3 className="font-bold text-lg sm:text-xl">{dest.name}</h3>
-                  <p className="text-xs sm:text-sm font-medium text-gray-200">{dest.count}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs font-medium text-gray-300 bg-white/10 px-2 py-0.5 rounded backdrop-blur-sm">{dest.level}</span>
+                  </div>
                 </div>
               </button>
             ))}
