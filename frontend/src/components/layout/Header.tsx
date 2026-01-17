@@ -146,15 +146,21 @@ export const Header = (): JSX.Element => {
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
-      // Use a timeout to force redirect if signOut hangs
-      await Promise.race([
-        signOut({ redirect: false, callbackUrl: '/' }),
-        new Promise((resolve) => setTimeout(resolve, 1000))
-      ]);
+      // 1. Attempt standard signout first
+      await signOut({ redirect: false });
+      
+      // 2. Call our aggressive cleanup endpoint
+      await fetch('/api/auth/force-logout', { method: 'POST' });
+      
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     } finally {
-      // Always force a hard navigate to clear client state completely
+      // 3. Final cleanup and hard redirect
+      // Clear any client-side storage just in case
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
       window.location.href = '/';
     }
   };
