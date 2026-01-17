@@ -23,6 +23,7 @@ import {
   Globe,
   Eye,
   Tag,
+  Map,
   Bell
 } from 'lucide-react';
 
@@ -31,7 +32,8 @@ import { notificationService } from '@/services/notificationService';
 export function AdminNavbar() {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const router = useRouter();
+  const router = useRouter(); // ... existing hooks
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -62,8 +64,7 @@ export function AdminNavbar() {
   useEffect(() => {
     const loadProfile = async () => {
       if (!session) return;
-// ... existing loadProfile logic
-
+      
       try {
         const token = (session as any)?.backendToken;
         const res = await fetch('/api/users/profile', {
@@ -120,6 +121,7 @@ export function AdminNavbar() {
     { name: 'Overview', href: '/dashboard/admin/overview', icon: BarChart3, description: 'Vista general' },
     { name: 'Users', href: '/dashboard/admin/users', icon: Users, description: 'Gestionar usuarios' },
     { name: 'Schools', href: '/dashboard/admin/schools', icon: School, description: 'Gestionar escuelas' },
+    { name: 'Destinos', href: '/dashboard/admin/destinations', icon: Map, description: 'Gestionar playas' },
     { name: 'Classes', href: '/dashboard/admin/classes', icon: Waves, description: 'Gestionar clases' },
     { name: 'Reservations', href: '/dashboard/admin/reservations', icon: Calendar, description: 'Ver reservas' },
     { name: 'Payments', href: '/dashboard/admin/payments', icon: CreditCard, description: 'Ver pagos' },

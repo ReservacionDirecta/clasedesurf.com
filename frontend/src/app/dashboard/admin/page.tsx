@@ -104,6 +104,14 @@ export default function AdminDashboardPage() {
       stats: `${stats.totalSchools} active schools`
     },
     {
+      title: 'Manage Destinations',
+      description: 'Manage beaches and surf spots',
+      href: '/dashboard/admin/destinations',
+      icon: '🏖️',
+      color: 'from-teal-500 to-teal-600',
+      stats: 'Manage spots'
+    },
+    {
       title: 'Manage Classes',
       description: 'Create, view, and manage surf classes',
       href: '/dashboard/admin/classes',
