@@ -766,21 +766,21 @@ export default function ClassesManagementPage() {
                                     (cls.nextSession ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-gray-50 border-gray-200 text-gray-500')
                                   }`}>
                                     <span className="text-[10px] font-bold uppercase leading-none">
-                                      {cls.date ? new Date(cls.date).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '') : 
-                                       cls.nextSession ? new Date(cls.nextSession.date).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '') : 'REC'}
+                                      {cls.date ? new Date(cls.date).toLocaleDateString('es-ES', { month: 'short', timeZone: 'UTC' }).replace('.', '') : 
+                                       cls.nextSession ? new Date(cls.nextSession.date).toLocaleDateString('es-ES', { month: 'short', timeZone: 'UTC' }).replace('.', '') : 'REC'}
                                     </span>
                                     <span className="text-lg font-bold leading-none mt-0.5">
-                                      {cls.date ? new Date(cls.date).getDate() : 
-                                       cls.nextSession ? new Date(cls.nextSession.date).getDate() : <Clock className="w-5 h-5" />}
+                                      {cls.date ? new Date(cls.date).getUTCDate() : 
+                                       cls.nextSession ? new Date(cls.nextSession.date).getUTCDate() : <Clock className="w-5 h-5" />}
                                     </span>
                                   </div>
 
                                   <div className="flex flex-col">
                                     <div className="text-sm font-bold text-gray-900 capitalize">
                                       {cls.date ? (
-                                        new Date(cls.date).toLocaleDateString('es-ES', { weekday: 'long' })
+                                        new Date(cls.date).toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' })
                                       ) : cls.nextSession ? (
-                                        new Date(cls.nextSession.date).toLocaleDateString('es-ES', { weekday: 'long' })
+                                        new Date(cls.nextSession.date).toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' })
                                       ) : (
                                         'Recurrente'
                                       )}
