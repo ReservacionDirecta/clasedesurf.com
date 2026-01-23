@@ -531,10 +531,11 @@ export default function ClassDetailsPage() {
   };
 
   const handleBookingSubmit = async (bookingData: any) => {
-    if (!session?.user) {
-      router.push('/login');
-      return;
-    }
+    // REMOYED: Mandatory login check
+    // if (!session?.user) {
+    //   router.push('/login');
+    //   return;
+    // }
 
     if (!classDetails) return;
 
@@ -564,8 +565,8 @@ export default function ClassDetailsPage() {
         bookingData: {
           ...bookingData,
           sessionId: selectedDate?.id,
-          email: session.user.email || bookingData.email,
-          name: session.user.name || bookingData.name,
+          email: session?.user?.email || bookingData.email,
+          name: session?.user?.name || bookingData.name,
           date: reservationDate, 
           time: reservationStartTime,
           totalAmount: bookingData.totalAmount,

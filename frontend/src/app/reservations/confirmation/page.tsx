@@ -256,12 +256,8 @@ function ReservationConfirmationContent() {
   const handleCreateReservation = async () => {
     if (!reservationData) return;
 
-    // Check if user is authenticated
-    if (!session) {
-      setError('Para completar la reserva, necesitas registrarte o iniciar sesión. Usa el botón "Registrarse y Confirmar Reserva" para crear una cuenta con tus datos.');
-      setShowRegisterForm(true);
-      return;
-    }
+    // Check if user is authenticated OR if we are doing guest checkout (we allow it now)
+    // if (!session) { ... } // REMOVED check
 
     // Validar datos de participantes
     if (!validateParticipants()) {
@@ -274,31 +270,38 @@ function ReservationConfirmationContent() {
       setError(null);
 
       const token = (session as any)?.backendToken;
-      if (!token) {
-        setError('Debes estar autenticado para crear la reserva');
-        setCreating(false);
-        return;
+      // if (!token) ... REMOVED: optionalAuth in backend
+
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
       const response = await fetch('/api/reservations', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           classId: parseInt(reservationData.classId),
           sessionId: (reservationData.bookingData as any).sessionId,
           date: (reservationData.bookingData as any).date,
           time: (reservationData.bookingData as any).time,
           specialRequest: reservationData.bookingData.specialRequest,
-          participants: participants,  // Enviar datos completos de participantes
+          participants: participants,  // Enviar datos completos de participantes (incluye email/nombre para guest)
           products: reservationData.bookingData.products // Enviar productos seleccionados
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        // Handle "Account Exists" specifically
+        if (errorData.code === 'ACCOUNT_EXISTS') {
+           setError(errorData.message);
+           setShowRegisterForm(false); // Hide register, maybe show login prompt explicitly
+           // Ideally we scroll to login section
+           return;
+        }
         throw new Error(errorData.message || 'Error al crear la reserva');
       }
 
@@ -313,6 +316,31 @@ function ReservationConfirmationContent() {
         reservationId: createdReservation.id.toString(),
         status: 'created'
       });
+
+      // Handle Auto-Login if token returned
+      if (createdReservation.token) {
+         // We have a new user! Sign them in.
+         // Since we don't have the password (it was auto-generated and hashed), we rely on custom token logic or credentials.
+         // Actually, NextAuth Credentials provider expects email/password usually.
+         // BUT we can use the `token` to set the session? 
+         // NextAuth is tricky here. 
+         // Strategy: We show the "Success" screen. The user is "technically" not logged in via NextAuth yet locally.
+         // But we can force a reload or use signIn with a custom provider?
+         // Simpler: Show the generated password (if any) and ask them to login?
+         // OR: We returned `generatedPassword` from backend. We can use `signIn('credentials')` with it!
+         if (createdReservation.generatedPassword) {
+             const result = await signIn('credentials', {
+                redirect: false,
+                email: reservationData.bookingData.email,
+                password: createdReservation.generatedPassword
+             });
+             if (!result?.error) {
+                // Success!
+                window.location.reload(); // Reload to pick up session
+                return; // Stop here, page reload happens
+             }
+         }
+      }
 
       // Avanzar al paso de pago
       setCurrentStep(3);
@@ -607,11 +635,10 @@ function ReservationConfirmationContent() {
 
                 {!isAuthenticated && (
                   <div className="bg-white rounded-2xl shadow-xl border-2 border-indigo-600 p-8 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-16 -mt-16 opacity-50"></div>
                     <div className="relative z-10">
-                      <h2 className="text-2xl font-bold text-slate-900 mb-2">Crear tu cuenta</h2>
+                      <h2 className="text-2xl font-bold text-slate-900 mb-2">Finalizar Reserva</h2>
                       <p className="text-slate-600 mb-8">
-                        Para poder gestionar tus reservas y acceder a tu perfil, necesitamos que definas una contraseña.
+                        Puedes continuar como invitado o iniciar sesión para guardar esta reserva en tu historial.
                       </p>
                       
                       {registerError && (
@@ -621,49 +648,33 @@ function ReservationConfirmationContent() {
                         </div>
                       )}
 
-                      <div className="grid sm:grid-cols-2 gap-6">
+                      <div className="grid sm:grid-cols-2 gap-8">
+                        {/* Guest Option */}
                         <div className="space-y-4">
-                          <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Nombre</label>
-                            <Input value={reservationData.bookingData.name} disabled className="bg-slate-50 border-slate-200" />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Email</label>
-                            <Input value={reservationData.bookingData.email} disabled className="bg-slate-50 border-slate-200" />
-                          </div>
+                           <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                             <User className="w-5 h-5 text-gray-500" /> Como Invitado
+                           </h3>
+                           <p className="text-sm text-gray-500">Crearemos una cuenta automática para ti con los datos de la reserva.</p>
+                           <Button 
+                             onClick={() => setCurrentStep(2)} 
+                             className="w-full h-12 text-base bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                           >
+                             Continuar como Invitado
+                           </Button>
                         </div>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Contraseña</label>
-                            <Input 
-                              type="password" 
-                              placeholder="Mínimo 6 caracteres"
-                              value={registerData.password}
-                              onChange={e => setRegisterData(prev => ({...prev, password: e.target.value}))}
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Confirmar Contraseña</label>
-                            <Input 
-                              type="password"
-                              placeholder="Repite tu contraseña"
-                              value={registerData.confirmPassword}
-                              onChange={e => setRegisterData(prev => ({...prev, confirmPassword: e.target.value}))}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-10 flex flex-col sm:flex-row gap-4">
-                        <Button 
-                          onClick={handleRegister} 
-                          className="px-10 h-14 text-lg bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200"
-                          disabled={registering}
-                        >
-                          {registering ? 'Procesando...' : 'Crear Cuenta y Continuar'}
-                        </Button>
-                        <div className="flex items-center px-4">
-                          <span className="text-sm text-slate-500">¿Ya tienes cuenta? <Link href="/login" className="text-indigo-600 font-bold hover:underline">Inicia sesión</Link></span>
+
+                        {/* Login Option */}
+                        <div className="space-y-4 border-l border-gray-100 pl-8">
+                           <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                             <Zap className="w-5 h-5 text-indigo-500" /> Con tu Cuenta
+                           </h3>
+                           <p className="text-sm text-gray-500">Si ya tienes cuenta, inicia sesión para acumular puntos.</p>
+                           <Button 
+                             onClick={() => signIn('credentials', { callbackUrl: window.location.href })}
+                             className="w-full h-12 text-base bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200"
+                           >
+                             Iniciar Sesión
+                           </Button>
                         </div>
                       </div>
                     </div>

@@ -102,7 +102,7 @@ export class EmailService {
     }
   }
   // 1. Registro (Welcome)
-  async sendWelcomeEmail(to: string, name: string, schoolName: string = 'clasedesurf.com') {
+  async sendWelcomeEmail(to: string, name: string, schoolName: string = 'clasedesurf.com', password?: string) {
     const subject = `¡Bienvenido a ${schoolName}!`;
     const content = `
       <h2 style="color: #333; margin-top: 0;">Hola ${name},</h2>
@@ -110,6 +110,15 @@ export class EmailService {
         ¡Gracias por registrarte en <strong>${schoolName}</strong>! Estamos emocionados de tenerte como parte de nuestra comunidad.
       </p>
       
+      ${password ? `
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 6px; margin: 20px 0;">
+        <p style="margin: 0 0 10px; color: #1e40af; font-weight: bold;">Tu cuenta ha sido creada automáticamente:</p>
+        <p style="margin: 5px 0;"><strong>Email:</strong> ${to}</p>
+        <p style="margin: 5px 0;"><strong>Contraseña:</strong> <span style="font-family: monospace; background: #fff; padding: 2px 6px; border-radius: 4px;">${password}</span></p>
+        <p style="margin: 10px 0 0; font-size: 13px; color: #666;">Te recomendamos cambiar tu contraseña después de iniciar sesión.</p>
+      </div>
+      ` : ''}
+
       <div style="text-align: center; margin: 30px 0;">
         <a href="${this.frontendUrl}/login" style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
           Iniciar Sesión

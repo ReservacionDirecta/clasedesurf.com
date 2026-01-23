@@ -1,22 +1,84 @@
 import express from 'express';
 import prisma from '../prisma';
 import { emailService } from '../services/email.service';
-import requireAuth, { AuthRequest, requireRole } from '../middleware/auth';
+import requireAuth, { AuthRequest, requireRole, optionalAuth } from '../middleware/auth';
 import { PrismaClient } from '@prisma/client';
 import { validateBody, validateParams } from '../middleware/validation';
 import { createReservationSchema, updateReservationSchema, reservationIdSchema } from '../validations/reservations';
 import resolveSchool from '../middleware/resolve-school';
 import { buildMultiTenantWhere } from '../middleware/multi-tenant';
 import { normalizeClassImages, normalizeSchoolImages } from '../utils/image-utils';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
-// POST /reservations - create reservation (requires auth)
-router.post('/', requireAuth, validateBody(createReservationSchema), async (req: AuthRequest, res) => {
+// POST /reservations - create reservation (supports guest checkout with optionalAuth)
+router.post('/', optionalAuth, validateBody(createReservationSchema), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId;
-    const { classId, sessionId, specialRequest, participants, discountCodeId, discountAmount, date, time, products } = req.body;
-    if (!userId) return res.status(401).json({ message: 'User not authenticated' });
+    const {
+      classId,
+      sessionId,
+      date,
+      time,
+      participants,
+      products,
+      discountAmount,
+      specialRequest,
+      discountCodeId
+    } = req.body;
+    let finalUserId = userId;
+    let newToken = null;
+    let isNewUser = false;
+    let generatedPassword = null;
+
+    // Handle Guest Checkout
+    if (!finalUserId) {
+      // Must have guest details in participants array or body
+      const guestParticipant = Array.isArray(participants) && participants.length > 0 ? participants[0] : null;
+      if (!guestParticipant || !guestParticipant.email || !guestParticipant.name) {
+        return res.status(400).json({ message: 'Guest details required (name and email)' });
+      }
+
+      const guestEmail = guestParticipant.email.toLowerCase().trim();
+
+      // Check if user exists
+      const existingUser = await prisma.user.findUnique({ where: { email: guestEmail } });
+
+      if (existingUser) {
+        // Option 1: Strict - Force Login
+        return res.status(409).json({
+          message: 'Ya existe una cuenta con este email. Por favor inicia sesión para continuar.',
+          code: 'ACCOUNT_EXISTS'
+        });
+        // Option 2: Link (Insecure without verification) - SKIPPED
+      } else {
+        // Create new user
+        generatedPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+        const newUser = await prisma.user.create({
+          data: {
+            name: guestParticipant.name,
+            email: guestEmail,
+            password: hashedPassword,
+            role: 'STUDENT',
+          }
+        });
+
+        finalUserId = newUser.id;
+        isNewUser = true;
+
+        // Generate Token for auto-login
+        const jwtSecret = process.env.JWT_SECRET || 'dev-secret';
+        newToken = jwt.sign(
+          { userId: newUser.id, role: newUser.role },
+          jwtSecret,
+          { expiresIn: '7d' }
+        );
+      }
+    }
 
     let requestedCount: number;
     if (Array.isArray(participants)) {
@@ -122,7 +184,7 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
       // 5. Create reservation
       const reservation = await tx.reservation.create({
         data: {
-          user: { connect: { id: Number(userId) } },
+          user: { connect: { id: Number(finalUserId) } },
           class: { connect: { id: classIdNum } },
           specialRequest: specialRequest || null,
           participants: participants || null,
@@ -182,12 +244,29 @@ router.post('/', requireAuth, validateBody(createReservationSchema), async (req:
           r.class.duration,
           r.payment.amount
         );
+
+        // Send Welcome Email if new user
+        if (isNewUser && generatedPassword) {
+          await emailService.sendWelcomeEmail(
+            r.user.email,
+            r.user.name,
+            r.class.school?.name || 'Clase de Surf',
+            generatedPassword
+          );
+          console.log(`Created guest user ${r.user.email} with password: ${generatedPassword}`);
+        }
+
       } catch (e) {
         console.error('Email error:', e);
       }
     }
 
-    res.status(201).json(result.reservation);
+    res.status(201).json({
+      ...result.reservation,
+      token: newToken,     // Return token for auto-login
+      isNewUser: isNewUser,
+      generatedPassword: generatedPassword // Optional: Return to show in UI one-time
+    });
   } catch (err: any) {
     console.error(err);
     res.status(500).json({ message: err.message || 'Internal server error' });

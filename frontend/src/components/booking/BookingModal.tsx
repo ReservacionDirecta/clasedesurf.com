@@ -112,8 +112,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
     if (session?.user && isOpen) {
       setFormData(prev => ({
         ...prev,
-        name: session.user.name || '',
-        email: session.user.email || ''
+        name: prev.name || session.user.name || '',
+        email: prev.email || session.user.email || ''
       }))
 
       if (session.user.role === 'STUDENT') {
