@@ -132,6 +132,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       }
     }
 
+    // Include schedules in fetch to compute next occurrence for virtual classes
     const classes = await prisma.class.findMany({
       where,
       include: {
@@ -147,14 +148,74 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
             totalReviews: true
           }
         },
+        schedules: { where: { isActive: true } }, // Fetch active schedules
         sessions: {
-          where: { isClosed: false },
+          where: { isClosed: false, date: { gte: new Date() } }, // Only future sessions
           orderBy: [{ date: 'asc' }, { time: 'asc' }],
-          take: 10 // Show some upcoming sessions info
+          take: 1
         }
       },
       orderBy: { createdAt: 'desc' }
     });
+
+    // Helper to find next occurrence based on schedule rules
+    const getNextScheduleDate = (schedules: any[]): { date: Date, time: string } | null => {
+      if (!schedules || schedules.length === 0) return null;
+
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      let earliest: { date: Date, time: string } | null = null;
+
+      for (const schedule of schedules) {
+        let bestDateForSchedule: Date | null = null;
+        let bestTime = schedule.startTime; // Default to first time
+
+        if (schedule.type === 'SINGLE' && schedule.specificDate && new Date(schedule.specificDate) >= now) {
+          bestDateForSchedule = new Date(schedule.specificDate);
+        } else if (schedule.type === 'RECURRING' && schedule.dayOfWeek !== null) {
+          // Find next date matching dayOfWeek
+          const d = new Date(now);
+          const today = d.getDay();
+          const target = schedule.dayOfWeek;
+          let daysToAdd = target - today;
+          if (daysToAdd < 0) daysToAdd += 7;
+          if (daysToAdd === 0) {
+            // If today, check time? Assuming future for simplicity or today is OK
+          }
+          d.setDate(d.getDate() + daysToAdd);
+          // Verify time? Let's verify if today and past time
+          if (daysToAdd === 0) {
+            const [h, m] = schedule.startTime.split(':').map(Number);
+            const nowTime = new Date();
+            if (nowTime.getHours() > h || (nowTime.getHours() === h && nowTime.getMinutes() > m)) {
+              d.setDate(d.getDate() + 7);
+            }
+          }
+          bestDateForSchedule = d;
+        } else if (schedule.type === 'SPECIFIC_DATES' && Array.isArray(schedule.dates)) {
+          // Find first future date
+          const futureDates = (schedule.dates as string[])
+            .map(ds => new Date(ds))
+            .filter(d => d >= now)
+            .sort((a, b) => a.getTime() - b.getTime());
+          if (futureDates.length > 0) bestDateForSchedule = futureDates[0];
+        } else if (schedule.type === 'DATE_RANGE' && schedule.rangeStart && schedule.rangeEnd) {
+          const start = new Date(schedule.rangeStart);
+          const end = new Date(schedule.rangeEnd);
+          if (end >= now) {
+            bestDateForSchedule = start >= now ? start : now;
+          }
+        }
+
+        if (bestDateForSchedule) {
+          if (!earliest || bestDateForSchedule < earliest.date) {
+            earliest = { date: bestDateForSchedule, time: bestTime };
+          }
+        }
+      }
+      return earliest;
+    };
+
 
     // Map to include summary info for the UI
     const productsWithInfo = classes.map(cls => {
@@ -166,12 +227,28 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
         cls.school = normalizeSchoolImages(cls.school);
       }
 
+      // Determine effective next session (Physical or Virtual)
+      let nextSession = cls.sessions[0] || null;
+      if (!nextSession) {
+        const calculatedState = getNextScheduleDate(cls.schedules);
+        if (calculatedState) {
+          nextSession = {
+            date: calculatedState.date, // Date object
+            time: calculatedState.time,
+            capacity: cls.defaultCapacity,
+            isClosed: false
+          } as any;
+        }
+      }
+
       return {
         ...cls,
         price: cls.defaultPrice, // Compatibility with existing frontend
         capacity: cls.defaultCapacity, // Compatibility with existing frontend
-        nextSession: cls.sessions[0] || null,
-        availableSlotsCount: cls.sessions.length
+        nextSession: nextSession,
+        availableSlotsCount: cls.sessions.length > 0 ? cls.sessions.length : (cls.schedules.length > 0 ? 1 : 0), // Approximation
+        // Explicitly set status to drive frontend UI
+        status: nextSession ? 'upcoming' : 'completed'
       };
     });
 
@@ -620,12 +697,40 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
 
     const updated = await prisma.class.update({
       where: { id: Number(id) },
-      data: updateData,
+      data: {
+        ...updateData,
+        deletedAt: null // Automatically reactivate class on edit
+      },
       include: { school: true, schedules: true }
     });
     res.json(updated);
   } catch (err) {
     console.error('[PUT /classes/:id] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// POST /classes/:id/restore - Restore soft-deleted class
+router.post('/:id/restore', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as any;
+    const classId = Number(id);
+
+    const existing = await prisma.class.findUnique({ where: { id: classId } });
+    if (!existing) return res.status(404).json({ message: 'Class not found' });
+
+    if (req.role === 'SCHOOL_ADMIN' && existing.schoolId !== req.schoolId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const restored = await prisma.class.update({
+      where: { id: classId },
+      data: { deletedAt: null }
+    });
+
+    res.json(restored);
+  } catch (err) {
+    console.error('[POST /classes/:id/restore] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

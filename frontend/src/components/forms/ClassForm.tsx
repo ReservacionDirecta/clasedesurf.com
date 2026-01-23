@@ -1046,6 +1046,8 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
         onSuccess={() => {
           showSuccess('Éxito', 'Horarios actualizados correctamente');
         }}
+        classId={isEditing && initialData?.id ? initialData.id : undefined}
+        classTitle={isEditing && initialData?.title ? initialData.title : undefined}
       />
     </div>
   );

@@ -29,6 +29,9 @@ interface EditDatesModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  classId?: number;
+  classTitle?: string;
+  className?: string; // keeping standard naming if needed? no, title is better
 }
 
 const DAYS = [
@@ -41,7 +44,7 @@ const DAYS = [
   { label: 'Dom', value: 0 }
 ];
 
-export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalProps) {
+export function EditDatesModal({ isOpen, onClose, onSuccess, classId, classTitle }: EditDatesModalProps) {
   const { showSuccess, showError } = useToast();
   const { data: session } = useSession();
 
@@ -52,14 +55,23 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
   const [saving, setSaving] = useState(false);
   const [step, setStep] = useState<'select' | 'edit'>('select');
 
-  // Load classes on modal open
+  // Load classes on modal open or set initial class logic
   useEffect(() => {
     if (isOpen && session) {
-      loadClasses();
+      if (classId) {
+        // Direct edit mode
+        setSelectedClass({ id: classId, title: classTitle || 'Clase' });
+        setStep('edit');
+        loadClassSchedules(classId);
+      } else {
+        // Select mode
+        setStep('select');
+        loadClasses();
+      }
     } else {
       resetModal();
     }
-  }, [isOpen, session]);
+  }, [isOpen, session, classId, classTitle]);
 
   const resetModal = () => {
     setClasses([]);
@@ -94,7 +106,14 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
       const res = await fetch(`/api/classes/${classId}`, { headers });
       if (res.ok) {
         const classData = await res.json();
-        setCurrentSchedules(classData.schedules || []);
+        const formattedSchedules = (classData.schedules || []).map((s: any) => ({
+          ...s,
+          specificDate: s.specificDate ? s.specificDate.split('T')[0] : undefined,
+          rangeStart: s.rangeStart ? s.rangeStart.split('T')[0] : undefined,
+          rangeEnd: s.rangeEnd ? s.rangeEnd.split('T')[0] : undefined,
+          dates: s.dates ? s.dates.map((d: string) => d.split('T')[0]) : undefined
+        }));
+        setCurrentSchedules(formattedSchedules);
         setStep('edit');
       }
     } catch (err) {
