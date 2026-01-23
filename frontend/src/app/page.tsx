@@ -227,7 +227,7 @@ export default function Home() {
       if (id === 'group') newFilters.type = 'GROUP';
       if (id === 'private') newFilters.type = 'PRIVATE';
       if (id === 'kids') newFilters.type = 'KIDS';
-      // Camps logic could be type='CAMP' or similar
+      if (id === 'camps') newFilters.type = 'SURF_CAMP';
       
       handleFiltersChange(newFilters);
     }

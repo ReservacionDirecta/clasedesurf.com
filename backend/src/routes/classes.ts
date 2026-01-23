@@ -77,9 +77,29 @@ router.get('/', optionalAuth, async (req: AuthRequest, res) => {
       where.level = level.toUpperCase();
     }
 
-    // Filter by type
+    // Filter by type (Smart Filter)
     if (type && typeof type === 'string') {
-      where.type = type.toUpperCase();
+      const typeStr = type.toUpperCase();
+
+      if (typeStr === 'KIDS') {
+        // Smart filter for Kids: Type is KIDS OR Title contains "niños"/"kids"
+        where.OR = [
+          { type: 'KIDS' },
+          { title: { contains: 'niños', mode: 'insensitive' } },
+          { title: { contains: 'kids', mode: 'insensitive' } }
+        ];
+      } else if (typeStr === 'SURF_CAMP' || typeStr === 'CAMPS') {
+        // Smart filter for Camps: Type is CAMP OR Title contains "camp" OR Duration > 24h
+        where.OR = [
+          { type: 'SURF_CAMP' },
+          { type: 'CAMP' },
+          { title: { contains: 'camp', mode: 'insensitive' } }
+          // Optionally add duration check if needed, but title is usually safer for now
+        ];
+      } else {
+        // Standard strict filter
+        where.type = typeStr;
+      }
     }
 
     // Filter by price range (using defaultPrice)
