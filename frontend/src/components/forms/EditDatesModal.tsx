@@ -233,40 +233,40 @@ export function EditDatesModal({ isOpen, onClose, onSuccess, classId, classTitle
 
               {/* Current Schedules */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <h4 className="font-semibold text-slate-700">Horarios Actuales</h4>
-                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-3 w-full sm:w-auto">
                     <Button
                       variant="outline"
-                      size="sm"
+                      className="h-10 w-full sm:w-auto"
                       onClick={() => addSchedule('RECURRING')}
                     >
-                      <Plus className="w-4 h-4 mr-1" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Recurrente
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
+                       className="h-10 w-full sm:w-auto"
                       onClick={() => addSchedule('SINGLE')}
                     >
-                      <Plus className="w-4 h-4 mr-1" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Día Único
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
+                       className="h-10 w-full sm:w-auto"
                       onClick={() => addSchedule('DATE_RANGE')}
                     >
-                      <Plus className="w-4 h-4 mr-1" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Rango
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
+                       className="h-10 w-full sm:w-auto"
                       onClick={() => addSchedule('SPECIFIC_DATES')}
                     >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Fechas Específicas
+                      <Plus className="w-4 h-4 mr-2" />
+                      Fechas
                     </Button>
                   </div>
                 </div>

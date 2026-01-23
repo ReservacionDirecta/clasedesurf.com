@@ -929,24 +929,24 @@ export default function ClassesManagementPage() {
                         {/* Distinct Time/Date Section */}
                         <div className="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-100">
                              <div className="flex items-start gap-3 mb-2">
-                                {/* Visual Calendar Date on Card */}
+                              {/* Visual Calendar Date on Card */}
                                 <div className={`flex flex-col items-center justify-center w-10 h-10 rounded border shrink-0 ${
                                   primaryClass.date ? 'bg-white border-blue-200 text-blue-700 shadow-sm' : 'bg-white border-gray-200 text-gray-400'
                                 }`}>
                                   <span className="text-[9px] font-bold uppercase leading-none">
-                                    {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '') : 'REC'}
+                                    {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { month: 'short', timeZone: 'UTC' }).replace('.', '') : 'REC'}
                                   </span>
                                   <span className="text-sm font-bold leading-none mt-0.5">
-                                    {primaryClass.date ? new Date(primaryClass.date).getDate() : <Clock className="w-3 h-3" />}
+                                    {primaryClass.date ? new Date(primaryClass.date).getUTCDate() : <Clock className="w-3 h-3" />}
                                   </span>
                                 </div>
 
                                 <div className="flex flex-col">
                                     <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">
-                                       {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { weekday: 'long' }) : 'Horarios'}
+                                       {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' }) : 'Horarios'}
                                     </span>
                                     <div className="flex items-center gap-1.5 text-gray-900 font-bold text-sm">
-                                      {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : 'Ver detalles'}
+                                      {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', timeZone: 'UTC' }) : 'Ver detalles'}
                                     </div>
                                 </div>
                              </div>
@@ -958,7 +958,7 @@ export default function ClassesManagementPage() {
                                         <div className="flex items-center gap-2">
                                             <div className="flex items-center gap-1.5 text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">
                                                 <Clock className="w-3 h-3" />
-                                                {cls.date ? new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }) : '--:--'}
+                                                {cls.date ? new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }) : '--:--'}
                                             </div>
                                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full uppercase ${getStatusColor(cls.status || 'upcoming')}`}>
                                                 {cls.status === 'upcoming' ? 'Activa' : cls.status === 'completed' ? 'Comp' : 'Canc'}
@@ -973,10 +973,10 @@ export default function ClassesManagementPage() {
                                              {/* Mini Actions */}
                                              <button 
                                                 onClick={() => { setSelectedClass(cls); setShowEditModal(true); }}
-                                                className="text-gray-400 hover:text-blue-600 ml-1"
+                                                className="p-2 text-gray-500 hover:text-blue-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                 title="Editar"
                                              >
-                                                <Edit className="w-3 h-3" />
+                                                <Edit className="w-4 h-4" />
                                              </button>
                                              <button 
                                                 onClick={() => { 
@@ -995,7 +995,7 @@ export default function ClassesManagementPage() {
                                                     });
                                                   }
                                                 }}
-                                                className="text-gray-400 hover:text-purple-600 ml-1"
+                                                className="p-2 text-gray-500 hover:text-purple-600 hover:bg-gray-100 rounded-lg transition-colors"
                                                 title="Duplicar"
                                              >
                                                 <Copy className="w-3 h-3" />
