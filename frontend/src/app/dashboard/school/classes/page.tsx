@@ -1058,7 +1058,7 @@ export default function ClassesManagementPage() {
         {showCreateModal && null}
 
         {showEditModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <h3 className="text-lg font-bold mb-4">Editar Clase</h3>
               <p className="text-gray-600 mb-4">Editando: {selectedClass.title}</p>
@@ -1096,7 +1096,7 @@ export default function ClassesManagementPage() {
         )}
 
         {showDeleteModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4" onClick={() => setShowDeleteModal(false)}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4" onClick={() => setShowDeleteModal(false)}>
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900">Eliminar Clase</h3>
@@ -1158,7 +1158,7 @@ export default function ClassesManagementPage() {
         )}
 
         {showDuplicateModal && selectedClass && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-100 p-4" onClick={() => setShowDuplicateModal(false)}>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4" onClick={() => setShowDuplicateModal(false)}>
             <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg sm:text-xl font-bold text-gray-900">Duplicar Clase</h3>

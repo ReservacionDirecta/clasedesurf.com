@@ -160,10 +160,10 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-3">
             <Calendar className="w-6 h-6 text-indigo-600" />
             Editar Horarios de Clases
@@ -173,7 +173,7 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
           </button>
         </div>
 
-        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
           {step === 'select' && (
             <div className="space-y-6">
               <div>
@@ -181,7 +181,7 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
                 <p className="text-sm text-slate-600 mb-4">
                   Elige la clase cuyos horarios deseas modificar. Solo podrás editar clases de tu escuela.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {classes.map(cls => (
                     <button
                       key={cls.id}
@@ -399,7 +399,7 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
 
         {/* Footer */}
         {step === 'edit' && (
-          <div className="p-4 sm:p-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-3 bg-slate-50/50">
+          <div className="p-4 sm:p-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-3 bg-slate-50/50 shrink-0">
             <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
