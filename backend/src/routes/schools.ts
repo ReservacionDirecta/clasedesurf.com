@@ -9,6 +9,32 @@ import { normalizeSchoolImages, normalizeClassImages } from '../utils/image-util
 
 const router = express.Router();
 
+
+// GET /schools/reviews/featured - get featured reviews across all schools
+router.get('/reviews/featured', async (req, res) => {
+  try {
+    const reviews = await prisma.schoolReview.findMany({
+      where: {
+        rating: { gte: 4 }, // Only 4+ stars
+        comment: { not: null } // Only with comments
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+      include: {
+        school: {
+          select: { name: true, location: true, logo: true }
+        }
+      }
+    });
+
+    // If no reviews, return empty array (frontend handles fallback)
+    res.json(reviews);
+  } catch (err: any) {
+    console.error('[GET /schools/reviews/featured] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // GET /schools - list schools
 router.get('/', async (req, res) => {
   try {

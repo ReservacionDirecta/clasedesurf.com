@@ -1,6 +1,5 @@
 
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Plus, Trash2, Clock } from 'lucide-react';
 import React from 'react';
 
@@ -37,14 +36,14 @@ export function TimeSlotPicker({ times, onChange, className = '', label = 'Horar
         <Clock className="w-4 h-4 text-slate-400" />
         {label}
       </label>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
         {times.map((time, idx) => (
-          <div key={idx} className="flex gap-2 animate-in fade-in zoom-in duration-200">
-            <Input
+          <div key={idx} className="flex gap-2 animate-in fade-in zoom-in duration-200 w-full sm:w-auto">
+            <input
               type="time"
               value={time}
               onChange={(e) => handleTimeChange(idx, e.target.value)}
-              className="w-32 h-10 text-center font-mono"
+              className="flex-1 sm:w-32 h-10 text-center font-mono rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400"
             />
             <Button
               type="button"
@@ -52,7 +51,7 @@ export function TimeSlotPicker({ times, onChange, className = '', label = 'Horar
               size="sm"
               disabled={times.length === 1 && !time} // Disable trash if only one empty slot
               onClick={() => removeTime(idx)}
-              className="h-10 w-10 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors"
+              className="h-10 w-10 p-0 text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-200 transition-colors shrink-0"
               title="Eliminar horario"
             >
               <Trash2 className="w-4 h-4" />
@@ -63,7 +62,7 @@ export function TimeSlotPicker({ times, onChange, className = '', label = 'Horar
           type="button"
           variant="secondary"
           onClick={addTime}
-          className="h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200"
+          className="h-10 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
           Agregar hora

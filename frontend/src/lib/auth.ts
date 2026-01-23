@@ -51,6 +51,7 @@ export const authOptions = {
             name: user.name,
             role: user.role,
             backendToken: token,
+            refreshToken: payload.refreshToken, // Capture refresh token
             backendTokenExpires: Date.now() + 24 * 60 * 60 * 1000, // match backend 24h access token
           };
         } catch (err) {
@@ -104,6 +105,7 @@ export const authOptions = {
             user.id = data.user.id.toString();
             user.role = data.user.role;
             (user as any).backendToken = data.token;
+            (user as any).refreshToken = data.refreshToken; // Capture refresh token
             (user as any).backendTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
           } else {
             console.error('Error en autenticación Google con backend:', await response.text());
@@ -121,6 +123,7 @@ export const authOptions = {
         token.id = user.id;
         token.role = (user as any).role;
         if ((user as any).backendToken) token.backendToken = (user as any).backendToken;
+        if ((user as any).refreshToken) token.refreshToken = (user as any).refreshToken; // Store refresh token
         if ((user as any).backendTokenExpires) token.backendTokenExpires = (user as any).backendTokenExpires;
       }
 
@@ -144,6 +147,7 @@ export const authOptions = {
           if (response.ok) {
             const data = await response.json();
             token.backendToken = data.token;
+            token.refreshToken = data.refreshToken; // Store refresh token
             token.backendTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
             token.id = data.user.id.toString();
             token.role = data.user.role;
@@ -161,12 +165,15 @@ export const authOptions = {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL || '/api'}/auth/refresh`, {
           method: 'POST',
-          credentials: 'include', // send cookie
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: token.refreshToken }), // Send refresh token
+          credentials: 'include', // send cookie as fallback
         });
         if (res.ok) {
           const data = await res.json();
           if (data.token) {
             token.backendToken = data.token;
+            if (data.refreshToken) token.refreshToken = data.refreshToken; // Update refresh token if rotated
             token.backendTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
           }
         }

@@ -80,7 +80,7 @@ router.post('/register', authLimiter, validateBody(registerSchema), async (req, 
     }
 
     const { password: _p, ...safe } = user as any;
-    res.status(201).json({ user: safe, token: accessToken });
+    res.status(201).json({ user: safe, token: accessToken, refreshToken: rawRefresh });
   } catch (err) {
     console.error('[auth] POST /register error', (err as any)?.stack || err);
     res.status(500).json({ message: 'Internal server error' });
@@ -118,7 +118,7 @@ router.post('/login', authLimiter, validateBody(loginSchema), async (req, res) =
     setRefreshCookie(res, rawRefresh);
 
     const { password: _p, ...safe } = user as any;
-    res.json({ user: safe, token: accessToken });
+    res.json({ user: safe, token: accessToken, refreshToken: rawRefresh });
   } catch (err) {
     console.error('[auth] POST /login error', (err as any)?.stack || err);
     res.status(500).json({ message: 'Internal server error' });
@@ -128,7 +128,10 @@ router.post('/login', authLimiter, validateBody(loginSchema), async (req, res) =
 // POST /auth/refresh - exchange refresh cookie for new access token
 router.post('/refresh', async (req, res) => {
   try {
-    const raw = req.cookies?.refreshToken;
+    let raw = req.cookies?.refreshToken;
+    if (!raw && req.body.refreshToken) {
+      raw = req.body.refreshToken;
+    }
     if (!raw) return res.status(401).json({ message: 'No refresh token' });
 
     // find candidate refresh tokens for user(s) and verify
@@ -157,7 +160,7 @@ router.post('/refresh', async (req, res) => {
     await prisma.refreshToken.create({ data: { tokenHash: newHash, user: { connect: { id: user.id } }, expiresAt: expiresAt2 } });
     setRefreshCookie(res, newRaw);
 
-    res.json({ token: accessToken });
+    res.json({ token: accessToken, refreshToken: newRaw });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal server error' });
@@ -238,7 +241,8 @@ router.post('/google', authLimiter, async (req, res) => {
           name: user.name,
           role: user.role
         },
-        token: accessToken
+        token: accessToken,
+        refreshToken: refreshToken
       });
     } else {
       // Usuario no existe, crear nuevo usuario
@@ -293,7 +297,8 @@ router.post('/google', authLimiter, async (req, res) => {
           name: user.name,
           role: user.role
         },
-        token: accessToken
+        token: accessToken,
+        refreshToken: refreshToken
       });
     }
   } catch (err) {
@@ -365,6 +370,7 @@ router.post('/register-school', authLimiter, async (req, res) => {
       user: safeUser,
       school: result.school,
       token: accessToken,
+      refreshToken: rawRefresh,
       message: 'Solicitud de registro enviada exitosamente'
     });
 

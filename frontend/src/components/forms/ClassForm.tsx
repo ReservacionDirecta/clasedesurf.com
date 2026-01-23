@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { MultiDatePicker } from '@/components/ui/MultiDatePicker';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { useToast } from '@/contexts/ToastContext';
 import { useSession } from 'next-auth/react';
 import { EditDatesModal } from './EditDatesModal';
@@ -460,25 +459,25 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
         {/* SECTION 1: DETALLES BASICOS */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+          <div className="p-4 sm:p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
             <List className="w-5 h-5 text-indigo-600" />
             <h2 className="text-lg font-bold text-slate-900">1. Detalles de la Clase</h2>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-6">
             {/* Título - Campo requerido */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <label className="text-sm font-semibold text-slate-700">Título de la Clase</label>
                 <span className="text-red-500 text-sm">*</span>
               </div>
-              <Input
+              <input
                 value={formData.title}
                 onChange={e => handleInputChange('title', e.target.value)}
                 placeholder="Ej: Curso de Surf Pro"
-                className={formData.title.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}
+                className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border ${formData.title.trim() === '' ? 'border-red-300 focus:border-red-500' : ''}`}
                 required
               />
               {formData.title.trim() === '' && (
@@ -490,7 +489,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Descripción</label>
               <textarea
-                className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 min-h-[120px] p-4 text-sm"
+                className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 min-h-[120px] p-4 text-sm transition-all shadow-sm border placeholder:text-slate-400"
                 value={formData.description}
                 onChange={e => handleInputChange('description', e.target.value)}
                 placeholder="Explica de qué trata la clase..."
@@ -504,7 +503,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-600">Nivel de Dificultad</label>
                   <select
-                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm"
+                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border"
                     value={formData.level}
                     onChange={e => handleInputChange('level', e.target.value)}
                   >
@@ -515,7 +514,8 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-600">Instructor a Cargo</label>
-                  <Input
+                  <input
+                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
                     value={formData.instructor}
                     onChange={e => handleInputChange('instructor', e.target.value)}
                     placeholder="Nombre del instructor"
@@ -545,7 +545,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
               {showRequirements && (
                 <div className="animate-in slide-in-from-top-2 duration-200">
                   <textarea
-                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 min-h-[80px] p-4 text-sm"
+                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 min-h-[80px] p-4 text-sm transition-all shadow-sm border placeholder:text-slate-400"
                     value={formData.studentDetails}
                     onChange={e => handleInputChange('studentDetails', e.target.value)}
                     placeholder="Ej: Traer protector solar, saber nadar, tener buena condición física, etc."
@@ -564,7 +564,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                     <span className="text-red-500 text-sm">*</span>
                   </div>
                   <select
-                    className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm ${
+                    className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border ${
                       !formData.duration || formData.duration < 30 || formData.duration > 480 ? 'border-red-300' : ''
                     }`}
                     value={formData.duration}
@@ -590,7 +590,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                       <span className="text-red-500 text-sm">*</span>
                     </div>
                     <select
-                      className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm ${
+                      className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border ${
                         !formData.schoolId ? 'border-red-300' : ''
                       }`}
                       value={formData.schoolId || ''}
@@ -616,7 +616,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                   {!showInlineBeachAdd ? (
                     <div className="space-y-2">
                       <select
-                        className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm ${
+                        className={`w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border ${
                           !formData.beachId ? 'border-red-300' : ''
                         }`}
                         value={formData.beachId || ''}
@@ -658,17 +658,17 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                           <X className="w-3 h-3" />
                         </Button>
                       </div>
-                      <Input
+                      <input
                         value={newBeachName}
                         onChange={e => setNewBeachName(e.target.value)}
                         placeholder="Nombre de la playa"
-                        className="text-sm"
+                        className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
                       />
-                      <Input
+                      <input
                         value={newBeachLocation}
                         onChange={e => setNewBeachLocation(e.target.value)}
                         placeholder="Ubicación (opcional)"
-                        className="text-sm"
+                        className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
                       />
                       <Button
                         type="button"
@@ -698,11 +698,21 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
               <div className="p-6 space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700">Nombre de la Playa</label>
-                  <Input value={newBeachName} onChange={e => setNewBeachName(e.target.value)} placeholder="Ej: Playa Makaha" />
+                  <input
+                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
+                    value={newBeachName} 
+                    onChange={e => setNewBeachName(e.target.value)} 
+                    placeholder="Ej: Playa Makaha" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-slate-700">Ubicación (opcional)</label>
-                  <Input value={newBeachLocation} onChange={e => setNewBeachLocation(e.target.value)} placeholder="Ej: Miraflores, Lima" />
+                  <input
+                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
+                    value={newBeachLocation} 
+                    onChange={e => setNewBeachLocation(e.target.value)} 
+                    placeholder="Ej: Miraflores, Lima" 
+                  />
                 </div>
                 <div className="pt-4 flex gap-3">
                   <Button variant="outline" className="flex-1" onClick={() => setShowAddBeachModal(false)}>Cancelar</Button>
@@ -717,18 +727,18 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
 
         {/* SECTION 2: PRECIO Y CAPACIDAD */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+          <div className="p-4 sm:p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
             <DollarSign className="w-5 h-5 text-green-600" />
             <h2 className="text-lg font-bold text-slate-900">2. Precio y Capacidad Predeterminada</h2>
           </div>
-          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Precio Base (PEN) *</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">S/</span>
                 <input 
                   type="number"
-                  className="w-full pl-8 pr-4 py-2.5 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 text-sm font-semibold"
+                  className="w-full pl-8 pr-4 py-2.5 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 text-sm font-semibold border transition-all shadow-sm placeholder:text-slate-400"
                   value={priceInput}
                   onChange={e => {
                     setPriceInput(e.target.value);
@@ -740,8 +750,9 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">Capacidad Máxima (Cupos)</label>
-              <Input 
+              <input 
                 type="number"
+                className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
                 value={formData.capacity}
                 onChange={e => handleInputChange('capacity', Number(e.target.value))}
                 required
@@ -752,11 +763,11 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
 
         {/* SECTION 3: IMAGENES */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+          <div className="p-4 sm:p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
             <ImageIcon className="w-5 h-5 text-blue-600" />
             <h2 className="text-lg font-bold text-slate-900">3. Imágenes del Producto</h2>
           </div>
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-6">
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-200 rounded-2xl hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer group">
                   <div className="p-3 bg-indigo-50 text-indigo-600 rounded-full group-hover:bg-indigo-100 transition-colors mb-3">
@@ -769,11 +780,11 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                 
                 <div className="flex flex-col gap-2">
                    <div className="flex-1 flex gap-2">
-                     <Input 
+                     <input 
                         placeholder="Pegar URL de imagen..." 
                         value={imageUrl} 
                         onChange={e => setImageUrl(e.target.value)}
-                        className="text-xs"
+                        className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
                      />
                      <Button 
                         type="button" 
@@ -814,21 +825,21 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
 
         {/* SECTION 4: PROGRAMACION (INVENTORY) - Visible always now, but with different context if editing */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className={`p-6 border-b border-slate-100 ${isEditing ? 'bg-amber-50/50' : 'bg-slate-50/50'} flex items-center gap-3`}>
+            <div className={`p-4 sm:p-6 border-b border-slate-100 ${isEditing ? 'bg-amber-50/50' : 'bg-slate-50/50'} flex items-center gap-3`}>
               <Calendar className={`w-5 h-5 ${isEditing ? 'text-amber-600' : 'text-indigo-600'}`} />
               <h2 className="text-lg font-bold text-slate-900">
                 {isEditing ? '4. Agregar Nueva Programación (Opcional)' : '4. Programación (Inventario)'}
               </h2>
             </div>
             {isEditing && (
-              <div className="px-6 pt-4 text-sm text-amber-700 bg-amber-50 mx-6 mt-4 rounded-xl border border-amber-100 p-3">
+              <div className="px-4 sm:px-6 pt-4 text-sm text-amber-700 bg-amber-50 mx-4 sm:mx-6 mt-4 rounded-xl border border-amber-100 p-3">
                  <p className="font-bold mb-1">Nota para edición:</p>
                  Configura aquí nuevos horarios si deseas agregar más disponibilidad. Los horarios existentes no se verán afectados salvo que los edites desde "Gestionar Horarios Existentes".
               </div>
             )}
             
-            <div className="p-6 space-y-8">
-              <div className="flex flex-wrap gap-2">
+            <div className="p-4 sm:p-6 space-y-8">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                 {[
                   { value: 'single', label: 'Día Único', icon: CheckCircle2 },
                   { value: 'recurring', label: 'Recurrente Weekly', icon: Clock },
@@ -839,7 +850,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                     key={type.value}
                     type="button"
                     onClick={() => handleInputChange('scheduleType', type.value)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
+                    className={`flex items-center justify-center sm:justify-start gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
                       formData.scheduleType === type.value 
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-100' 
                         : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
@@ -856,16 +867,26 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                  <div className="space-y-6 animate-in fade-in duration-300">
                    <div className="space-y-2">
                      <label className="text-sm font-semibold text-slate-700">Fecha</label>
-                     <Input type="date" value={formData.date} onChange={e => handleInputChange('date', e.target.value)} />
+                     <input 
+                      type="date" 
+                      value={formData.date} 
+                      onChange={e => handleInputChange('date', e.target.value)}
+                      className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400 text-slate-600"
+                     />
                    </div>
                    <div className="space-y-4">
                      <label className="text-sm font-semibold text-slate-700">Horarios</label>
                      <div className="flex flex-wrap gap-3">
                        {formData.times.map((t, idx) => (
                          <div key={idx} className="flex gap-2">
-                           <Input type="time" value={t} onChange={e => {
-                             const nt = [...formData.times]; nt[idx] = e.target.value; handleInputChange('times', nt);
-                           }} className="w-32" />
+                           <input 
+                              type="time" 
+                              value={t} 
+                              onChange={e => {
+                                const nt = [...formData.times]; nt[idx] = e.target.value; handleInputChange('times', nt);
+                              }} 
+                              className="w-32 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400 text-center font-mono"
+                            />
                            <Button
                              type="button" variant="outline" size="sm"
                              disabled={formData.times.length === 1}
@@ -889,12 +910,17 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-slate-700">Desde la Fecha</label>
-                      <Input type="date" value={formData.startDate} onChange={e => handleInputChange('startDate', e.target.value)} />
+                      <input 
+                        type="date" 
+                        value={formData.startDate} 
+                        onChange={e => handleInputChange('startDate', e.target.value)} 
+                        className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400 text-slate-600"
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-slate-700">Por cuantas semanas?</label>
                       <select 
-                        className="w-full rounded-xl border-slate-200 p-2.5 text-sm"
+                        className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border"
                         value={formData.weeksCount}
                         onChange={e => handleInputChange('weeksCount', Number(e.target.value))}
                       >
@@ -938,11 +964,21 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                      <div className="space-y-2">
                        <label className="text-sm font-semibold text-slate-700">Fecha Inicio</label>
-                       <Input type="date" value={formData.dateRangeStart} onChange={e => handleInputChange('dateRangeStart', e.target.value)} />
+                       <input 
+                        type="date" 
+                        value={formData.dateRangeStart} 
+                        onChange={e => handleInputChange('dateRangeStart', e.target.value)} 
+                        className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400 text-slate-600"
+                       />
                      </div>
                      <div className="space-y-2">
                        <label className="text-sm font-semibold text-slate-700">Fecha Fin</label>
-                       <Input type="date" value={formData.dateRangeEnd} onChange={e => handleInputChange('dateRangeEnd', e.target.value)} />
+                       <input 
+                        type="date" 
+                        value={formData.dateRangeEnd} 
+                        onChange={e => handleInputChange('dateRangeEnd', e.target.value)}
+                        className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400 text-slate-600"
+                       />
                      </div>
                    </div>
                    <div className="space-y-4">
@@ -992,11 +1028,11 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
           </div>
 
 
-        <div className="flex items-center justify-end gap-4 pb-12">
-           <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 sm:gap-4 pb-12">
+           <Button type="button" variant="outline" onClick={onCancel} disabled={saving} className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm">
              Cancelar
            </Button>
-           <Button type="submit" className="px-8 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100" disabled={saving}>
+           <Button type="submit" className="w-full sm:w-auto h-12 sm:h-10 text-base sm:text-sm px-8 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100 items-center justify-center" disabled={saving}>
              {saving ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Crear Producto y Sesiones')}
              {!saving && <ChevronRight className="w-4 h-4 ml-2" />}
            </Button>

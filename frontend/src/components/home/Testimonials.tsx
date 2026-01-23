@@ -1,7 +1,7 @@
 'use client'
 
 import { StarIcon } from '@/components/ui/Icons'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const testimonials = [
   {
@@ -34,6 +34,38 @@ const testimonials = [
 ]
 
 export function Testimonials() {
+  const [reviews, setReviews] = useState<any[]>(testimonials)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchReviews() {
+      try {
+        const res = await fetch('/api/schools/reviews/featured')
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data) && data.length > 0) {
+            // Transform to component format
+            const realReviews = data.map((r: any) => ({
+              id: r.id,
+              name: r.studentName,
+              role: 'Alumno Verificado', // Since we don't have role stored in review
+              image: `https://ui-avatars.com/api/?name=${encodeURIComponent(r.studentName)}&background=random`,
+              content: r.comment,
+              rating: r.rating,
+              location: r.school?.location || 'Lima, Perú'
+            }))
+            setReviews(realReviews.slice(0, 3)) // Show top 3
+          }
+        }
+      } catch (error) {
+        console.log('Using fallback testimonials')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchReviews()
+  }, [])
+
   return (
     <section className="py-20 bg-[#F8FAFC]">
       <div className="container mx-auto px-4">
@@ -47,7 +79,7 @@ export function Testimonials() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((item) => (
+          {reviews.map((item) => (
             <div key={item.id} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative">
               {/* Quote Icon Background */}
               <div className="absolute top-6 right-8 text-gray-100 -z-0">
@@ -58,11 +90,11 @@ export function Testimonials() {
 
               <div className="flex items-center gap-1 mb-6 text-yellow-400">
                 {[...Array(5)].map((_, i) => (
-                   <StarIcon key={i} className="w-5 h-5 fill-current" />
+                   <StarIcon key={i} className={`w-5 h-5 ${i < item.rating ? 'fill-current' : 'text-gray-200 fill-gray-200'}`} />
                 ))}
               </div>
 
-              <p className="text-gray-700 leading-relaxed mb-8 relative z-10 text-lg italic">
+              <p className="text-gray-700 leading-relaxed mb-8 relative z-10 text-lg italic line-clamp-4">
                 "{item.content}"
               </p>
 
@@ -71,6 +103,7 @@ export function Testimonials() {
                   src={item.image} 
                   alt={item.name} 
                   className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md"
+                  onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.name)}` }}
                 />
                 <div>
                   <h4 className="font-bold text-[#011627] text-sm">{item.name}</h4>

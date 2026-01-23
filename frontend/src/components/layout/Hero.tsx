@@ -17,12 +17,14 @@ export function Hero({ children }: HeroProps) {
     <section className="relative min-h-[500px] sm:min-h-[600px] flex items-center justify-center overflow-hidden">
 
       {/* Background Image with Parallax-like fix */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-105"
-        style={{
-          backgroundImage: `url("/hero.png")`
-        }}
-      />
+      <div className="absolute inset-0 select-none">
+         {/* Use next/image for optimization */}
+         <img 
+            src="/hero.png" 
+            alt="Hero background" 
+            className="w-full h-full object-cover object-center transform scale-105"
+         />
+      </div>
       
       {/* Enhanced Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/70 backdrop-blur-[1px]" />

@@ -423,26 +423,26 @@ export default function ClassesManagementPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'upcoming':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-50 text-green-700 border border-green-200';
       case 'completed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-50 text-blue-700 border border-blue-200';
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-50 text-red-700 border border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
 
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'BEGINNER':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-teal-50 text-teal-700 border border-teal-200';
       case 'INTERMEDIATE':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-50 text-orange-700 border border-orange-200';
       case 'ADVANCED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-purple-50 text-purple-700 border border-purple-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
 
@@ -758,46 +758,85 @@ export default function ClassesManagementPage() {
                                 />
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {cls.date ? (
-                                    new Date(cls.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
-                                  ) : cls.nextSession ? (
-                                    new Date(cls.nextSession.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
-                                  ) : (
-                                    <span className="text-gray-400">Recurrente</span>
-                                  )}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {cls.date ? (
-                                    new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-                                  ) : cls.nextSession ? (
-                                    cls.nextSession.time
-                                  ) : (
-                                    <span className="text-xs">Ver horarios</span>
-                                  )}
+
+                                <div className="flex items-center gap-3">
+                                  {/* Visual Calendar Date */}
+                                  <div className={`flex flex-col items-center justify-center w-12 h-12 rounded-lg border ${
+                                    cls.date ? 'bg-blue-50 border-blue-200 text-blue-700' : 
+                                    (cls.nextSession ? 'bg-purple-50 border-purple-200 text-purple-700' : 'bg-gray-50 border-gray-200 text-gray-500')
+                                  }`}>
+                                    <span className="text-[10px] font-bold uppercase leading-none">
+                                      {cls.date ? new Date(cls.date).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '') : 
+                                       cls.nextSession ? new Date(cls.nextSession.date).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '') : 'REC'}
+                                    </span>
+                                    <span className="text-lg font-bold leading-none mt-0.5">
+                                      {cls.date ? new Date(cls.date).getDate() : 
+                                       cls.nextSession ? new Date(cls.nextSession.date).getDate() : <Clock className="w-5 h-5" />}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-col">
+                                    <div className="text-sm font-bold text-gray-900 capitalize">
+                                      {cls.date ? (
+                                        new Date(cls.date).toLocaleDateString('es-ES', { weekday: 'long' })
+                                      ) : cls.nextSession ? (
+                                        new Date(cls.nextSession.date).toLocaleDateString('es-ES', { weekday: 'long' })
+                                      ) : (
+                                        'Recurrente'
+                                      )}
+                                    </div>
+                                    <div className="text-sm text-gray-500 flex items-center gap-1">
+                                      <Clock className="w-3 H-3" />
+                                      {cls.date ? (
+                                        new Date(cls.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })
+                                      ) : cls.nextSession ? (
+                                        cls.nextSession.time
+                                      ) : (
+                                        'Ver Horarios'
+                                      )}
+                                    </div>
+                                  </div>
                                 </div>
                               </td>
                               <td className="px-6 py-4">
                                 <div className="text-sm font-medium text-gray-900">{cls.title}</div>
-                                <div className="text-sm text-gray-500 truncate max-w-xs">{cls.instructor || 'Sin instructor'} • {cls.duration} min</div>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                   <span className="text-xs text-gray-500 flex items-center bg-gray-100 px-1.5 py-0.5 rounded">
+                                      {cls.instructor || 'Sin instructor'} 
+                                   </span>
+                                   <span className="text-xs text-gray-500 flex items-center bg-gray-100 px-1.5 py-0.5 rounded">
+                                      {cls.duration} min
+                                   </span>
+                                </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(cls.status || 'upcoming')}`}>
+                                <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${
+                                  cls.status === 'upcoming' ? 'bg-green-50 text-green-700 border-green-200' :
+                                  cls.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                  'bg-red-50 text-red-700 border-red-200'
+                                }`}>
                                   {cls.status === 'upcoming' ? 'Próxima' : cls.status === 'completed' ? 'Completada' : 'Cancelada'}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {cls.enrolled || 0} / {cls.capacity}
+                                <div className="flex items-center gap-1.5">
+                                  <Users className="w-4 h-4 text-gray-400" />
+                                  <span className="font-medium">{cls.enrolled || 0}</span>
+                                  <span className="text-gray-400">/ {cls.capacity}</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1.5 max-w-[80px]">
+                                   <div className="bg-blue-600 h-1.5 rounded-full" style={{ width: `${Math.min(100, ((cls.enrolled || 0) / cls.capacity) * 100)}%` }}></div>
+                                </div>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 S/. {cls.price}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div className="flex items-center justify-end gap-2">
-                                  <button onClick={() => router.push(`/dashboard/school/classes/${cls.id}/reservations`)} className="text-blue-600 hover:text-blue-900" title="Ver Reservas">
+                                  <button onClick={() => router.push(`/dashboard/school/classes/${cls.id}/reservations`)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Reservas">
                                     <ListChecks className="w-5 h-5" />
                                   </button>
-                                  <button onClick={() => { setSelectedClass(cls); setShowEditModal(true); }} className="text-gray-600 hover:text-gray-900" title="Editar">
+                                  <button onClick={() => { setSelectedClass(cls); setShowEditModal(true); }} className="p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" title="Editar">
                                     <Edit className="w-5 h-5" />
                                   </button>
                                   <button onClick={() => {
@@ -889,12 +928,25 @@ export default function ClassesManagementPage() {
 
                         {/* Distinct Time/Date Section */}
                         <div className="mt-4 bg-gray-50 rounded-lg p-3 border border-gray-100">
-                             <div className="flex items-center justify-between mb-2">
+                             <div className="flex items-start gap-3 mb-2">
+                                {/* Visual Calendar Date on Card */}
+                                <div className={`flex flex-col items-center justify-center w-10 h-10 rounded border shrink-0 ${
+                                  primaryClass.date ? 'bg-white border-blue-200 text-blue-700 shadow-sm' : 'bg-white border-gray-200 text-gray-400'
+                                }`}>
+                                  <span className="text-[9px] font-bold uppercase leading-none">
+                                    {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { month: 'short' }).replace('.', '') : 'REC'}
+                                  </span>
+                                  <span className="text-sm font-bold leading-none mt-0.5">
+                                    {primaryClass.date ? new Date(primaryClass.date).getDate() : <Clock className="w-3 h-3" />}
+                                  </span>
+                                </div>
+
                                 <div className="flex flex-col">
-                                    <span className="text-xs text-gray-500 uppercase font-semibold">Fecha</span>
-                                    <div className="flex items-center gap-1.5 text-gray-900 font-medium">
-                                    <Calendar className="w-4 h-4 text-blue-500" />
-                                    {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Fecha pendiente'}
+                                    <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">
+                                       {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { weekday: 'long' }) : 'Horarios'}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 text-gray-900 font-bold text-sm">
+                                      {primaryClass.date ? new Date(primaryClass.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }) : 'Ver detalles'}
                                     </div>
                                 </div>
                              </div>

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Plus, Trash2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { useToast } from '@/contexts/ToastContext';
 import { useSession } from 'next-auth/react';
 import { MultiDatePicker } from '@/components/ui/MultiDatePicker';
@@ -164,7 +163,7 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-3">
             <Calendar className="w-6 h-6 text-indigo-600" />
             Editar Horarios de Clases
@@ -174,7 +173,7 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
           {step === 'select' && (
             <div className="space-y-6">
               <div>
@@ -217,7 +216,7 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-slate-700">Horarios Actuales</h4>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -303,11 +302,11 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
                       {schedule.type === 'SINGLE' && (
                         <div>
                           <label className="text-sm font-medium text-slate-600">Fecha</label>
-                          <Input
+                          <input
                             type="date"
                             value={schedule.specificDate || ''}
                             onChange={e => updateSchedule(index, { specificDate: e.target.value })}
-                            className="mt-1"
+                            className="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400"
                           />
                         </div>
                       )}
@@ -316,20 +315,20 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
                         <>
                           <div>
                             <label className="text-sm font-medium text-slate-600">Fecha Inicio</label>
-                            <Input
+                            <input
                               type="date"
                               value={schedule.rangeStart || ''}
                               onChange={e => updateSchedule(index, { rangeStart: e.target.value })}
-                              className="mt-1"
+                              className="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400"
                             />
                           </div>
                           <div>
                             <label className="text-sm font-medium text-slate-600">Fecha Fin</label>
-                            <Input
+                            <input
                               type="date"
                               value={schedule.rangeEnd || ''}
                               onChange={e => updateSchedule(index, { rangeEnd: e.target.value })}
-                              className="mt-1"
+                              className="mt-1 w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400"
                             />
                           </div>
                         </>
@@ -348,10 +347,10 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
 
                       <div className="md:col-span-2">
                         <label className="text-sm font-medium text-slate-600">Horarios</label>
-                        <div className="flex flex-wrap gap-2 mt-1">
+                        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 mt-1">
                           {schedule.times.map((time, timeIndex) => (
-                            <div key={timeIndex} className="flex gap-1">
-                              <Input
+                            <div key={timeIndex} className="flex gap-1 w-full sm:w-auto">
+                              <input
                                 type="time"
                                 value={time}
                                 onChange={e => {
@@ -359,7 +358,7 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
                                   newTimes[timeIndex] = e.target.value;
                                   updateSchedule(index, { times: newTimes });
                                 }}
-                                className="w-32"
+                                className="flex-1 sm:w-32 rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border placeholder:text-slate-400"
                               />
                               {schedule.times.length > 1 && (
                                 <Button
@@ -369,8 +368,9 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
                                     const newTimes = schedule.times.filter((_, i) => i !== timeIndex);
                                     updateSchedule(index, { times: newTimes });
                                   }}
+                                  className="shrink-0"
                                 >
-                                  <Trash2 className="w-3 h-3" />
+                                  <Trash2 className="w-4 h-4" />
                                 </Button>
                               )}
                             </div>
@@ -382,6 +382,7 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
                               const newTimes = [...schedule.times, ''];
                               updateSchedule(index, { times: newTimes });
                             }}
+                            className="w-full sm:w-auto"
                           >
                             <Plus className="w-3 h-3 mr-1" />
                             Hora
@@ -398,11 +399,11 @@ export function EditDatesModal({ isOpen, onClose, onSuccess }: EditDatesModalPro
 
         {/* Footer */}
         {step === 'edit' && (
-          <div className="p-6 border-t border-slate-100 flex justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>
+          <div className="p-4 sm:p-6 border-t border-slate-100 flex flex-col-reverse sm:flex-row justify-end gap-3 bg-slate-50/50">
+            <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button onClick={handleSaveSchedules} disabled={saving}>
+            <Button onClick={handleSaveSchedules} disabled={saving} className="w-full sm:w-auto">
               {saving ? 'Guardando...' : 'Guardar Cambios'}
               {!saving && <Save className="w-4 h-4 ml-2" />}
             </Button>
