@@ -16,7 +16,8 @@
     "prisma:migrate": "prisma migrate dev --name init --preview-feature",
     "prisma:deploy": "prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts",
-    "seed:beaches": "ts-node prisma/seed_beaches.ts"
+    "seed:beaches": "ts-node prisma/seed_beaches.ts",
+    "test": "vitest run"
   },
   "prisma": {
     "seed": "npm run seed"

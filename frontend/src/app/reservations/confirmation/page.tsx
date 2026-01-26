@@ -110,7 +110,9 @@ function ReservationConfirmationContent() {
 
         for (let i = 0; i < numParticipants; i++) {
           initialParticipants.push({
-            name: i === 0 && data.bookingData?.name ? data.bookingData.name : '',
+            // If a user is logged in, prefill the first participant's name from the session,
+            // falling back to the guest booking data if session data isn't available.
+            name: i === 0 ? (session?.user?.name || data.bookingData?.name || '') : '',
             age: i === 0 && data.bookingData?.age ? data.bookingData.age : '',
             height: i === 0 && data.bookingData?.height ? data.bookingData.height : '',
             weight: i === 0 && data.bookingData?.weight ? data.bookingData.weight : '',
@@ -143,11 +145,10 @@ function ReservationConfirmationContent() {
     }
   }, [searchParams, sessionStatus]);
 
-  // Auto-create reservation when user becomes authenticated and has pending reservation
+// Auto-create reservation when user becomes authenticated and has pending reservation
   useEffect(() => {
     if (
-      sessionStatus === 'authenticated' &&
-      session &&
+      session && // Use session object itself for more direct check
       reservationData &&
       reservationData.status === 'pending' &&
       !reservationData.reservationId &&
@@ -161,14 +162,14 @@ function ReservationConfirmationContent() {
         handleCreateReservation();
       }
     }
-  }, [sessionStatus, session, reservationData, creating, registering]);
+  }, [session, reservationData, creating, registering]); // Removed sessionStatus, added session object
 
   // Mostrar automáticamente el formulario de participantes cuando el usuario se autentica
   useEffect(() => {
-    if (sessionStatus === 'authenticated' && reservationData && participants.length > 0) {
+    if (session && reservationData && participants.length > 0) { // Changed sessionStatus to session
       setShowParticipantsForm(true);
     }
-  }, [sessionStatus, reservationData, participants.length]);
+  }, [session, reservationData, participants.length]); // Changed sessionStatus to session
 
   const fetchReservation = async (id: string) => {
     try {
@@ -317,30 +318,24 @@ function ReservationConfirmationContent() {
         status: 'created'
       });
 
-      // Handle Auto-Login if token returned
+// Handle Auto-Login if token returned
       if (createdReservation.token) {
-         // We have a new user! Sign them in.
-         // Since we don't have the password (it was auto-generated and hashed), we rely on custom token logic or credentials.
-         // Actually, NextAuth Credentials provider expects email/password usually.
-         // BUT we can use the `token` to set the session? 
-         // NextAuth is tricky here. 
-         // Strategy: We show the "Success" screen. The user is "technically" not logged in via NextAuth yet locally.
-         // But we can force a reload or use signIn with a custom provider?
-         // Simpler: Show the generated password (if any) and ask them to login?
-         // OR: We returned `generatedPassword` from backend. We can use `signIn('credentials')` with it!
-         if (createdReservation.generatedPassword) {
-             const result = await signIn('credentials', {
-                redirect: false,
-                email: reservationData.bookingData.email,
-                password: createdReservation.generatedPassword
-             });
-             if (!result?.error) {
-                // Success!
-                window.location.reload(); // Reload to pick up session
-                return; // Stop here, page reload happens
-             }
-         }
-      }
+        // We have a new user! Sign them in.
+        if (createdReservation.generatedPassword) {
+          const result = await signIn('credentials', {
+            redirect: false,
+            email: reservationData.bookingData.email,
+            password: createdReservation.generatedPassword
+          });
+          if (!result?.error) {
+            // Success! The session is now established via NextAuth internal mechanism.
+            // Force a re-render that will be picked up by useSession/update if needed,
+            // but immediately advance to the next step.
+            setCurrentStep(3); 
+            return; // Stop here, page reload is avoided
+          }
+        }
+      } 
 
       // Avanzar al paso de pago
       setCurrentStep(3);
