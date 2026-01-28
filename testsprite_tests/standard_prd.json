@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "project": "Clase de Surf",
+    "date": "2026-01-21",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "Clase de Surf is an integrated surf school platform combining a robust backend API and an interactive frontend web application. It enables users to browse, book surf classes, manage reservations and payments, while admins and instructors have dedicated dashboards for management. The system includes a guest checkout feature for easy booking without prior authentication, automated email notifications, and multi-tenant support for multiple surf schools.",
+  "core_goals": [
+    "Provide seamless class browsing and booking experience for users including guests.",
+    "Support multi-tenant surf schools with role-based access for admins, instructors, and students.",
+    "Automate user account creation and session management with guest checkout functionality.",
+    "Enable detailed reservation and payment management with status tracking and admin verification.",
+    "Offer real-time notifications and email communications for key user interactions.",
+    "Deliver role-specific dashboards for managing classes, reservations, students, and payments.",
+    "Ensure secure authentication via JWT tokens and social login integration."
+  ],
+  "key_features": [
+    "Complete authentication system with JWT, refresh tokens, and Google OAuth integrated via NextAuth.js with role-based controls.",
+    "Class browsing and detailed class session selection with participant management and multi-step booking flow.",
+    "Guest checkout allowing unauthenticated users to book surf classes, automatically creating user accounts with email notification containing credentials.",
+    "Comprehensive reservation management including create, view, update, and cancel functionality.",
+    "Payment processing system supporting voucher uploads, discount codes, Yape/Plin integration, and admin payment verification.",
+    "Multi-tenant architecture supporting isolation of schools, users, and data with school-scoped admin dashboards.",
+    "Role-specific dashboards: Student, Instructor, School Admin, and Super Admin with relevant views and controls.",
+    "In-app real-time notifications with notification center UI and email integration using Resend API.",
+    "Product and beach/location management including equipment sales and surf location details.",
+    "Image upload and management via Cloudinary with fallback support."
+  ],
+  "user_flow_summary": [
+    "Users browse surf classes on home page or class listing pages.",
+    "Users select class, choose session date/time, and enter participant details in a multi-step booking modal.",
+    "Guest users can continue booking without login; system auto-creates user account and sends welcome email with credentials.",
+    "Authenticated users can view and manage their reservations on a dedicated page, including cancellations.",
+    "Admins and instructors access dashboards to manage classes, schedules, reservations, students, and payments.",
+    "Payments are made by uploading vouchers; discount codes can be applied before verification by admins.",
+    "Users receive email notifications and in-app notifications for reservation confirmations, cancellations, payments, and reminders.",
+    "Session persistence ensures booking data is preserved across navigation and login redirects during the booking process."
+  ],
+  "validation_criteria": [
+    "Successful user registration, login, and social authentication with correct JWT issuance and refresh flows.",
+    "Guest checkout API creates new users with generated password, sends welcome email, and returns token; existing email during guest checkout returns proper error code.",
+    "Class booking flows preserve state across page navigation and between login/guest checkout options.",
+    "Payment voucher uploads are stored correctly and visible in dashboard with accurate status updates.",
+    "Admins can create, update, and soft delete classes, schools, instructors, and users with proper authorization.",
+    "Reservation creation, update, and cancellation APIs function correctly with data integrity across multi-tenant boundaries.",
+    "Email notifications are triggered for relevant events: welcome, reservation confirmation, cancellation, payment receipt, and reminders.",
+    "In-app notifications appear in real-time and update status when marked read via the UI.",
+    "Dashboards reflect appropriate data filtered by roles and school tenancy with accessible statistics and relevant management controls.",
+    "Image uploads succeed to Cloudinary or fall back to local storage without data loss."
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "TypeScript",
+      "Next.js 15",
+      "React 19",
+      "Express.js",
+      "Prisma ORM",
+      "PostgreSQL",
+      "TailwindCSS",
+      "NextAuth.js",
+      "Resend (Email)",
+      "Redis",
+      "Cloudinary (Images)",
+      "JWT Authentication"
+    ],
+    "features": [
+      {
+        "name": "Authentication System",
+        "description": "Complete auth system with JWT tokens, refresh tokens, Google OAuth, and NextAuth.js integration for session management",
+        "files": [
+          "backend/src/routes/auth.ts",
+          "frontend/src/lib/auth.ts",
+          "frontend/src/app/api/auth/[...nextauth]/route.ts",
+          "backend/src/middleware/auth.ts"
+        ]
+      },
+      {
+        "name": "Class Booking System",
+        "description": "Browse, view, and book surf classes with date/time selection, participant management, and guest checkout support",
+        "files": [
+          "frontend/src/app/classes/[id]/page.tsx",
+          "frontend/src/components/booking/BookingModal.tsx",
+          "frontend/src/components/classes/BookingWidget.tsx",
+          "backend/src/routes/classes.ts"
+        ]
+      },
+      {
+        "name": "Reservation Management",
+        "description": "Create, view, update, and cancel reservations with multi-tenant support and guest checkout functionality",
+        "files": [
+          "backend/src/routes/reservations.ts",
+          "frontend/src/app/reservations/confirmation/page.tsx",
+          "frontend/src/app/reservations/page.tsx"
+        ]
+      },
+      {
+        "name": "Guest Checkout",
+        "description": "Allows unauthenticated users to book classes, auto-creates user accounts, and sends welcome emails with credentials",
+        "files": [
+          "backend/src/routes/reservations.ts",
+          "frontend/src/app/reservations/confirmation/page.tsx",
+          "backend/src/services/email.service.ts"
+        ]
+      },
+      {
+        "name": "Payment System",
+        "description": "Payment processing with voucher uploads, Yape/Plin integration, discount codes, and admin verification",
+        "files": [
+          "backend/src/routes/payments.ts",
+          "frontend/src/components/payments/PaymentUpload.tsx",
+          "backend/src/routes/discountCodes.ts"
+        ]
+      },
+      {
+        "name": "School Dashboard",
+        "description": "School admin dashboard for managing classes, instructors, students, reservations, and payments",
+        "files": [
+          "frontend/src/app/dashboard/school/page.tsx",
+          "frontend/src/app/dashboard/school/classes/page.tsx",
+          "frontend/src/app/dashboard/school/students/page.tsx",
+          "frontend/src/app/dashboard/school/reservations/page.tsx"
+        ]
+      },
+      {
+        "name": "Instructor Dashboard",
+        "description": "Instructor-specific views for managing their classes, schedules, and student interactions",
+        "files": [
+          "frontend/src/app/dashboard/instructor/page.tsx",
+          "frontend/src/app/dashboard/instructor/classes/page.tsx",
+          "backend/src/routes/instructor-classes.ts"
+        ]
+      },
+      {
+        "name": "Admin Dashboard",
+        "description": "Super admin dashboard for managing all schools, users, and system-wide settings",
+        "files": [
+          "frontend/src/app/dashboard/admin/page.tsx",
+          "backend/src/routes/schools.ts",
+          "backend/src/routes/users.ts"
+        ]
+      },
+      {
+        "name": "Email Service",
+        "description": "Email notifications for reservations, payments, password resets, and welcome emails using Resend API",
+        "files": [
+          "backend/src/services/email.service.ts"
+        ]
+      },
+      {
+        "name": "Notification System",
+        "description": "In-app notifications with real-time updates and notification center UI",
+        "files": [
+          "backend/src/routes/notifications.ts",
+          "backend/src/services/notification.service.ts",
+          "frontend/src/components/notifications/NotificationCenter.tsx"
+        ]
+      },
+      {
+        "name": "Multi-Tenant System",
+        "description": "School-based multi-tenancy with data isolation and role-based access control",
+        "files": [
+          "backend/src/middleware/multi-tenant.ts",
+          "backend/src/middleware/resolve-school.ts"
+        ]
+      },
+      {
+        "name": "Product Management",
+        "description": "Manage and sell products (equipment, accessories) alongside class bookings",
+        "files": [
+          "backend/src/routes/products.ts",
+          "frontend/src/components/products/ProductSelector.tsx"
+        ]
+      },
+      {
+        "name": "Beach/Location Management",
+        "description": "Manage beach locations for surf classes with details and mapping",
+        "files": [
+          "backend/src/routes/beaches.ts",
+          "backend/prisma/seed_beaches.ts"
+        ]
+      },
+      {
+        "name": "Image Upload System",
+        "description": "Image upload and management with Cloudinary integration and local storage fallback",
+        "files": [
+          "backend/src/routes/images.ts",
+          "backend/src/config/storage.ts",
+          "backend/src/utils/image-utils.ts"
+        ]
+      },
+      {
+        "name": "Home Page",
+        "description": "Main landing page with hero section, class listings, instructor spotlight, and school showcase",
+        "files": [
+          "frontend/src/app/HomeClient.tsx",
+          "frontend/src/components/home/Hero.tsx",
+          "frontend/src/components/home/InstructorSpotlight.tsx",
+          "frontend/src/components/home/FeaturedClasses.tsx"
+        ]
+      },
+      {
+        "name": "Statistics Dashboard",
+        "description": "Analytics and statistics for schools, reservations, and revenue",
+        "files": [
+          "backend/src/routes/stats.ts",
+          "frontend/src/app/dashboard/school/page.tsx"
+        ]
+      }
+    ]
+  }
+}

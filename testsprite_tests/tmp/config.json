@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000/classes/3",
+  "loginUser": "admin@test.com",
+  "loginPassword": "admin123",
+  "executionArgs": {
+    "projectName": "clasedesurf.com",
+    "projectPath": "c:\\Users\\yerct\\clasedesurf.com",
+    "testIds": [],
+    "additionalInstruction": "Focus on testing the guest checkout flow: 1) Navigate to /classes/3, 2) Open booking modal, 3) Fill participant details without logging in, 4) Complete reservation as guest, 5) Verify reservation is created successfully. The 401 error should now be fixed.",
+    "envs": {
+      "API_KEY": "sk-user-GzYe1fPAwgfwkN6TJ_N4qepM9xv4aF01Pj3dFu7YwPgbD9oDR8bHW2rS_Y75t43RQgz49ZMsvAMySrP4JHxfCeHk2UiuTMBvAMKSLX89ldO9VplZsY7WJ_wnTtygo7h2JUU"
+    }
+  },
+  "proxy": "http://4011d0c9-2aed-4046-884c-778b211e0e12:Q6oTp2PcuT8iUlaRli5B2SwUXIbTS4k2@tun.testsprite.com:8080"
+}

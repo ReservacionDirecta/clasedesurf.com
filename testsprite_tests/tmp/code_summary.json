@@ -1,0 +1,160 @@
+{
+  "tech_stack": [
+    "TypeScript",
+    "Next.js 15",
+    "React 19",
+    "Express.js",
+    "Prisma ORM",
+    "PostgreSQL",
+    "TailwindCSS",
+    "NextAuth.js",
+    "Resend (Email)",
+    "Redis",
+    "Cloudinary (Images)",
+    "JWT Authentication"
+  ],
+  "features": [
+    {
+      "name": "Authentication System",
+      "description": "Complete auth system with JWT tokens, refresh tokens, Google OAuth, and NextAuth.js integration for session management",
+      "files": [
+        "backend/src/routes/auth.ts",
+        "frontend/src/lib/auth.ts",
+        "frontend/src/app/api/auth/[...nextauth]/route.ts",
+        "backend/src/middleware/auth.ts"
+      ]
+    },
+    {
+      "name": "Class Booking System",
+      "description": "Browse, view, and book surf classes with date/time selection, participant management, and guest checkout support",
+      "files": [
+        "frontend/src/app/classes/[id]/page.tsx",
+        "frontend/src/components/booking/BookingModal.tsx",
+        "frontend/src/components/classes/BookingWidget.tsx",
+        "backend/src/routes/classes.ts"
+      ]
+    },
+    {
+      "name": "Reservation Management",
+      "description": "Create, view, update, and cancel reservations with multi-tenant support and guest checkout functionality",
+      "files": [
+        "backend/src/routes/reservations.ts",
+        "frontend/src/app/reservations/confirmation/page.tsx",
+        "frontend/src/app/reservations/page.tsx"
+      ]
+    },
+    {
+      "name": "Guest Checkout",
+      "description": "Allows unauthenticated users to book classes, auto-creates user accounts, and sends welcome emails with credentials",
+      "files": [
+        "backend/src/routes/reservations.ts",
+        "frontend/src/app/reservations/confirmation/page.tsx",
+        "backend/src/services/email.service.ts"
+      ]
+    },
+    {
+      "name": "Payment System",
+      "description": "Payment processing with voucher uploads, Yape/Plin integration, discount codes, and admin verification",
+      "files": [
+        "backend/src/routes/payments.ts",
+        "frontend/src/components/payments/PaymentUpload.tsx",
+        "backend/src/routes/discountCodes.ts"
+      ]
+    },
+    {
+      "name": "School Dashboard",
+      "description": "School admin dashboard for managing classes, instructors, students, reservations, and payments",
+      "files": [
+        "frontend/src/app/dashboard/school/page.tsx",
+        "frontend/src/app/dashboard/school/classes/page.tsx",
+        "frontend/src/app/dashboard/school/students/page.tsx",
+        "frontend/src/app/dashboard/school/reservations/page.tsx"
+      ]
+    },
+    {
+      "name": "Instructor Dashboard",
+      "description": "Instructor-specific views for managing their classes, schedules, and student interactions",
+      "files": [
+        "frontend/src/app/dashboard/instructor/page.tsx",
+        "frontend/src/app/dashboard/instructor/classes/page.tsx",
+        "backend/src/routes/instructor-classes.ts"
+      ]
+    },
+    {
+      "name": "Admin Dashboard",
+      "description": "Super admin dashboard for managing all schools, users, and system-wide settings",
+      "files": [
+        "frontend/src/app/dashboard/admin/page.tsx",
+        "backend/src/routes/schools.ts",
+        "backend/src/routes/users.ts"
+      ]
+    },
+    {
+      "name": "Email Service",
+      "description": "Email notifications for reservations, payments, password resets, and welcome emails using Resend API",
+      "files": [
+        "backend/src/services/email.service.ts"
+      ]
+    },
+    {
+      "name": "Notification System",
+      "description": "In-app notifications with real-time updates and notification center UI",
+      "files": [
+        "backend/src/routes/notifications.ts",
+        "backend/src/services/notification.service.ts",
+        "frontend/src/components/notifications/NotificationCenter.tsx"
+      ]
+    },
+    {
+      "name": "Multi-Tenant System",
+      "description": "School-based multi-tenancy with data isolation and role-based access control",
+      "files": [
+        "backend/src/middleware/multi-tenant.ts",
+        "backend/src/middleware/resolve-school.ts"
+      ]
+    },
+    {
+      "name": "Product Management",
+      "description": "Manage and sell products (equipment, accessories) alongside class bookings",
+      "files": [
+        "backend/src/routes/products.ts",
+        "frontend/src/components/products/ProductSelector.tsx"
+      ]
+    },
+    {
+      "name": "Beach/Location Management",
+      "description": "Manage beach locations for surf classes with details and mapping",
+      "files": [
+        "backend/src/routes/beaches.ts",
+        "backend/prisma/seed_beaches.ts"
+      ]
+    },
+    {
+      "name": "Image Upload System",
+      "description": "Image upload and management with Cloudinary integration and local storage fallback",
+      "files": [
+        "backend/src/routes/images.ts",
+        "backend/src/config/storage.ts",
+        "backend/src/utils/image-utils.ts"
+      ]
+    },
+    {
+      "name": "Home Page",
+      "description": "Main landing page with hero section, class listings, instructor spotlight, and school showcase",
+      "files": [
+        "frontend/src/app/HomeClient.tsx",
+        "frontend/src/components/home/Hero.tsx",
+        "frontend/src/components/home/InstructorSpotlight.tsx",
+        "frontend/src/components/home/FeaturedClasses.tsx"
+      ]
+    },
+    {
+      "name": "Statistics Dashboard",
+      "description": "Analytics and statistics for schools, reservations, and revenue",
+      "files": [
+        "backend/src/routes/stats.ts",
+        "frontend/src/app/dashboard/school/page.tsx"
+      ]
+    }
+  ]
+}

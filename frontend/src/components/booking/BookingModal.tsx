@@ -214,8 +214,12 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
     if (step === 1) {
       if (!formData.name.trim()) newErrors.name = 'El nombre es requerido'
       if (!formData.email.trim()) newErrors.email = 'El email es requerido'
-      if (!formData.email.includes('@')) newErrors.email = 'Email inválido'
-      if (!formData.age || parseInt(formData.age) < 8) newErrors.age = 'La edad mínima es 8 años'
+      else if (!formData.email.includes('@')) newErrors.email = 'Email inválido'
+      
+      const ageNum = Number(formData.age)
+      if (!formData.age || isNaN(ageNum) || ageNum < 8 || ageNum > 120) {
+        newErrors.age = 'Ingresa una edad válida (mínimo 8 años)'
+      }
     }
 
     if (step === 3) {
@@ -340,7 +344,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
   const isStepComplete = (step: number) => {
     if (step === 1) {
-      return formData.name && formData.email && formData.age && parseInt(formData.age) >= 8
+      const ageNum = Number(formData.age)
+      return formData.name && formData.email && formData.age && !isNaN(ageNum) && ageNum >= 8
     }
     if (step === 2) {
       return true // Optional fields

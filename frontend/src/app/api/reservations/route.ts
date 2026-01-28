@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     if (!token) {
       return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
     }
-    
+
     const headers: any = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
@@ -40,25 +40,25 @@ export async function GET(req: NextRequest) {
       }
     }
     const backendUrl = `${BACKEND}/reservations${searchParams}`;
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Backend error' }));
       return NextResponse.json(errorData, { status: response.status });
     }
-    
+
     const data = await response.json();
     return NextResponse.json(data);
-    
+
   } catch (error) {
     console.error('Reservations proxy error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { message: 'Proxy error', error: errorMessage }, 
+      { message: 'Proxy error', error: errorMessage },
       { status: 500 }
     );
   }
@@ -67,22 +67,20 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ message: 'No autorizado' }, { status: 401 });
-    }
+    // Session is now optional for guest checkout
+    const token = (session as any)?.backendToken;
 
-    const token = (session as any).backendToken;
-    if (!token) {
-      return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
-    }
-    
     const headers: any = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      'Content-Type': 'application/json'
     };
 
+    // Only add Authorization header if we have a token
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const body = await req.json();
-    
+
     const response = await fetch(`${BACKEND}/reservations`, {
       method: 'POST',
       headers,
@@ -96,11 +94,11 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-    
+
   } catch (error) {
     console.error('Error creating reservation:', error);
     return NextResponse.json(
-      { message: 'Internal server error' }, 
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -117,14 +115,14 @@ export async function PUT(req: NextRequest) {
     if (!token) {
       return NextResponse.json({ message: 'Token no disponible. Por favor, inicia sesión nuevamente.' }, { status: 401 });
     }
-    
+
     const headers: any = {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     };
 
     const body = await req.json();
-    
+
     const response = await fetch(`${BACKEND}/reservations`, {
       method: 'PUT',
       headers,
@@ -138,11 +136,11 @@ export async function PUT(req: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data, { status: response.status });
-    
+
   } catch (error) {
     console.error('Error updating reservation:', error);
     return NextResponse.json(
-      { message: 'Internal server error' }, 
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }
