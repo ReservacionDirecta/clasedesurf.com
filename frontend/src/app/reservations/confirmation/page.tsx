@@ -239,6 +239,17 @@ function ReservationConfirmationContent() {
         setParticipantsError(`El nombre del participante ${i + 1} es requerido`);
         return false;
       }
+      // For guest checkout, first participant must have email
+      if (i === 0 && !session) {
+        if (!p.email || !p.email.trim()) {
+          setParticipantsError('El correo electrónico es requerido para completar la reserva');
+          return false;
+        }
+        if (!p.email.includes('@')) {
+          setParticipantsError('Por favor ingresa un correo electrónico válido');
+          return false;
+        }
+      }
       if (!p.age || parseInt(p.age) < 8) {
         setParticipantsError(`La edad del participante ${i + 1} debe ser mínimo 8 años`);
         return false;
@@ -729,6 +740,19 @@ function ReservationConfirmationContent() {
                                 className="bg-white border-slate-200 h-12"
                              />
                            </div>
+                           {/* Email field for guest checkout - only for first participant when not logged in */}
+                           {idx === 0 && !session && (
+                           <div className="sm:col-span-2 lg:col-span-1">
+                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Correo electrónico *</label>
+                             <Input 
+                                type="email"
+                                placeholder="correo@ejemplo.com"
+                                value={p.email || ''}
+                                onChange={e => updateParticipant(idx, 'email', e.target.value)}
+                                className="bg-white border-slate-200 h-12"
+                             />
+                           </div>
+                           )}
                            <div>
                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Edad</label>
                              <Input 
