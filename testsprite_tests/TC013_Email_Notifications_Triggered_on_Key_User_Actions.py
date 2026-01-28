@@ -46,90 +46,17 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # -> Open the booking modal to start guest checkout.
+        # -> Open the booking modal by clicking the 'Reservar ahora' button to start the reservation process.
         frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
         # Click 'Reservar ahora' button to open booking modal
         elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Select 1 participant from the dropdown and click 'Reservar ahora' to proceed with reservation.
+        # -> Select '1 persona' from the participant dropdown (index 55) and then click 'Reservar ahora' button (index 56) to proceed with reservation.
         frame = context.pages[-1]
-        # Click 'Reservar ahora' to proceed with reservation
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill in the reservation form fields: full name, email, age, then click 'Siguiente' to proceed.
-        frame = context.pages[-1]
-        # Input full name in reservation form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Test User')
-        
-
-        frame = context.pages[-1]
-        # Input email in reservation form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('testuser@example.com')
-        
-
-        frame = context.pages[-1]
-        # Input age in reservation form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('30')
-        
-
-        frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed with reservation
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill in height, weight, swimming ability, experience level, and medical condition fields, then submit the reservation.
-        frame = context.pages[-1]
-        # Input height in cm
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('170')
-        
-
-        frame = context.pages[-1]
-        # Input weight in kg
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('70')
-        
-
-        frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
-        # Click 'Sé nadar' checkbox to indicate swimming ability
-        elem = frame.locator('xpath=html/body/div/div/div[3]/div[14]/div/img').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        frame = context.pages[-1]
-        # Input medical condition as none
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Ninguna lesión')
-        
-
-        frame = context.pages[-1]
-        # Click 'Siguiente' button to submit reservation details
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Check for any modal, alert, or page element indicating reservation success or confirmation. If none, try to navigate to user reservations or admin panel to verify reservation creation.
-        await page.mouse.wheel(0, 300)
-        
-
-        # -> Close cookie banner and navigate to admin panel to verify reservation creation and email notifications.
-        frame = context.pages[-1]
-        # Click 'Aceptar todas' to accept cookies and close banner
-        elem = frame.locator('xpath=html/body/div[3]/div/div/div[2]/button[3]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        frame = context.pages[-1]
-        # Click 'Iniciar Sesión' to login as admin for verification
-        elem = frame.locator('xpath=html/body/header/div/div/div/a/button').nth(0)
+        # Click 'Reservar ahora' button to proceed with reservation
+        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/div[2]/div/select').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
@@ -138,7 +65,7 @@ async def run_test():
         try:
             await expect(frame.locator('text=Email Notification Success').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test case failed: Email notifications for welcome emails, reservation confirmations, cancellations, payment receipts, and reminders were not sent correctly as per the test plan.")
+            raise AssertionError('Test case failed: Email notifications for welcome emails, reservation confirmations, cancellations, payment receipts, and reminders were not sent correctly as per the test plan.')
         await asyncio.sleep(5)
     
     finally:

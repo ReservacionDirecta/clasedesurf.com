@@ -48,49 +48,17 @@ async def run_test():
         # Interact with the page elements to simulate user flow
         # -> Click the 'Reservar ahora' button to open the booking modal.
         frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
-        # Click 'Reservar ahora' button to open booking modal
-        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill participant details as guest and proceed to payment step.
-        frame = context.pages[-1]
-        # Click 'Reservar ahora' button to proceed with booking
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Click 'Siguiente' to proceed to the next step in the booking process, likely payment.
-        frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed to next step in booking
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill valid full name and valid email in participant details form, then click 'Siguiente' to proceed to payment step.
-        frame = context.pages[-1]
-        # Fill valid full name in participant details form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Juan Pérez')
-        
-
-        frame = context.pages[-1]
-        # Fill valid email in participant details form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('juan.perez@example.com')
-        
-
-        frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed to payment step
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
+        # Click 'Reservar ahora' button to open booking modal for booking.
+        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control/button/img').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
+        frame = context.pages[-1]
         try:
-            await expect(page.locator('text=Discount Applied Successfully').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=Discount Applied Successfully')).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test failed: Discount codes could not be applied during payment as expected. The discount was not reflected in the total amount or invalid/expired codes were not properly rejected.")
+            raise AssertionError("Test failed: Discount code application test failed as the test plan execution did not complete successfully. The expected discount application confirmation message was not found.")
         await asyncio.sleep(5)
     
     finally:

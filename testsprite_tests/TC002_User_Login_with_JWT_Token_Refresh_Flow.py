@@ -48,38 +48,43 @@ async def run_test():
         # Interact with the page elements to simulate user flow
         # -> Click the 'Reservar ahora' button to open the booking modal.
         frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
-        # Click the 'Reservar ahora' button to open the booking modal for booking.
-        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control/button/img').nth(0)
+        # Click 'Reservar ahora' button to open booking modal
+        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Click the correct 'Reservar ahora' button (index 39) to open the booking modal.
+        # -> Fill participant details in the booking modal without logging in.
         frame = context.pages[-1]
-        # Click the 'Reservar ahora' button to open the booking modal for booking.
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/div[2]/div/select').nth(0)
+        # Click 'Iniciar Sesión' button to open login modal for user login test
+        elem = frame.locator('xpath=html/body/header/div/div/div/a/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Fill participant details for guest checkout by selecting 1 participant and proceed with reservation.
+        # -> Input valid username and password, then submit login form.
         frame = context.pages[-1]
-        # Click 'Reservar ahora' button to proceed with the booking as guest.
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        # Input valid username/email
+        elem = frame.locator('xpath=html/body/div[2]/div/div[2]/div/form/div/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('admin@test.com')
         
 
-        # -> Click the 'Siguiente' button to proceed to the next step in the guest checkout reservation process.
         frame = context.pages[-1]
-        # Click the 'Siguiente' button to proceed with the guest checkout reservation.
-        elem = frame.locator('xpath=html/body/div[3]').nth(0)
+        # Input valid password
+        elem = frame.locator('xpath=html/body/div[2]/div/div[2]/div/form/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('admin123')
+        
+
+        frame = context.pages[-1]
+        # Click 'Iniciar Sesión' button to submit login form
+        elem = frame.locator('xpath=html/body/div[2]/div/div[2]/div/form/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Login Successful! Welcome back').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=Login Successful').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError('Test case failed: The login with correct credentials and refresh token flow did not succeed as expected.')
+            raise AssertionError("Test case failed: User login with correct credentials and refresh token flow did not succeed as expected. JWT tokens were not returned or validated.")
         await asyncio.sleep(5)
     
     finally:

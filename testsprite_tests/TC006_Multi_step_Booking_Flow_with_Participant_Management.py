@@ -55,37 +55,57 @@ async def run_test():
 
         # -> Enter participant details for the single participant in the booking modal.
         frame = context.pages[-1]
-        # Select number of participants dropdown to enter participant details.
+        # Click 'Reservar ahora' button to proceed to participant details entry.
         elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Fill in participant details: full name, email, and age, then proceed by clicking 'Siguiente'.
+        # -> Click the 'Siguiente' button to validate participant data and proceed to booking confirmation.
         frame = context.pages[-1]
-        # Enter full name for participant.
+        # Click the 'Siguiente' button to validate participant data and proceed to the next step in the booking modal.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Fill in the 'Nombre completo' and 'Correo electrónico' fields with valid data and reattempt to proceed by clicking 'Siguiente'.
+        frame = context.pages[-1]
+        # Fill 'Nombre completo' field with valid name.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
         await page.wait_for_timeout(3000); await elem.fill('Juan Pérez')
         
 
         frame = context.pages[-1]
-        # Enter email for participant.
+        # Fill 'Correo electrónico' field with valid email.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('juan@ejemplo.com')
+        await page.wait_for_timeout(3000); await elem.fill('juan.perez@example.com')
         
 
         frame = context.pages[-1]
-        # Enter age for participant.
+        # Click 'Siguiente' button to validate participant data and proceed.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Clear and re-enter the age field with a valid number and then click 'Siguiente' to reattempt validation.
+        frame = context.pages[-1]
+        # Clear the 'Edad' field to remove invalid input.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('')
+        
+
+        frame = context.pages[-1]
+        # Re-enter a valid age (25) in the 'Edad' field.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
         await page.wait_for_timeout(3000); await elem.fill('25')
         
 
         frame = context.pages[-1]
-        # Click 'Siguiente' to proceed to next step in booking modal.
+        # Click the 'Siguiente' button to validate participant data and proceed.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Fill in the customization fields: height, weight, swimming ability, experience level, and medical conditions if any, then click 'Siguiente' to continue.
+        # -> Fill in the 'Personaliza tu experiencia' fields (height, weight, swimming ability, experience level, medical conditions) and proceed.
         frame = context.pages[-1]
         # Enter height in cm.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
@@ -99,40 +119,35 @@ async def run_test():
         
 
         frame = context.pages[-1]
-        # Click checkbox 'Sé nadar' to indicate swimming ability.
+        # Toggle 'Sé nadar' checkbox to indicate swimming ability.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[3]/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         frame = context.pages[-1]
-        # Enter 'Ninguna' for medical conditions.
+        # Enter medical condition details.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Ninguna')
+        await page.wait_for_timeout(3000); await elem.fill('Ninguna lesión o condición médica.')
         
 
         frame = context.pages[-1]
-        # Click 'Siguiente' to proceed to the next step in booking modal.
+        # Click 'Siguiente' button to proceed to the next step.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Identify and fill emergency contact details fields correctly or proceed if not required, then continue to booking confirmation step.
-        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
-        
-
-        # -> Click the 'Siguiente' button to attempt to proceed to the next step or booking confirmation, or identify emergency contact fields if they appear.
+        # -> Click the 'Siguiente' button to proceed to the next step (likely emergency contact or booking confirmation).
         frame = context.pages[-1]
-        # Click 'Siguiente' to try to proceed to the next step or booking confirmation.
+        # Click the 'Siguiente' button to proceed from 'Personaliza tu experiencia' to the next step.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
-        frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Booking Completed Successfully!').first).to_be_visible(timeout=1000)
+            await expect(page.locator('text=Booking Completed Successfully!')).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test case failed: The booking modal workflow did not complete successfully, indicating failure in participant data entry, session selection, or booking confirmation as per the test plan.")
+            raise AssertionError("Test plan execution failed: Booking modal workflow test failed including participant data entry, session selection, and booking confirmation.")
         await asyncio.sleep(5)
     
     finally:

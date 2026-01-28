@@ -54,6 +54,7 @@ interface ReservationData {
 
 interface ParticipantDetails {
   name: string;
+  email?: string; // Added for guest checkout
   age: string;
   height: string;
   weight: string;
@@ -113,6 +114,8 @@ function ReservationConfirmationContent() {
             // If a user is logged in, prefill the first participant's name from the session,
             // falling back to the guest booking data if session data isn't available.
             name: i === 0 ? (session?.user?.name || data.bookingData?.name || '') : '',
+            // Include email for guest checkout (mandatory for first participant)
+            email: i === 0 ? (session?.user?.email || data.bookingData?.email || '') : '',
             age: i === 0 && data.bookingData?.age ? data.bookingData.age : '',
             height: i === 0 && data.bookingData?.height ? data.bookingData.height : '',
             weight: i === 0 && data.bookingData?.weight ? data.bookingData.weight : '',

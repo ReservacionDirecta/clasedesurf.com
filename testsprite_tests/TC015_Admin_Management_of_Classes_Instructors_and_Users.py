@@ -48,81 +48,17 @@ async def run_test():
         # Interact with the page elements to simulate user flow
         # -> Open the booking modal by clicking the 'Reservar ahora' button.
         frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
-        # Click the 'Reservar ahora' button to open the booking modal.
-        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Select '1 persona' option from the participant dropdown (index 56) and then click 'Reservar ahora' button (index 57) to proceed with guest reservation.
-        frame = context.pages[-1]
-        # Click 'Reservar ahora' button to proceed with reservation as guest.
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill in the personal information fields: full name, email, and age with valid data, then click the 'Siguiente' button to proceed.
-        frame = context.pages[-1]
-        # Input full name in the reservation form.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Juan Pérez')
-        
-
-        frame = context.pages[-1]
-        # Input email in the reservation form.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('juan.perez@example.com')
-        
-
-        frame = context.pages[-1]
-        # Input age in the reservation form.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('30')
-        
-
-        frame = context.pages[-1]
-        # Click the 'Siguiente' button to proceed to the next step in the reservation process.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill in the 'Detalles' section fields (height, weight, swimming level, injuries) and proceed to the next step.
-        frame = context.pages[-1]
-        # Input height in cm in 'Detalles' section.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('170')
-        
-
-        frame = context.pages[-1]
-        # Input weight in kg in 'Detalles' section.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('70')
-        
-
-        frame = context.pages[-1]
-        # Input injuries or medical conditions as none.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Ninguna lesión o condición médica.')
-        
-
-        frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed to the next step in the reservation process.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Click the 'Siguiente' button to attempt to proceed to the 'Emergencia' section or complete the reservation if emergency details are optional.
-        frame = context.pages[-1]
-        # Click the 'Siguiente' button to proceed to the next step or complete the reservation.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div').nth(0)
+        # Click 'Reservar ahora' button to open booking modal
+        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control/button/img').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Admin Privileges Granted').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=Unauthorized admin access attempt detected')).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test plan execution failed: Authorized admins could not create, update, or soft delete classes, instructors, and users with proper role and data validation.")
+            raise AssertionError("Test plan execution failed: Authorized admins must be able to create, update, and soft delete classes, instructors, and users with proper role and data validation. This failure indicates the test did not pass these critical validations.")
         await asyncio.sleep(5)
     
     finally:

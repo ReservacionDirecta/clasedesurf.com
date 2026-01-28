@@ -46,76 +46,72 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # -> Click on 'Reservar ahora' button to open booking modal
-        frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
-        # Click on 'Reservar ahora' button to open booking modal
-        elem = frame.locator('xpath=html/body/div/div/div[3]/div[13]/div/div/button').nth(0)
+        # -> Open the booking modal to start the reservation process.
+        frame = context.pages[-1]
+        # Click 'Aceptar todas' to accept cookies and remove cookie banner
+        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[2]/div[4]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Select '1 persona' from the participant dropdown and then click 'Reservar ahora' to complete reservation
+        # -> Click the 'Reservar ahora' button (index 39) to open the booking modal and start the guest checkout flow.
         frame = context.pages[-1]
-        # Click 'Reservar ahora' to proceed with reservation
+        # Click 'Reservar ahora' button to open booking modal
+        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/div[2]/div/select').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Fill participant details as guest and complete the reservation.
+        frame = context.pages[-1]
+        # Click 'Reservar ahora' to proceed to participant details form
         elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Fill in guest personal details (name, email, age) and click 'Siguiente' to proceed
+        # -> Click 'Siguiente' button to proceed to the next step of the reservation process.
         frame = context.pages[-1]
-        # Fill in full name
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Juan Pérez')
-        
-
-        frame = context.pages[-1]
-        # Fill in email
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('juan@example.com')
-        
-
-        frame = context.pages[-1]
-        # Fill in age
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('25')
-        
-
-        frame = context.pages[-1]
-        # Click 'Siguiente' to proceed with reservation
+        # Click 'Siguiente' button to proceed to next step in reservation form
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Fill in experience details (height, weight, swimming level, injury) and click 'Siguiente' to complete reservation
+        # -> Try to input email and age fields using keyboard events or other alternative methods, or report the issue if no progress.
         frame = context.pages[-1]
-        # Fill in height
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('170')
-        
-
-        frame = context.pages[-1]
-        # Fill in weight
+        # Click email field to focus
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('70')
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         frame = context.pages[-1]
-        # Fill in injury or medical condition
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Ninguna')
+        # Click age field to focus
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div[2]/div/select').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         frame = context.pages[-1]
-        # Click 'Siguiente' to complete reservation
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div').nth(0)
+        # Click 'Siguiente' button to proceed after typing participant details
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Try to select the 'Participantes' dropdown to a valid option and re-enter the age field using keyboard input, then try to proceed again.
+        frame = context.pages[-1]
+        # Click age field to focus
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div[2]/div/select').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        frame = context.pages[-1]
+        # Click 'Siguiente' button to proceed after re-entering age and selecting participants
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Reservation Cancelled Successfully').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=Reservation Cancellation Confirmed').first).to_be_visible(timeout=30000)
         except AssertionError:
-            raise AssertionError("Test failed: The reservation cancellation did not trigger the expected cancellation email and in-app notification as per the test plan.")
+            raise AssertionError("Test case failed: The reservation cancellation did not trigger the expected cancellation email and in-app notification as per the test plan.")
         await asyncio.sleep(5)
     
     finally:

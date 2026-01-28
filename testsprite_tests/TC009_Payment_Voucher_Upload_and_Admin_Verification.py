@@ -46,135 +46,109 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # -> Click on 'Reservar ahora' button to open booking modal
+        # -> Click the 'Reservar ahora' button to open the booking modal.
         frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
-        # Click on 'Reservar ahora' button to open booking modal
-        elem = frame.locator('xpath=html/body/div/div/div[3]/div[13]/div/div/button').nth(0)
+        # Click the 'Reservar ahora' button to open the booking modal for booking.
+        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Click on 'Reservar ahora' button to proceed with reservation
+        # -> Select number of participants and click 'Reservar ahora' to proceed with reservation.
         frame = context.pages[-1]
-        # Click on 'Reservar ahora' button to proceed with reservation
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div[2]/button').nth(0)
+        # Select number of participants dropdown to choose 1 participant.
+        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/div[2]/div/select').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Click on 'Reservar ahora' button to proceed to participant details form
+        # -> Select '1 persona' from the dropdown and click 'Reservar ahora' to proceed with reservation.
         frame = context.pages[-1]
-        # Click on 'Reservar ahora' button to proceed to participant details form
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div/section[4]/div/div[2]/div/div[2]/a').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Switch back to the original booking tab at http://localhost:3000/classes/3 and retry clicking the correct 'Reservar ahora' button to proceed with participant details form.
-        frame = context.pages[-1]
-        # Switch to the original booking tab by clicking on it or go back to it
-        elem = frame.locator('xpath=html/body/div/div[2]/div[9]/div/div[3]/div/div/canvas').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        await page.goto('http://localhost:3000/classes/3', timeout=10000)
-        await asyncio.sleep(3)
-        
-
-        # -> Dismiss cookie consent banner by clicking 'Aceptar todas' button to avoid UI obstruction, then click 'Reservar ahora' button to open booking modal.
-        frame = context.pages[-1]
-        # Click 'Aceptar todas' button to accept cookies and dismiss banner
-        elem = frame.locator('xpath=html/body/div[3]/div/div/div[2]/button[3]').nth(0)
+        # Select '1 persona' from the participants dropdown.
+        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/div[2]/div/select').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         frame = context.pages[-1]
-        # Click 'Reservar ahora' button to open booking modal
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Click on the correct 'Reservar ahora' button (index 45) to open the booking modal and proceed with participant details entry.
-        frame = context.pages[-1]
-        # Click on 'Reservar ahora' button to open booking modal
+        # Click 'Reservar ahora' button to proceed with reservation as guest.
         elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Fill in participant details: name, email, age, and confirm number of participants, then click 'Siguiente' to proceed.
+        # -> Click the 'Siguiente' button to proceed with the reservation process.
         frame = context.pages[-1]
-        # Input full name in participant details form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Test User')
-        
-
-        frame = context.pages[-1]
-        # Input email in participant details form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('testuser@example.com')
-        
-
-        frame = context.pages[-1]
-        # Input age in participant details form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('30')
-        
-
-        frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed to next step
+        # Click the 'Siguiente' button to proceed with the reservation.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Click 'Siguiente' button (index 53) to proceed to the next step in the booking process.
+        # -> Fill 'Nombre completo' and 'Correo electrónico' fields with valid guest data and retry clicking 'Siguiente'.
         frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed to next booking step
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill in valid emergency contact name and phone number, then click 'Confirmar Reserva' button to complete reservation.
-        frame = context.pages[-1]
-        # Input emergency contact name
+        # Fill 'Nombre completo' field with valid guest name.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Emergency Contact')
+        await page.wait_for_timeout(3000); await elem.fill('Juan Pérez')
         
 
         frame = context.pages[-1]
-        # Input valid emergency phone number
+        # Fill 'Correo electrónico' field with valid guest email.
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('+51987654321')
+        await page.wait_for_timeout(3000); await elem.fill('juan.perez@example.com')
         
 
         frame = context.pages[-1]
-        # Click 'Confirmar Reserva' button to complete reservation
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button[2]').nth(0)
+        # Click 'Siguiente' button to proceed after filling required fields.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Click 'Continuar como Invitado' button to finalize reservation as guest and proceed to payment voucher upload.
+        # -> Try to correct the age input field by clearing and re-entering a valid age, then retry clicking 'Siguiente'. If still failing, report the issue and stop.
         frame = context.pages[-1]
-        # Click 'Continuar como Invitado' button to finalize reservation as guest
-        elem = frame.locator('xpath=html/body/div[2]/div/div[3]/div/div/div[2]/div/div/div/button').nth(0)
+        # Clear the 'Edad' input field to remove invalid age error.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('')
+        
+
+        frame = context.pages[-1]
+        # Re-enter valid age '25' in the 'Edad' input field.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('25')
+        
+
+        frame = context.pages[-1]
+        # Click 'Siguiente' button to retry proceeding with reservation after correcting age input.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Correct the 'Edad' (Age) field by inputting a valid age number, optionally fill height and weight, then click 'Confirmar Datos y Reservar' button to complete reservation.
+        # -> Fill the 'Detalles' section fields as needed and proceed to the next step to complete the reservation.
         frame = context.pages[-1]
-        # Correct the 'Edad' field by inputting a valid age
-        elem = frame.locator('xpath=html/body/div[2]/div/div[3]/div/div/div/div[2]/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('30')
+        # Confirm 'Altura (cm)' field is filled with 170.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('170')
         
 
         frame = context.pages[-1]
-        # Click 'Confirmar Datos y Reservar' button to complete reservation
-        elem = frame.locator('xpath=html/body/div[2]/div/div[3]/div/div/div/div[3]/button[2]').nth(0)
+        # Confirm 'Peso (kg)' field is filled with 70.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('70')
+        
+
+        frame = context.pages[-1]
+        # Click 'Siguiente' button to proceed from 'Detalles' section.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Click the 'Siguiente' button to proceed from 'Detalles' section to the next step in the reservation process.
+        frame = context.pages[-1]
+        # Click 'Siguiente' button to proceed from 'Detalles' section.
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
-        frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=Payment Voucher Verified Successfully').first).to_be_visible(timeout=1000)
+            await expect(page.locator('text=Payment Voucher Uploaded Successfully')).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test failed: Payment voucher upload and verification process did not complete successfully as per the test plan. The payment status did not update to 'verified' and the UI did not reflect the correct status.")
+            raise AssertionError("Test failed: Payment voucher upload functionality and subsequent verification by admin did not complete successfully. The voucher was not stored or linked correctly, or the payment status did not update to verified in the dashboard as expected.")
         await asyncio.sleep(5)
     
     finally:

@@ -46,70 +46,89 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # -> Click the 'Reservar ahora' button to open the booking modal.
+        # -> Open the booking modal by clicking the 'Reservar ahora' button to start guest reservation
         frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
         # Click 'Reservar ahora' button to open booking modal
-        elem = frame.locator('xpath=html/body/div/div/div[3]/div[13]/div/div/button/div[2]/div/div/div').nth(0)
+        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Fill participant details in the booking modal for guest checkout.
+        # -> Click 'Reservar ahora' button to complete the reservation as guest and trigger notification
         frame = context.pages[-1]
-        # Select number of participants dropdown
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/div[2]/div/select').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Select '1 persona' from participants dropdown and click 'Reservar ahora' to complete guest reservation.
-        frame = context.pages[-1]
-        # Select '1 persona' from participants dropdown
-        elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/div[2]/div/select').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        frame = context.pages[-1]
-        # Click 'Reservar ahora' button to complete reservation
+        # Click 'Reservar ahora' button to complete guest reservation
         elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Fill in the guest reservation form fields: full name, email, and age, then click 'Siguiente' to proceed.
+        # -> Fill in personal details: name, email, age, and confirm participant count, then click 'Siguiente' to proceed
         frame = context.pages[-1]
-        # Fill full name in guest reservation form
+        # Fill in full name
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Test User')
+        await page.wait_for_timeout(3000); await elem.fill('Juan Pérez')
         
 
         frame = context.pages[-1]
-        # Fill email in guest reservation form
+        # Fill in email address
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('testuser@example.com')
+        await page.wait_for_timeout(3000); await elem.fill('juan@ejemplo.com')
         
 
         frame = context.pages[-1]
-        # Fill age in guest reservation form
+        # Fill in age
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('30')
+        await page.wait_for_timeout(3000); await elem.fill('25')
         
 
         frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed with reservation
+        # Click 'Siguiente' button to proceed to next step
         elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Click the 'Siguiente' button to proceed to the next step in the reservation process.
+        # -> Fill experience details (height, weight, swimming level, injuries) and click 'Siguiente' to proceed
         frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed to next step in reservation form
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div').nth(0)
+        # Fill height in cm
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('170')
+        
+
+        frame = context.pages[-1]
+        # Fill weight in kg
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('70')
+        
+
+        frame = context.pages[-1]
+        # Check 'Sé nadar' checkbox
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[3]/div').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        frame = context.pages[-1]
+        # Fill injury details
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
+        await page.wait_for_timeout(3000); await elem.fill('Ninguna lesión')
+        
+
+        frame = context.pages[-1]
+        # Click 'Siguiente' button to proceed to next step
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Click 'Siguiente' or equivalent button to proceed to final reservation confirmation and complete the booking
+        frame = context.pages[-1]
+        # Click 'Siguiente' button to proceed to next step or complete reservation
+        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
+        frame = context.pages[-1]
         try:
-            await expect(page.locator('text=Notification Center Updated Successfully').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=Notification Center Updated Successfully').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test failed: Notification did not appear in real-time, could not mark as read, or status updates did not persist as required by the test plan.")
+            raise AssertionError("Test failed: Notification did not appear in real-time, could not be marked as read, or status updates did not persist as required by the test plan.")
         await asyncio.sleep(5)
     
     finally:

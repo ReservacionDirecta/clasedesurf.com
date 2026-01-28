@@ -46,122 +46,81 @@ async def run_test():
                 pass
         
         # Interact with the page elements to simulate user flow
-        # -> Click on 'Reservar ahora' button to start booking process.
+        # -> Click the 'Reservar ahora' button to open the booking modal and start guest checkout.
         frame = context.pages[-1].frame_locator('html > body > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > section:nth-of-type(4) > div > div > iframe.w-full.h-full.grayscale-10.transition-all.duration-700[src="https://maps.google.com/maps?q=Playa%20Playa%20M%C3%A1ncora%2C%20M%C3%A1ncora%2C%20Piura&t=&z=15&ie=UTF8&iwloc=&output=embed"][title="Ubicación de la clase"][aria-label="Mapa mostrando la ubicación en Playa Máncora"]')
-        # Click on 'Reservar ahora' button to start booking process.
-        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control/button/img').nth(0)
+        # Click 'Reservar ahora' button to open booking modal
+        elem = frame.locator('xpath=html/body/div/div/div[3]/div[12]/div/gmp-internal-camera-control/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Try clicking the 'Aceptar todas' button on the cookie consent banner to remove any potential UI blocking, then retry clicking 'Reservar ahora'.
+        # -> Scroll down if needed and locate the email input field to enter an unused email for guest checkout.
+        await page.mouse.wheel(0, 300)
+        
+
+        # -> Scroll further down or search for the email input field to enter an unused email for guest checkout.
+        await page.mouse.wheel(0, 300)
+        
+
+        # -> Close or accept the cookie consent banner to clear the view and try to locate the email input field for guest checkout.
         frame = context.pages[-1]
-        # Click 'Aceptar todas' button on cookie consent banner to accept cookies and remove UI blocking.
+        # Click 'Aceptar todas' button to accept cookies and close the banner
         elem = frame.locator('xpath=html/body/div[3]/div/div/div[2]/button[2]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Close the cookie preferences modal by clicking the close button to clear UI and then retry clicking 'Reservar ahora' to start booking.
+        # -> Click the 'Cerrar modal' button (index 67) to close the cookie preferences modal and reveal the booking form for guest email input.
         frame = context.pages[-1]
-        # Click close button on cookie preferences modal to close it.
+        # Click 'Cerrar modal' button to close cookie preferences modal
+        elem = frame.locator('xpath=html/body/div[4]/div[2]/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Scroll down to locate the guest email input field to enter an unused email.
+        await page.mouse.wheel(0, await page.evaluate('() => window.innerHeight'))
+        
+
+        # -> Click 'Aceptar todas' button (index 67) to accept cookies and close the banner, then locate the email input field for guest checkout.
+        frame = context.pages[-1]
+        # Click 'Aceptar todas' button to accept cookies and close banner
+        elem = frame.locator('xpath=html/body/div[3]/div/div/div[2]/button[2]').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Click the 'Cerrar modal' button (index 67) to close the cookie preferences modal and reveal the booking form for guest email input.
+        frame = context.pages[-1]
+        # Click 'Cerrar modal' button to close cookie preferences modal
+        elem = frame.locator('xpath=html/body/div[4]/div[2]/div/button').nth(0)
+        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
+        
+
+        # -> Scroll up slightly to check if the guest email input field is above the current viewport or search for the email input field in the booking form.
+        await page.mouse.wheel(0, -200)
+        
+
+        # -> Scroll down further to locate the guest email input field in the booking modal.
+        await page.mouse.wheel(0, 300)
+        
+
+        # -> Click 'Aceptar todas' button (index 68) to accept cookies and close the banner, then locate the email input field for guest checkout.
+        frame = context.pages[-1]
+        # Click 'Aceptar todas' button to accept cookies and close banner
         elem = frame.locator('xpath=html/body/div[3]/div/div/div[2]/button[3]').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
-        # -> Click the 'Reservar ahora' button to open the booking modal and start the guest booking process.
+        # -> Click 'Reservar ahora' button (index 58) to attempt to complete booking as guest and see if system generates user and sends welcome email automatically.
         frame = context.pages[-1]
-        # Click 'Reservar ahora' button to start booking process as guest.
+        # Click 'Reservar ahora' button to complete booking as guest
         elem = frame.locator('xpath=html/body/div[2]/div[2]/div[3]/div[2]/div/div/div[2]/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill in participant details with an unused email and proceed by clicking 'Siguiente'.
-        frame = context.pages[-1]
-        # Input full name in 'Nombre completo' field.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Test User')
-        
-
-        frame = context.pages[-1]
-        # Input unused email in 'Correo electrónico' field.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('testuser12345@example.com')
-        
-
-        frame = context.pages[-1]
-        # Input age in 'Edad' field.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[3]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('30')
-        
-
-        frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed to next step.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill in customization details and click 'Siguiente' to proceed to the next step.
-        frame = context.pages[-1]
-        # Input height in cm.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('170')
-        
-
-        frame = context.pages[-1]
-        # Input weight in kg.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('70')
-        
-
-        frame = context.pages[-1]
-        # Check 'Sé nadar' checkbox.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[3]/div').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        frame = context.pages[-1]
-        # Input medical condition as none.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[4]/textarea').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Ninguna lesión o condición médica.')
-        
-
-        frame = context.pages[-1]
-        # Click 'Siguiente' button to proceed to next step.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Fill emergency contact details and confirm the reservation by clicking 'Confirmar Reserva'.
-        frame = context.pages[-1]
-        # Input emergency contact name.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('Juan Perez')
-        
-
-        frame = context.pages[-1]
-        # Input emergency contact phone number.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/form/div/div[2]/div[2]/input').nth(0)
-        await page.wait_for_timeout(3000); await elem.fill('+51987654321')
-        
-
-        frame = context.pages[-1]
-        # Click 'Confirmar Reserva' button to complete booking as guest.
-        elem = frame.locator('xpath=html/body/div[2]/div[3]/div/div/div[2]/div/button[2]').nth(0)
-        await page.wait_for_timeout(3000); await elem.click(timeout=5000)
-        
-
-        # -> Click 'Continuar como Invitado' button to finalize booking and trigger user account creation.
-        frame = context.pages[-1]
-        # Click 'Continuar como Invitado' button to finalize booking as guest and create user account.
-        elem = frame.locator('xpath=html/body/div[2]/div/div[3]/div/div/div[2]/div/div/div/button').nth(0)
         await page.wait_for_timeout(3000); await elem.click(timeout=5000)
         
 
         # --> Assertions to verify final state
         frame = context.pages[-1]
         try:
-            await expect(frame.locator('text=User account successfully created with auth token').first).to_be_visible(timeout=1000)
+            await expect(frame.locator('text=User creation successful').first).to_be_visible(timeout=1000)
         except AssertionError:
-            raise AssertionError("Test failed: Guest checkout flow did not create a new user with generated credentials, did not send welcome email, or did not return an authentication token as expected.")
+            raise AssertionError("Test failed: Guest checkout flow did not create a new user with generated credentials, send welcome email, or return auth token as expected.")
         await asyncio.sleep(5)
     
     finally:
