@@ -3,24 +3,27 @@ import { z } from 'zod';
 // Schema for participant details
 const participantSchema = z.object({
   name: z.string().min(1, 'Participant name is required'),
+  email: z.string().email('Invalid email format').optional(), // For guest checkout
   age: z.union([z.string(), z.number()]).transform(val => {
     const num = typeof val === 'string' ? parseInt(val, 10) : val;
     if (isNaN(num) || num < 8) throw new Error('Age must be at least 8');
     return num;
   }),
-  height: z.union([z.string(), z.number()]).transform(val => {
+  height: z.union([z.string(), z.number()]).optional().transform(val => {
+    if (!val) return undefined;
     const num = typeof val === 'string' ? parseInt(val, 10) : val;
     if (isNaN(num) || num < 100) throw new Error('Height must be at least 100cm');
     return num;
   }),
-  weight: z.union([z.string(), z.number()]).transform(val => {
+  weight: z.union([z.string(), z.number()]).optional().transform(val => {
+    if (!val) return undefined;
     const num = typeof val === 'string' ? parseInt(val, 10) : val;
     if (isNaN(num) || num < 20) throw new Error('Weight must be at least 20kg');
     return num;
   }),
-  canSwim: z.boolean(),
+  canSwim: z.boolean().optional().default(false),
   swimmingLevel: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
-  hasSurfedBefore: z.boolean(),
+  hasSurfedBefore: z.boolean().optional().default(false),
   injuries: z.string().optional(),
   comments: z.string().optional()
 });

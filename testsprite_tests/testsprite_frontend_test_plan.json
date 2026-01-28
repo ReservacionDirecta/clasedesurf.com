@@ -1,548 +1,645 @@
 [
   {
     "id": "TC001",
-    "title": "User Registration with JWT Token Issuance",
-    "description": "Verify that new users can register successfully and receive a valid JWT token and refresh token.",
+    "title": "Browse surf classes on home and class listing pages",
+    "description": "Verify that users can view all available surf classes on the home page and dedicated class listing pages with correct class details displayed.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Send a registration request with valid user data."
+        "description": "Navigate to the home page"
       },
       {
         "type": "assertion",
-        "description": "Check that the user is created in the database."
+        "description": "Check that a list of surf classes is visible with name, description, and thumbnail"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to the class listing page"
       },
       {
         "type": "assertion",
-        "description": "Verify that a valid JWT token and refresh token are issued and returned."
+        "description": "Validate surf classes are listed including filters and pagination (if any)"
+      },
+      {
+        "type": "action",
+        "description": "Click on a surf class to view class details"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm detailed class information is shown including sessions/date and participant limits"
       }
     ]
   },
   {
     "id": "TC002",
-    "title": "User Login with JWT Token Refresh Flow",
-    "description": "Verify user login with correct credentials and the refresh token flow for renewing JWT tokens.",
+    "title": "Multi-step booking flow for authenticated users",
+    "description": "Ensure authenticated users can select a class session, add participant details, apply discount codes, and complete booking successfully.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Attempt login with valid username/email and password."
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure the login is successful and JWT tokens are returned."
+        "description": "Login as a registered user with valid credentials"
       },
       {
         "type": "action",
-        "description": "Send refresh token request to renew the JWT token."
+        "description": "Select a surf class and open the booking modal"
+      },
+      {
+        "type": "action",
+        "description": "Choose a session date and time"
+      },
+      {
+        "type": "action",
+        "description": "Enter participant information and confirm details"
+      },
+      {
+        "type": "action",
+        "description": "Apply valid discount code and verify discount application"
+      },
+      {
+        "type": "action",
+        "description": "Submit booking request"
       },
       {
         "type": "assertion",
-        "description": "Validate that a new JWT token is issued and is valid."
+        "description": "Check booking confirmation page with reservation details"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify reservation appears in user's reservations page"
       }
     ]
   },
   {
     "id": "TC003",
-    "title": "Guest Checkout Account Creation and Notification",
-    "description": "Verify guest checkout flow creates new user with generated credentials, sends welcome email, and returns auth token.",
+    "title": "Guest checkout creates user account and sends welcome email",
+    "description": "Verify that an unauthenticated user can complete booking via guest checkout, triggering automatic account creation with credentials emailed.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Start booking as guest and provide an unused email."
+        "description": "Navigate to surf class booking modal as guest (not logged in)"
       },
       {
         "type": "action",
-        "description": "Complete booking and confirm user account creation."
+        "description": "Proceed through multi-step booking entering participant details and email"
+      },
+      {
+        "type": "action",
+        "description": "Submit guest booking"
       },
       {
         "type": "assertion",
-        "description": "Check that a new user is created with generated password."
+        "description": "Check response for successful reservation and newly created user account token"
       },
       {
         "type": "assertion",
-        "description": "Verify welcome email is sent with login credentials."
+        "description": "Verify welcome email with login credentials is sent to the provided email"
+      },
+      {
+        "type": "action",
+        "description": "Attempt login with emailed credentials"
       },
       {
         "type": "assertion",
-        "description": "Validate an authentication token is returned for the new user."
+        "description": "User successfully logs in and reservations are accessible"
       }
     ]
   },
   {
     "id": "TC004",
-    "title": "Guest Checkout with Existing Email Error",
-    "description": "Verify that guest checkout attempt with existing user email returns proper error response.",
+    "title": "Guest checkout fails on existing email with error",
+    "description": "Confirm that guest checkout returns a proper error when attempting to book with an email that's already registered.",
     "category": "error handling",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Begin guest checkout using an email already registered."
-      },
-      {
-        "type": "action",
-        "description": "Submit booking details."
+        "description": "Attempt guest booking using an email already associated with an existing user account"
       },
       {
         "type": "assertion",
-        "description": "Verify the system returns an error indicating the email already exists."
+        "description": "Check that API returns conflict or specific error code indicating email already exists"
+      },
+      {
+        "type": "assertion",
+        "description": "No duplicate user account is created"
       }
     ]
   },
   {
     "id": "TC005",
-    "title": "Class Browsing and Detailed Session Selection",
-    "description": "Validate that users can browse classes and select sessions with accurate details including dates and times.",
+    "title": "Reservation management: create, view, update, and cancel",
+    "description": "Validate that authenticated users can create new reservations, view reservation details, update participant info, and cancel reservations properly.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to class listing page."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify all available classes for the tenant/school are displayed."
+        "description": "Login as authenticated user"
       },
       {
         "type": "action",
-        "description": "Select a class to view detailed session information."
+        "description": "Create a new reservation through booking flow"
       },
       {
         "type": "assertion",
-        "description": "Check that session dates, times, participant limits, and instructor info are accurate and complete."
+        "description": "Verify reservation is visible in user's reservations list"
+      },
+      {
+        "type": "action",
+        "description": "Select an existing reservation to view details"
+      },
+      {
+        "type": "assertion",
+        "description": "Check reservation details match expected data including status and payment info"
+      },
+      {
+        "type": "action",
+        "description": "Update participant information within the reservation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify changes are saved and visible in reservation details"
+      },
+      {
+        "type": "action",
+        "description": "Cancel the reservation"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm reservation status is updated to cancelled and visible to user"
       }
     ]
   },
   {
     "id": "TC006",
-    "title": "Multi-step Booking Flow with Participant Management",
-    "description": "Test the booking modal workflow including participant data entry, session selection, and booking confirmation.",
+    "title": "Payment processing with voucher upload and admin verification",
+    "description": "Ensure users can upload payment vouchers and admins can verify payment statuses with correct updates reflected in dashboards.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Start booking a class session."
+        "description": "Login as authenticated user and navigate to reservation payment section"
       },
       {
         "type": "action",
-        "description": "Enter participant details for each participant."
+        "description": "Upload payment voucher image for a specific reservation"
       },
       {
         "type": "assertion",
-        "description": "Verify validation of participant data including required fields."
+        "description": "Confirm voucher upload success and voucher is linked to reservation"
       },
       {
         "type": "action",
-        "description": "Complete booking and confirm reservation."
+        "description": "Login as school admin"
+      },
+      {
+        "type": "action",
+        "description": "View pending payments and verify the uploaded voucher"
+      },
+      {
+        "type": "action",
+        "description": "Mark payment as verified"
       },
       {
         "type": "assertion",
-        "description": "Check that reservation is created with correct participant and session details."
+        "description": "Check payment status update is reflected in user's dashboard and reservation"
       }
     ]
   },
   {
     "id": "TC007",
-    "title": "Booking State Preservation Across Navigation",
-    "description": "Verify that booking data is preserved when the user navigates away and returns or logs in during the booking process.",
+    "title": "Discount code application during booking",
+    "description": "Verify discount codes can be applied during booking process, reflected in price calculation and successfully validated serverside.",
     "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Begin booking a session and enter partial information."
+        "description": "Start booking a surf class and navigate to discount code input"
       },
       {
         "type": "action",
-        "description": "Navigate to another page or perform login as existing user."
-      },
-      {
-        "type": "action",
-        "description": "Return to booking flow."
+        "description": "Enter a valid discount code and apply"
       },
       {
         "type": "assertion",
-        "description": "Verify that previously entered booking information is still present and intact."
+        "description": "Confirm discount percentage or value is applied to total price"
+      },
+      {
+        "type": "action",
+        "description": "Proceed to complete booking"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify reservation price reflects discount and discount code is associated with payment record"
       }
     ]
   },
   {
     "id": "TC008",
-    "title": "Reservation Management - Create, Update and Cancel",
-    "description": "Validate the full lifecycle of a reservation including creation, updates to participant info/session and cancellation with status tracking.",
-    "category": "functional",
+    "title": "Multi-tenant data isolation enforcement",
+    "description": "Confirm that data shown to admins, instructors, and users is properly scoped only to their respective surf school tenancy without leakage.",
+    "category": "security",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Create a new reservation via API or UI."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify reservation details are stored correctly with accurate status."
+        "description": "Login as admin of School A"
       },
       {
         "type": "action",
-        "description": "Update reservation details such as participant info or session time."
+        "description": "View dashboard to list classes, reservations, users"
       },
       {
         "type": "assertion",
-        "description": "Check updated reservation reflects changes and maintains data integrity."
+        "description": "Verify displayed data only belongs to School A"
       },
       {
         "type": "action",
-        "description": "Cancel the reservation."
+        "description": "Attempt to access reservation or user data from School B via URL or API"
       },
       {
         "type": "assertion",
-        "description": "Confirm reservation status is updated to cancelled and related data integrity is maintained."
+        "description": "Access is denied or data is not returned"
       }
     ]
   },
   {
     "id": "TC009",
-    "title": "Payment Voucher Upload and Admin Verification",
-    "description": "Test payment voucher upload functionality and subsequent verification by admin with accurate status update in dashboard.",
+    "title": "Role-based dashboard access and controls",
+    "description": "Validate that users accessing dashboards see role-specific views and controls based on their role: Student, Instructor, School Admin, Super Admin.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Upload payment voucher for a reservation."
+        "description": "Login as Student and navigate to dashboard"
       },
       {
         "type": "assertion",
-        "description": "Verify voucher is stored successfully and linked to the correct payment record."
+        "description": "Confirm student sees only their reservations and profile info, cannot access admin controls"
       },
       {
         "type": "action",
-        "description": "Admin reviews and marks the payment as verified."
+        "description": "Login as Instructor"
       },
       {
         "type": "assertion",
-        "description": "Check that payment status changes to verified and UI updates correctly."
+        "description": "Confirm instructor sees class schedule, participant lists, and messaging with students"
+      },
+      {
+        "type": "action",
+        "description": "Login as School Admin"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm admin can manage classes, reservations, students, payments for their school only"
+      },
+      {
+        "type": "action",
+        "description": "Login as Super Admin"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm super admin can manage all schools, users and system-wide settings"
       }
     ]
   },
   {
     "id": "TC010",
-    "title": "Application of Discount Codes During Payment",
-    "description": "Verify discount codes can be applied during payment, affecting the final amount and respecting expiration/usage rules.",
+    "title": "Session persistence across booking navigation and login",
+    "description": "Ensure booking state is preserved when users navigate away and return, or when switching from guest to logged-in during booking process.",
     "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Enter a valid discount code during payment process."
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm the discount is applied and reflected in the total amount."
+        "description": "Begin booking as guest, select class, session, and enter partial participant info"
       },
       {
         "type": "action",
-        "description": "Attempt to use an expired or invalid discount code."
+        "description": "Navigate away from booking modal to another page"
+      },
+      {
+        "type": "action",
+        "description": "Return to booking modal"
       },
       {
         "type": "assertion",
-        "description": "Verify the system rejects the discount code with an appropriate error message."
+        "description": "Verify previously entered details are persisted and prefilled"
+      },
+      {
+        "type": "action",
+        "description": "Proceed to guest checkout and then choose to login instead"
+      },
+      {
+        "type": "action",
+        "description": "Login with existing or new account"
+      },
+      {
+        "type": "assertion",
+        "description": "Booking data is preserved post-login enabling completion without data loss"
       }
     ]
   },
   {
     "id": "TC011",
-    "title": "Role-based Access Control in Dashboards",
-    "description": "Verify that students, instructors, school admins, and super admins only access data and controls appropriate to their roles and tenancy.",
-    "category": "security",
+    "title": "Automated email notifications for user events",
+    "description": "Verify that automated emails are triggered and delivered upon key events: account creation, reservation confirmation, cancellation, payment receipt, and reminders.",
+    "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Login as student and access dashboard."
+        "description": "Complete guest booking to trigger account welcome email"
       },
       {
         "type": "assertion",
-        "description": "Ensure only student-specific views and personal reservations are accessible."
+        "description": "Check welcome email is received with correct login credentials"
       },
       {
         "type": "action",
-        "description": "Login as instructor and access dashboard."
+        "description": "Make a reservation booking as authenticated user"
       },
       {
         "type": "assertion",
-        "description": "Check instructor-specific classes, schedules, and student lists are visible and editable."
+        "description": "Confirm reservation confirmation email is sent"
       },
       {
         "type": "action",
-        "description": "Login as school admin."
+        "description": "Cancel a reservation"
       },
       {
         "type": "assertion",
-        "description": "Verify access to all classes, reservations, students, payments of their school only."
+        "description": "Verify cancellation email is sent"
       },
       {
         "type": "action",
-        "description": "Login as super admin."
+        "description": "Upload payment voucher for reservation"
       },
       {
         "type": "assertion",
-        "description": "Confirm full access to manage all schools, users, and system settings."
+        "description": "Confirm payment receipt email is sent"
       },
       {
         "type": "action",
-        "description": "Attempt to access dashboards or data beyond role privileges."
+        "description": "Simulate reminder trigger time prior to class session"
       },
       {
         "type": "assertion",
-        "description": "Validate access is denied with appropriate error or redirect."
+        "description": "Email reminder for upcoming class is sent"
       }
     ]
   },
   {
     "id": "TC012",
-    "title": "Multi-tenant Data Isolation Verification",
-    "description": "Ensure users and admins from one surf school cannot access data belonging to other schools.",
-    "category": "security",
-    "priority": "High",
+    "title": "In-app notification real-time updates and UI",
+    "description": "Validate that in-app notifications appear in real-time for relevant events and can be marked read via notification center with status updates.",
+    "category": "functional",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Login as a school admin for School A."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify dashboard displays only School A data."
+        "description": "Login as user with active reservations"
       },
       {
         "type": "action",
-        "description": "Attempt API calls or direct access to data/assets of School B."
+        "description": "Trigger an event such as reservation confirmation or payment receipt"
       },
       {
         "type": "assertion",
-        "description": "Confirm access is rejected due to multi-tenant data isolation enforcement."
+        "description": "Verify corresponding notification appears in the notification center UI in real-time"
+      },
+      {
+        "type": "action",
+        "description": "Mark notification as read from notification center"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm notification status updates and UI reflects read state"
       }
     ]
   },
   {
     "id": "TC013",
-    "title": "Email Notifications Triggered on Key User Actions",
-    "description": "Test that email notifications are sent correctly for welcome emails, reservation confirmations, cancellations, payment receipts, and reminders.",
+    "title": "Admin can create, update, and soft delete classes and users",
+    "description": "Ensure school admins have authorized access to create new classes, update existing classes and users, and soft delete (deactivate) records with proper restrictions.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Trigger user registration or guest checkout."
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm welcome email is sent with correct content."
+        "description": "Login as school admin"
       },
       {
         "type": "action",
-        "description": "Create a reservation."
+        "description": "Create a new surf class with valid details"
       },
       {
         "type": "assertion",
-        "description": "Verify reservation confirmation email is sent."
+        "description": "Confirm class is added and visible in class listing"
       },
       {
         "type": "action",
-        "description": "Cancel an existing reservation."
+        "description": "Update the class details (e.g. time, participant limit)"
       },
       {
         "type": "assertion",
-        "description": "Check that cancellation email is dispatched."
+        "description": "Verify updated class details reflected in UI"
       },
       {
         "type": "action",
-        "description": "Upload payment voucher."
+        "description": "Soft delete a class"
       },
       {
         "type": "assertion",
-        "description": "Ensure payment receipt email is sent upon admin verification."
+        "description": "Confirm class is marked inactive but not fully deleted and not visible to users"
       },
       {
         "type": "action",
-        "description": "Trigger reservation reminder via scheduled job."
+        "description": "Update user information within their school tenancy"
       },
       {
         "type": "assertion",
-        "description": "Validate reminder email is sent in a timely manner."
+        "description": "Verify updates apply only within current school scope"
       }
     ]
   },
   {
     "id": "TC014",
-    "title": "In-App Real-Time Notifications Functionality",
-    "description": "Verify notifications appear in real-time in the notification center UI, can be marked read and status updates persist.",
+    "title": "Image upload to Cloudinary with local fallback",
+    "description": "Validate image uploads succeed to Cloudinary; if cloud upload fails, the system stores images in local fallback storage without data loss.",
     "category": "functional",
     "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Perform an action triggering a notification (e.g. reservation confirmed)."
+        "description": "Upload an image for product or class via UI"
       },
       {
         "type": "assertion",
-        "description": "Check notification appears instantly in the UI notification center."
+        "description": "Confirm image upload success and URL references Cloudinary storage"
       },
       {
         "type": "action",
-        "description": "Mark the notification as read."
+        "description": "Simulate Cloudinary service being unavailable"
+      },
+      {
+        "type": "action",
+        "description": "Attempt image upload again"
       },
       {
         "type": "assertion",
-        "description": "Confirm notification status updates and persists across page reload."
+        "description": "Verify image is saved to local storage and accessible via expected fallback URL"
       }
     ]
   },
   {
     "id": "TC015",
-    "title": "Admin Management of Classes, Instructors, and Users",
-    "description": "Verify that authorized admins can create, update, and soft delete classes, instructors, and users with proper role and data validation.",
-    "category": "functional",
-    "priority": "High",
+    "title": "Payment voucher upload validation and error handling",
+    "description": "Check that payment voucher uploads are validated for format, size limits, and that invalid uploads are rejected with appropriate errors.",
+    "category": "error handling",
+    "priority": "Medium",
     "steps": [
       {
         "type": "action",
-        "description": "Login as school admin."
-      },
-      {
-        "type": "action",
-        "description": "Create a new class with valid data."
+        "description": "Attempt to upload a valid voucher image file within size limits"
       },
       {
         "type": "assertion",
-        "description": "Check the class is created and visible in listings."
+        "description": "Confirm upload success"
       },
       {
         "type": "action",
-        "description": "Update existing instructor details."
+        "description": "Attempt to upload invalid file types (e.g. text file) or oversized images"
       },
       {
         "type": "assertion",
-        "description": "Verify that changes are saved and reflected."
-      },
-      {
-        "type": "action",
-        "description": "Soft delete a user."
-      },
-      {
-        "type": "assertion",
-        "description": "Ensure user is marked deleted without removing data from database."
-      },
-      {
-        "type": "action",
-        "description": "Attempt unauthorized modifications without admin rights."
-      },
-      {
-        "type": "assertion",
-        "description": "Validate that access is blocked appropriately."
+        "description": "Verify upload is rejected with meaningful error message"
       }
     ]
   },
   {
     "id": "TC016",
-    "title": "Product and Beach/Location Management",
-    "description": "Test that products (equipment) and beach location data can be created, updated, and displayed correctly.",
-    "category": "functional",
-    "priority": "Medium",
+    "title": "Reservation creation rejects overbooking",
+    "description": "Ensure that reservation creation APIs reject booking requests when class session participant limits are exceeded to prevent overbooking.",
+    "category": "error handling",
+    "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Create a new product with valid details."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify product is visible in product selection and linked properly."
+        "description": "Identify a class session with participant limit reached"
       },
       {
         "type": "action",
-        "description": "Add or update a surf beach location with mapping details."
+        "description": "Attempt to create a new reservation for this session"
       },
       {
         "type": "assertion",
-        "description": "Confirm that location details including map display correctly."
+        "description": "Verify API returns appropriate error preventing booking"
       }
     ]
   },
   {
     "id": "TC017",
-    "title": "Image Upload with Cloudinary and Fallback",
-    "description": "Verify that images can be uploaded successfully to Cloudinary and fallback to local storage is handled correctly upon failure.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Upload image file through the image management interface."
-      },
-      {
-        "type": "assertion",
-        "description": "Check that image is stored on Cloudinary and accessible."
-      },
-      {
-        "type": "action",
-        "description": "Simulate Cloudinary upload failure."
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm image is stored locally instead and system handles fallback gracefully without data loss."
-      }
-    ]
-  },
-  {
-    "id": "TC018",
-    "title": "Statistics Dashboard Data Accuracy",
-    "description": "Validate that analytics and statistics on school dashboards display accurate data about classes, reservations, and revenue.",
-    "category": "functional",
-    "priority": "Medium",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Access the statistics dashboard as a school admin."
-      },
-      {
-        "type": "assertion",
-        "description": "Verify statistics reflect current data in the system for the correct school."
-      },
-      {
-        "type": "action",
-        "description": "Compare statistics numbers with raw database counts for classes, reservations, and payments."
-      },
-      {
-        "type": "assertion",
-        "description": "Confirm data aggregation is accurate and consistent."
-      }
-    ]
-  },
-  {
-    "id": "TC019",
-    "title": "Reservation Cancellation Email and Notification",
-    "description": "Ensure that when a reservation is cancelled, proper cancellation email and in-app notification are sent to the user.",
+    "title": "Reservation cancellation updates availability and notifications",
+    "description": "Validate that cancelling a reservation frees participant spots for a class session and triggers cancellation email and in-app notification.",
     "category": "functional",
     "priority": "High",
     "steps": [
       {
         "type": "action",
-        "description": "Cancel an existing reservation."
+        "description": "Login and cancel an existing reservation"
       },
       {
         "type": "assertion",
-        "description": "Verify cancellation email is sent to the user."
+        "description": "Confirm reservation marked cancelled and class session participant count updated"
       },
       {
         "type": "assertion",
-        "description": "Check that an in-app notification about the cancellation appears in the user’s notification center."
+        "description": "Verify cancellation email and in-app notification are sent to user"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Instructor can view and manage assigned classes and schedules",
+    "description": "Check that instructors have access to their specific dashboard showing assigned classes and session schedules with options to manage participant lists.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as instructor"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to instructor dashboard"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify visibility of assigned classes and future session schedules"
+      },
+      {
+        "type": "action",
+        "description": "Open class session participant list"
+      },
+      {
+        "type": "assertion",
+        "description": "Confirm participants are correctly listed and participant management functionality available"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Yape/Plin payment integration and status reflection",
+    "description": "Validate integration with Yape and Plin payment methods; ensure that payments made through these methods update reservation payment status correctly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select Yape or Plin as payment method during reservation payment"
+      },
+      {
+        "type": "action",
+        "description": "Complete payment via chosen payment gateway simulation"
+      },
+      {
+        "type": "assertion",
+        "description": "Check payment status updated to ‘paid’ after confirmation"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify payment records displayed correctly in admin dashboard"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "School admin cannot access other schools’ data",
+    "description": "Confirm that school admins are restricted from accessing classes, reservations, users, or payments belonging to another tenant school.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login as school admin from School X"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to access URLs or APIs related to School Y’s data"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied or data is not visible"
       }
     ]
   }
