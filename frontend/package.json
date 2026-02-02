@@ -61,6 +61,7 @@
     "prisma": "^5.22.0",
     "tailwindcss": "^4.1.18",
     "typescript": "^5",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "jsdom": "^22.0.0"
   }
 }
