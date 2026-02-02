@@ -17,7 +17,8 @@
     "prisma:deploy": "prisma migrate deploy",
     "seed": "ts-node prisma/seed.ts",
     "seed:beaches": "ts-node prisma/seed_beaches.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepare": "husky install"
   },
   "prisma": {
     "seed": "npm run seed"
@@ -54,6 +55,8 @@
     "prisma": "^5.22.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "husky": "^8.0.0",
+    "vitest": "^0.34.0"
   }
 }

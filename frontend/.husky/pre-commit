@@ -1,1 +1,14 @@
-npm test
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npm --prefix frontend run typecheck
+if [ $? -ne 0 ]; then
+  echo "Frontend typecheck failed. Commit aborted."
+  exit 1
+fi
+
+npm --prefix frontend run lint
+if [ $? -ne 0 ]; then
+  echo "Frontend lint failed. Commit aborted."
+  exit 1
+fi

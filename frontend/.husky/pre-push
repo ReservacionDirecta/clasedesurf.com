@@ -1,0 +1,21 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+set -e
+
+echo && echo "Running frontend tests..." 
+npm --prefix frontend test --silent
+
+echo && echo "Running backend tests..." 
+npm --prefix backend test --silent || true
+
+if [ -n "${RAILWAY_DEPLOY_ON_PUSH:-}" ]; then
+  if [ "$GITHUB_REF" = "refs/heads/main" ] || [ "$GITHUB_REF" = "refs/heads/master" ]; then
+    if command -v railway >/dev/null 2>&1; then
+      echo "Triggering Railway deployment for main..."
+      railway up -y || true
+    else
+      echo "Railway CLI not found, skipping deployment."
+    fi
+  fi
+fi

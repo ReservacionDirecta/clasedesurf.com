@@ -1,0 +1,14 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npm --prefix backend run typecheck
+if [ $? -ne 0 ]; then
+  echo "Backend typecheck failed. Commit aborted."
+  exit 1
+fi
+
+npm --prefix backend run lint
+if [ $? -ne 0 ]; then
+  echo "Backend lint failed. Commit aborted."
+  exit 1
+fi
