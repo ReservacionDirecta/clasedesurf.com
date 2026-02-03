@@ -375,59 +375,63 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md transition-opacity duration-300"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
       <div
-        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-[95dvh] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl flex flex-col transform transition-transform duration-300 max-h-[100dvh]"
+        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-[92dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-xl flex flex-col transform transition-transform duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with Progress */}
-        <div className="bg-white border-b border-gray-100 p-5 shrink-0">
-          <div className="flex items-center justify-between mb-6">
+        {/* Compact Header with Progress */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 sm:p-5 shrink-0 rounded-t-3xl sm:rounded-t-2xl">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex-1 min-w-0 pr-4">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Reservar Clase</h2>
-              <p className="text-sm text-slate-500 truncate font-medium">{classData.title}</p>
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight">Reservar Clase</h2>
+              <p className="text-sm text-blue-100 truncate">{classData.title}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2.5 hover:bg-slate-100/80 rounded-full transition-colors flex-shrink-0 text-slate-400 hover:text-slate-600 active:scale-95"
+              className="p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0 text-white/80 hover:text-white active:scale-95"
               aria-label="Cerrar modal"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Enterprise Progress Steps */}
-          <div className="relative">
-            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-slate-100">
-               <div style={{ width: `${(currentStep / STEPS.length) * 100}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500 ease-out"></div>
-            </div>
-            <div className="flex justify-between text-xs font-medium text-slate-500 px-1">
-               {STEPS.map((step) => (
-                 <span key={step.id} className={`${currentStep >= step.id ? 'text-blue-600 font-bold' : ''}`}>
-                    {step.name}
-                 </span>
-               ))}
-            </div>
+          {/* Progress Steps - More compact */}
+          <div className="flex items-center gap-2">
+            {STEPS.map((step, idx) => (
+              <div key={step.id} className="flex items-center flex-1">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                  currentStep > step.id ? 'bg-white text-blue-600' : 
+                  currentStep === step.id ? 'bg-white text-blue-600 ring-2 ring-white/50' : 
+                  'bg-blue-500/50 text-white/70'
+                }`}>
+                  {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
+                </div>
+                {idx < STEPS.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 rounded ${currentStep > step.id ? 'bg-white' : 'bg-blue-500/50'}`} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Form Content */}
-        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        {/* Form Content - Tighter padding */}
+        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
           {/* Step 1: Personal Information */}
           {currentStep === 1 && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="space-y-1 mb-6">
-                 <h3 className="text-lg font-bold text-slate-900">Cuéntanos sobre ti</h3>
-                 <p className="text-slate-500 text-sm">Necesitamos tus datos para asegurar tu lugar en la clase.</p>
+            <div className="space-y-4 animate-fadeIn">
+              <div className="mb-2">
+                 <h3 className="text-base font-bold text-slate-900">Cuéntanos sobre ti</h3>
+                 <p className="text-slate-500 text-xs">Necesitamos tus datos para asegurar tu lugar.</p>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-3">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
+                  <label htmlFor="name" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                     Nombre completo <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -436,14 +440,14 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     type="text"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.name ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.name ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="Ej. Juan Pérez"
                   />
-                  {errors.name && <p className="text-red-500 text-sm mt-1.5 font-medium flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-red-500 block"></span>{errors.name}</p>}
+                  {errors.name && <p className="text-red-500 text-xs mt-1 font-medium">{errors.name}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-2">
+                  <label htmlFor="email" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                     Correo electrónico <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -452,15 +456,15 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.email ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.email ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="juan@ejemplo.com"
                   />
-                  {errors.email && <p className="text-red-500 text-sm mt-1.5 font-medium flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-red-500 block"></span>{errors.email}</p>}
+                  {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
                 </div>
 
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="age" className="block text-sm font-bold text-slate-700 mb-2">
+                    <label htmlFor="age" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                       Edad <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -471,14 +475,14 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                       max="100"
                       value={formData.age}
                       onChange={handleInputChange}
-                      className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.age ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                      className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.age ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                       placeholder="25"
                     />
-                    {errors.age && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.age}</p>}
+                    {errors.age && <p className="text-red-500 text-xs mt-1 font-medium">{errors.age}</p>}
                   </div>
 
                   <div>
-                    <label htmlFor="participants" className="block text-sm font-bold text-slate-700 mb-2">
+                    <label htmlFor="participants" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                       Participantes
                     </label>
                     <div className="relative">
@@ -487,7 +491,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                           name="participants"
                           value={formData.participants}
                           onChange={handleInputChange}
-                          className="w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer hover:bg-slate-100"
+                          className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer hover:bg-slate-100"
                         >
                           {Array.from({ length: Math.min(classData.availableSpots || 1, 10) }, (_, i) => (
                             <option key={i + 1} value={i + 1}>
@@ -495,7 +499,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
                 </div>
@@ -596,16 +600,17 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
           {/* Step 3: Emergency Contact & Payment */}
           {currentStep === 3 && (
-            <div className="space-y-8 animate-fadeIn pb-4">
-              <div className="space-y-1">
-                 <h3 className="text-lg font-bold text-slate-900">Seguridad y Pago</h3>
-                 <p className="text-slate-500 text-sm">Ya casi terminamos. Revisa los detalles finales.</p>
+            <div className="space-y-4 animate-fadeIn pb-2">
+              <div className="mb-2">
+                 <h3 className="text-base font-bold text-slate-900">Contacto de Emergencia</h3>
+                 <p className="text-slate-500 text-xs">Por seguridad, necesitamos un contacto adicional.</p>
               </div>
               
-              <div className="space-y-5">
+              {/* Emergency fields in 2-column grid for better space usage */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="emergencyContact" className="block text-sm font-bold text-slate-700 mb-2">
-                    Contacto de Emergencia <span className="text-red-500">*</span>
+                  <label htmlFor="emergencyContact" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
+                    Nombre <span className="text-red-500">*</span>
                   </label>
                   <Input
                     id="emergencyContact"
@@ -613,15 +618,15 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     type="text"
                     value={formData.emergencyContact}
                     onChange={handleInputChange}
-                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.emergencyContact ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.emergencyContact ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="Nombre del contacto"
                   />
-                  {errors.emergencyContact && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.emergencyContact}</p>}
+                  {errors.emergencyContact && <p className="text-red-500 text-xs mt-1 font-medium">{errors.emergencyContact}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="emergencyPhone" className="block text-sm font-bold text-slate-700 mb-2">
-                    Teléfono de Emergencia <span className="text-red-500">*</span>
+                  <label htmlFor="emergencyPhone" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
+                    Teléfono <span className="text-red-500">*</span>
                   </label>
                   <Input
                     id="emergencyPhone"
@@ -629,11 +634,12 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     type="tel"
                     value={formData.emergencyPhone}
                     onChange={handleInputChange}
-                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.emergencyPhone ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.emergencyPhone ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="+51 999 999 999"
                   />
-                  {errors.emergencyPhone && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.emergencyPhone}</p>}
+                  {errors.emergencyPhone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.emergencyPhone}</p>}
                 </div>
+              </div>
 
                  {/* Discount Code */}
                  <div className="pt-2">

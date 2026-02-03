@@ -105,33 +105,49 @@ function ReservationConfirmationContent() {
         const data = JSON.parse(dataFromStorage);
         setReservationData(data);
 
-        // Inicializar array de participantes
-        const numParticipants = data.bookingData?.participants || 1;
+        // Check if participants is an array (new format from BookingModal)
+        const rawParticipants = data.bookingData?.participants;
+        const numParticipants = Array.isArray(rawParticipants) ? rawParticipants.length : 
+          (typeof data.bookingData?.participants === 'number' ? data.bookingData.participants : 1);
+        
         const initialParticipants: ParticipantDetails[] = [];
 
         for (let i = 0; i < numParticipants; i++) {
+          // If participants is an array, use the data directly
+          const sourceData = Array.isArray(rawParticipants) && rawParticipants[i] 
+            ? rawParticipants[i] 
+            : (i === 0 ? data.bookingData : null);
+          
           initialParticipants.push({
-            // If a user is logged in, prefill the first participant's name from the session,
-            // falling back to the guest booking data if session data isn't available.
-            name: i === 0 ? (session?.user?.name || data.bookingData?.name || '') : '',
-            // Include email for guest checkout (mandatory for first participant)
-            email: i === 0 ? (session?.user?.email || data.bookingData?.email || '') : '',
-            age: i === 0 && data.bookingData?.age ? data.bookingData.age : '',
-            height: i === 0 && data.bookingData?.height ? data.bookingData.height : '',
-            weight: i === 0 && data.bookingData?.weight ? data.bookingData.weight : '',
-            canSwim: i === 0 && data.bookingData?.canSwim ? data.bookingData.canSwim : false,
-            swimmingLevel: i === 0 && data.bookingData?.swimmingLevel ? data.bookingData.swimmingLevel : 'BEGINNER',
-            hasSurfedBefore: i === 0 && data.bookingData?.hasSurfedBefore ? data.bookingData.hasSurfedBefore : false,
-            injuries: i === 0 && data.bookingData?.injuries ? data.bookingData.injuries : '',
+            name: sourceData?.name || (i === 0 ? (session?.user?.name || data.bookingData?.name || '') : ''),
+            email: sourceData?.email || (i === 0 ? (session?.user?.email || data.bookingData?.email || '') : ''),
+            age: sourceData?.age?.toString() || (i === 0 && data.bookingData?.age ? data.bookingData.age : ''),
+            height: sourceData?.height?.toString() || (i === 0 && data.bookingData?.height ? data.bookingData.height : ''),
+            weight: sourceData?.weight?.toString() || (i === 0 && data.bookingData?.weight ? data.bookingData.weight : ''),
+            canSwim: sourceData?.canSwim ?? (i === 0 && data.bookingData?.canSwim ? data.bookingData.canSwim : false),
+            swimmingLevel: sourceData?.swimmingLevel || (i === 0 && data.bookingData?.swimmingLevel ? data.bookingData.swimmingLevel : 'BEGINNER'),
+            hasSurfedBefore: sourceData?.hasSurfedBefore ?? (i === 0 && data.bookingData?.hasSurfedBefore ? data.bookingData.hasSurfedBefore : false),
+            injuries: sourceData?.injuries || (i === 0 && data.bookingData?.injuries ? data.bookingData.injuries : ''),
             comments: ''
           });
         }
 
         setParticipants(initialParticipants);
 
-        // Determinar el paso inicial
+        // Determinar el paso inicial - skip step 2 if single participant with complete data
+        const firstP = initialParticipants[0];
+        const hasCompleteData = firstP && 
+          firstP.name && 
+          firstP.age && 
+          (sessionStatus === 'authenticated' || firstP.email);
+        
         if (sessionStatus === 'authenticated') {
-          setCurrentStep(2);
+          // If data is complete for single participant, skip to confirmation
+          if (numParticipants === 1 && hasCompleteData) {
+            setCurrentStep(2); // Still show step 2 but data is pre-filled
+          } else {
+            setCurrentStep(2);
+          }
         } else {
           setCurrentStep(1);
         }
