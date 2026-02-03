@@ -257,12 +257,6 @@ router.post('/', optionalAuth, validateBody(createReservationSchema), async (req
         if (first.emergencyPhone !== undefined && first.emergencyPhone !== null) {
           profileUpdate.emergencyPhone = String(first.emergencyPhone);
         }
-        if (first.swimmingLevel !== undefined && first.swimmingLevel !== null && first.swimmingLevel !== '') {
-          profileUpdate.swimmingLevel = String(first.swimmingLevel);
-        }
-        if (first.hasSurfedBefore !== undefined) {
-          profileUpdate.hasSurfedBefore = Boolean(first.hasSurfedBefore);
-        }
 
         // Only run update if there's something to update
         if (Object.keys(profileUpdate).length > 0) {

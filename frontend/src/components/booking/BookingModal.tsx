@@ -155,8 +155,6 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
         height: profile.height ? profile.height.toString() : prev.height,
         weight: profile.weight ? profile.weight.toString() : prev.weight,
         canSwim: profile.canSwim !== undefined ? profile.canSwim : prev.canSwim,
-        swimmingLevel: profile.swimmingLevel || prev.swimmingLevel || 'BEGINNER',
-        hasSurfedBefore: profile.hasSurfedBefore !== undefined ? profile.hasSurfedBefore : prev.hasSurfedBefore,
         injuries: profile.injuries || prev.injuries,
         emergencyContact: profile.emergencyContact || prev.emergencyContact || '',
         emergencyPhone: profile.emergencyPhone || profile.phone || prev.emergencyPhone || ''

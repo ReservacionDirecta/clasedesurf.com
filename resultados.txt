@@ -1,589 +1,295 @@
-2026-02-03T01:03:05.282320752Z [inf]  
-2026-02-03T01:03:09.185416918Z [inf]  [35m[Region: us-east4][0m
-2026-02-03T01:03:09.194823072Z [inf]  [35m==============
-2026-02-03T01:03:09.194859340Z [inf]  Using Nixpacks
-2026-02-03T01:03:09.194867127Z [inf]  ==============
-2026-02-03T01:03:09.194871894Z [inf]  [0m
-2026-02-03T01:03:09.194953952Z [inf]  context: r2qv-pFfY
-2026-02-03T01:03:09.345780819Z [inf]  ╔════════════ Nixpacks v1.38.0 ════════════╗
-2026-02-03T01:03:09.345810754Z [inf]  ║ setup      │ nodejs_18, npm-9_x, openssl ║
-2026-02-03T01:03:09.345815881Z [inf]  ║──────────────────────────────────────────║
-2026-02-03T01:03:09.345820045Z [inf]  ║ install    │ npm ci                      ║
-2026-02-03T01:03:09.345825821Z [inf]  ║──────────────────────────────────────────║
-2026-02-03T01:03:09.345829258Z [inf]  ║ build      │ npm run build               ║
-2026-02-03T01:03:09.345833166Z [inf]  ║──────────────────────────────────────────║
-2026-02-03T01:03:09.345836694Z [inf]  ║ start      │ npm run start               ║
-2026-02-03T01:03:09.345840191Z [inf]  ╚══════════════════════════════════════════╝
-2026-02-03T01:03:09.587090898Z [inf]  [internal] load build definition from Dockerfile
-2026-02-03T01:03:09.587145596Z [inf]  [internal] load build definition from Dockerfile
-2026-02-03T01:03:09.587160315Z [inf]  [internal] load build definition from Dockerfile
-2026-02-03T01:03:09.587174899Z [inf]  [internal] load build definition from Dockerfile
-2026-02-03T01:03:09.597928262Z [inf]  [internal] load build definition from Dockerfile
-2026-02-03T01:03:09.600375904Z [inf]  [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
-2026-02-03T01:03:09.674159887Z [inf]  [internal] load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
-2026-02-03T01:03:09.674588944Z [inf]  [internal] load .dockerignore
-2026-02-03T01:03:09.674639226Z [inf]  [internal] load .dockerignore
-2026-02-03T01:03:09.674651953Z [inf]  [internal] load .dockerignore
-2026-02-03T01:03:09.686872069Z [inf]  [internal] load .dockerignore
-2026-02-03T01:03:09.694151934Z [inf]  [internal] load build context
-2026-02-03T01:03:09.694202780Z [inf]  [internal] load build context
-2026-02-03T01:03:09.790501030Z [inf]  [internal] load build context
-2026-02-03T01:03:09.794412606Z [inf]  [stage-0  2/11] WORKDIR /app/
-2026-02-03T01:03:09.794477179Z [inf]  [stage-0  2/11] WORKDIR /app/
-2026-02-03T01:03:09.794507443Z [inf]  [stage-0  3/10] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
-2026-02-03T01:03:09.811542900Z [inf]  [stage-0  3/10] COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
-2026-02-03T01:03:09.813293031Z [inf]  [stage-0  4/10] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
-2026-02-03T01:03:09.962033075Z [inf]  unpacking 'https://github.com/NixOS/nixpkgs/archive/ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.tar.gz' into the Git cache...
-
-2026-02-03T01:03:37.720737776Z [inf]  unpacking 'https://github.com/railwayapp/nix-npm-overlay/archive/main.tar.gz' into the Git cache...
-
-2026-02-03T01:03:38.05701474Z [inf]  installing 'ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env'
-
-2026-02-03T01:03:38.658319403Z [inf]  these 5 derivations will be built:
-
-2026-02-03T01:03:38.658332325Z [inf]    /nix/store/1f4a312hz9m6y1ssip52drgkim8az4d6-libraries.drv
-  /nix/store/6vy68gykpxfphbmmyd59ya88xvrwvvaa-npm-9.9.4.tgz.drv
-  /nix/store/79g4v87v1cgrx5vlwzcagcs6v8ps8fk2-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env.drv
-  /nix/store/w9h0z1lhfwxc0m38f3w5brfdqrzm4wyj-npm.drv
-  /nix/store/n12g1myf9avf7s8klvwn4b0yl2bxxnn7-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env.drv
-
-2026-02-03T01:03:38.658361518Z [inf]  these 76 paths will be fetched (118.54 MiB download, 558.32 MiB unpacked):
-
-2026-02-03T01:03:38.658371402Z [inf]    /nix/store/cf7gkacyxmm66lwl5nj6j6yykbrg4q5c-acl-2.3.2
-  /nix/store/a9jgnlhkjkxav6qrc3rzg2q84pkl2wvr-attr-2.5.2
-  /nix/store/5mh7kaj2fyv8mk4sfq1brwxgc02884wi-bash-5.2p37
-  /nix/store/j7p46r8v9gcpbxx89pbqlh61zhd33gzv-binutils-2.43.1
-  /nix/store/df2a8k58k00f2dh2x930dg6xs6g6mliv-binutils-2.43.1-lib
-  /nix/store/srcmmqi8kxjfygd0hyy42c8hv6cws83b-binutils-wrapper-2.43.1
-  /nix/store/wf5zj2gbib3gjqllkabxaw4dh0gzcla3-builder.pl
-
-2026-02-03T01:03:38.65837622Z [inf]    /nix/store/ivl2v8rgg7qh1jkj5pwpqycax3rc2hnl-bzip2-1.0.8
-  /nix/store/mglixp03lsp0w986svwdvm7vcy17rdax-bzip2-1.0.8-bin
-  /nix/store/4s9rah4cwaxflicsk5cndnknqlk9n4p3-coreutils-9.5
-  /nix/store/pkc7mb4a4qvyz73srkqh4mwl70w98dsv-curl-8.11.0
-
-2026-02-03T01:03:38.658382471Z [inf]    /nix/store/p123cq20klajcl9hj8jnkjip5nw6awhz-curl-8.11.0-bin
-  /nix/store/5f5linrxzhhb3mrclkwdpm9bd8ygldna-curl-8.11.0-dev
-  /nix/store/agvks3qmzja0yj54szi3vja6vx3cwkkw-curl-8.11.0-man
-
-2026-02-03T01:03:38.658392539Z [inf]    /nix/store/00g69vw7c9lycy63h45ximy0wmzqx5y6-diffutils-3.10
-  /nix/store/74h4z8k82pmp24xryflv4lxkz8jlpqqd-ed-1.20.2
-  /nix/store/qbry6090vlr9ar33kdmmbq2p5apzbga8-expand-response-params
-  /nix/store/c4rj90r2m89rxs64hmm857mipwjhig5d-file-5.46
-  /nix/store/jqrz1vq5nz4lnv9pqzydj0ir58wbjfy1-findutils-4.10.0
-  /nix/store/a3c47r5z1q2c4rz0kvq8hlilkhx2s718-gawk-5.3.1
-
-2026-02-03T01:03:38.658395473Z [inf]    /nix/store/l89iqc7am6i60y8vk507zwrzxf0wcd3v-gcc-14-20241116
-
-2026-02-03T01:03:38.658403117Z [inf]    /nix/store/bpq1s72cw9qb2fs8mnmlw6hn2c7iy0ss-gcc-14-20241116-lib
-  /nix/store/17v0ywnr3akp85pvdi56gwl99ljv95kx-gcc-14-20241116-libgcc
-  /nix/store/xcn9p4xxfbvlkpah7pwchpav4ab9d135-gcc-wrapper-14-20241116
-
-2026-02-03T01:03:38.658406631Z [inf]    /nix/store/65h17wjrrlsj2rj540igylrx7fqcd6vq-glibc-2.40-36
-  /nix/store/1c6bmxrrhm8bd26ai2rjqld2yyjrxhds-glibc-2.40-36-bin
-  /nix/store/kj8hbqx4ds9qm9mq7hyikxyfwwg13kzj-glibc-2.40-36-dev
-
-2026-02-03T01:03:38.658409304Z [inf]    /nix/store/kryrg7ds05iwcmy81amavk8w13y4lxbs-gmp-6.3.0
-  /nix/store/a2byxfv4lc8f2g5xfzw8cz5q8k05wi29-gmp-with-cxx-6.3.0
-
-2026-02-03T01:03:38.658411615Z [inf]    /nix/store/1m67ipsk39xvhyqrxnzv2m2p48pil8kl-gnu-config-2024-01-01
-
-2026-02-03T01:03:38.658413826Z [inf]    /nix/store/aap6cq56amx4mzbyxp2wpgsf1kqjcr1f-gnugrep-3.11
-  /nix/store/fp6cjl1zcmm6mawsnrb5yak1wkz2ma8l-gnumake-4.4.1
-
-2026-02-03T01:03:38.658424595Z [inf]    /nix/store/abm77lnrkrkb58z6xp1qwjcr1xgkcfwm-gnused-4.9
-  /nix/store/9cwwj1c9csmc85l2cqzs3h9hbf1vwl6c-gnutar-1.35
-  /nix/store/nvvj6sk0k6px48436drlblf4gafgbvzr-gzip-1.13
-  /nix/store/wwipgdqb4p2fr46kmw9c5wlk799kbl68-icu4c-74.2
-  /nix/store/m8w3mf0i4862q22bxad0wspkgdy4jnkk-icu4c-74.2-dev
-
-2026-02-03T01:03:38.65842774Z [inf]    /nix/store/xmbv8s4p4i4dbxgkgdrdfb0ym25wh6gk-isl-0.20
-  /nix/store/2wh1gqyzf5xsvxpdz2k0bxiz583wwq29-keyutils-1.6.3-lib
-
-2026-02-03T01:03:38.658438944Z [inf]    /nix/store/milph81dilrh96isyivh5n50agpx39k2-krb5-1.21.3
-  /nix/store/b56mswksrql15knpb1bnhv3ysif340kd-krb5-1.21.3-dev
-  /nix/store/v9c1s50x7magpiqgycxxkn36avzbcg0g-krb5-1.21.3-lib
-  /nix/store/34z2792zyd4ayl5186vx0s98ckdaccz9-libidn2-2.3.7
-
-2026-02-03T01:03:38.658441676Z [inf]    /nix/store/2a3anh8vl3fcgk0fvaravlimrqawawza-libmpc-1.3.1
-  /nix/store/8675pnfr4fqnwv4pzjl67hdwls4q13aa-libssh2-1.11.1
-  /nix/store/d7zhcrcc7q3yfbm3qkqpgc3daq82spwi-libssh2-1.11.1-dev
-
-2026-02-03T01:03:38.658444268Z [inf]    /nix/store/xcqcgqazykf6s7fsn08k0blnh0wisdcl-libunistring-1.3
-
-2026-02-03T01:03:38.658447023Z [inf]    /nix/store/r9ac2hwnmb0nxwsrvr6gi9wsqf2whfqj-libuv-1.49.2
-  /nix/store/ll14czvpxglf6nnwmmrmygplm830fvlv-libuv-1.49.2-dev
-
-2026-02-03T01:03:38.658457555Z [inf]    /nix/store/6cr0spsvymmrp1hj5n0kbaxw55w1lqyp-libxcrypt-4.4.36
-  /nix/store/pc74azbkr19rkd5bjalq2xwx86cj3cga-linux-headers-6.12
-  /nix/store/fv7gpnvg922frkh81w5hkdhpz0nw3iiz-mirrors-list
-  /nix/store/qs22aazzrdd4dnjf9vffl0n31hvls43h-mpfr-4.2.1
-
-2026-02-03T01:03:38.658459738Z [inf]    /nix/store/grixvx878884hy8x3xs0c0s1i00j632k-nghttp2-1.64.0
-  /nix/store/dz97fw51rm5bl9kz1vg0haj1j1a7r1mr-nghttp2-1.64.0-dev
-
-2026-02-03T01:03:38.658462142Z [inf]    /nix/store/qcghigzrz56vczwlzg9c02vbs6zr9jkz-nghttp2-1.64.0-lib
-  /nix/store/wlpq101dsifq98z2bk300x4dk80wcybr-nodejs-18.20.5
-
-2026-02-03T01:03:38.658464233Z [inf]    /nix/store/9l9n7a0v4aibcz0sgd0crs209an9p7dz-openssl-3.3.2
-
-2026-02-03T01:03:38.658466382Z [inf]    /nix/store/h1ydpxkw9qhjdxjpic1pdc2nirggyy6f-openssl-3.3.2
-
-2026-02-03T01:03:38.658468641Z [inf]    /nix/store/lygl27c44xv73kx1spskcgvzwq7z337c-openssl-3.3.2-bin
-  /nix/store/qq5q0alyzywdazhmybi7m69akz0ppk05-openssl-3.3.2-bin
-
-2026-02-03T01:03:38.65848574Z [inf]    /nix/store/kqm7wpqkzc4bwjlzqizcbz0mgkj06a9x-openssl-3.3.2-dev
-  /nix/store/pp2zf8bdgyz60ds8vcshk2603gcjgp72-openssl-3.3.2-dev
-  /nix/store/q10wlq1brcnc21v5qvhbj9fwlf806dgm-openssl-3.3.2-man
-  /nix/store/5yja5dpk2qw1v5mbfbl2d7klcdfrh90w-patch-2.7.6
-  /nix/store/srfxqk119fijwnprgsqvn68ys9kiw0bn-patchelf-0.15.0
-  /nix/store/3j1p598fivxs69wx3a657ysv3rw8k06l-pcre2-10.44
-  /nix/store/1i003ijlh9i0mzp6alqby5hg3090pjdx-perl-5.40.0
-  /nix/store/4ig84cyqi6qy4n0sanrbzsw1ixa497jx-stdenv-linux
-  /nix/store/d0gfdcag8bxzvg7ww4s7px4lf8sxisyx-stdenv-linux
-
-2026-02-03T01:03:38.658509307Z [inf]    /nix/store/d29r1bdmlvwmj52apgcdxfl1mm9c5782-update-autotools-gnu-config-scripts-hook
-  /nix/store/acfkqzj5qrqs88a4a6ixnybbjxja663d-xgcc-14-20241116-libgcc
-  /nix/store/c2njy6bv84kw1i4bjf5k5gn7gz8hn57n-xz-5.6.3
-  /nix/store/h18s640fnhhj2qdh5vivcfbxvz377srg-xz-5.6.3-bin
-  /nix/store/cqlaa2xf6lslnizyj9xqa8j0ii1yqw0x-zlib-1.3.1
-  /nix/store/1lggwqzapn5mn49l9zy4h566ysv9kzdb-zlib-1.3.1-dev
-
-2026-02-03T01:03:38.664906779Z [inf]  copying path '/nix/store/wf5zj2gbib3gjqllkabxaw4dh0gzcla3-builder.pl' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.666641241Z [inf]  copying path '/nix/store/q10wlq1brcnc21v5qvhbj9fwlf806dgm-openssl-3.3.2-man' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.66847402Z [inf]  copying path '/nix/store/17v0ywnr3akp85pvdi56gwl99ljv95kx-gcc-14-20241116-libgcc' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.668507529Z [inf]  copying path '/nix/store/1m67ipsk39xvhyqrxnzv2m2p48pil8kl-gnu-config-2024-01-01' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.668934182Z [inf]  copying path '/nix/store/acfkqzj5qrqs88a4a6ixnybbjxja663d-xgcc-14-20241116-libgcc' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.669131105Z [inf]  copying path '/nix/store/xcqcgqazykf6s7fsn08k0blnh0wisdcl-libunistring-1.3' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.671661367Z [inf]  copying path '/nix/store/pc74azbkr19rkd5bjalq2xwx86cj3cga-linux-headers-6.12' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.671676526Z [inf]  copying path '/nix/store/fv7gpnvg922frkh81w5hkdhpz0nw3iiz-mirrors-list' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.672103835Z [inf]  copying path '/nix/store/agvks3qmzja0yj54szi3vja6vx3cwkkw-curl-8.11.0-man' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.672641781Z [inf]  copying path '/nix/store/grixvx878884hy8x3xs0c0s1i00j632k-nghttp2-1.64.0' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.678817401Z [inf]  copying path '/nix/store/d29r1bdmlvwmj52apgcdxfl1mm9c5782-update-autotools-gnu-config-scripts-hook' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.717458536Z [inf]  copying path '/nix/store/34z2792zyd4ayl5186vx0s98ckdaccz9-libidn2-2.3.7' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:38.733850922Z [inf]  copying path '/nix/store/65h17wjrrlsj2rj540igylrx7fqcd6vq-glibc-2.40-36' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.366423431Z [inf]  copying path '/nix/store/a9jgnlhkjkxav6qrc3rzg2q84pkl2wvr-attr-2.5.2' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.366476385Z [inf]  copying path '/nix/store/5mh7kaj2fyv8mk4sfq1brwxgc02884wi-bash-5.2p37' from 'https://cache.nixos.org'...
-copying path '/nix/store/ivl2v8rgg7qh1jkj5pwpqycax3rc2hnl-bzip2-1.0.8' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.366506924Z [inf]  copying path '/nix/store/a3c47r5z1q2c4rz0kvq8hlilkhx2s718-gawk-5.3.1' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.366525668Z [inf]  copying path '/nix/store/bpq1s72cw9qb2fs8mnmlw6hn2c7iy0ss-gcc-14-20241116-lib' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.366615124Z [inf]  copying path '/nix/store/qbry6090vlr9ar33kdmmbq2p5apzbga8-expand-response-params' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.366667882Z [inf]  copying path '/nix/store/1c6bmxrrhm8bd26ai2rjqld2yyjrxhds-glibc-2.40-36-bin' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.36670279Z [inf]  copying path '/nix/store/fp6cjl1zcmm6mawsnrb5yak1wkz2ma8l-gnumake-4.4.1' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.366739284Z [inf]  copying path '/nix/store/kryrg7ds05iwcmy81amavk8w13y4lxbs-gmp-6.3.0' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.366788432Z [inf]  copying path '/nix/store/74h4z8k82pmp24xryflv4lxkz8jlpqqd-ed-1.20.2' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.367252734Z [inf]  copying path '/nix/store/2wh1gqyzf5xsvxpdz2k0bxiz583wwq29-keyutils-1.6.3-lib' from 'https://cache.nixos.org'...
-copying path '/nix/store/abm77lnrkrkb58z6xp1qwjcr1xgkcfwm-gnused-4.9' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.367272874Z [inf]  copying path '/nix/store/r9ac2hwnmb0nxwsrvr6gi9wsqf2whfqj-libuv-1.49.2' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.367349928Z [inf]  copying path '/nix/store/6cr0spsvymmrp1hj5n0kbaxw55w1lqyp-libxcrypt-4.4.36' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.367355814Z [inf]  copying path '/nix/store/qcghigzrz56vczwlzg9c02vbs6zr9jkz-nghttp2-1.64.0-lib' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.37362875Z [inf]  copying path '/nix/store/9l9n7a0v4aibcz0sgd0crs209an9p7dz-openssl-3.3.2' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.392287971Z [inf]  copying path '/nix/store/h1ydpxkw9qhjdxjpic1pdc2nirggyy6f-openssl-3.3.2' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.395118763Z [inf]  copying path '/nix/store/mglixp03lsp0w986svwdvm7vcy17rdax-bzip2-1.0.8-bin' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.398321278Z [inf]  copying path '/nix/store/cf7gkacyxmm66lwl5nj6j6yykbrg4q5c-acl-2.3.2' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.39850612Z [inf]  copying path '/nix/store/3j1p598fivxs69wx3a657ysv3rw8k06l-pcre2-10.44' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.399652109Z [inf]  copying path '/nix/store/c2njy6bv84kw1i4bjf5k5gn7gz8hn57n-xz-5.6.3' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.401344165Z [inf]  copying path '/nix/store/5yja5dpk2qw1v5mbfbl2d7klcdfrh90w-patch-2.7.6' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.402924738Z [inf]  copying path '/nix/store/cqlaa2xf6lslnizyj9xqa8j0ii1yqw0x-zlib-1.3.1' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.403058265Z [inf]  copying path '/nix/store/dz97fw51rm5bl9kz1vg0haj1j1a7r1mr-nghttp2-1.64.0-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.404841898Z [inf]  copying path '/nix/store/ll14czvpxglf6nnwmmrmygplm830fvlv-libuv-1.49.2-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.408358865Z [inf]  copying path '/nix/store/9cwwj1c9csmc85l2cqzs3h9hbf1vwl6c-gnutar-1.35' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.413990084Z [inf]  copying path '/nix/store/df2a8k58k00f2dh2x930dg6xs6g6mliv-binutils-2.43.1-lib' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.414041686Z [inf]  copying path '/nix/store/c4rj90r2m89rxs64hmm857mipwjhig5d-file-5.46' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.414112303Z [inf]  copying path '/nix/store/1lggwqzapn5mn49l9zy4h566ysv9kzdb-zlib-1.3.1-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.418991257Z [inf]  copying path '/nix/store/xmbv8s4p4i4dbxgkgdrdfb0ym25wh6gk-isl-0.20' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.419124381Z [inf]  copying path '/nix/store/qs22aazzrdd4dnjf9vffl0n31hvls43h-mpfr-4.2.1' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.430248469Z [inf]  copying path '/nix/store/h18s640fnhhj2qdh5vivcfbxvz377srg-xz-5.6.3-bin' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.43289833Z [inf]  copying path '/nix/store/nvvj6sk0k6px48436drlblf4gafgbvzr-gzip-1.13' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.445862746Z [inf]  copying path '/nix/store/2a3anh8vl3fcgk0fvaravlimrqawawza-libmpc-1.3.1' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.44874371Z [inf]  copying path '/nix/store/aap6cq56amx4mzbyxp2wpgsf1kqjcr1f-gnugrep-3.11' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.455027016Z [inf]  copying path '/nix/store/kj8hbqx4ds9qm9mq7hyikxyfwwg13kzj-glibc-2.40-36-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.55283606Z [inf]  copying path '/nix/store/v9c1s50x7magpiqgycxxkn36avzbcg0g-krb5-1.21.3-lib' from 'https://cache.nixos.org'...
-copying path '/nix/store/8675pnfr4fqnwv4pzjl67hdwls4q13aa-libssh2-1.11.1' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.552918323Z [inf]  copying path '/nix/store/qq5q0alyzywdazhmybi7m69akz0ppk05-openssl-3.3.2-bin' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.562794221Z [inf]  copying path '/nix/store/lygl27c44xv73kx1spskcgvzwq7z337c-openssl-3.3.2-bin' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.581943396Z [inf]  copying path '/nix/store/j7p46r8v9gcpbxx89pbqlh61zhd33gzv-binutils-2.43.1' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.581950512Z [inf]  copying path '/nix/store/l89iqc7am6i60y8vk507zwrzxf0wcd3v-gcc-14-20241116' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.582018699Z [inf]  copying path '/nix/store/a2byxfv4lc8f2g5xfzw8cz5q8k05wi29-gmp-with-cxx-6.3.0' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.582090478Z [inf]  copying path '/nix/store/wwipgdqb4p2fr46kmw9c5wlk799kbl68-icu4c-74.2' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.582186139Z [inf]  copying path '/nix/store/srfxqk119fijwnprgsqvn68ys9kiw0bn-patchelf-0.15.0' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.586294196Z [inf]  copying path '/nix/store/kqm7wpqkzc4bwjlzqizcbz0mgkj06a9x-openssl-3.3.2-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.591321245Z [inf]  copying path '/nix/store/pp2zf8bdgyz60ds8vcshk2603gcjgp72-openssl-3.3.2-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.611219739Z [inf]  copying path '/nix/store/4s9rah4cwaxflicsk5cndnknqlk9n4p3-coreutils-9.5' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.626685382Z [inf]  copying path '/nix/store/pkc7mb4a4qvyz73srkqh4mwl70w98dsv-curl-8.11.0' from 'https://cache.nixos.org'...
-copying path '/nix/store/milph81dilrh96isyivh5n50agpx39k2-krb5-1.21.3' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.653663715Z [inf]  copying path '/nix/store/d7zhcrcc7q3yfbm3qkqpgc3daq82spwi-libssh2-1.11.1-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.656659352Z [inf]  copying path '/nix/store/p123cq20klajcl9hj8jnkjip5nw6awhz-curl-8.11.0-bin' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.660026253Z [inf]  copying path '/nix/store/00g69vw7c9lycy63h45ximy0wmzqx5y6-diffutils-3.10' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.660064247Z [inf]  copying path '/nix/store/jqrz1vq5nz4lnv9pqzydj0ir58wbjfy1-findutils-4.10.0' from 'https://cache.nixos.org'...
-copying path '/nix/store/1i003ijlh9i0mzp6alqby5hg3090pjdx-perl-5.40.0' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.66227392Z [inf]  copying path '/nix/store/b56mswksrql15knpb1bnhv3ysif340kd-krb5-1.21.3-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.682125928Z [inf]  copying path '/nix/store/5f5linrxzhhb3mrclkwdpm9bd8ygldna-curl-8.11.0-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.712088389Z [inf]  copying path '/nix/store/4ig84cyqi6qy4n0sanrbzsw1ixa497jx-stdenv-linux' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:39.759608019Z [inf]  building '/nix/store/1f4a312hz9m6y1ssip52drgkim8az4d6-libraries.drv'...
-
-2026-02-03T01:03:39.798303677Z [inf]  building '/nix/store/6vy68gykpxfphbmmyd59ya88xvrwvvaa-npm-9.9.4.tgz.drv'...
-
-2026-02-03T01:03:39.965835351Z [inf]  building '/nix/store/79g4v87v1cgrx5vlwzcagcs6v8ps8fk2-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env.drv'...
-
-2026-02-03T01:03:40.049011437Z [inf]  
-trying https://registry.npmjs.org/npm/-/npm-9.9.4.tgz
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-
-2026-02-03T01:03:40.119113373Z [inf]  100 2648k  100 2648k    0     0  31.7M      0 --:--:-- --:--:-- --:--:-- 31.9M
-
-2026-02-03T01:03:40.235227613Z [inf]  copying path '/nix/store/srcmmqi8kxjfygd0hyy42c8hv6cws83b-binutils-wrapper-2.43.1' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:40.541469952Z [inf]  copying path '/nix/store/m8w3mf0i4862q22bxad0wspkgdy4jnkk-icu4c-74.2-dev' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:40.651263381Z [inf]  copying path '/nix/store/wlpq101dsifq98z2bk300x4dk80wcybr-nodejs-18.20.5' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:44.419546882Z [inf]  copying path '/nix/store/xcn9p4xxfbvlkpah7pwchpav4ab9d135-gcc-wrapper-14-20241116' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:44.432403973Z [inf]  copying path '/nix/store/d0gfdcag8bxzvg7ww4s7px4lf8sxisyx-stdenv-linux' from 'https://cache.nixos.org'...
-
-2026-02-03T01:03:44.482678846Z [inf]  building '/nix/store/w9h0z1lhfwxc0m38f3w5brfdqrzm4wyj-npm.drv'...
-
-2026-02-03T01:03:44.539928205Z [inf]  Running phase: unpackPhase
-
-2026-02-03T01:03:44.544395173Z [inf]  unpacking source archive /nix/store/fkd1ma3nify8r9wp463yg5rqz9hdcyf1-npm-9.9.4.tgz
-
-2026-02-03T01:03:44.673017285Z [inf]  source root is package
-
-2026-02-03T01:03:44.714529585Z [inf]  setting SOURCE_DATE_EPOCH to timestamp 499162500 of file package/package.json
-
-2026-02-03T01:03:44.720366921Z [inf]  Running phase: installPhase
-
-2026-02-03T01:03:45.393646578Z [inf]  building '/nix/store/n12g1myf9avf7s8klvwn4b0yl2bxxnn7-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7-env.drv'...
-
-2026-02-03T01:03:45.489077116Z [inf]  created 424 symlinks in user environment
-
-2026-02-03T01:03:45.64685736Z [inf]  building '/nix/store/qqxblwnmrkddsdk840jrd6awsicpr8zr-user-environment.drv'...
-
-2026-02-03T01:03:45.806964184Z [inf]  removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
-
-2026-02-03T01:03:45.807083027Z [inf]  removing old generations of profile /nix/var/nix/profiles/per-user/root/profile
-
-2026-02-03T01:03:45.807171604Z [inf]  removing profile version 1
-
-2026-02-03T01:03:45.807331409Z [inf]  removing old generations of profile /nix/var/nix/profiles/per-user/root/channels
-
-2026-02-03T01:03:45.807389155Z [inf]  removing old generations of profile /nix/var/nix/profiles/per-user/root/profile
-
-2026-02-03T01:03:45.810347076Z [inf]  finding garbage collector roots...
-
-2026-02-03T01:03:45.810550244Z [inf]  removing stale link from '/nix/var/nix/gcroots/auto/lzjbmb2ry0z7lma2fvpqprb12921pnb5' to '/nix/var/nix/profiles/per-user/root/profile-1-link'
-
-2026-02-03T01:03:45.816247794Z [inf]  deleting garbage...
-
-2026-02-03T01:03:45.835707405Z [inf]  deleting '/nix/store/a9qf4wwhympzs35ncp80r185j6a21w07-user-environment'
-
-2026-02-03T01:03:45.836453083Z [inf]  deleting '/nix/store/253kwn1730vnay87xkjgxa2v97w3y079-user-environment.drv'
-
-2026-02-03T01:03:45.836868205Z [inf]  deleting '/nix/store/hn5mrh362n52x8wwab9s1v6bgn4n5c94-env-manifest.nix'
-
-2026-02-03T01:03:45.837782811Z [inf]  deleting '/nix/store/d0gfdcag8bxzvg7ww4s7px4lf8sxisyx-stdenv-linux'
-
-2026-02-03T01:03:45.838136884Z [inf]  deleting '/nix/store/xcn9p4xxfbvlkpah7pwchpav4ab9d135-gcc-wrapper-14-20241116'
-
-2026-02-03T01:03:45.83877811Z [inf]  deleting '/nix/store/l89iqc7am6i60y8vk507zwrzxf0wcd3v-gcc-14-20241116'
-
-2026-02-03T01:03:45.852457842Z [inf]  deleting '/nix/store/xmbv8s4p4i4dbxgkgdrdfb0ym25wh6gk-isl-0.20'
-
-2026-02-03T01:03:45.853053203Z [inf]  deleting '/nix/store/2a3anh8vl3fcgk0fvaravlimrqawawza-libmpc-1.3.1'
-
-2026-02-03T01:03:45.853277178Z [inf]  deleting '/nix/store/qs22aazzrdd4dnjf9vffl0n31hvls43h-mpfr-4.2.1'
-
-2026-02-03T01:03:45.853410559Z [inf]  deleting '/nix/store/kryrg7ds05iwcmy81amavk8w13y4lxbs-gmp-6.3.0'
-
-2026-02-03T01:03:45.853702203Z [inf]  deleting '/nix/store/srcmmqi8kxjfygd0hyy42c8hv6cws83b-binutils-wrapper-2.43.1'
-
-2026-02-03T01:03:45.854117865Z [inf]  deleting '/nix/store/kj8hbqx4ds9qm9mq7hyikxyfwwg13kzj-glibc-2.40-36-dev'
-
-2026-02-03T01:03:45.858224856Z [inf]  deleting '/nix/store/1c6bmxrrhm8bd26ai2rjqld2yyjrxhds-glibc-2.40-36-bin'
-
-2026-02-03T01:03:45.858751587Z [inf]  deleting '/nix/store/4ig84cyqi6qy4n0sanrbzsw1ixa497jx-stdenv-linux'
-
-2026-02-03T01:03:45.858907846Z [inf]  deleting '/nix/store/mglixp03lsp0w986svwdvm7vcy17rdax-bzip2-1.0.8-bin'
-
-2026-02-03T01:03:45.859164762Z [inf]  deleting '/nix/store/c4rj90r2m89rxs64hmm857mipwjhig5d-file-5.46'
-
-2026-02-03T01:03:45.859561Z [inf]  deleting '/nix/store/5f5linrxzhhb3mrclkwdpm9bd8ygldna-curl-8.11.0-dev'
-
-2026-02-03T01:03:45.85988531Z [inf]  deleting '/nix/store/d7zhcrcc7q3yfbm3qkqpgc3daq82spwi-libssh2-1.11.1-dev'
-
-2026-02-03T01:03:45.860122391Z [inf]  deleting '/nix/store/fv7gpnvg922frkh81w5hkdhpz0nw3iiz-mirrors-list'
-
-2026-02-03T01:03:45.860715788Z [inf]  deleting '/nix/store/j7p46r8v9gcpbxx89pbqlh61zhd33gzv-binutils-2.43.1'
-
-2026-02-03T01:03:45.86395474Z [inf]  deleting '/nix/store/abm77lnrkrkb58z6xp1qwjcr1xgkcfwm-gnused-4.9'
-
-2026-02-03T01:03:45.865868654Z [inf]  deleting '/nix/store/aap6cq56amx4mzbyxp2wpgsf1kqjcr1f-gnugrep-3.11'
-
-2026-02-03T01:03:45.869831603Z [inf]  deleting '/nix/store/1i003ijlh9i0mzp6alqby5hg3090pjdx-perl-5.40.0'
-
-2026-02-03T01:03:45.886981061Z [inf]  deleting '/nix/store/lwi59jcfwk2lnrakmm1y5vw85hj3n1bi-source'
-
-2026-02-03T01:03:46.911887915Z [inf]  deleting '/nix/store/9cwwj1c9csmc85l2cqzs3h9hbf1vwl6c-gnutar-1.35'
-
-2026-02-03T01:03:46.913816658Z [inf]  deleting '/nix/store/3j1p598fivxs69wx3a657ysv3rw8k06l-pcre2-10.44'
-
-2026-02-03T01:03:46.914082994Z [inf]  deleting '/nix/store/9fxr7753z31rn59i64dqaajgsx0ap91p-libraries'
-
-2026-02-03T01:03:46.914721507Z [inf]  deleting '/nix/store/fp6cjl1zcmm6mawsnrb5yak1wkz2ma8l-gnumake-4.4.1'
-
-2026-02-03T01:03:46.916320158Z [inf]  deleting '/nix/store/5khfwnx4arf3nl3i9k1rljb29krdy6xn-source'
-
-2026-02-03T01:03:46.917378256Z [inf]  deleting '/nix/store/d29r1bdmlvwmj52apgcdxfl1mm9c5782-update-autotools-gnu-config-scripts-hook'
-
-2026-02-03T01:03:46.91748206Z [inf]  deleting '/nix/store/1m67ipsk39xvhyqrxnzv2m2p48pil8kl-gnu-config-2024-01-01'
-
-2026-02-03T01:03:46.917710672Z [inf]  deleting '/nix/store/b56mswksrql15knpb1bnhv3ysif340kd-krb5-1.21.3-dev'
-
-2026-02-03T01:03:46.918955874Z [inf]  deleting '/nix/store/p123cq20klajcl9hj8jnkjip5nw6awhz-curl-8.11.0-bin'
-
-2026-02-03T01:03:46.919094998Z [inf]  deleting '/nix/store/pc74azbkr19rkd5bjalq2xwx86cj3cga-linux-headers-6.12'
-
-2026-02-03T01:03:46.928028385Z [inf]  deleting '/nix/store/5yja5dpk2qw1v5mbfbl2d7klcdfrh90w-patch-2.7.6'
-
-2026-02-03T01:03:46.928553843Z [inf]  deleting '/nix/store/jqrz1vq5nz4lnv9pqzydj0ir58wbjfy1-findutils-4.10.0'
-
-2026-02-03T01:03:46.930927257Z [inf]  deleting '/nix/store/pkc7mb4a4qvyz73srkqh4mwl70w98dsv-curl-8.11.0'
-
-2026-02-03T01:03:46.931188234Z [inf]  deleting '/nix/store/dz97fw51rm5bl9kz1vg0haj1j1a7r1mr-nghttp2-1.64.0-dev'
-
-2026-02-03T01:03:46.931571568Z [inf]  deleting '/nix/store/qcghigzrz56vczwlzg9c02vbs6zr9jkz-nghttp2-1.64.0-lib'
-
-2026-02-03T01:03:46.932399479Z [inf]  deleting '/nix/store/wf5zj2gbib3gjqllkabxaw4dh0gzcla3-builder.pl'
-
-2026-02-03T01:03:46.932574337Z [inf]  deleting '/nix/store/agvks3qmzja0yj54szi3vja6vx3cwkkw-curl-8.11.0-man'
-
-2026-02-03T01:03:46.932988915Z [inf]  deleting '/nix/store/nvvj6sk0k6px48436drlblf4gafgbvzr-gzip-1.13'
-
-2026-02-03T01:03:46.933447521Z [inf]  deleting '/nix/store/fkd1ma3nify8r9wp463yg5rqz9hdcyf1-npm-9.9.4.tgz'
-
-2026-02-03T01:03:46.933757598Z [inf]  deleting '/nix/store/8675pnfr4fqnwv4pzjl67hdwls4q13aa-libssh2-1.11.1'
-
-2026-02-03T01:03:46.934128962Z [inf]  deleting '/nix/store/milph81dilrh96isyivh5n50agpx39k2-krb5-1.21.3'
-
-2026-02-03T01:03:46.935311413Z [inf]  deleting '/nix/store/v9c1s50x7magpiqgycxxkn36avzbcg0g-krb5-1.21.3-lib'
-
-2026-02-03T01:03:46.936668452Z [inf]  deleting '/nix/store/h18s640fnhhj2qdh5vivcfbxvz377srg-xz-5.6.3-bin'
-
-2026-02-03T01:03:46.937104791Z [inf]  deleting '/nix/store/c2njy6bv84kw1i4bjf5k5gn7gz8hn57n-xz-5.6.3'
-
-2026-02-03T01:03:46.938773446Z [inf]  deleting '/nix/store/2wh1gqyzf5xsvxpdz2k0bxiz583wwq29-keyutils-1.6.3-lib'
-
-2026-02-03T01:03:46.939030591Z [inf]  deleting '/nix/store/74h4z8k82pmp24xryflv4lxkz8jlpqqd-ed-1.20.2'
-
-2026-02-03T01:03:46.939371931Z [inf]  deleting '/nix/store/ivl2v8rgg7qh1jkj5pwpqycax3rc2hnl-bzip2-1.0.8'
-
-2026-02-03T01:03:46.93986615Z [inf]  deleting '/nix/store/qbry6090vlr9ar33kdmmbq2p5apzbga8-expand-response-params'
-
-2026-02-03T01:03:46.940072771Z [inf]  deleting '/nix/store/df2a8k58k00f2dh2x930dg6xs6g6mliv-binutils-2.43.1-lib'
-
-2026-02-03T01:03:46.940403336Z [inf]  deleting '/nix/store/00g69vw7c9lycy63h45ximy0wmzqx5y6-diffutils-3.10'
-
-2026-02-03T01:03:46.942075058Z [inf]  deleting '/nix/store/grixvx878884hy8x3xs0c0s1i00j632k-nghttp2-1.64.0'
-
-2026-02-03T01:03:46.942316211Z [inf]  deleting '/nix/store/6cr0spsvymmrp1hj5n0kbaxw55w1lqyp-libxcrypt-4.4.36'
-
-2026-02-03T01:03:46.942559051Z [inf]  deleting '/nix/store/srfxqk119fijwnprgsqvn68ys9kiw0bn-patchelf-0.15.0'
-
-2026-02-03T01:03:46.943059913Z [inf]  deleting '/nix/store/kqm7wpqkzc4bwjlzqizcbz0mgkj06a9x-openssl-3.3.2-dev'
-
-2026-02-03T01:03:46.944428707Z [inf]  deleting '/nix/store/qq5q0alyzywdazhmybi7m69akz0ppk05-openssl-3.3.2-bin'
-
-2026-02-03T01:03:46.944566907Z [inf]  deleting '/nix/store/9l9n7a0v4aibcz0sgd0crs209an9p7dz-openssl-3.3.2'
-
-2026-02-03T01:03:46.945032691Z [inf]  deleting '/nix/store/a3c47r5z1q2c4rz0kvq8hlilkhx2s718-gawk-5.3.1'
-
-2026-02-03T01:03:46.946644728Z [inf]  deleting unused links...
-
-2026-02-03T01:03:48.692010314Z [inf]  note: currently hard linking saves 1.64 MiB
-
-2026-02-03T01:03:48.752435155Z [inf]  61 store paths deleted, 559.40 MiB freed
-
-2026-02-03T01:03:49.148432909Z [inf]  [stage-0  4/10] RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
-2026-02-03T01:03:49.150975139Z [inf]  [stage-0  5/10] COPY . /app/.
-2026-02-03T01:03:49.319305266Z [inf]  [stage-0  5/10] COPY . /app/.
-2026-02-03T01:03:49.321452980Z [inf]  [stage-0  6/10] RUN --mount=type=cache,id=s/d9b3d98e-99ec-4dec-9cc9-79976f89ee09-/root/npm,target=/root/.npm npm ci
-2026-02-03T01:03:49.524843074Z [inf]  npm warn config production Use `--omit=dev` instead.
-
-2026-02-03T01:03:52.554532063Z [inf]  npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'inngest@3.49.0',
-npm warn EBADENGINE   required: { node: '>=20' },
-npm warn EBADENGINE   current: { node: 'v18.20.5', npm: '10.8.2' }
-npm warn EBADENGINE }
-
-2026-02-03T01:03:52.556121318Z [inf]  npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'vite@7.3.1',
-npm warn EBADENGINE   required: { node: '^20.19.0 || >=22.12.0' },
-npm warn EBADENGINE   current: { node: 'v18.20.5', npm: '10.8.2' }
-npm warn EBADENGINE }
-
-2026-02-03T01:03:52.556670493Z [inf]  npm warn EBADENGINE Unsupported engine {
-npm warn EBADENGINE   package: 'vitest@4.0.18',
-npm warn EBADENGINE   required: { node: '^20.0.0 || ^22.0.0 || >=24.0.0' },
-npm warn EBADENGINE   current: { node: 'v18.20.5', npm: '10.8.2' }
-npm warn EBADENGINE }
-
-2026-02-03T01:03:52.573346594Z [inf]  npm error code EUSAGE
-
-2026-02-03T01:03:52.573453361Z [inf]  npm error
-npm error `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.
-npm error
-npm error Missing: @playwright/test@1.58.1 from lock file
-npm error Missing: jsdom@22.1.0 from lock file
-npm error Missing: playwright@1.58.1 from lock file
-npm error Missing: abab@2.0.6 from lock file
-npm error Missing: cssstyle@3.0.0 from lock file
-npm error Missing: data-urls@4.0.0 from lock file
-npm error Missing: decimal.js@10.6.0 from lock file
-npm error Missing: domexception@4.0.0 from lock file
-npm error Missing: html-encoding-sniffer@3.0.0 from lock file
-npm error Missing: http-proxy-agent@5.0.0 from lock file
-npm error Missing: https-proxy-agent@5.0.1 from lock file
-npm error Missing: is-potential-custom-element-name@1.0.1 from lock file
-npm error Missing: nwsapi@2.2.23 from lock file
-npm error Missing: parse5@7.3.0 from lock file
-npm error Missing: rrweb-cssom@0.6.0 from lock file
-npm error Missing: saxes@6.0.0 from lock file
-npm error Missing: symbol-tree@3.2.4 from lock file
-npm error Missing: tough-cookie@4.1.4 from lock file
-npm error Missing: w3c-xmlserializer@4.0.0 from lock file
-npm error Missing: webidl-conversions@7.0.0 from lock file
-npm error Missing: whatwg-encoding@2.0.0 from lock file
-npm error Missing: whatwg-mimetype@3.0.0 from lock file
-npm error Missing: whatwg-url@12.0.1 from lock file
-npm error Missing: ws@8.19.0 from lock file
-npm error Missing: xml-name-validator@4.0.0 from lock file
-npm error Missing: whatwg-url@12.0.1 from lock file
-npm error Missing: webidl-conversions@7.0.0 from lock file
-npm error Missing: @tootallnate/once@2.0.0 from lock file
-npm error Missing: agent-base@6.0.2 from lock file
-npm error Missing: entities@6.0.1 from lock file
-npm error Missing: fsevents@2.3.2 from lock file
-npm error Missing: playwright-core@1.58.1 from lock file
-npm error Missing: xmlchars@2.2.0 from lock file
-npm error Missing: psl@1.15.0 from lock file
-npm error Missing: universalify@0.2.0 from lock file
-npm error Missing: url-parse@1.5.10 from lock file
-npm error Missing: querystringify@2.2.0 from lock file
-npm error Missing: requires-port@1.0.0 from lock file
-npm error Missing: iconv-lite@0.6.3 from lock file
-npm error Missing: safer-buffer@2.1.2 from lock file
-npm error Missing: tr46@4.1.1 from lock file
-npm error Missing: webidl-conversions@7.0.0 from lock file
-npm error Missing: agent-base@6.0.2 from lock file
-npm error Missing: tr46@4.1.1 from lock file
-npm error
-npm error Clean install a project
-npm error
-npm error Usage:
-npm error npm ci
-npm error
-npm error Options:
-npm error [--install-strategy <hoisted|nested|shallow|linked>] [--legacy-bundling]
-npm error [--global-style] [--omit <dev|optional|peer> [--omit <dev|optional|peer> ...]]
-npm error [--include <prod|dev|optional|peer> [--include <prod|dev|optional|peer> ...]]
-npm error [--strict-peer-deps] [--foreground-scripts] [--ignore-scripts] [--no-audit]
-npm error [--no-bin-links] [--no-fund] [--dry-run]
-npm error [-w|--workspace <workspace-name> [-w|--workspace <workspace-name> ...]]
-npm error [-ws|--workspaces] [--include-workspace-root] [--install-links]
-npm error
-npm error aliases: clean-install, ic, install-clean, isntall-clean
-npm error
-npm error Run "npm help ci" for more info
-
-2026-02-03T01:03:52.574671253Z [inf]  npm error A complete log of this run can be found in: /root/.npm/_logs/2026-02-03T01_03_49_495Z-debug-0.log
-
-2026-02-03T01:03:52.701233283Z [err]  [stage-0  6/10] RUN --mount=type=cache,id=s/d9b3d98e-99ec-4dec-9cc9-79976f89ee09-/root/npm,target=/root/.npm npm ci
-2026-02-03T01:03:52.717306242Z [err]  Dockerfile:20
-2026-02-03T01:03:52.717352405Z [err]  -------------------
-2026-02-03T01:03:52.717357494Z [err]  18 |     ENV NIXPACKS_PATH=/app/node_modules/.bin:$NIXPACKS_PATH
-2026-02-03T01:03:52.717361988Z [err]  19 |     COPY . /app/.
-2026-02-03T01:03:52.717368499Z [err]  20 | >>> RUN --mount=type=cache,id=s/d9b3d98e-99ec-4dec-9cc9-79976f89ee09-/root/npm,target=/root/.npm npm ci
-2026-02-03T01:03:52.717372002Z [err]  21 |
-2026-02-03T01:03:52.717375085Z [err]  22 |     # build phase
-2026-02-03T01:03:52.717378467Z [err]  -------------------
-2026-02-03T01:03:52.717382992Z [err]  ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c npm ci" did not complete successfully: exit code: 1
-2026-02-03T01:03:52.723819260Z [err]  Error: Docker build failed
-
-
-
-
-
-
-backend 
-
-2026-02-03T01:03:03.125316743Z [inf]  
-2026-02-03T01:03:07.104099501Z [inf]  [35m[Region: ][0m
-2026-02-03T01:03:07.127335210Z [err]  [91mDockerfile `Dockerfile` does not exist[0m
+2026-02-03T15:38:02.000000000Z [inf]  Stopping Container
+2026-02-03T15:38:03.000000000Z [inf]  Stopping Container
+2026-02-03T15:38:04.000000000Z [inf]  Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/487ca619-8ba7-47f8-9a35-c89560648e3a/vol_ugy6h6s7novckicv
+2026-02-03T15:38:13.000000000Z [inf]  Starting Container
+2026-02-03T15:38:13.948277851Z [err]  npm warn config production Use `--omit=dev` instead.
+2026-02-03T15:38:13.948282416Z [inf]  
+2026-02-03T15:38:13.948286577Z [inf]  > clasesde-pe-platform@2.0.0 start
+2026-02-03T15:38:13.948291277Z [inf]  > next start
+2026-02-03T15:38:13.948295797Z [inf]  
+2026-02-03T15:38:13.948300597Z [inf]     ▲ Next.js 15.5.9
+2026-02-03T15:38:13.948305713Z [inf]     - Local:        http://localhost:3000
+2026-02-03T15:38:13.948309644Z [inf]     - Network:      http://10.250.11.231:3000
+2026-02-03T15:38:13.948314218Z [inf]  
+2026-02-03T15:38:13.948318447Z [inf]   ✓ Starting...
+2026-02-03T15:38:13.948322714Z [inf]  Next.js config - NODE_ENV: production
+2026-02-03T15:38:13.948326592Z [inf]  Next.js config - BACKEND URL: https://surfschool-backend-production.up.railway.app
+2026-02-03T15:38:13.948330426Z [err]   ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+2026-02-03T15:38:13.948334734Z [inf]   ✓ Ready in 401ms
+2026-02-03T15:38:19.000000000Z [inf]  Starting Container
+2026-02-03T15:38:24.000000000Z [inf]  Stopping Container
+2026-02-03T15:38:24.913222760Z [inf]  
+2026-02-03T15:38:24.913231155Z [inf]  > clasedesurf-backend@0.1.0 start
+2026-02-03T15:38:24.913238364Z [inf]  > node scripts/start.js
+2026-02-03T15:38:24.913246401Z [inf]  
+2026-02-03T15:38:24.913253961Z [inf]  [dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+2026-02-03T15:38:24.913260784Z [inf]  🚀 Starting Surf School Backend...
+2026-02-03T15:38:24.913268479Z [inf]  ====================================
+2026-02-03T15:38:24.913278624Z [inf]  NODE_ENV: production
+2026-02-03T15:38:24.913287781Z [inf]  PORT: 4000
+2026-02-03T15:38:24.913762281Z [inf]  DATABASE_URL: configured
+2026-02-03T15:38:24.913784421Z [inf]  SEED_ON_START: false
+2026-02-03T15:38:24.913793813Z [inf]  
+2026-02-03T15:38:24.913801914Z [inf]  ✅ Found server at: dist/server.js
+2026-02-03T15:38:24.913810896Z [inf]  🗄️  Setting up database...
+2026-02-03T15:38:24.913820526Z [inf]  🔄 Running: npx prisma migrate deploy
+2026-02-03T15:38:24.913828185Z [inf]  Prisma schema loaded from prisma/schema.prisma
+2026-02-03T15:38:24.913836853Z [inf]  Datasource "db": PostgreSQL database "railway", schema "public" at "postgres.railway.internal:5432"
+2026-02-03T15:38:24.913846703Z [inf]  
+2026-02-03T15:38:24.913855351Z [inf]  No migration found in prisma/migrations
+2026-02-03T15:38:24.913862578Z [inf]  
+2026-02-03T15:38:24.913869765Z [err]  Error: P3009
+2026-02-03T15:38:24.913876991Z [err]  
+2026-02-03T15:38:24.913886127Z [err]  migrate found failed migrations in the target database, new migrations will not be applied. Read more about how to resolve migration issues in a production database: https://pris.ly/d/migrate-resolve
+2026-02-03T15:38:24.913895092Z [err]  The `20251224221646_structural_refactor_classes_to_products` migration started at 2025-12-24 22:47:13.462812 UTC failed
+2026-02-03T15:38:24.913901825Z [err]  
+2026-02-03T15:38:26.939173226Z [err]  npm error path /app
+2026-02-03T15:38:26.939178496Z [err]  npm error command failed
+2026-02-03T15:38:26.939187266Z [err]  npm error signal SIGTERM
+2026-02-03T15:38:26.939193726Z [err]  npm error command sh -c next start
+2026-02-03T15:38:26.939198446Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2026-02-03T14_49_11_869Z-debug-0.log
+2026-02-03T15:38:27.380914469Z [inf]  ⚠️  Command failed with code 1: npx
+2026-02-03T15:38:27.380927102Z [inf]  🚀 Server is running on port 4000
+2026-02-03T15:38:27.380929231Z [inf]  🌱 Skipping database seed (set SEED_ON_START=true to enable)
+2026-02-03T15:38:27.380942037Z [inf]  ✅ [Redis] Connected successfully
+2026-02-03T15:38:27.380943527Z [inf]  🎯 Starting Node.js server...
+2026-02-03T15:38:27.380971413Z [inf]  [dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+2026-02-03T15:38:27.380982382Z [inf]  📂 Serving static files from: /storage/data
+2026-02-03T15:38:27.380988706Z [inf]  ✅ Connected to PostgreSQL
+2026-02-03T15:38:27.380996665Z [inf]  🌐 Server will be available at http://localhost:4000
+2026-02-03T15:38:27.380997184Z [inf]  [Redis] Initializing connection...
+2026-02-03T15:38:27.381006375Z [inf]  
+2026-02-03T15:38:27.381010455Z [inf]  prisma:info Starting a postgresql pool with 97 connections.
+2026-02-03T15:38:27.381015259Z [inf]  [dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+2026-02-03T15:38:27.381026163Z [inf]  [Redis] Connecting to URL: redis://default:****@redis.railway.internal:6379
+2026-02-03T15:38:27.381028160Z [inf]  [dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+2026-02-03T15:38:27.381039267Z [inf]  DATABASE_URL: configured
+2026-02-03T15:38:27.381041191Z [inf]  ⚠️ WhatsApp Service Disabled
+2026-02-03T15:38:27.381051485Z [inf]  DATABASE_URL value: postgresql://postgres:BJrFcoAnIvEWPxvQLJHJfzYPiHMOrkhb@postgres.railway.internal:5432/railway
+2026-02-03T15:38:27.381059867Z [inf]  📂 Storage directory exists at: /storage/data
+2026-02-03T15:38:27.381096685Z [err]  
+2026-02-03T15:38:31.525738581Z [err]  2026-02-03 15:38:23.716 UTC [65393] LOG:  could not receive data from client: Connection reset by peer
+2026-02-03T15:38:31.525746407Z [err]  2026-02-03 15:38:23.921 UTC [65394] LOG:  could not receive data from client: Connection reset by peer
+2026-02-03T15:41:46.940001084Z [err]  2026-02-03 15:41:46.684 UTC [65395] ERROR:  column users.swimmingLevel does not exist at character 248
+2026-02-03T15:41:46.940014799Z [err]  2026-02-03 15:41:46.684 UTC [65395] STATEMENT:  SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:41:46.940194524Z [err]  2026-02-03 15:41:46.370 UTC [65395] ERROR:  column users.swimmingLevel does not exist at character 248
+2026-02-03T15:41:46.940202412Z [err]  2026-02-03 15:41:46.370 UTC [65395] STATEMENT:  SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:41:49.720778415Z [err]  2026-02-03 15:41:49.715 UTC [65395] ERROR:  column users.swimmingLevel does not exist at character 248
+2026-02-03T15:41:49.720788353Z [err]  2026-02-03 15:41:49.715 UTC [65395] STATEMENT:  SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:41:50.678956095Z [err]  2026-02-03 15:41:50.009 UTC [65395] ERROR:  column users.swimmingLevel does not exist at character 248
+2026-02-03T15:41:50.678960564Z [err]  2026-02-03 15:41:50.009 UTC [65395] STATEMENT:  SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:41:54.321888957Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
+2026-02-03T15:41:54.321894022Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
+2026-02-03T15:41:54.321899068Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
+2026-02-03T15:41:54.321901831Z [inf]  [API Proxy] GET Calendar https://surfschool-backend-production.up.railway.app/classes/3/calendar?start=2026-02-03T15%3A41%3A46.989Z&end=2026-05-04T15%3A41%3A46.989Z
+2026-02-03T15:41:54.321914504Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
+2026-02-03T15:41:54.321922145Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
+2026-02-03T15:41:54.321928879Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
+2026-02-03T15:41:54.321935318Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
+2026-02-03T15:41:54.321942149Z [inf]  [API Proxy] GET Calendar https://surfschool-backend-production.up.railway.app/classes/3/calendar?start=2026-02-03T15%3A41%3A50.311Z&end=2026-05-04T15%3A41%3A50.311Z
+2026-02-03T15:41:54.321949115Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
+2026-02-03T15:41:54.321957444Z [inf]  [API Proxy] GET Calendar https://surfschool-backend-production.up.railway.app/classes/3/calendar?start=2026-02-03T15%3A41%3A53.084Z&end=2026-05-04T15%3A41%3A53.084Z
+2026-02-03T15:41:54.910654913Z [err]  2026-02-03 15:41:54.817 UTC [65395] ERROR:  column users.swimmingLevel does not exist at character 248
+2026-02-03T15:41:54.910661535Z [err]  2026-02-03 15:41:54.817 UTC [65395] STATEMENT:  SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:41:55.363955618Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
+2026-02-03T15:41:55.363961090Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
+2026-02-03T15:41:59.031606763Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
+2026-02-03T15:41:59.031614674Z [inf]  prisma:query SELECT 1
+2026-02-03T15:41:59.031622705Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:41:59.031629677Z [inf]  prisma:error 
+2026-02-03T15:41:59.031636766Z [inf]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:41:59.031644362Z [inf]  
+2026-02-03T15:41:59.031665257Z [inf]  
+2026-02-03T15:41:59.031673706Z [inf]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:41:59.031680253Z [err]  PrismaClientKnownRequestError: 
+2026-02-03T15:41:59.031686931Z [err]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:41:59.031694441Z [err]  
+2026-02-03T15:41:59.031701156Z [err]  
+2026-02-03T15:41:59.031711249Z [err]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:41:59.031718181Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+2026-02-03T15:41:59.031724500Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+2026-02-03T15:41:59.031731728Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+2026-02-03T15:41:59.031738602Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+2026-02-03T15:42:02.029617208Z [err]      at async /app/dist/routes/users.js:52:22 {
+2026-02-03T15:42:02.029625320Z [err]    code: 'P2022',
+2026-02-03T15:42:02.029631647Z [err]    clientVersion: '5.22.0',
+2026-02-03T15:42:02.029637832Z [err]    meta: { modelName: 'User', column: 'users.swimmingLevel' }
+2026-02-03T15:42:02.029644059Z [err]  }
+2026-02-03T15:42:02.029650546Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE ("public"."classes"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:02.029658600Z [inf]  prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location", "public"."schools"."description", "public"."schools"."phone", "public"."schools"."email", "public"."schools"."createdAt", "public"."schools"."updatedAt", "public"."schools"."address", "public"."schools"."coverImage", "public"."schools"."facebook", "public"."schools"."instagram", "public"."schools"."logo", "public"."schools"."website", "public"."schools"."whatsapp", "public"."schools"."ownerId", "public"."schools"."foundedYear", "public"."schools"."rating", "public"."schools"."totalReviews", "public"."schools"."status"::text FROM "public"."schools" WHERE "public"."schools"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:02.029665225Z [inf]  prisma:query SELECT "public"."beaches"."id", "public"."beaches"."name", "public"."beaches"."slug", "public"."beaches"."location", "public"."beaches"."description", "public"."beaches"."image", "public"."beaches"."waveType", "public"."beaches"."level", "public"."beaches"."bestTime", "public"."beaches"."entryTips", "public"."beaches"."hazards", "public"."beaches"."conditions", "public"."beaches"."isActive", "public"."beaches"."displayOrder", "public"."beaches"."count", "public"."beaches"."createdAt", "public"."beaches"."updatedAt" FROM "public"."beaches" WHERE "public"."beaches"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:04.893294434Z [inf]  prisma:query SELECT "public"."class_schedules"."id", "public"."class_schedules"."classId", "public"."class_schedules"."type"::text, "public"."class_schedules"."dayOfWeek", "public"."class_schedules"."startTime", "public"."class_schedules"."endTime", "public"."class_schedules"."times", "public"."class_schedules"."specificDate", "public"."class_schedules"."rangeStart", "public"."class_schedules"."rangeEnd", "public"."class_schedules"."dates", "public"."class_schedules"."isActive" FROM "public"."class_schedules" WHERE "public"."class_schedules"."classId" IN ($1) OFFSET $2
+2026-02-03T15:42:04.893301616Z [inf]  prisma:query SELECT "public"."class_sessions"."id", "public"."class_sessions"."classId", "public"."class_sessions"."date", "public"."class_sessions"."time", "public"."class_sessions"."capacity", "public"."class_sessions"."price", "public"."class_sessions"."isClosed", "public"."class_sessions"."createdAt", "public"."class_sessions"."updatedAt" FROM "public"."class_sessions" WHERE (("public"."class_sessions"."isClosed" = $1 AND "public"."class_sessions"."date" >= $2) AND "public"."class_sessions"."classId" IN ($3)) ORDER BY "public"."class_sessions"."date" ASC, "public"."class_sessions"."time" ASC LIMIT $4 OFFSET $5
+2026-02-03T15:42:04.893308662Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
+2026-02-03T15:42:04.893316361Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:09.532464507Z [inf]  prisma:error 
+2026-02-03T15:42:09.532471648Z [inf]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:42:09.532478048Z [inf]  
+2026-02-03T15:42:09.532484571Z [inf]  
+2026-02-03T15:42:09.532490493Z [inf]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:42:09.532496530Z [err]  PrismaClientKnownRequestError: 
+2026-02-03T15:42:09.532502845Z [err]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:42:09.532508749Z [err]  
+2026-02-03T15:42:09.532514468Z [err]  
+2026-02-03T15:42:09.532520300Z [err]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:42:09.532526529Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+2026-02-03T15:42:09.532532473Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+2026-02-03T15:42:09.532538375Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+2026-02-03T15:42:09.532543528Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+2026-02-03T15:42:09.532549631Z [err]      at async /app/dist/routes/users.js:52:22 {
+2026-02-03T15:42:09.532557444Z [err]    code: 'P2022',
+2026-02-03T15:42:09.532565967Z [err]    clientVersion: '5.22.0',
+2026-02-03T15:42:09.532572414Z [err]    meta: { modelName: 'User', column: 'users.swimmingLevel' }
+2026-02-03T15:42:09.532577797Z [err]  }
+2026-02-03T15:42:09.532585392Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE ("public"."classes"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:12.364835768Z [inf]  prisma:query SELECT "public"."class_schedules"."id", "public"."class_schedules"."classId", "public"."class_schedules"."type"::text, "public"."class_schedules"."dayOfWeek", "public"."class_schedules"."startTime", "public"."class_schedules"."endTime", "public"."class_schedules"."times", "public"."class_schedules"."specificDate", "public"."class_schedules"."rangeStart", "public"."class_schedules"."rangeEnd", "public"."class_schedules"."dates", "public"."class_schedules"."isActive" FROM "public"."class_schedules" WHERE ("public"."class_schedules"."isActive" = $1 AND "public"."class_schedules"."classId" IN ($2)) OFFSET $3
+2026-02-03T15:42:12.364844584Z [inf]  prisma:query SELECT "public"."class_sessions"."id", "public"."class_sessions"."classId", "public"."class_sessions"."date", "public"."class_sessions"."time", "public"."class_sessions"."capacity", "public"."class_sessions"."price", "public"."class_sessions"."isClosed", "public"."class_sessions"."createdAt", "public"."class_sessions"."updatedAt" FROM "public"."class_sessions" WHERE (("public"."class_sessions"."date" >= $1 AND "public"."class_sessions"."date" <= $2) AND "public"."class_sessions"."classId" IN ($3)) OFFSET $4
+2026-02-03T15:42:12.364955076Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
+2026-02-03T15:42:12.364962392Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:12.366120850Z [inf]  prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE (("public"."reservations"."date" >= $1 AND "public"."reservations"."date" <= $2 AND "public"."reservations"."status" <> CAST($3::text AS "public"."ReservationStatus")) AND "public"."reservations"."classId" IN ($4)) OFFSET $5
+2026-02-03T15:42:14.708551240Z [inf]  prisma:error 
+2026-02-03T15:42:14.708559018Z [inf]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:42:14.708566581Z [inf]  
+2026-02-03T15:42:14.708574425Z [inf]  
+2026-02-03T15:42:14.708580912Z [inf]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:42:14.708589149Z [err]  PrismaClientKnownRequestError: 
+2026-02-03T15:42:14.708597400Z [err]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:42:14.708603533Z [err]  
+2026-02-03T15:42:14.708610811Z [err]  
+2026-02-03T15:42:14.708618256Z [err]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:42:14.708625686Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+2026-02-03T15:42:14.708632662Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+2026-02-03T15:42:14.708639785Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+2026-02-03T15:42:14.708647082Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+2026-02-03T15:42:14.708653417Z [err]      at async /app/dist/routes/users.js:52:22 {
+2026-02-03T15:42:14.708661475Z [err]    code: 'P2022',
+2026-02-03T15:42:14.708669519Z [err]    clientVersion: '5.22.0',
+2026-02-03T15:42:14.708676902Z [err]    meta: { modelName: 'User', column: 'users.swimmingLevel' }
+2026-02-03T15:42:14.708684331Z [err]  }
+2026-02-03T15:42:14.708693700Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE ("public"."classes"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:17.001256649Z [inf]  prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location", "public"."schools"."description", "public"."schools"."phone", "public"."schools"."email", "public"."schools"."createdAt", "public"."schools"."updatedAt", "public"."schools"."address", "public"."schools"."coverImage", "public"."schools"."facebook", "public"."schools"."instagram", "public"."schools"."logo", "public"."schools"."website", "public"."schools"."whatsapp", "public"."schools"."ownerId", "public"."schools"."foundedYear", "public"."schools"."rating", "public"."schools"."totalReviews", "public"."schools"."status"::text FROM "public"."schools" WHERE "public"."schools"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:17.001266145Z [inf]  prisma:query SELECT "public"."beaches"."id", "public"."beaches"."name", "public"."beaches"."slug", "public"."beaches"."location", "public"."beaches"."description", "public"."beaches"."image", "public"."beaches"."waveType", "public"."beaches"."level", "public"."beaches"."bestTime", "public"."beaches"."entryTips", "public"."beaches"."hazards", "public"."beaches"."conditions", "public"."beaches"."isActive", "public"."beaches"."displayOrder", "public"."beaches"."count", "public"."beaches"."createdAt", "public"."beaches"."updatedAt" FROM "public"."beaches" WHERE "public"."beaches"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:17.001274243Z [inf]  prisma:query SELECT "public"."class_schedules"."id", "public"."class_schedules"."classId", "public"."class_schedules"."type"::text, "public"."class_schedules"."dayOfWeek", "public"."class_schedules"."startTime", "public"."class_schedules"."endTime", "public"."class_schedules"."times", "public"."class_schedules"."specificDate", "public"."class_schedules"."rangeStart", "public"."class_schedules"."rangeEnd", "public"."class_schedules"."dates", "public"."class_schedules"."isActive" FROM "public"."class_schedules" WHERE "public"."class_schedules"."classId" IN ($1) OFFSET $2
+2026-02-03T15:42:17.001282416Z [inf]  prisma:query SELECT "public"."class_sessions"."id", "public"."class_sessions"."classId", "public"."class_sessions"."date", "public"."class_sessions"."time", "public"."class_sessions"."capacity", "public"."class_sessions"."price", "public"."class_sessions"."isClosed", "public"."class_sessions"."createdAt", "public"."class_sessions"."updatedAt" FROM "public"."class_sessions" WHERE (("public"."class_sessions"."isClosed" = $1 AND "public"."class_sessions"."date" >= $2) AND "public"."class_sessions"."classId" IN ($3)) ORDER BY "public"."class_sessions"."date" ASC, "public"."class_sessions"."time" ASC LIMIT $4 OFFSET $5
+2026-02-03T15:42:20.328823029Z [inf]  prisma:error 
+2026-02-03T15:42:20.328839587Z [inf]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:42:20.328850840Z [inf]  
+2026-02-03T15:42:20.328887520Z [inf]  
+2026-02-03T15:42:20.328897060Z [inf]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:42:20.328904950Z [err]  PrismaClientKnownRequestError: 
+2026-02-03T15:42:20.328913243Z [err]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:42:20.328921781Z [err]  
+2026-02-03T15:42:20.328930100Z [err]  
+2026-02-03T15:42:20.328939475Z [err]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:42:20.328946014Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+2026-02-03T15:42:20.328955677Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+2026-02-03T15:42:20.328964536Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+2026-02-03T15:42:20.328973490Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+2026-02-03T15:42:20.328982560Z [err]      at async /app/dist/routes/users.js:52:22 {
+2026-02-03T15:42:20.329236041Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
+2026-02-03T15:42:20.329245253Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:23.379165844Z [err]    code: 'P2022',
+2026-02-03T15:42:23.379178680Z [err]    clientVersion: '5.22.0',
+2026-02-03T15:42:23.379188107Z [err]    meta: { modelName: 'User', column: 'users.swimmingLevel' }
+2026-02-03T15:42:23.379195440Z [err]  }
+2026-02-03T15:42:23.379201734Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE ("public"."classes"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:23.379208012Z [inf]  prisma:query SELECT "public"."class_schedules"."id", "public"."class_schedules"."classId", "public"."class_schedules"."type"::text, "public"."class_schedules"."dayOfWeek", "public"."class_schedules"."startTime", "public"."class_schedules"."endTime", "public"."class_schedules"."times", "public"."class_schedules"."specificDate", "public"."class_schedules"."rangeStart", "public"."class_schedules"."rangeEnd", "public"."class_schedules"."dates", "public"."class_schedules"."isActive" FROM "public"."class_schedules" WHERE ("public"."class_schedules"."isActive" = $1 AND "public"."class_schedules"."classId" IN ($2)) OFFSET $3
+2026-02-03T15:42:23.379214722Z [inf]  prisma:query SELECT "public"."class_sessions"."id", "public"."class_sessions"."classId", "public"."class_sessions"."date", "public"."class_sessions"."time", "public"."class_sessions"."capacity", "public"."class_sessions"."price", "public"."class_sessions"."isClosed", "public"."class_sessions"."createdAt", "public"."class_sessions"."updatedAt" FROM "public"."class_sessions" WHERE (("public"."class_sessions"."date" >= $1 AND "public"."class_sessions"."date" <= $2) AND "public"."class_sessions"."classId" IN ($3)) OFFSET $4
+2026-02-03T15:42:25.169906317Z [err]  2026-02-03 15:42:22.522 UTC [65395] ERROR:  column users.swimmingLevel does not exist at character 248
+2026-02-03T15:42:25.169926311Z [err]  2026-02-03 15:42:22.522 UTC [65395] STATEMENT:  SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE "public"."users"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:26.024528173Z [inf]  prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE (("public"."reservations"."date" >= $1 AND "public"."reservations"."date" <= $2 AND "public"."reservations"."status" <> CAST($3::text AS "public"."ReservationStatus")) AND "public"."reservations"."classId" IN ($4)) OFFSET $5
+2026-02-03T15:42:26.024627510Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE ("public"."classes"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:26.024643478Z [inf]  prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location", "public"."schools"."description", "public"."schools"."phone", "public"."schools"."email", "public"."schools"."createdAt", "public"."schools"."updatedAt", "public"."schools"."address", "public"."schools"."coverImage", "public"."schools"."facebook", "public"."schools"."instagram", "public"."schools"."logo", "public"."schools"."website", "public"."schools"."whatsapp", "public"."schools"."ownerId", "public"."schools"."foundedYear", "public"."schools"."rating", "public"."schools"."totalReviews", "public"."schools"."status"::text FROM "public"."schools" WHERE "public"."schools"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:29.409484402Z [inf]  prisma:query SELECT "public"."beaches"."id", "public"."beaches"."name", "public"."beaches"."slug", "public"."beaches"."location", "public"."beaches"."description", "public"."beaches"."image", "public"."beaches"."waveType", "public"."beaches"."level", "public"."beaches"."bestTime", "public"."beaches"."entryTips", "public"."beaches"."hazards", "public"."beaches"."conditions", "public"."beaches"."isActive", "public"."beaches"."displayOrder", "public"."beaches"."count", "public"."beaches"."createdAt", "public"."beaches"."updatedAt" FROM "public"."beaches" WHERE "public"."beaches"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:29.409494788Z [inf]  prisma:query SELECT "public"."class_schedules"."id", "public"."class_schedules"."classId", "public"."class_schedules"."type"::text, "public"."class_schedules"."dayOfWeek", "public"."class_schedules"."startTime", "public"."class_schedules"."endTime", "public"."class_schedules"."times", "public"."class_schedules"."specificDate", "public"."class_schedules"."rangeStart", "public"."class_schedules"."rangeEnd", "public"."class_schedules"."dates", "public"."class_schedules"."isActive" FROM "public"."class_schedules" WHERE "public"."class_schedules"."classId" IN ($1) OFFSET $2
+2026-02-03T15:42:29.409502484Z [inf]  prisma:query SELECT "public"."class_sessions"."id", "public"."class_sessions"."classId", "public"."class_sessions"."date", "public"."class_sessions"."time", "public"."class_sessions"."capacity", "public"."class_sessions"."price", "public"."class_sessions"."isClosed", "public"."class_sessions"."createdAt", "public"."class_sessions"."updatedAt" FROM "public"."class_sessions" WHERE (("public"."class_sessions"."isClosed" = $1 AND "public"."class_sessions"."date" >= $2) AND "public"."class_sessions"."classId" IN ($3)) ORDER BY "public"."class_sessions"."date" ASC, "public"."class_sessions"."time" ASC LIMIT $4 OFFSET $5
+2026-02-03T15:42:29.409510496Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE ("public"."classes"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:32.888789244Z [inf]  prisma:query SELECT "public"."class_schedules"."id", "public"."class_schedules"."classId", "public"."class_schedules"."type"::text, "public"."class_schedules"."dayOfWeek", "public"."class_schedules"."startTime", "public"."class_schedules"."endTime", "public"."class_schedules"."times", "public"."class_schedules"."specificDate", "public"."class_schedules"."rangeStart", "public"."class_schedules"."rangeEnd", "public"."class_schedules"."dates", "public"."class_schedules"."isActive" FROM "public"."class_schedules" WHERE ("public"."class_schedules"."isActive" = $1 AND "public"."class_schedules"."classId" IN ($2)) OFFSET $3
+2026-02-03T15:42:32.888798739Z [inf]  prisma:query SELECT "public"."class_sessions"."id", "public"."class_sessions"."classId", "public"."class_sessions"."date", "public"."class_sessions"."time", "public"."class_sessions"."capacity", "public"."class_sessions"."price", "public"."class_sessions"."isClosed", "public"."class_sessions"."createdAt", "public"."class_sessions"."updatedAt" FROM "public"."class_sessions" WHERE (("public"."class_sessions"."date" >= $1 AND "public"."class_sessions"."date" <= $2) AND "public"."class_sessions"."classId" IN ($3)) OFFSET $4
+2026-02-03T15:42:32.888806370Z [inf]  prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE (("public"."reservations"."date" >= $1 AND "public"."reservations"."date" <= $2 AND "public"."reservations"."status" <> CAST($3::text AS "public"."ReservationStatus")) AND "public"."reservations"."classId" IN ($4)) OFFSET $5
+2026-02-03T15:42:32.888813065Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
+2026-02-03T15:42:32.888820108Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:33.539108354Z [err]  2026-02-03 15:42:32.813 UTC [65395] ERROR:  column users.swimmingLevel does not exist at character 248
+2026-02-03T15:42:33.539119533Z [err]  2026-02-03 15:42:32.813 UTC [65395] STATEMENT:  SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE "public"."users"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:35.720225031Z [err]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:42:35.720238319Z [err]  
+2026-02-03T15:42:35.720245788Z [err]  
+2026-02-03T15:42:35.720253588Z [err]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:42:35.720401930Z [inf]  prisma:error 
+2026-02-03T15:42:35.720419225Z [inf]  Invalid `prisma.user.findUnique()` invocation:
+2026-02-03T15:42:35.720425798Z [inf]  
+2026-02-03T15:42:35.720431528Z [inf]  
+2026-02-03T15:42:35.720438294Z [inf]  The column `users.swimmingLevel` does not exist in the current database.
+2026-02-03T15:42:35.720444358Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+2026-02-03T15:42:35.720446980Z [err]  PrismaClientKnownRequestError: 
+2026-02-03T15:42:35.720453357Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+2026-02-03T15:42:35.720460291Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+2026-02-03T15:42:35.720467085Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+2026-02-03T15:42:35.720473029Z [err]      at async /app/dist/routes/users.js:52:22 {
+2026-02-03T15:42:35.720480615Z [err]    code: 'P2022',
+2026-02-03T15:42:35.720487246Z [err]    clientVersion: '5.22.0',
+2026-02-03T15:42:35.720493782Z [err]    meta: { modelName: 'User', column: 'users.swimmingLevel' }
+2026-02-03T15:42:35.720501431Z [err]  }
+2026-02-03T15:42:35.720508007Z [inf]  [Validation] Validating body: {
+2026-02-03T15:42:35.720514957Z [inf]    "classId": 3,
+2026-02-03T15:42:35.720522147Z [inf]    "sessionId": 15,
+2026-02-03T15:42:35.720529536Z [inf]    "date": "2026-02-07T00:00:00.000Z",
+2026-02-03T15:42:35.720536076Z [inf]    "time": "08:00",
+2026-02-03T15:42:35.720543731Z [inf]    "specialRequest": "",
+2026-02-03T15:42:35.720552263Z [inf]    "participants": [
+2026-02-03T15:42:37.731113031Z [inf]      {
+2026-02-03T15:42:37.731125319Z [inf]        "name": "student",
+2026-02-03T15:42:37.731133290Z [inf]        "email": "student@clasedesurf.com",
+2026-02-03T15:42:37.731140501Z [inf]        "age": "35",
+2026-02-03T15:42:37.731148756Z [inf]        "height": "190",
+2026-02-03T15:42:37.731156895Z [inf]        "weight": "85",
+2026-02-03T15:42:37.731164499Z [inf]        "canSwim": true,
+2026-02-03T15:42:37.731171448Z [inf]        "swimmingLevel": "INTERMEDIATE",
+2026-02-03T15:42:37.731178048Z [inf]        "hasSurfedBefore": true,
+2026-02-03T15:42:37.731184050Z [inf]        "injuries": "",
+2026-02-03T15:42:37.731189542Z [inf]        "comments": ""
+2026-02-03T15:42:37.731197874Z [inf]      }
+2026-02-03T15:42:37.731208348Z [inf]    ]
+2026-02-03T15:42:37.731214695Z [inf]  }
+2026-02-03T15:42:37.731220989Z [inf]  [Validation] Validation passed: {
+2026-02-03T15:42:37.731227246Z [inf]    "classId": 3,
+2026-02-03T15:42:37.731233930Z [inf]    "specialRequest": "",
+2026-02-03T15:42:37.731240352Z [inf]    "participants": [
+2026-02-03T15:42:37.731247685Z [inf]      {
+2026-02-03T15:42:37.731253358Z [inf]        "name": "student",
+2026-02-03T15:42:37.731260493Z [inf]        "email": "student@clasedesurf.com",
+2026-02-03T15:42:37.731267283Z [inf]        "age": 35,
+2026-02-03T15:42:37.731275007Z [inf]        "height": 190,
+2026-02-03T15:42:37.731281049Z [inf]        "weight": 85,
+2026-02-03T15:42:37.731287430Z [inf]        "canSwim": true,
+2026-02-03T15:42:37.731293719Z [inf]        "swimmingLevel": "INTERMEDIATE",
+2026-02-03T15:42:37.731300212Z [inf]        "hasSurfedBefore": true,
+2026-02-03T15:42:37.731308366Z [inf]        "injuries": "",
+2026-02-03T15:42:37.731316677Z [inf]        "comments": ""
+2026-02-03T15:42:37.731323091Z [inf]      }
+2026-02-03T15:42:37.731330506Z [inf]    ],
+2026-02-03T15:42:37.731336350Z [inf]    "date": "2026-02-07T00:00:00.000Z",
+2026-02-03T15:42:40.275037637Z [inf]    "time": "08:00",
+2026-02-03T15:42:40.275046933Z [inf]    "sessionId": 15
+2026-02-03T15:42:40.275054285Z [inf]  }
+2026-02-03T15:42:40.275060898Z [inf]  [Validation] foundedYear in validated data: undefined undefined
+2026-02-03T15:42:40.275067726Z [inf]  prisma:query SELECT 1
+2026-02-03T15:42:40.275074267Z [inf]  prisma:query BEGIN
+2026-02-03T15:42:40.275081643Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE ("public"."classes"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:40.275089216Z [inf]  prisma:query SELECT "public"."class_sessions"."id", "public"."class_sessions"."classId", "public"."class_sessions"."date", "public"."class_sessions"."time", "public"."class_sessions"."capacity", "public"."class_sessions"."price", "public"."class_sessions"."isClosed", "public"."class_sessions"."createdAt", "public"."class_sessions"."updatedAt" FROM "public"."class_sessions" WHERE ("public"."class_sessions"."id" = $1 AND "public"."class_sessions"."classId" IN ($2)) OFFSET $3
+2026-02-03T15:42:40.275095814Z [inf]  prisma:query SELECT "public"."schools"."id", "public"."schools"."name", "public"."schools"."location", "public"."schools"."description", "public"."schools"."phone", "public"."schools"."email", "public"."schools"."createdAt", "public"."schools"."updatedAt", "public"."schools"."address", "public"."schools"."coverImage", "public"."schools"."facebook", "public"."schools"."instagram", "public"."schools"."logo", "public"."schools"."website", "public"."schools"."whatsapp", "public"."schools"."ownerId", "public"."schools"."foundedYear", "public"."schools"."rating", "public"."schools"."totalReviews", "public"."schools"."status"::text FROM "public"."schools" WHERE "public"."schools"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:42.938736728Z [inf]  prisma:query SELECT COUNT(*) FROM (SELECT "public"."reservations"."id" FROM "public"."reservations" WHERE ("public"."reservations"."classId" = $1 AND "public"."reservations"."status" <> CAST($2::text AS "public"."ReservationStatus") AND "public"."reservations"."date" = $3 AND "public"."reservations"."time" = $4) OFFSET $5) AS "sub"
+2026-02-03T15:42:42.938746449Z [inf]  prisma:query SELECT "public"."classes"."id" FROM "public"."classes" WHERE ("public"."classes"."id" = $1 AND 1=1) OFFSET $2
+2026-02-03T15:42:42.938757383Z [inf]  prisma:query SELECT "public"."users"."id" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) OFFSET $2
+2026-02-03T15:42:42.938764663Z [inf]  prisma:query INSERT INTO "public"."reservations" ("userId","classId","status","specialRequest","createdAt","updatedAt","participants","date","time") VALUES ($1,$2,CAST($3::text AS "public"."ReservationStatus"),$4,$5,$6,$7,$8,$9) RETURNING "public"."reservations"."id"
+2026-02-03T15:42:42.938771787Z [inf]  prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE "public"."reservations"."id" = $1 LIMIT $2 OFFSET $3
+2026-02-03T15:42:42.938779393Z [inf]  prisma:query SELECT "public"."reservations"."id" FROM "public"."reservations" WHERE ("public"."reservations"."id" = $1 AND 1=1) OFFSET $2
+2026-02-03T15:42:42.938786107Z [inf]  prisma:query SELECT "public"."payments"."id", "public"."payments"."reservationId" FROM "public"."payments" WHERE (1=1 AND "public"."payments"."reservationId" IN ($1)) OFFSET $2
+2026-02-03T15:42:42.938793774Z [inf]  prisma:query INSERT INTO "public"."payments" ("reservationId","amount","status","createdAt","updatedAt","originalAmount") VALUES ($1,$2,CAST($3::text AS "public"."PaymentStatus"),$4,$5,$6) RETURNING "public"."payments"."id"
+2026-02-03T15:42:45.670480479Z [inf]  prisma:query SELECT "public"."payments"."id", "public"."payments"."reservationId", "public"."payments"."amount", "public"."payments"."status"::text, "public"."payments"."paymentMethod", "public"."payments"."transactionId", "public"."payments"."paidAt", "public"."payments"."createdAt", "public"."payments"."updatedAt", "public"."payments"."voucherImage", "public"."payments"."voucherNotes", "public"."payments"."discountCodeId", "public"."payments"."discountAmount", "public"."payments"."originalAmount" FROM "public"."payments" WHERE "public"."payments"."id" = $1 LIMIT $2 OFFSET $3
+2026-02-03T15:42:45.670505765Z [inf]  prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE ("public"."reservations"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+2026-02-03T15:42:45.670514706Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."swimmingLevel", "public"."users"."hasSurfedBefore", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE "public"."users"."id" IN ($1) OFFSET $2
+2026-02-03T15:42:45.670525066Z [inf]  prisma:error 
+2026-02-03T15:42:45.670632534Z [inf]  Invalid `prisma.reservation.findUnique()` invocation:
+2026-02-03T15:42:45.670643394Z [inf]  
+2026-02-03T15:42:45.670652244Z [inf]  
