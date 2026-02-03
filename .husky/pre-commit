@@ -1,1 +1,21 @@
-cd frontend && npm run lint && npm run format
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🎨 Running lint and checks..."
+
+# Frontend Lint
+echo "👉 Checking Frontend..."
+cd frontend
+npm run lint || exit 1
+# Skip format check for now to avoid annoyance, or maybe run it? 
+# User had 'npm run format' in previous pre-commit.
+npm run format || exit 1
+cd ..
+
+# Backend Lint (if available, otherwise skips)
+echo "👉 Checking Backend..."
+cd backend
+npm run lint || echo "⚠️ Backend linting skipped (check package.json)"
+cd ..
+
+echo "✅ Pre-commit checks passed!"

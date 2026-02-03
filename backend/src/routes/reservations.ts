@@ -228,6 +228,23 @@ router.post('/', optionalAuth, validateBody(createReservationSchema), async (req
 
     if (!result.ok) return res.status(400).json({ message: result.reason });
 
+    // Persist user profile data for future reservations
+    try {
+      const first = Array.isArray(participants) && participants.length > 0 ? participants[0] : null;
+      if (first && finalUserId) {
+        const profileData: any = {
+          height: first.height ?? null,
+          weight: first.weight ?? null,
+          canSwim: first.canSwim ?? false,
+          swimmingLevel: first.swimmingLevel ?? 'BEGINNER',
+          injuries: first.injuries ?? ''
+        };
+        await storage.appendStorage(`profiles/${finalUserId}.json`, profileData);
+      }
+    } catch (e) {
+      console.error('Error persisting profile data:', e);
+    }
+
     // Email notification
     const r = result.reservation as any;
     if (r) {
