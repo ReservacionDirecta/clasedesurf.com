@@ -4,7 +4,7 @@
     "projectName": "frontend",
     "projectPath": "C:\\Users\\yerct\\clasedesurf.com\\frontend",
     "testIds": [],
-    "additionalInstruction": "Rerun all tests for the frontend application. Specifically, verify the user flow in the reservation confirmation page works correctly when: 1) A user proceeds as a guest, 2) A user logs in at Step 1, and 3) A user attempts to book as a guest with an email that already exists (checking for the correct prompt to log in). Also, ensure the page reload fix for auto-login after guest registration is successful without a full page navigation.",
+    "additionalInstruction": "Run all tests including reservation flow; generate a markdown test report at testsprite_tests/testsprite-mcp-test-report.md",
     "envs": {
       "API_KEY": "sk-user-GzYe1fPAwgfwkN6TJ_N4qepM9xv4aF01Pj3dFu7YwPgbD9oDR8bHW2rS_Y75t43RQgz49ZMsvAMySrP4JHxfCeHk2UiuTMBvAMKSLX89ldO9VplZsY7WJ_wnTtygo7h2JUU"
     }
