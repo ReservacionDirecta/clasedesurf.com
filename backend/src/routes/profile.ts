@@ -1,6 +1,7 @@
 import express from 'express'
 import multer from 'multer'
 import cloudinary from 'cloudinary'
+import storage from '../storage/storage'
 
 const router = express.Router()
 
@@ -11,8 +12,8 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET || ''
 })
 
-const storage = multer.memoryStorage()
-const upload = multer({ storage })
+const multerStorage = multer.memoryStorage()
+const upload = multer({ storage: multerStorage })
 
 // POST /profile/photo - upload a profile image (jpg/png)
 router.post('/photo', upload.single('avatar'), async (req, res) => {
@@ -38,3 +39,18 @@ router.post('/photo', upload.single('avatar'), async (req, res) => {
 })
 
 export default router
+
+// GET /profile/latest - fetch last persisted profile for a user
+router.get('/latest', async (req, res) => {
+  try {
+    const userId = (req.query.userId as string) || (req as any).userId
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID required' })
+    }
+    const profile = await storage.readProfile(userId)
+    res.json(profile ?? {})
+  } catch (e) {
+    console.error('Profile latest error:', e)
+    res.status(500).json({ message: 'Internal server error' })
+  }
+})
