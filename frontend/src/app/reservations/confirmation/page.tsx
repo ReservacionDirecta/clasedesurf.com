@@ -957,7 +957,7 @@ function ReservationConfirmationContent() {
                   </div>
                   <div className="flex justify-between items-center text-sm font-medium">
                      <span className="text-slate-500">Cantidad alumnos</span>
-                     <span className="text-slate-900">x {reservationData.bookingData.participants}</span>
+                     <span className="text-slate-900">x {Array.isArray(reservationData.bookingData.participants) ? reservationData.bookingData.participants.length : reservationData.bookingData.participants}</span>
                   </div>
                   
                   {reservationData.bookingData.selectedProducts && reservationData.bookingData.selectedProducts.length > 0 && (

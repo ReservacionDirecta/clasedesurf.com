@@ -107,7 +107,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
     }
   }, [isOpen])
 
-  // Pre-fill user data
+  // Pre-fill user data from profile when modal opens
   useEffect(() => {
     if (session?.user && isOpen) {
       setFormData(prev => ({
@@ -116,9 +116,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
         email: prev.email || session.user.email || ''
       }))
 
-      if (session.user.role === 'STUDENT') {
-        loadStudentProfile()
-      }
+      // Load full profile for any logged-in user to pre-fill all fields
+      loadStudentProfile()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, isOpen])
@@ -156,6 +155,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
         height: profile.height ? profile.height.toString() : prev.height,
         weight: profile.weight ? profile.weight.toString() : prev.weight,
         canSwim: profile.canSwim !== undefined ? profile.canSwim : prev.canSwim,
+        swimmingLevel: profile.swimmingLevel || prev.swimmingLevel || 'BEGINNER',
+        hasSurfedBefore: profile.hasSurfedBefore !== undefined ? profile.hasSurfedBefore : prev.hasSurfedBefore,
         injuries: profile.injuries || prev.injuries,
         emergencyContact: profile.emergencyContact || prev.emergencyContact || '',
         emergencyPhone: profile.emergencyPhone || profile.phone || prev.emergencyPhone || ''
@@ -726,8 +727,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
         </form>
 
         {/* Sticky Footer - inside modal with proper margins */}
-        <div className="bg-white border-t border-slate-100 p-4 shrink-0 safe-area-bottom sm:rounded-b-2xl">
-          <div className="flex items-center gap-3">
+        <div className="bg-white border-t border-slate-100  pb-5 shrink-0 safe-area-bottom sm:rounded-b-2xl">
+          <div className="flex items-center p-4 gap-3">
             {currentStep > 1 && (
               <button
                 type="button"
