@@ -107,7 +107,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
     }
   }, [isOpen])
 
-  // Pre-fill user data
+  // Pre-fill user data from profile when modal opens
   useEffect(() => {
     if (session?.user && isOpen) {
       setFormData(prev => ({
@@ -116,9 +116,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
         email: prev.email || session.user.email || ''
       }))
 
-      if (session.user.role === 'STUDENT') {
-        loadStudentProfile()
-      }
+      // Load full profile for any logged-in user to pre-fill all fields
+      loadStudentProfile()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, isOpen])
@@ -157,7 +156,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
         weight: profile.weight ? profile.weight.toString() : prev.weight,
         canSwim: profile.canSwim !== undefined ? profile.canSwim : prev.canSwim,
         injuries: profile.injuries || prev.injuries,
-        emergencyPhone: profile.phone || prev.emergencyPhone || ''
+        emergencyContact: profile.emergencyContact || prev.emergencyContact || '',
+        emergencyPhone: profile.emergencyPhone || profile.phone || prev.emergencyPhone || ''
       }))
     } catch (error) {
       console.error('Error loading student profile:', error)
@@ -262,9 +262,25 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
       return
     }
 
+    // Build participants array with all profile data for persistence
+    const participantsArray = Array.from({ length: formData.participants }, (_, i) => ({
+      name: i === 0 ? formData.name : `Participante ${i + 1}`,
+      email: i === 0 ? formData.email : undefined,
+      age: i === 0 ? formData.age : undefined,
+      height: i === 0 ? formData.height : undefined,
+      weight: i === 0 ? formData.weight : undefined,
+      canSwim: i === 0 ? formData.canSwim : undefined,
+      swimmingLevel: i === 0 ? formData.swimmingLevel : undefined,
+      hasSurfedBefore: i === 0 ? formData.hasSurfedBefore : undefined,
+      injuries: i === 0 ? formData.injuries : undefined,
+      emergencyContact: i === 0 ? formData.emergencyContact : undefined,
+      emergencyPhone: i === 0 ? formData.emergencyPhone : undefined
+    }))
+
     const bookingData = {
       classId: classData.id,
-      ...formData,
+      participants: participantsArray,
+      specialRequest: formData.specialRequest,
       totalAmount: finalPricePEN,
       originalAmount: basePricePEN,
       discountCode: discountInfo?.valid ? formData.discountCode.toUpperCase() : null,
@@ -358,59 +374,63 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md transition-opacity duration-300"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
       <div
-        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-[95dvh] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl flex flex-col transform transition-transform duration-300 max-h-[100dvh]"
+        className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full h-[92dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-xl flex flex-col transform transition-transform duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header with Progress */}
-        <div className="bg-white border-b border-gray-100 p-5 shrink-0">
-          <div className="flex items-center justify-between mb-6">
+        {/* Compact Header with Progress */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 sm:p-5 shrink-0 rounded-t-3xl sm:rounded-t-2xl">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex-1 min-w-0 pr-4">
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Reservar Clase</h2>
-              <p className="text-sm text-slate-500 truncate font-medium">{classData.title}</p>
+              <h2 className="text-lg sm:text-xl font-bold tracking-tight">Reservar Clase</h2>
+              <p className="text-sm text-blue-100 truncate">{classData.title}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2.5 hover:bg-slate-100/80 rounded-full transition-colors flex-shrink-0 text-slate-400 hover:text-slate-600 active:scale-95"
+              className="p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0 text-white/80 hover:text-white active:scale-95"
               aria-label="Cerrar modal"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Enterprise Progress Steps */}
-          <div className="relative">
-            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-slate-100">
-               <div style={{ width: `${(currentStep / STEPS.length) * 100}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500 ease-out"></div>
-            </div>
-            <div className="flex justify-between text-xs font-medium text-slate-500 px-1">
-               {STEPS.map((step) => (
-                 <span key={step.id} className={`${currentStep >= step.id ? 'text-blue-600 font-bold' : ''}`}>
-                    {step.name}
-                 </span>
-               ))}
-            </div>
+          {/* Progress Steps - More compact */}
+          <div className="flex items-center gap-2">
+            {STEPS.map((step, idx) => (
+              <div key={step.id} className="flex items-center flex-1">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                  currentStep > step.id ? 'bg-white text-blue-600' : 
+                  currentStep === step.id ? 'bg-white text-blue-600 ring-2 ring-white/50' : 
+                  'bg-blue-500/50 text-white/70'
+                }`}>
+                  {currentStep > step.id ? <Check className="w-4 h-4" /> : step.id}
+                </div>
+                {idx < STEPS.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 rounded ${currentStep > step.id ? 'bg-white' : 'bg-blue-500/50'}`} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Form Content */}
-        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        {/* Form Content - Tighter padding */}
+        <form ref={formRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
           {/* Step 1: Personal Information */}
           {currentStep === 1 && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="space-y-1 mb-6">
-                 <h3 className="text-lg font-bold text-slate-900">Cuéntanos sobre ti</h3>
-                 <p className="text-slate-500 text-sm">Necesitamos tus datos para asegurar tu lugar en la clase.</p>
+            <div className="space-y-4 animate-fadeIn">
+              <div className="mb-2">
+                 <h3 className="text-base font-bold text-slate-900">Cuéntanos sobre ti</h3>
+                 <p className="text-slate-500 text-xs">Necesitamos tus datos para asegurar tu lugar.</p>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-3">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-bold text-slate-700 mb-2">
+                  <label htmlFor="name" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                     Nombre completo <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -419,14 +439,14 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     type="text"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.name ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.name ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="Ej. Juan Pérez"
                   />
-                  {errors.name && <p className="text-red-500 text-sm mt-1.5 font-medium flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-red-500 block"></span>{errors.name}</p>}
+                  {errors.name && <p className="text-red-500 text-xs mt-1 font-medium">{errors.name}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-bold text-slate-700 mb-2">
+                  <label htmlFor="email" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                     Correo electrónico <span className="text-red-500">*</span>
                   </label>
                   <Input
@@ -435,15 +455,15 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     type="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.email ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.email ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="juan@ejemplo.com"
                   />
-                  {errors.email && <p className="text-red-500 text-sm mt-1.5 font-medium flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-red-500 block"></span>{errors.email}</p>}
+                  {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
                 </div>
 
-                <div className="grid grid-cols-2 gap-5">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="age" className="block text-sm font-bold text-slate-700 mb-2">
+                    <label htmlFor="age" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                       Edad <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -454,14 +474,14 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                       max="100"
                       value={formData.age}
                       onChange={handleInputChange}
-                      className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.age ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                      className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.age ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                       placeholder="25"
                     />
-                    {errors.age && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.age}</p>}
+                    {errors.age && <p className="text-red-500 text-xs mt-1 font-medium">{errors.age}</p>}
                   </div>
 
                   <div>
-                    <label htmlFor="participants" className="block text-sm font-bold text-slate-700 mb-2">
+                    <label htmlFor="participants" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                       Participantes
                     </label>
                     <div className="relative">
@@ -470,7 +490,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                           name="participants"
                           value={formData.participants}
                           onChange={handleInputChange}
-                          className="w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer hover:bg-slate-100"
+                          className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer hover:bg-slate-100"
                         >
                           {Array.from({ length: Math.min(classData.availableSpots || 1, 10) }, (_, i) => (
                             <option key={i + 1} value={i + 1}>
@@ -478,7 +498,7 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                             </option>
                           ))}
                         </select>
-                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
                 </div>
@@ -488,15 +508,16 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
           {/* Step 2: Additional Details */}
           {currentStep === 2 && (
-            <div className="space-y-6 animate-fadeIn">
-               <div className="space-y-1 mb-6">
-                 <h3 className="text-lg font-bold text-slate-900">Personaliza tu experiencia</h3>
-                 <p className="text-slate-500 text-sm">Ayúdanos a preparar el equipo adecuado para ti.</p>
+            <div className="space-y-5 animate-fadeIn">
+               <div className="mb-4">
+                 <h3 className="text-base font-bold text-slate-900">Personaliza tu experiencia</h3>
+                 <p className="text-slate-500 text-xs">Ayúdanos a preparar el equipo adecuado para ti.</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              {/* Physical Details - Clean 2x2 grid */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="height" className="block text-sm font-bold text-slate-700 mb-2">
+                  <label htmlFor="height" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                     Altura (cm)
                   </label>
                   <Input
@@ -507,13 +528,13 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     max="250"
                     value={formData.height}
                     onChange={handleInputChange}
-                    className="h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base"
+                    className="h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     placeholder="170"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="weight" className="block text-sm font-bold text-slate-700 mb-2">
+                  <label htmlFor="weight" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                     Peso (kg)
                   </label>
                   <Input
@@ -524,23 +545,24 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     max="200"
                     value={formData.weight}
                     onChange={handleInputChange}
-                    className="h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base"
+                    className="h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     placeholder="70"
                   />
                 </div>
               </div>
 
-              <div className="space-y-4">
-                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setFormData(prev => ({...prev, canSwim: !prev.canSwim}))}>
-                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${formData.canSwim ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}>
-                        {formData.canSwim && <Check className="w-4 h-4 text-white" />}
+              {/* Swimming & Experience Section */}
+              <div className="bg-slate-50/50 rounded-xl p-4 space-y-4 border border-slate-100">
+                 <div className="flex items-center gap-4 cursor-pointer" onClick={() => setFormData(prev => ({...prev, canSwim: !prev.canSwim}))}>
+                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${formData.canSwim ? 'bg-blue-600' : 'border-2 border-slate-300 bg-white'}`}>
+                        {formData.canSwim && <Check className="w-3.5 h-3.5 text-white" />}
                     </div>
-                    <span className="font-bold text-slate-700">Sé nadar</span>
+                    <span className="text-sm font-semibold text-slate-700">Sé nadar</span>
                  </div>
 
                 <div>
-                  <label htmlFor="swimmingLevel" className="block text-sm font-bold text-slate-700 mb-2">
-                    Nivel de experiencia
+                  <label htmlFor="swimmingLevel" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
+                    Nivel de experiencia en surf
                   </label>
                    <div className="relative">
                       <select
@@ -548,30 +570,31 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                         name="swimmingLevel"
                         value={formData.swimmingLevel}
                         onChange={handleInputChange}
-                        className="w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer"
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer"
                       >
                         <option value="BEGINNER">Principiante (Primera vez)</option>
                         <option value="INTERMEDIATE">Intermedio (Algunas veces)</option>
                         <option value="ADVANCED">Avanzado (Consistente)</option>
                         <option value="EXPERT">Experto</option>
                       </select>
-                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                    </div>
                 </div>
               </div>
 
+              {/* Injuries/Medical */}
               <div>
-                <label htmlFor="injuries" className="block text-sm font-bold text-slate-700 mb-2">
+                <label htmlFor="injuries" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                   ¿Alguna lesión o condición médica?
                 </label>
                 <textarea
                   id="injuries"
                   name="injuries"
-                  rows={3}
+                  rows={2}
                   value={formData.injuries}
                   onChange={handleInputChange}
                   placeholder="Ej. Lesión antigua en hombro derecho..."
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-base resize-none"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm resize-none"
                 />
               </div>
             </div>
@@ -579,16 +602,17 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
           {/* Step 3: Emergency Contact & Payment */}
           {currentStep === 3 && (
-            <div className="space-y-8 animate-fadeIn pb-4">
-              <div className="space-y-1">
-                 <h3 className="text-lg font-bold text-slate-900">Seguridad y Pago</h3>
-                 <p className="text-slate-500 text-sm">Ya casi terminamos. Revisa los detalles finales.</p>
+            <div className="space-y-4 animate-fadeIn pb-2">
+              <div className="mb-2">
+                 <h3 className="text-base font-bold text-slate-900">Contacto de Emergencia</h3>
+                 <p className="text-slate-500 text-xs">Por seguridad, necesitamos un contacto adicional.</p>
               </div>
               
-              <div className="space-y-5">
+              {/* Emergency fields in 2-column grid for better space usage */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="emergencyContact" className="block text-sm font-bold text-slate-700 mb-2">
-                    Contacto de Emergencia <span className="text-red-500">*</span>
+                  <label htmlFor="emergencyContact" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
+                    Nombre <span className="text-red-500">*</span>
                   </label>
                   <Input
                     id="emergencyContact"
@@ -596,15 +620,15 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     type="text"
                     value={formData.emergencyContact}
                     onChange={handleInputChange}
-                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.emergencyContact ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.emergencyContact ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="Nombre del contacto"
                   />
-                  {errors.emergencyContact && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.emergencyContact}</p>}
+                  {errors.emergencyContact && <p className="text-red-500 text-xs mt-1 font-medium">{errors.emergencyContact}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="emergencyPhone" className="block text-sm font-bold text-slate-700 mb-2">
-                    Teléfono de Emergencia <span className="text-red-500">*</span>
+                  <label htmlFor="emergencyPhone" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
+                    Teléfono <span className="text-red-500">*</span>
                   </label>
                   <Input
                     id="emergencyPhone"
@@ -612,11 +636,12 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     type="tel"
                     value={formData.emergencyPhone}
                     onChange={handleInputChange}
-                    className={`h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base ${errors.emergencyPhone ? 'border-red-500 focus:ring-red-500/10' : ''}`}
+                    className={`h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.emergencyPhone ? 'border-red-500 focus:ring-red-500/20' : ''}`}
                     placeholder="+51 999 999 999"
                   />
-                  {errors.emergencyPhone && <p className="text-red-500 text-sm mt-1.5 font-medium">{errors.emergencyPhone}</p>}
+                  {errors.emergencyPhone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.emergencyPhone}</p>}
                 </div>
+              </div>
 
                  {/* Discount Code */}
                  <div className="pt-2">
@@ -659,7 +684,6 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                         </div>
                     )}
                  </div>
-              </div>
 
               {/* Order Summary Card */}
               <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
@@ -699,27 +723,43 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                    </div>
                 </div>
               </div>
+
+              {/* Políticas de reserva - Compactas */}
+              <div className="px-1 space-y-1.5 text-[11px] text-slate-500">
+                <p className="flex items-start gap-1.5">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Tienes <strong className="text-slate-700">48 horas</strong> para completar el pago y confirmar tu reserva.</span>
+                </p>
+                <p className="flex items-start gap-1.5">
+                  <span className="text-green-500 mt-0.5">•</span>
+                  <span>Cancelación gratuita con <strong className="text-slate-700">100% reembolso</strong> dentro de las primeras 48h después del pago.</span>
+                </p>
+                <p className="flex items-start gap-1.5">
+                  <span className="text-amber-500 mt-0.5">•</span>
+                  <span>Pasadas las 48h, las cancelaciones no son reembolsables.</span>
+                </p>
+              </div>
             </div>
           )}
         </form>
 
-        {/* Sticky Footer */}
-        <div className="bg-white/80 backdrop-blur-md border-t border-slate-100 p-4 sm:p-6 shrink-0 safe-area-bottom">
-          <div className="flex items-center gap-3 max-w-2xl mx-auto">
+        {/* Sticky Footer - inside modal with proper margins */}
+        <div className="bg-white border-t border-slate-100  pb-5 shrink-0 safe-area-bottom sm:rounded-b-2xl">
+          <div className="flex items-center p-4 gap-3">
             {currentStep > 1 && (
               <button
                 type="button"
                 onClick={handlePrevious}
-                className="h-14 w-14 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors active:scale-95"
+                className="h-12 w-12 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors active:scale-95"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
             )}
             
             <Button
-              type="button" // Controlled by onClick logic, simpler than form submit
+              type="button"
               onClick={currentStep < STEPS.length ? handleNext : (e) => handleSubmit(e as any)}
-              className="flex-1 h-14 text-lg font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95 flex items-center justify-center gap-2"
+              className="flex-1 h-12 text-base font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               {currentStep < STEPS.length ? (
                  <>Siguiente <ChevronRight className="w-5 h-5 opacity-60" /></> 

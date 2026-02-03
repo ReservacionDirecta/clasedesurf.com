@@ -105,33 +105,49 @@ function ReservationConfirmationContent() {
         const data = JSON.parse(dataFromStorage);
         setReservationData(data);
 
-        // Inicializar array de participantes
-        const numParticipants = data.bookingData?.participants || 1;
+        // Check if participants is an array (new format from BookingModal)
+        const rawParticipants = data.bookingData?.participants;
+        const numParticipants = Array.isArray(rawParticipants) ? rawParticipants.length : 
+          (typeof data.bookingData?.participants === 'number' ? data.bookingData.participants : 1);
+        
         const initialParticipants: ParticipantDetails[] = [];
 
         for (let i = 0; i < numParticipants; i++) {
+          // If participants is an array, use the data directly
+          const sourceData = Array.isArray(rawParticipants) && rawParticipants[i] 
+            ? rawParticipants[i] 
+            : (i === 0 ? data.bookingData : null);
+          
           initialParticipants.push({
-            // If a user is logged in, prefill the first participant's name from the session,
-            // falling back to the guest booking data if session data isn't available.
-            name: i === 0 ? (session?.user?.name || data.bookingData?.name || '') : '',
-            // Include email for guest checkout (mandatory for first participant)
-            email: i === 0 ? (session?.user?.email || data.bookingData?.email || '') : '',
-            age: i === 0 && data.bookingData?.age ? data.bookingData.age : '',
-            height: i === 0 && data.bookingData?.height ? data.bookingData.height : '',
-            weight: i === 0 && data.bookingData?.weight ? data.bookingData.weight : '',
-            canSwim: i === 0 && data.bookingData?.canSwim ? data.bookingData.canSwim : false,
-            swimmingLevel: i === 0 && data.bookingData?.swimmingLevel ? data.bookingData.swimmingLevel : 'BEGINNER',
-            hasSurfedBefore: i === 0 && data.bookingData?.hasSurfedBefore ? data.bookingData.hasSurfedBefore : false,
-            injuries: i === 0 && data.bookingData?.injuries ? data.bookingData.injuries : '',
+            name: sourceData?.name || (i === 0 ? (session?.user?.name || data.bookingData?.name || '') : ''),
+            email: sourceData?.email || (i === 0 ? (session?.user?.email || data.bookingData?.email || '') : ''),
+            age: sourceData?.age?.toString() || (i === 0 && data.bookingData?.age ? data.bookingData.age : ''),
+            height: sourceData?.height?.toString() || (i === 0 && data.bookingData?.height ? data.bookingData.height : ''),
+            weight: sourceData?.weight?.toString() || (i === 0 && data.bookingData?.weight ? data.bookingData.weight : ''),
+            canSwim: sourceData?.canSwim ?? (i === 0 && data.bookingData?.canSwim ? data.bookingData.canSwim : false),
+            swimmingLevel: sourceData?.swimmingLevel || (i === 0 && data.bookingData?.swimmingLevel ? data.bookingData.swimmingLevel : 'BEGINNER'),
+            hasSurfedBefore: sourceData?.hasSurfedBefore ?? (i === 0 && data.bookingData?.hasSurfedBefore ? data.bookingData.hasSurfedBefore : false),
+            injuries: sourceData?.injuries || (i === 0 && data.bookingData?.injuries ? data.bookingData.injuries : ''),
             comments: ''
           });
         }
 
         setParticipants(initialParticipants);
 
-        // Determinar el paso inicial
+        // Determinar el paso inicial - skip step 2 if single participant with complete data
+        const firstP = initialParticipants[0];
+        const hasCompleteData = firstP && 
+          firstP.name && 
+          firstP.age && 
+          (sessionStatus === 'authenticated' || firstP.email);
+        
         if (sessionStatus === 'authenticated') {
-          setCurrentStep(2);
+          // If data is complete for single participant, skip to confirmation
+          if (numParticipants === 1 && hasCompleteData) {
+            setCurrentStep(2); // Still show step 2 but data is pre-filled
+          } else {
+            setCurrentStep(2);
+          }
         } else {
           setCurrentStep(1);
         }
@@ -730,8 +746,9 @@ function ReservationConfirmationContent() {
                           <h3 className="text-lg font-bold text-slate-900">{idx === 0 ? 'Titular' : `Acompañante ${idx + 1}`}</h3>
                         </div>
                         
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                           <div className="sm:col-span-2 lg:col-span-1">
+                        <div className="space-y-4">
+                          {/* Name - Full width */}
+                           <div>
                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Nombre completo</label>
                              <Input 
                                 placeholder="Ej: Juan Pérez"
@@ -740,9 +757,10 @@ function ReservationConfirmationContent() {
                                 className="bg-white border-slate-200 h-12"
                              />
                            </div>
+                           
                            {/* Email field for guest checkout - only for first participant when not logged in */}
                            {idx === 0 && !session && (
-                           <div className="sm:col-span-2 lg:col-span-1">
+                           <div>
                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Correo electrónico *</label>
                              <Input 
                                 type="email"
@@ -753,32 +771,34 @@ function ReservationConfirmationContent() {
                              />
                            </div>
                            )}
-                           <div>
-                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Edad</label>
-                             <Input 
-                                type="number"
-                                placeholder="8+"
-                                value={p.age}
-                                onChange={e => updateParticipant(idx, 'age', e.target.value)}
-                                className="bg-white border-slate-200 h-12"
-                             />
-                           </div>
-                           <div className="grid grid-cols-2 gap-4">
+                           
+                           {/* Age, Height, Weight - 3 column grid */}
+                           <div className="grid grid-cols-3 gap-3">
                              <div>
-                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Altura (cm)</label>
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Edad</label>
                                <Input 
                                   type="number"
-                                  placeholder="cm"
+                                  placeholder="25"
+                                  value={p.age}
+                                  onChange={e => updateParticipant(idx, 'age', e.target.value)}
+                                  className="bg-white border-slate-200 h-12"
+                               />
+                             </div>
+                             <div>
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Altura</label>
+                               <Input 
+                                  type="number"
+                                  placeholder="170 cm"
                                   value={p.height}
                                   onChange={e => updateParticipant(idx, 'height', e.target.value)}
                                   className="bg-white border-slate-200 h-12"
                                />
                              </div>
                              <div>
-                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Peso (kg)</label>
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Peso</label>
                                <Input 
                                   type="number"
-                                  placeholder="kg"
+                                  placeholder="70 kg"
                                   value={p.weight}
                                   onChange={e => updateParticipant(idx, 'weight', e.target.value)}
                                   className="bg-white border-slate-200 h-12"
@@ -853,7 +873,7 @@ function ReservationConfirmationContent() {
                     </p>
 
                     {/* Resumen Visible de la Reserva */}
-                    <div className="bg-slate-50 rounded-2xl p-6 mb-10 max-w-xl mx-auto border border-slate-100">
+                    <div className="bg-slate-50 rounded-2xl p-6 mb-6 max-w-xl mx-auto border border-slate-100">
                       <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Resumen de Reserva</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
                         <div>
@@ -879,27 +899,45 @@ function ReservationConfirmationContent() {
                       </div>
                     </div>
 
+                    {/* Políticas de reserva - Compactas */}
+                    <div className="max-w-xl mx-auto mb-8 px-4">
+                      <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                          <strong>48h</strong> para pagar
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                          <strong>100%</strong> reembolso en 48h
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                          Sin reembolso después
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
                        <div className="p-6 rounded-2xl bg-indigo-50 border border-indigo-100 text-left">
                           <CreditCard className="w-8 h-8 text-indigo-600 mb-4" />
-                          <h4 className="font-bold text-indigo-900 mb-2">Métodos de Pago</h4>
+                          <h4 className="font-bold text-indigo-900 mb-2">Pago Seguro</h4>
                           <p className="text-sm text-indigo-700/80 leading-relaxed mb-4">
-                             Aceptamos Transferencia, Yape, Plin o pago en efectivo en la oficina de la escuela.
+                             Acepto Yape, Plin, transferencia bancaria o depósito. Tu pago va directo a la plataforma.
                           </p>
                           <Button 
                             variant="primary" 
                             className="w-full bg-indigo-600 shadow-md"
                             onClick={() => setShowPaymentModal(true)}
                           >
-                             Información de Pago
+                             Realizar Pago
                           </Button>
                        </div>
                        
                        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-left">
                           <User className="w-8 h-8 text-slate-400 mb-4" />
-                          <h4 className="font-bold text-slate-900 mb-2">Siguiente Paso</h4>
+                          <h4 className="font-bold text-slate-900 mb-2">¿Ya pagaste?</h4>
                           <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                             Sube tu comprobante si ya pagaste, o ven a visitarnos en la playa antes de tu clase.
+                             Revisa el estado de tu reserva y recibe tu confirmación cuando verifiquemos el pago.
                           </p>
                           <Link href="/reservations" className="block w-full">
                             <Button variant="outline" className="w-full border-slate-300">
@@ -941,7 +979,7 @@ function ReservationConfirmationContent() {
                   </div>
                   <div className="flex justify-between items-center text-sm font-medium">
                      <span className="text-slate-500">Cantidad alumnos</span>
-                     <span className="text-slate-900">x {reservationData.bookingData.participants}</span>
+                     <span className="text-slate-900">x {Array.isArray(reservationData.bookingData.participants) ? reservationData.bookingData.participants.length : reservationData.bookingData.participants}</span>
                   </div>
                   
                   {reservationData.bookingData.selectedProducts && reservationData.bookingData.selectedProducts.length > 0 && (

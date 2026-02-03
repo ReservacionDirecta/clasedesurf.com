@@ -7,7 +7,6 @@ import {
   Building2, 
   Smartphone, 
   Link as LinkIcon, 
-  DollarSign,
   Upload,
   X,
   CheckCircle,
@@ -27,7 +26,7 @@ interface PaymentUploadProps {
   };
 }
 
-type PaymentMethod = 'transfer' | 'deposit' | 'yape' | 'payment_link' | 'cash';
+type PaymentMethod = 'transfer' | 'deposit' | 'yape' | 'payment_link';
 
 interface PaymentInstructions {
   transfer: {
@@ -53,7 +52,7 @@ interface PaymentInstructions {
     };
   };
   yape: {
-    title: 'Yape';
+    title: 'Yape / Plin';
     icon: React.ComponentType<any>;
     instructions: string[];
     phoneNumber?: string;
@@ -63,11 +62,6 @@ interface PaymentInstructions {
     icon: React.ComponentType<any>;
     instructions: string[];
     link?: string;
-  };
-  cash: {
-    title: 'Efectivo';
-    icon: React.ComponentType<any>;
-    instructions: string[];
   };
 }
 
@@ -106,13 +100,13 @@ const paymentInstructions: PaymentInstructions = {
     }
   },
   yape: {
-    title: 'Yape',
+    title: 'Yape / Plin',
     icon: Smartphone,
     instructions: [
-      'Realiza el pago por Yape al número: 987654321',
+      'Realiza el pago por Yape o Plin al número indicado',
       'Toma una captura de pantalla del comprobante',
       'Sube la captura en el formulario',
-      'El pago será verificado en un plazo de 2 horas'
+      'El pago será verificado en minutos'
     ],
     phoneNumber: '987654321'
   },
@@ -126,16 +120,6 @@ const paymentInstructions: PaymentInstructions = {
       'No es necesario subir comprobante'
     ],
     link: 'https://payment.example.com/pay'
-  },
-  cash: {
-    title: 'Efectivo',
-    icon: DollarSign,
-    instructions: [
-      'El pago se realizará en efectivo al inicio de la clase',
-      'No es necesario subir comprobante',
-      'El instructor confirmará el pago al recibirlo',
-      'Tu reserva quedará confirmada una vez recibido el pago'
-    ]
   }
 };
 
@@ -294,8 +278,8 @@ export default function PaymentUpload({
       return;
     }
 
-    // Para efectivo, no se requiere comprobante
-    if (selectedMethod !== 'cash' && !voucherFile && !voucherPreview && !existingPayment?.voucherImage) {
+    // Para payment_link no se requiere comprobante, para los demás sí
+    if (selectedMethod !== 'payment_link' && !voucherFile && !voucherPreview && !existingPayment?.voucherImage) {
       setError('Por favor sube el comprobante de pago');
       return;
     }
@@ -379,7 +363,7 @@ export default function PaymentUpload({
             paymentMethod: selectedMethod,
             voucherImage: voucherImageBase64,
             voucherNotes: voucherNotes || null,
-            status: selectedMethod === 'cash' ? 'PENDING' : 'PENDING'
+            status: 'PENDING'
           })
         });
 
@@ -411,7 +395,10 @@ export default function PaymentUpload({
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
-      <h3 className="text-xl font-bold text-gray-900 mb-6">Método de Pago</h3>
+      <h3 className="text-xl font-bold text-gray-900 mb-2">Método de Pago</h3>
+      <p className="text-xs text-slate-500 mb-6">
+        Al pagar, aceptas las políticas: <span className="text-slate-700 font-medium">100% reembolso si cancelas en 48h</span>, sin reembolso después.
+      </p>
 
       {existingPayment && existingPayment.status === 'PAID' && (
         <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
@@ -427,9 +414,7 @@ export default function PaymentUpload({
           <div className="flex items-center">
             <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
             <p className="text-green-800 font-medium">
-              {selectedMethod === 'cash' 
-                ? 'Pago registrado. Se confirmará al inicio de la clase.'
-                : 'Comprobante enviado. Estamos verificando tu pago.'}
+              Comprobante enviado. Estamos verificando tu pago.
             </p>
           </div>
         </div>
@@ -541,8 +526,8 @@ export default function PaymentUpload({
           </div>
         )}
 
-        {/* Voucher Upload (not for cash or payment_link) */}
-        {selectedMethod && selectedMethod !== 'cash' && selectedMethod !== 'payment_link' && (
+        {/* Voucher Upload (not for payment_link) */}
+        {selectedMethod && selectedMethod !== 'payment_link' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Comprobante de Pago {existingPayment?.voucherImage ? '(Actualizar)' : ''}
@@ -605,7 +590,7 @@ export default function PaymentUpload({
             disabled={isSubmitting || !selectedMethod}
             className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
           >
-            {isSubmitting ? 'Procesando...' : selectedMethod === 'cash' ? 'Registrar Pago en Efectivo' : 'Enviar Comprobante'}
+            {isSubmitting ? 'Procesando...' : 'Enviar Comprobante'}
           </button>
         )}
       </form>

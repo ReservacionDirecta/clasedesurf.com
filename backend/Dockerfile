@@ -20,13 +20,13 @@ COPY tsconfig.json ./
 
 # Install dependencies
 RUN npm ci --no-audit --no-fund && \
-  chmod -R +x node_modules/.bin
+  chmod -R 777 node_modules/.bin
 
 # Copy source code
 COPY . .
 
 # Generate Prisma client
-RUN npx prisma generate
+RUN npm run prisma:generate
 
 # Build TypeScript
 RUN npm run build

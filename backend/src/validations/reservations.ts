@@ -25,7 +25,9 @@ const participantSchema = z.object({
   swimmingLevel: z.enum(['BEGINNER', 'INTERMEDIATE', 'ADVANCED']).optional(),
   hasSurfedBefore: z.boolean().optional().default(false),
   injuries: z.string().optional(),
-  comments: z.string().optional()
+  comments: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  emergencyPhone: z.string().optional()
 });
 
 // Schema for creating a new reservation

@@ -301,7 +301,8 @@ export default function ClassDetailsPage() {
     } finally {
       setLoading(false);
     }
-  }, [classId, session]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classId]); // Intentionally omitting session to prevent refetch on tab switch
 
   useEffect(() => {
     fetchClassDetails();
@@ -547,6 +548,11 @@ export default function ClassDetailsPage() {
       const reservationEndTime = selectedDate ? selectedDate.endTime : classDetails.endTime;
 
       // Preparar datos de reserva para la página de confirmación
+      // Extract first participant data if participants is an array
+      const firstParticipant = Array.isArray(bookingData.participants) && bookingData.participants.length > 0
+        ? bookingData.participants[0]
+        : null;
+
       const reservationData = {
         classId: classDetails.id.toString(),
         classData: {
@@ -563,13 +569,25 @@ export default function ClassDetailsPage() {
           images: classDetails.images
         },
         bookingData: {
-          ...bookingData,
+          // Include raw participants array for backend
+          participants: bookingData.participants,
+          // Also include flattened first participant data for backward compat with confirmation page
+          name: firstParticipant?.name || session?.user?.name || '',
+          email: firstParticipant?.email || session?.user?.email || '',
+          age: firstParticipant?.age || '',
+          height: firstParticipant?.height || '',
+          weight: firstParticipant?.weight || '',
+          canSwim: firstParticipant?.canSwim || false,
+          swimmingLevel: firstParticipant?.swimmingLevel || 'BEGINNER',
+          hasSurfedBefore: firstParticipant?.hasSurfedBefore || false,
+          injuries: firstParticipant?.injuries || '',
+          emergencyContact: firstParticipant?.emergencyContact || '',
+          emergencyPhone: firstParticipant?.emergencyPhone || '',
           sessionId: selectedDate?.id,
-          email: session?.user?.email || bookingData.email,
-          name: session?.user?.name || bookingData.name,
           date: reservationDate, 
           time: reservationStartTime,
           totalAmount: bookingData.totalAmount,
+          specialRequest: bookingData.specialRequest || '',
           selectedProducts: schoolProducts.filter(p => selectedProductIds.includes(p.id))
         },
         status: 'pending' as const
