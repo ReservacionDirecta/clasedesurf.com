@@ -1,3 +1,8 @@
+/**
+ * Reservations API Routes
+ * All payments are now processed through the platform.
+ * Updated: 2026-02-03
+ */
 import express from 'express';
 import prisma from '../prisma';
 import { emailService } from '../services/email.service';
