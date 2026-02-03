@@ -10,6 +10,7 @@ import { buildMultiTenantWhere } from '../middleware/multi-tenant';
 import { normalizeClassImages, normalizeSchoolImages } from '../utils/image-utils';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import storage from '../storage/storage';
 
 const router = express.Router();
 
