@@ -157,7 +157,8 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
         weight: profile.weight ? profile.weight.toString() : prev.weight,
         canSwim: profile.canSwim !== undefined ? profile.canSwim : prev.canSwim,
         injuries: profile.injuries || prev.injuries,
-        emergencyPhone: profile.phone || prev.emergencyPhone || ''
+        emergencyContact: profile.emergencyContact || prev.emergencyContact || '',
+        emergencyPhone: profile.emergencyPhone || profile.phone || prev.emergencyPhone || ''
       }))
     } catch (error) {
       console.error('Error loading student profile:', error)
@@ -262,9 +263,25 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
       return
     }
 
+    // Build participants array with all profile data for persistence
+    const participantsArray = Array.from({ length: formData.participants }, (_, i) => ({
+      name: i === 0 ? formData.name : `Participante ${i + 1}`,
+      email: i === 0 ? formData.email : undefined,
+      age: i === 0 ? formData.age : undefined,
+      height: i === 0 ? formData.height : undefined,
+      weight: i === 0 ? formData.weight : undefined,
+      canSwim: i === 0 ? formData.canSwim : undefined,
+      swimmingLevel: i === 0 ? formData.swimmingLevel : undefined,
+      hasSurfedBefore: i === 0 ? formData.hasSurfedBefore : undefined,
+      injuries: i === 0 ? formData.injuries : undefined,
+      emergencyContact: i === 0 ? formData.emergencyContact : undefined,
+      emergencyPhone: i === 0 ? formData.emergencyPhone : undefined
+    }))
+
     const bookingData = {
       classId: classData.id,
-      ...formData,
+      participants: participantsArray,
+      specialRequest: formData.specialRequest,
       totalAmount: finalPricePEN,
       originalAmount: basePricePEN,
       discountCode: discountInfo?.valid ? formData.discountCode.toUpperCase() : null,

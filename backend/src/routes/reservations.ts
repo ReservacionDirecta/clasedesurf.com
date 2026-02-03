@@ -229,21 +229,46 @@ router.post('/', optionalAuth, validateBody(createReservationSchema), async (req
 
     if (!result.ok) return res.status(400).json({ message: result.reason });
 
-    // Persist user profile data for future reservations
+    // Persist user profile data for future reservations (to database)
     try {
       const first = Array.isArray(participants) && participants.length > 0 ? participants[0] : null;
       if (first && finalUserId) {
-        const profileData: any = {
-          height: first.height ?? null,
-          weight: first.weight ?? null,
-          canSwim: first.canSwim ?? false,
-          swimmingLevel: first.swimmingLevel ?? 'BEGINNER',
-          injuries: first.injuries ?? ''
-        };
-        await storage.appendStorage(`profiles/${finalUserId}.json`, profileData);
+        const profileUpdate: any = {};
+
+        // Only update fields that have values
+        if (first.age !== undefined && first.age !== null && first.age !== '') {
+          profileUpdate.age = Number(first.age);
+        }
+        if (first.height !== undefined && first.height !== null && first.height !== '') {
+          profileUpdate.height = Number(first.height);
+        }
+        if (first.weight !== undefined && first.weight !== null && first.weight !== '') {
+          profileUpdate.weight = Number(first.weight);
+        }
+        if (first.canSwim !== undefined) {
+          profileUpdate.canSwim = Boolean(first.canSwim);
+        }
+        if (first.injuries !== undefined && first.injuries !== null) {
+          profileUpdate.injuries = String(first.injuries);
+        }
+        if (first.emergencyContact !== undefined && first.emergencyContact !== null) {
+          profileUpdate.emergencyContact = String(first.emergencyContact);
+        }
+        if (first.emergencyPhone !== undefined && first.emergencyPhone !== null) {
+          profileUpdate.emergencyPhone = String(first.emergencyPhone);
+        }
+
+        // Only run update if there's something to update
+        if (Object.keys(profileUpdate).length > 0) {
+          await prisma.user.update({
+            where: { id: Number(finalUserId) },
+            data: profileUpdate
+          });
+          console.log(`Updated profile for user ${finalUserId}:`, Object.keys(profileUpdate));
+        }
       }
     } catch (e) {
-      console.error('Error persisting profile data:', e);
+      console.error('Error persisting profile data to database:', e);
     }
 
     // Email notification

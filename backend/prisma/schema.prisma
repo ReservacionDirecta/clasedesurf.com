@@ -20,8 +20,10 @@ model User {
   height        Float?
   canSwim       Boolean        @default(false)
   injuries      String?
-  phone         String?
-  createdAt     DateTime       @default(now())
+  phone            String?
+  emergencyContact String?
+  emergencyPhone   String?
+  createdAt        DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   profilePhoto  String?
   avatar        String? // Predefined avatar identifier (e.g., 'wave1', 'surf1')
