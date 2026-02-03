@@ -508,15 +508,16 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
 
           {/* Step 2: Additional Details */}
           {currentStep === 2 && (
-            <div className="space-y-6 animate-fadeIn">
-               <div className="space-y-1 mb-6">
-                 <h3 className="text-lg font-bold text-slate-900">Personaliza tu experiencia</h3>
-                 <p className="text-slate-500 text-sm">Ayúdanos a preparar el equipo adecuado para ti.</p>
+            <div className="space-y-5 animate-fadeIn">
+               <div className="mb-4">
+                 <h3 className="text-base font-bold text-slate-900">Personaliza tu experiencia</h3>
+                 <p className="text-slate-500 text-xs">Ayúdanos a preparar el equipo adecuado para ti.</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
+              {/* Physical Details - Clean 2x2 grid */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="height" className="block text-sm font-bold text-slate-700 mb-2">
+                  <label htmlFor="height" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                     Altura (cm)
                   </label>
                   <Input
@@ -527,13 +528,13 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     max="250"
                     value={formData.height}
                     onChange={handleInputChange}
-                    className="h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base"
+                    className="h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     placeholder="170"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="weight" className="block text-sm font-bold text-slate-700 mb-2">
+                  <label htmlFor="weight" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                     Peso (kg)
                   </label>
                   <Input
@@ -544,23 +545,24 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                     max="200"
                     value={formData.weight}
                     onChange={handleInputChange}
-                    className="h-14 px-4 rounded-xl border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all text-base"
+                    className="h-12 px-4 rounded-lg border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     placeholder="70"
                   />
                 </div>
               </div>
 
-              <div className="space-y-4">
-                 <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setFormData(prev => ({...prev, canSwim: !prev.canSwim}))}>
-                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${formData.canSwim ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}>
-                        {formData.canSwim && <Check className="w-4 h-4 text-white" />}
+              {/* Swimming & Experience Section */}
+              <div className="bg-slate-50/50 rounded-xl p-4 space-y-4 border border-slate-100">
+                 <div className="flex items-center gap-4 cursor-pointer" onClick={() => setFormData(prev => ({...prev, canSwim: !prev.canSwim}))}>
+                    <div className={`w-5 h-5 rounded flex items-center justify-center transition-colors ${formData.canSwim ? 'bg-blue-600' : 'border-2 border-slate-300 bg-white'}`}>
+                        {formData.canSwim && <Check className="w-3.5 h-3.5 text-white" />}
                     </div>
-                    <span className="font-bold text-slate-700">Sé nadar</span>
+                    <span className="text-sm font-semibold text-slate-700">Sé nadar</span>
                  </div>
 
                 <div>
-                  <label htmlFor="swimmingLevel" className="block text-sm font-bold text-slate-700 mb-2">
-                    Nivel de experiencia
+                  <label htmlFor="swimmingLevel" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
+                    Nivel de experiencia en surf
                   </label>
                    <div className="relative">
                       <select
@@ -568,30 +570,31 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                         name="swimmingLevel"
                         value={formData.swimmingLevel}
                         onChange={handleInputChange}
-                        className="w-full h-14 px-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer"
+                        className="w-full h-12 px-4 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none font-medium text-slate-900 cursor-pointer"
                       >
                         <option value="BEGINNER">Principiante (Primera vez)</option>
                         <option value="INTERMEDIATE">Intermedio (Algunas veces)</option>
                         <option value="ADVANCED">Avanzado (Consistente)</option>
                         <option value="EXPERT">Experto</option>
                       </select>
-                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                    </div>
                 </div>
               </div>
 
+              {/* Injuries/Medical */}
               <div>
-                <label htmlFor="injuries" className="block text-sm font-bold text-slate-700 mb-2">
+                <label htmlFor="injuries" className="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wide">
                   ¿Alguna lesión o condición médica?
                 </label>
                 <textarea
                   id="injuries"
                   name="injuries"
-                  rows={3}
+                  rows={2}
                   value={formData.injuries}
                   onChange={handleInputChange}
                   placeholder="Ej. Lesión antigua en hombro derecho..."
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-base resize-none"
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm resize-none"
                 />
               </div>
             </div>

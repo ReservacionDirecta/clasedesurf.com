@@ -746,8 +746,9 @@ function ReservationConfirmationContent() {
                           <h3 className="text-lg font-bold text-slate-900">{idx === 0 ? 'Titular' : `Acompañante ${idx + 1}`}</h3>
                         </div>
                         
-                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                           <div className="sm:col-span-2 lg:col-span-1">
+                        <div className="space-y-4">
+                          {/* Name - Full width */}
+                           <div>
                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Nombre completo</label>
                              <Input 
                                 placeholder="Ej: Juan Pérez"
@@ -756,9 +757,10 @@ function ReservationConfirmationContent() {
                                 className="bg-white border-slate-200 h-12"
                              />
                            </div>
+                           
                            {/* Email field for guest checkout - only for first participant when not logged in */}
                            {idx === 0 && !session && (
-                           <div className="sm:col-span-2 lg:col-span-1">
+                           <div>
                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Correo electrónico *</label>
                              <Input 
                                 type="email"
@@ -769,32 +771,34 @@ function ReservationConfirmationContent() {
                              />
                            </div>
                            )}
-                           <div>
-                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Edad</label>
-                             <Input 
-                                type="number"
-                                placeholder="8+"
-                                value={p.age}
-                                onChange={e => updateParticipant(idx, 'age', e.target.value)}
-                                className="bg-white border-slate-200 h-12"
-                             />
-                           </div>
-                           <div className="grid grid-cols-2 gap-4">
+                           
+                           {/* Age, Height, Weight - 3 column grid */}
+                           <div className="grid grid-cols-3 gap-3">
                              <div>
-                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Altura (cm)</label>
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Edad</label>
                                <Input 
                                   type="number"
-                                  placeholder="cm"
+                                  placeholder="25"
+                                  value={p.age}
+                                  onChange={e => updateParticipant(idx, 'age', e.target.value)}
+                                  className="bg-white border-slate-200 h-12"
+                               />
+                             </div>
+                             <div>
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Altura</label>
+                               <Input 
+                                  type="number"
+                                  placeholder="170 cm"
                                   value={p.height}
                                   onChange={e => updateParticipant(idx, 'height', e.target.value)}
                                   className="bg-white border-slate-200 h-12"
                                />
                              </div>
                              <div>
-                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Peso (kg)</label>
+                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Peso</label>
                                <Input 
                                   type="number"
-                                  placeholder="kg"
+                                  placeholder="70 kg"
                                   value={p.weight}
                                   onChange={e => updateParticipant(idx, 'weight', e.target.value)}
                                   className="bg-white border-slate-200 h-12"
