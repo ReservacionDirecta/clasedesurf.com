@@ -873,7 +873,7 @@ function ReservationConfirmationContent() {
                     </p>
 
                     {/* Resumen Visible de la Reserva */}
-                    <div className="bg-slate-50 rounded-2xl p-6 mb-10 max-w-xl mx-auto border border-slate-100">
+                    <div className="bg-slate-50 rounded-2xl p-6 mb-6 max-w-xl mx-auto border border-slate-100">
                       <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Resumen de Reserva</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
                         <div>
@@ -899,27 +899,45 @@ function ReservationConfirmationContent() {
                       </div>
                     </div>
 
+                    {/* Políticas de reserva - Compactas */}
+                    <div className="max-w-xl mx-auto mb-8 px-4">
+                      <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                          <strong>48h</strong> para pagar
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                          <strong>100%</strong> reembolso en 48h
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                          Sin reembolso después
+                        </span>
+                      </div>
+                    </div>
+
                     <div className="grid sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
                        <div className="p-6 rounded-2xl bg-indigo-50 border border-indigo-100 text-left">
                           <CreditCard className="w-8 h-8 text-indigo-600 mb-4" />
-                          <h4 className="font-bold text-indigo-900 mb-2">Métodos de Pago</h4>
+                          <h4 className="font-bold text-indigo-900 mb-2">Pago Seguro</h4>
                           <p className="text-sm text-indigo-700/80 leading-relaxed mb-4">
-                             Aceptamos Transferencia, Yape, Plin o pago en efectivo en la oficina de la escuela.
+                             Acepto Yape, Plin, transferencia bancaria o depósito. Tu pago va directo a la plataforma.
                           </p>
                           <Button 
                             variant="primary" 
                             className="w-full bg-indigo-600 shadow-md"
                             onClick={() => setShowPaymentModal(true)}
                           >
-                             Información de Pago
+                             Realizar Pago
                           </Button>
                        </div>
                        
                        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-left">
                           <User className="w-8 h-8 text-slate-400 mb-4" />
-                          <h4 className="font-bold text-slate-900 mb-2">Siguiente Paso</h4>
+                          <h4 className="font-bold text-slate-900 mb-2">¿Ya pagaste?</h4>
                           <p className="text-sm text-slate-600 leading-relaxed mb-4">
-                             Sube tu comprobante si ya pagaste, o ven a visitarnos en la playa antes de tu clase.
+                             Revisa el estado de tu reserva y recibe tu confirmación cuando verifiquemos el pago.
                           </p>
                           <Link href="/reservations" className="block w-full">
                             <Button variant="outline" className="w-full border-slate-300">

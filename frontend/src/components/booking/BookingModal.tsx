@@ -723,6 +723,22 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                    </div>
                 </div>
               </div>
+
+              {/* Políticas de reserva - Compactas */}
+              <div className="px-1 space-y-1.5 text-[11px] text-slate-500">
+                <p className="flex items-start gap-1.5">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Tienes <strong className="text-slate-700">48 horas</strong> para completar el pago y confirmar tu reserva.</span>
+                </p>
+                <p className="flex items-start gap-1.5">
+                  <span className="text-green-500 mt-0.5">•</span>
+                  <span>Cancelación gratuita con <strong className="text-slate-700">100% reembolso</strong> dentro de las primeras 48h después del pago.</span>
+                </p>
+                <p className="flex items-start gap-1.5">
+                  <span className="text-amber-500 mt-0.5">•</span>
+                  <span>Pasadas las 48h, las cancelaciones no son reembolsables.</span>
+                </p>
+              </div>
             </div>
           )}
         </form>
