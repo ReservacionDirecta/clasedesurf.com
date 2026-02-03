@@ -682,7 +682,6 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
                         </div>
                     )}
                  </div>
-              </div>
 
               {/* Order Summary Card */}
               <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
@@ -726,23 +725,23 @@ export function BookingModal({ isOpen, onClose, classData, onSubmit, initialPart
           )}
         </form>
 
-        {/* Sticky Footer */}
-        <div className="bg-white/80 backdrop-blur-md border-t border-slate-100 p-4 sm:p-6 shrink-0 safe-area-bottom">
-          <div className="flex items-center gap-3 max-w-2xl mx-auto">
+        {/* Sticky Footer - inside modal with proper margins */}
+        <div className="bg-white border-t border-slate-100 p-4 shrink-0 safe-area-bottom sm:rounded-b-2xl">
+          <div className="flex items-center gap-3">
             {currentStep > 1 && (
               <button
                 type="button"
                 onClick={handlePrevious}
-                className="h-14 w-14 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors active:scale-95"
+                className="h-12 w-12 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors active:scale-95"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
             )}
             
             <Button
-              type="button" // Controlled by onClick logic, simpler than form submit
+              type="button"
               onClick={currentStep < STEPS.length ? handleNext : (e) => handleSubmit(e as any)}
-              className="flex-1 h-14 text-lg font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95 flex items-center justify-center gap-2"
+              className="flex-1 h-12 text-base font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all active:scale-95 flex items-center justify-center gap-2"
             >
               {currentStep < STEPS.length ? (
                  <>Siguiente <ChevronRight className="w-5 h-5 opacity-60" /></> 
