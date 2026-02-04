@@ -200,12 +200,15 @@ export default function StudentProfile() {
       const token = (session as any)?.backendToken;
       
       // Prepare data
+      const isUrl = selectedAvatar && (selectedAvatar.startsWith('http') || selectedAvatar.startsWith('/'));
+
       const data: any = {
         ...userProfile,
         age: userProfile.age ? Number(userProfile.age) : null,
         weight: userProfile.weight ? Number(userProfile.weight) : null,
         height: userProfile.height ? Number(userProfile.height) : null,
-        avatar: selectedAvatar || null,
+        avatar: !isUrl ? selectedAvatar : null,
+        profilePhoto: isUrl ? selectedAvatar : null,
       };
       
       console.log('[Profile] Sending data:', data);
@@ -227,11 +230,15 @@ export default function StudentProfile() {
       const saved = await res.json();
       console.log('[Profile] Saved successfully:', saved);
       
-      // Update avatar from server response
-      setSelectedAvatar(saved.avatar || null);
+      // Update avatar from server response (might be in profilePhoto or avatar)
+      const savedAvatar = saved.profilePhoto || saved.avatar || null;
+      setSelectedAvatar(savedAvatar);
       
       // Update session
-      await update({ name: userProfile.name });
+      await update({ 
+        name: userProfile.name,
+        image: isUrl ? selectedAvatar : null 
+      });
       
       setIsEditing(false);
       setIsDirty(false);

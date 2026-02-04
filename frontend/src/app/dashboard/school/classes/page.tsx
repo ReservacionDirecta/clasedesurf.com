@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X, ListChecks, LayoutGrid, List, Copy } from 'lucide-react';
+import { Plus, Calendar, Clock, Users, MapPin, Eye, Edit, Trash2, DollarSign, X, ListChecks, LayoutGrid, List, Copy, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { SchoolContextBanner } from '@/components/school/SchoolContextBanner';
 import { useToast } from '@/contexts/ToastContext';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
@@ -23,6 +23,7 @@ interface Class {
   location?: string;
   instructor: string;
   status?: 'upcoming' | 'completed' | 'cancelled';
+  instructorStatus?: 'PENDING' | 'CONFIRMED' | 'REJECTED';
   availableSpots?: number;
   reservations?: any[];
   isRecurring?: boolean;
@@ -803,6 +804,9 @@ export default function ClassesManagementPage() {
                                 <div className="flex flex-wrap gap-1 mt-1">
                                    <span className="text-xs text-gray-500 flex items-center bg-gray-100 px-1.5 py-0.5 rounded">
                                       {cls.instructor || 'Sin instructor'} 
+                                      {cls.instructorStatus === 'PENDING' && <AlertCircle className="w-3 h-3 ml-1 text-amber-500" title="Pendiente de confirmación por el instructor" />}
+                                      {cls.instructorStatus === 'CONFIRMED' && <CheckCircle className="w-3 h-3 ml-1 text-green-500" title="Instructor confirmado" />}
+                                      {cls.instructorStatus === 'REJECTED' && <XCircle className="w-3 h-3 ml-1 text-red-500" title="Instructor rechazó la clase" />}
                                    </span>
                                    <span className="text-xs text-gray-500 flex items-center bg-gray-100 px-1.5 py-0.5 rounded">
                                       {cls.duration} min
@@ -919,6 +923,18 @@ export default function ClassesManagementPage() {
                                  <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-0.5 rounded-full">
                                     {cluster.length} horario{cluster.length > 1 ? 's' : ''}
                                  </span>
+                                 {primaryClass.instructorStatus && (
+                                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium border flex items-center gap-1 ${
+                                      primaryClass.instructorStatus === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                      primaryClass.instructorStatus === 'CONFIRMED' ? 'bg-green-50 text-green-700 border-green-200' :
+                                      'bg-red-50 text-red-700 border-red-200'
+                                   }`}>
+                                     {primaryClass.instructorStatus === 'PENDING' ? <AlertCircle className="w-3 h-3" /> :
+                                      primaryClass.instructorStatus === 'CONFIRMED' ? <CheckCircle className="w-3 h-3" /> :
+                                      <XCircle className="w-3 h-3" />}
+                                      <span>Inst. {primaryClass.instructorStatus === 'PENDING' ? '?' : primaryClass.instructorStatus === 'CONFIRMED' ? 'OK' : 'NO'}</span>
+                                   </span>
+                                 )}
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getLevelColor(primaryClass.level)}`}>
                                   {primaryClass.level}
                                 </span>

@@ -14,8 +14,22 @@ router.get('/classes', requireAuth, resolveSchool, async (req: AuthRequest, res)
     if (req.role !== 'INSTRUCTOR') return res.status(403).json({ message: 'Forbidden' });
     if (!req.schoolId) return res.status(404).json({ message: 'No school' });
 
+    const instructor = await prisma.instructor.findFirst({
+      where: { userId: Number(req.userId) },
+      include: { user: true }
+    });
+
+    if (!instructor) return res.status(403).json({ message: 'Instructor profile not found' });
+
     const classes = await prisma.class.findMany({
-      where: { schoolId: req.schoolId, deletedAt: null },
+      where: {
+        schoolId: req.schoolId,
+        deletedAt: null,
+        OR: [
+          { instructorId: instructor.id },
+          { instructor: instructor.user?.name || '' }
+        ]
+      },
       include: {
         sessions: {
           where: { date: { gte: new Date() } },

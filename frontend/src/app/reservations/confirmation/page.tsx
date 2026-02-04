@@ -26,6 +26,7 @@ import { Input } from '@/components/ui/Input';
 import ImageWithFallback from '@/components/ui/ImageWithFallback';
 import { formatDualCurrency } from '@/lib/currency';
 import PaymentUpload from '@/components/payments/PaymentUpload';
+import { useToast } from '@/contexts/ToastContext';
 
 interface ReservationData {
   classId: string;
@@ -69,6 +70,7 @@ function ReservationConfirmationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status: sessionStatus } = useSession();
+  const { showInfo, showError } = useToast();
   const [reservationData, setReservationData] = useState<ReservationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -329,8 +331,9 @@ function ReservationConfirmationContent() {
         // Handle "Account Exists" specifically
         if (errorData.code === 'ACCOUNT_EXISTS') {
            setError(errorData.message);
-           setShowRegisterForm(false); // Hide register, maybe show login prompt explicitly
-           // Ideally we scroll to login section
+           showError('Cuenta existente', errorData.message);
+           // setShowRegisterForm(false); // Removed, as we are in guest checkout logic
+           // Ideally we scroll to login section or show a modal
            return;
         }
         throw new Error(errorData.message || 'Error al crear la reserva');
@@ -361,6 +364,11 @@ function ReservationConfirmationContent() {
             // Success! The session is now established via NextAuth internal mechanism.
             // Force a re-render that will be picked up by useSession/update if needed,
             // but immediately advance to the next step.
+            showInfo(
+              'Cuenta creada automáticamente', 
+              'Hemos creado un perfil con los datos de tu reserva para facilitar tus próximos accesos. ¡Bienvenido!',
+              8000
+            );
             setCurrentStep(3); 
             return; // Stop here, page reload is avoided
           }

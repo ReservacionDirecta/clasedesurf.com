@@ -48,6 +48,10 @@ export const createClassSchema = z.object({
     .max(100, 'Instructor name must be less than 100 characters')
     .nullable()
     .optional(),
+  instructorId: z.number()
+    .int('Instructor ID must be a whole number')
+    .min(1, 'Invalid instructor ID')
+    .optional(),
   images: z.array(z.string())
     .max(5, 'Maximum 5 images allowed')
     .optional(),
@@ -73,6 +77,7 @@ const bulkClassBaseDataSchema = createClassSchema.pick({
   price: true,
   level: true,
   instructor: true,
+  instructorId: true,
   images: true,
   studentDetails: true
 });
@@ -140,6 +145,10 @@ export const updateClassSchema = z.object({
   instructor: z.string()
     .max(100, 'Instructor name must be less than 100 characters')
     .nullable()
+    .optional(),
+  instructorId: z.number()
+    .int('Instructor ID must be a whole number')
+    .min(1, 'Invalid instructor ID')
     .optional(),
   images: z.array(z.string())
     .max(5, 'Maximum 5 images allowed')

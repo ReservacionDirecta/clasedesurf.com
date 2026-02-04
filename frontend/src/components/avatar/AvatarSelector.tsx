@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { User } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { User, Upload, Image as ImageIcon } from 'lucide-react';
+import ImageWithFallback from '@/components/ui/ImageWithFallback';
 
 // Avatar definitions - 6 avatares relacionados con el surf
 export const STUDENT_AVATARS = [
@@ -46,14 +47,92 @@ export default function AvatarSelector({
   };
 
   const gridSizeClasses = {
-    sm: 'grid-cols-3 gap-2',
-    md: 'grid-cols-3 gap-3',
-    lg: 'grid-cols-3 gap-4',
+    sm: 'grid-cols-4 gap-2',
+    md: 'grid-cols-4 gap-3',
+    lg: 'grid-cols-4 gap-4',
   };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!res.ok) throw new Error('Error al subir imagen');
+      
+      const data = await res.json();
+      if (data.url) {
+        onSelectAvatar(data.url);
+      }
+    } catch (e) {
+      console.error(e);
+      // Optional: notify parent of error
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const isCustomImage = selectedAvatar && (selectedAvatar.startsWith('http') || selectedAvatar.startsWith('/'));
 
   return (
     <div className="w-full">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        className="hidden"
+        accept="image/jpeg,image/png,image/webp"
+      />
       <div className={`grid ${gridSizeClasses[size]} mb-4`}>
+        {/* Upload Button */}
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className={`
+            relative ${sizeClasses[size]} rounded-full 
+            bg-gray-100 hover:bg-gray-200 border-2 border-dashed border-gray-300
+            flex items-center justify-center
+            transition-all duration-200
+            hover:scale-105 shadow-sm hover:shadow-md
+            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          `}
+          title="Subir Foto"
+          disabled={uploading}
+        >
+           {uploading ? (
+             <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-500 border-t-transparent"></div>
+           ) : (
+             <Upload className="w-1/2 h-1/2 text-gray-500" />
+           )}
+        </button>
+
+        {/* Custom Image Preview (if selected) */}
+        {isCustomImage && (
+           <button
+           type="button"
+           className={`
+             relative ${sizeClasses[size]} rounded-full 
+             bg-white overflow-hidden
+             flex items-center justify-center
+             ring-4 ring-blue-500 ring-offset-2 shadow-lg
+           `}
+           title="Tu Foto"
+         >
+           <img src={selectedAvatar} alt="Custom" className="w-full h-full object-cover" />
+         </button>
+        )}
+
         {avatares.map((avatar) => {
           const isSelected = selectedAvatar === avatar.id;
           return (
@@ -138,6 +217,17 @@ export function AvatarDisplay({
   }
 
   if (!avatar) {
+    if (avatarId && (avatarId.startsWith('http') || avatarId.startsWith('/'))) {
+        return (
+            <div className={`
+              ${sizeClasses[size]} rounded-full 
+              overflow-hidden bg-white border border-gray-200 shadow-sm
+              ${className}
+            `}>
+              <img src={avatarId} alt="Profile" className="w-full h-full object-cover" />
+            </div>
+          );
+    }
     return <>{fallback}</>;
   }
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { StarIcon } from '@/components/ui/Icons'
 import { Footer } from '@/components/layout/Footer'
+import { InstructorReviewForm } from '@/components/instructors/InstructorReviewForm'
 
 interface InstructorReview {
   id: number
@@ -231,38 +232,73 @@ export default function InstructorDetailPage() {
             </div>
           </div>
 
-          {/* Reviews */}
-          {instructor.reviews && instructor.reviews.length > 0 && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
-                Reseñas de estudiantes
-              </h2>
-              
-              <div className="space-y-4">
+          {/* Reviews Section */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8">
+            <h2 className="font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+              Reseñas de estudiantes
+            </h2>
+            
+            {instructor.reviews && instructor.reviews.length > 0 ? (
+              <div className="space-y-6 mb-8">
                 {instructor.reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
+                  <div key={review.id} className="border-b border-gray-100 pb-6 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-medium text-gray-900">{review.studentName}</span>
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <StarIcon 
-                            key={i} 
-                            className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-200'}`} 
-                          />
-                        ))}
-                      </div>
+                      <span className="text-xs text-gray-400">
+                        {new Date(review.createdAt).toLocaleDateString('es-PE', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 mb-2">
+                      {[...Array(5)].map((_, i) => (
+                        <StarIcon 
+                          key={i} 
+                          className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-200'}`} 
+                        />
+                      ))}
                     </div>
                     {review.comment && (
-                      <p className="text-gray-600 text-sm">{review.comment}</p>
+                      <p className="text-gray-600 text-sm leading-relaxed">{review.comment}</p>
                     )}
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8 italic mb-8">
+                Aún no hay reseñas. ¡Sé el primero en opinar!
+              </p>
+            )}
+
+            {/* Add Review Form */}
+            <div className="pt-6 border-t border-gray-100">
+              <InstructorReviewForm 
+                instructorId={instructor.id} 
+                onReviewAdded={() => {
+                  // Re-fetch instructor data to show new rating and reviews
+                  if (params.id) {
+                    const fetchInstructor = async () => {
+                        try {
+                            const res = await fetch(`/api/instructors/${params.id}`)
+                            if (res.ok) {
+                            const data = await res.json()
+                            setInstructor(data)
+                            }
+                        } catch (error) {
+                            console.error('Error refreshing instructor:', error)
+                        }
+                    }
+                    fetchInstructor()
+                  }
+                }} 
+              />
             </div>
-          )}
+          </div>
 
           {/* CTA */}
           <div className="mt-8 text-center">

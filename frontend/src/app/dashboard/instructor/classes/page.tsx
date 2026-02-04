@@ -20,6 +20,7 @@ interface Class {
   level: string;
   location: string;
   status: 'upcoming' | 'completed' | 'cancelled';
+  instructorStatus?: 'PENDING' | 'CONFIRMED' | 'REJECTED';
   reservations?: Reservation[];
 }
 
@@ -91,6 +92,7 @@ export default function InstructorClasses() {
           level: cls.level || 'INTERMEDIATE',
           location: cls.location || 'Por definir',
           status: status,
+          instructorStatus: cls.instructorStatus,
           reservations: cls.reservations?.map((r: any) => ({
             id: r.id,
             userId: r.userId,
@@ -469,6 +471,35 @@ export default function InstructorClasses() {
 
     setClasses([...classes, newClass]);
     setShowCreateModal(false);
+    setClasses([...classes, newClass]);
+    setShowCreateModal(false);
+  };
+
+  const updateClassStatus = async (classId: number, status: 'CONFIRMED' | 'REJECTED') => {
+    try {
+      const token = (session as any)?.backendToken;
+      const res = await fetch(`/api/classes/${classId}/instructor-status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!res.ok) throw new Error('Error updating status');
+      
+      // Optimistic update
+      setClasses(prev => prev.map(c => 
+        c.id === classId ? { ...c, instructorStatus: status } : c
+      ));
+
+      // Refresh to be safe
+      fetchClasses();
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al actualizar el estado de la clase');
+    }
   };
 
   if (status === 'loading' || loading) {
@@ -609,6 +640,30 @@ export default function InstructorClasses() {
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">{cls.title}</h3>
                       <p className="text-gray-600 mb-3">{cls.description}</p>
+                      
+                      {/* Confirmation Alert */}
+                      {cls.instructorStatus === 'PENDING' && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-pulse">
+                          <div className="flex items-center text-amber-800 text-sm font-medium">
+                             <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                             <span>Confirmación requerida para esta clase</span>
+                          </div>
+                          <div className="flex gap-2 w-full sm:w-auto">
+                             <button
+                               onClick={() => updateClassStatus(cls.id, 'CONFIRMED')}
+                               className="flex-1 sm:flex-none px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded shadow-sm hover:bg-green-700 transition"
+                             >
+                               Confirmar
+                             </button>
+                             <button
+                               onClick={() => updateClassStatus(cls.id, 'REJECTED')}
+                               className="flex-1 sm:flex-none px-3 py-1.5 bg-white border border-red-200 text-red-600 text-xs font-bold rounded shadow-sm hover:bg-red-50 transition"
+                             >
+                               Rechazar
+                             </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2 ml-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(cls.status)}`}>

@@ -32,6 +32,7 @@ interface ClassFormData {
   price: number;
   level: string;
   instructor: string;
+  instructorId?: number;
   studentDetails: string;
   images: string[];
   beachId?: number;
@@ -92,6 +93,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
     price: initialData?.defaultPrice || initialData?.price || 90,
     level: initialData?.level || 'BEGINNER',
     instructor: initialData?.instructor || '',
+    instructorId: initialData?.instructorId || undefined,
     studentDetails: initialData?.studentDetails || '',
     images: initialData?.images && initialData.images.length > 0 ? initialData.images : [''],
     beachId: initialData?.beachId || undefined,
@@ -110,6 +112,8 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
 
   const [priceInput, setPriceInput] = useState<string>(String(formData.price));
   const [beaches, setBeaches] = useState<Beach[]>([]);
+  const [instructors, setInstructors] = useState<any[]>([]);
+  const [useManualInstructor, setUseManualInstructor] = useState(!formData.instructorId && !!formData.instructor);
   const [schools, setSchools] = useState<any[]>([]);
   const [showAddBeachModal, setShowAddBeachModal] = useState(false);
   const [newBeachName, setNewBeachName] = useState('');
@@ -145,6 +149,10 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
         // Fetch beaches
         const beachesRes = await fetch('/api/beaches', { headers });
         if (beachesRes.ok) setBeaches(await beachesRes.json());
+        
+        // Fetch instructors
+        const instrRes = await fetch('/api/instructors', { headers });
+        if (instrRes.ok) setInstructors(await instrRes.json());
 
         // Fetch schools if admin
         if (((session as any)?.user?.role === 'ADMIN')) {
@@ -394,6 +402,7 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
         price: Number(formData.price) || 0,
         level: formData.level,
         instructor: formData.instructor,
+        instructorId: formData.instructorId,
         studentDetails: formData.studentDetails,
         images: validImages,
         schedules
@@ -514,12 +523,63 @@ export function ClassForm({ initialData, isEditing = false, onSuccess, onCancel 
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-600">Instructor a Cargo</label>
-                  <input
-                    className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
-                    value={formData.instructor}
-                    onChange={e => handleInputChange('instructor', e.target.value)}
-                    placeholder="Nombre del instructor"
-                  />
+                  {!useManualInstructor ? (
+                    <div className="flex max-w-full">
+                      <select
+                        className="w-full rounded-l-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm border"
+                        value={formData.instructorId || ''}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === 'manual') {
+                            setUseManualInstructor(true);
+                            handleInputChange('instructorId', undefined);
+                            handleInputChange('instructor', '');
+                          } else {
+                            const id = Number(val);
+                            handleInputChange('instructorId', id);
+                            const selected = instructors.find(i => i.id === id);
+                            handleInputChange('instructor', selected?.user?.name || '');
+                          }
+                        }}
+                      >
+                        <option value="">Seleccionar Instructor</option>
+                        {instructors.map(i => (
+                          <option key={i.id} value={i.id}>
+                            {i.user?.name || 'Sin Nombre'} {i.type === 'INDEPENDENT' ? '(Indep.)' : ''}
+                          </option>
+                        ))}
+                        <option value="manual">Otro (Manual)</option>
+                      </select>
+                      <Button 
+                         type="button" 
+                         variant="outline" 
+                         className="rounded-l-none border-l-0 px-3"
+                         onClick={() => setUseManualInstructor(true)}
+                         title="Ingresar manualmente"
+                      >
+                         ✏️
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                       <input
+                         className="w-full rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 p-2.5 text-sm transition-all shadow-sm placeholder:text-slate-400 border"
+                         value={formData.instructor}
+                         onChange={e => handleInputChange('instructor', e.target.value)}
+                         placeholder="Nombre del instructor"
+                       />
+                       <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={() => {
+                             setUseManualInstructor(false);
+                             handleInputChange('instructorId', undefined);
+                          }}
+                       >
+                         Lista
+                       </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

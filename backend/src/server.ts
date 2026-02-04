@@ -19,6 +19,7 @@ import beachesRouter from './routes/beaches';
 import notesRouter from './routes/notes';
 import discountCodesRouter from './routes/discountCodes';
 import imagesRouter from './routes/images';
+import uploadRouter from './routes/upload';
 import notificationsRouter from './routes/notifications';
 import productsRouter from './routes/products';
 import { whatsappService } from './services/whatsapp.service';
@@ -100,6 +101,7 @@ app.use('/beaches', beachesRouter);
 app.use('/notes', notesRouter);
 app.use('/discount-codes', discountCodesRouter);
 app.use('/images', imagesRouter);
+app.use('/upload', uploadRouter);
 app.use('/notifications', notificationsRouter);
 app.use('/products', productsRouter);
 

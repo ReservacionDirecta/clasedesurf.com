@@ -20,7 +20,8 @@
     "test": "npx vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "echo 'lint step skipped'",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "npm run seed"

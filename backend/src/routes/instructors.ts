@@ -1,6 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../prisma';
+import { InstructorType } from '@prisma/client';
 import { validateBody, validateParams } from '../middleware/validation';
 import requireAuth, { AuthRequest, requireRole, optionalAuth } from '../middleware/auth';
 import resolveSchool from '../middleware/resolve-school';
@@ -18,7 +19,8 @@ const createInstructorSchema = z.object({
   specialties: z.array(z.string()).default([]),
   certifications: z.array(z.string()).default([]),
   profileImage: z.string().url().optional(),
-  instructorRole: z.enum(['INSTRUCTOR', 'HEAD_COACH']).default('INSTRUCTOR')
+  instructorRole: z.enum(['INSTRUCTOR', 'HEAD_COACH']).default('INSTRUCTOR'),
+  type: z.enum(['EMPLOYEE', 'INDEPENDENT']).default('EMPLOYEE')
 });
 
 // POST /instructors/create-with-user - Create instructor and associated user
@@ -33,113 +35,117 @@ router.post('/create-with-user', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMI
       profileImage,
       instructorRole,
       schoolId,
-      sendWelcomeEmail
+      sendWelcomeEmail,
+      type
     }: {
-      userData: {
-        name: string;
-        email: string;
-        phone?: string | null;
-        password: string;
-        role?: string;
-      };
-      bio?: string;
-      yearsExperience?: number;
-      specialties?: string[];
-      certifications?: string[];
-      profileImage?: string;
-      instructorRole?: 'INSTRUCTOR' | 'HEAD_COACH';
-      schoolId?: number;
-      sendWelcomeEmail?: boolean;
-    } = req.body;
+      }: {
+        userData: {
+          name: string;
+    email: string;
+    phone ?: string | null;
+    password: string;
+    role ?: string;
+  };
+  bio ?: string;
+  yearsExperience ?: number;
+  specialties ?: string[];
+  certifications ?: string[];
+  profileImage ?: string;
+  instructorRole ?: 'INSTRUCTOR' | 'HEAD_COACH';
+  schoolId ?: number;
+  sendWelcomeEmail ?: boolean;
+  type ?: 'EMPLOYEE' | 'INDEPENDENT';
+} = req.body;
 
-    if (!userData || !userData.name || !userData.email || !userData.password) {
-      res.status(400).json({ message: 'Missing required user data fields' });
-      return;
-    }
+if (!userData || !userData.name || !userData.email || !userData.password) {
+  res.status(400).json({ message: 'Missing required user data fields' });
+  return;
+}
 
-    // Determine target school
-    let targetSchoolId: number | undefined;
-    if (req.role === 'SCHOOL_ADMIN') {
-      if (!req.schoolId) {
-        res.status(404).json({ message: 'No school found for this user' });
-        return;
-      }
-      targetSchoolId = req.schoolId;
-    } else if (req.role === 'ADMIN') {
-      if (!schoolId) {
-        res.status(400).json({ message: 'School ID is required' });
-        return;
-      }
-      targetSchoolId = schoolId;
-    }
-
-    if (!targetSchoolId) {
-      res.status(400).json({ message: 'School ID could not be determined' });
-      return;
-    }
-
-    const existingUser = await prisma.user.findUnique({ where: { email: userData.email } });
-    if (existingUser) {
-      res.status(400).json({ message: 'Email already exists' });
-      return;
-    }
-
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
-
-    const result = await prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
-        data: {
-          name: userData.name,
-          email: userData.email,
-          phone: userData.phone || null,
-          password: hashedPassword,
-          role: 'INSTRUCTOR'
-        }
-      });
-
-      const newInstructor = await tx.instructor.create({
-        data: {
-          userId: newUser.id,
-          schoolId: targetSchoolId as number,
-          bio: bio || null,
-          yearsExperience: yearsExperience ?? 0,
-          specialties: specialties || [],
-          certifications: certifications || [],
-          profileImage: profileImage || null,
-          instructorRole: instructorRole || 'INSTRUCTOR',
-          isActive: true
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true
-            }
-          },
-          school: {
-            select: {
-              id: true,
-              name: true,
-              location: true
-            }
-          }
-        }
-      });
-
-      return { user: newUser, instructor: newInstructor };
-    });
-
-    if (sendWelcomeEmail) {
-      console.log(`Welcome email should be sent to ${userData.email}`);
-    }
-
-    res.status(201).json(result.instructor);
-  } catch (err) {
-    console.error('[POST /instructors/create-with-user] Error:', err);
-    res.status(500).json({ message: 'Internal server error' });
+// Determine target school
+let targetSchoolId: number | undefined;
+if (req.role === 'SCHOOL_ADMIN') {
+  if (!req.schoolId) {
+    res.status(404).json({ message: 'No school found for this user' });
+    return;
   }
+  targetSchoolId = req.schoolId;
+} else if (req.role === 'ADMIN') {
+  if (!schoolId) {
+    res.status(400).json({ message: 'School ID is required' });
+    return;
+  }
+  targetSchoolId = schoolId;
+}
+
+if (!targetSchoolId) {
+  res.status(400).json({ message: 'School ID could not be determined' });
+  return;
+}
+
+const existingUser = await prisma.user.findUnique({ where: { email: userData.email } });
+if (existingUser) {
+  res.status(400).json({ message: 'Email already exists' });
+  return;
+}
+
+const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+const result = await prisma.$transaction(async (tx) => {
+  const newUser = await tx.user.create({
+    data: {
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone || null,
+      password: hashedPassword,
+      role: 'INSTRUCTOR'
+    }
+  });
+
+  const newInstructor = await tx.instructor.create({
+    data: {
+      userId: newUser.id,
+      schoolId: targetSchoolId as number,
+      bio: bio || null,
+      yearsExperience: yearsExperience ?? 0,
+      specialties: specialties || [],
+      certifications: certifications || [],
+      profileImage: profileImage || null,
+      instructorRole: instructorRole || 'INSTRUCTOR',
+      type: type || 'EMPLOYEE',
+      isActive: true
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true
+        }
+      },
+      school: {
+        select: {
+          id: true,
+          name: true,
+          location: true
+        }
+      }
+    }
+  });
+
+  return { user: newUser, instructor: newInstructor };
+});
+
+if (sendWelcomeEmail) {
+  console.log(`Welcome email should be sent to ${userData.email}`);
+}
+
+res.status(201).json(result.instructor);
+  } catch (err) {
+  console.error('[POST /instructors/create-with-user] Error:', err);
+  res.status(500).json({ message: 'Internal server error' });
+}
 });
 
 const updateInstructorSchema = z.object({
@@ -149,6 +155,7 @@ const updateInstructorSchema = z.object({
   certifications: z.array(z.string()).optional(),
   profileImage: z.string().url().optional(),
   instructorRole: z.enum(['INSTRUCTOR', 'HEAD_COACH']).optional(),
+  type: z.enum(['EMPLOYEE', 'INDEPENDENT']).optional(),
   isActive: z.boolean().optional()
 });
 
@@ -273,7 +280,7 @@ router.get('/:id', requireAuth, validateParams(instructorIdSchema), enforceSchoo
 // POST /instructors - Create instructor (ADMIN or SCHOOL_ADMIN)
 router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateBody(createInstructorSchema), async (req: AuthRequest, res) => {
   try {
-    const { userId, schoolId, bio, yearsExperience, specialties, certifications, profileImage, instructorRole } = req.body;
+    const { userId, schoolId, bio, yearsExperience, specialties, certifications, profileImage, instructorRole, type } = req.body;
 
     // Determine final schoolId
     let finalSchoolId: number;
@@ -325,7 +332,9 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
         specialties: specialties || [],
         certifications: certifications || [],
         profileImage: profileImage || null,
+        profileImage: profileImage || null,
         instructorRole: instructorRole || 'INSTRUCTOR',
+        type: type || 'EMPLOYEE',
         isActive: true
       },
       include: {

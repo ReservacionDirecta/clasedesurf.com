@@ -1,5 +1,6 @@
 import express from 'express';
 import prisma from '../prisma';
+import { ClassInstructorStatus } from '@prisma/client';
 import { normalizeClassImages, normalizeSchoolImages } from '../utils/image-utils';
 import { validateBody, validateParams } from '../middleware/validation';
 import { createClassSchema, updateClassSchema, classIdSchema, createBulkClassesSchema } from '../validations/classes';
@@ -485,13 +486,21 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
   try {
     const {
       title, description, duration, capacity, price, level,
-      instructor, images, schoolId, beachId, schedules
+      instructor, instructorId, images, schoolId, beachId, schedules
     } = req.body;
 
     let finalSchoolId: number | undefined = schoolId ? Number(schoolId) : undefined;
     if (req.role === 'SCHOOL_ADMIN') {
       if (!req.schoolId) return res.status(404).json({ message: 'No school found for this user' });
       finalSchoolId = req.schoolId;
+    }
+
+    let instructorStatus: ClassInstructorStatus = ClassInstructorStatus.CONFIRMED;
+    if (instructorId) {
+      const instr = await prisma.instructor.findUnique({ where: { id: Number(instructorId) } });
+      if (instr?.type === 'INDEPENDENT') {
+        instructorStatus = ClassInstructorStatus.PENDING;
+      }
     }
 
     const newClass = await prisma.class.create({
@@ -503,6 +512,8 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
         defaultPrice: price ? Number(price) : 0,
         level,
         instructor,
+        instructorId: instructorId ? Number(instructorId) : undefined,
+        instructorStatus,
         images: images || [],
         school: { connect: { id: Number(finalSchoolId) } },
         ...(beachId && { beach: { connect: { id: Number(beachId) } } }),
@@ -558,7 +569,17 @@ router.post('/bulk', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolv
     // Use transaction to ensure both Product and Sessions are created or neither
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create the Class (Product)
+      // 1. Create the Class (Product)
       console.log('[POST /bulk] Creating Class Product...');
+
+      let instructorStatus: ClassInstructorStatus = ClassInstructorStatus.CONFIRMED;
+      if (baseData.instructorId) {
+        const instr = await prisma.instructor.findUnique({ where: { id: Number(baseData.instructorId) } });
+        if (instr?.type === 'INDEPENDENT') {
+          instructorStatus = ClassInstructorStatus.PENDING;
+        }
+      }
+
       const classData: any = {
         title: baseData.title,
         description: baseData.description,
@@ -567,6 +588,8 @@ router.post('/bulk', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolv
         defaultPrice: baseData.price ? Number(baseData.price) : 0,
         level: baseData.level,
         instructor: baseData.instructor,
+        instructorId: baseData.instructorId ? Number(baseData.instructorId) : undefined,
+        instructorStatus,
         studentDetails: baseData.studentDetails,
         images: baseData.images || [],
         school: { connect: { id: finalSchoolId } }
@@ -657,7 +680,7 @@ router.post('/bulk-sessions', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']
 router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSchool, validateParams(classIdSchema), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params as any;
-    const { images, capacity, price, schedules, ...restData } = req.body;
+    const { images, capacity, price, schedules, instructorId, ...restData } = req.body;
 
     const existing = await prisma.class.findUnique({ where: { id: Number(id) } });
     if (!existing) return res.status(404).json({ message: 'Class not found' });
@@ -669,6 +692,16 @@ router.put('/:id', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveS
     const updateData: any = { ...restData };
     if (capacity !== undefined) updateData.defaultCapacity = Number(capacity);
     if (price !== undefined) updateData.defaultPrice = Number(price);
+
+    if (instructorId !== undefined) {
+      updateData.instructorId = Number(instructorId);
+      const instr = await prisma.instructor.findUnique({ where: { id: Number(instructorId) } });
+      if (instr) {
+        updateData.instructorStatus = instr.type === 'INDEPENDENT'
+          ? ClassInstructorStatus.PENDING
+          : ClassInstructorStatus.CONFIRMED;
+      }
+    }
 
     if (images !== undefined) {
       updateData.images = Array.isArray(images) ? images.map((img: string) => {
@@ -938,6 +971,40 @@ router.post('/:id/sessions', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN'])
     res.json(session);
   } catch (err) {
     console.error('[POST /sessions] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// PUT /classes/:id/instructor-status - Update class confirmation status (INSTRUCTOR only)
+router.put('/:id/instructor-status', requireAuth, requireRole(['INSTRUCTOR']), validateParams(classIdSchema), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params as any;
+    const { status } = req.body;
+
+    if (!['CONFIRMED', 'REJECTED'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const existingClass = await prisma.class.findUnique({ where: { id: Number(id) } });
+    if (!existingClass) return res.status(404).json({ message: 'Class not found' });
+
+    // Verify requesting user is the assigned instructor
+    const instructorProfile = await prisma.instructor.findFirst({
+      where: { userId: Number(req.userId) }
+    });
+
+    if (!instructorProfile || existingClass.instructorId !== instructorProfile.id) {
+      return res.status(403).json({ message: 'You are not assigned to this class' });
+    }
+
+    const updated = await prisma.class.update({
+      where: { id: Number(id) },
+      data: { instructorStatus: status as ClassInstructorStatus }
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error('[PUT /classes/:id/instructor-status] Error:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
