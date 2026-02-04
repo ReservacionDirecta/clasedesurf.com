@@ -38,114 +38,113 @@ router.post('/create-with-user', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMI
       sendWelcomeEmail,
       type
     }: {
-      }: {
-        userData: {
-          name: string;
-    email: string;
-    phone ?: string | null;
-    password: string;
-    role ?: string;
-  };
-  bio ?: string;
-  yearsExperience ?: number;
-  specialties ?: string[];
-  certifications ?: string[];
-  profileImage ?: string;
-  instructorRole ?: 'INSTRUCTOR' | 'HEAD_COACH';
-  schoolId ?: number;
-  sendWelcomeEmail ?: boolean;
-  type ?: 'EMPLOYEE' | 'INDEPENDENT';
-} = req.body;
+      userData: {
+        name: string;
+        email: string;
+        phone?: string | null;
+        password: string;
+        role?: string;
+      };
+      bio?: string;
+      yearsExperience?: number;
+      specialties?: string[];
+      certifications?: string[];
+      profileImage?: string;
+      instructorRole?: 'INSTRUCTOR' | 'HEAD_COACH';
+      schoolId?: number;
+      sendWelcomeEmail?: boolean;
+      type?: 'EMPLOYEE' | 'INDEPENDENT';
+    } = req.body;
 
-if (!userData || !userData.name || !userData.email || !userData.password) {
-  res.status(400).json({ message: 'Missing required user data fields' });
-  return;
-}
-
-// Determine target school
-let targetSchoolId: number | undefined;
-if (req.role === 'SCHOOL_ADMIN') {
-  if (!req.schoolId) {
-    res.status(404).json({ message: 'No school found for this user' });
-    return;
-  }
-  targetSchoolId = req.schoolId;
-} else if (req.role === 'ADMIN') {
-  if (!schoolId) {
-    res.status(400).json({ message: 'School ID is required' });
-    return;
-  }
-  targetSchoolId = schoolId;
-}
-
-if (!targetSchoolId) {
-  res.status(400).json({ message: 'School ID could not be determined' });
-  return;
-}
-
-const existingUser = await prisma.user.findUnique({ where: { email: userData.email } });
-if (existingUser) {
-  res.status(400).json({ message: 'Email already exists' });
-  return;
-}
-
-const hashedPassword = await bcrypt.hash(userData.password, 10);
-
-const result = await prisma.$transaction(async (tx) => {
-  const newUser = await tx.user.create({
-    data: {
-      name: userData.name,
-      email: userData.email,
-      phone: userData.phone || null,
-      password: hashedPassword,
-      role: 'INSTRUCTOR'
+    if (!userData || !userData.name || !userData.email || !userData.password) {
+      res.status(400).json({ message: 'Missing required user data fields' });
+      return;
     }
-  });
 
-  const newInstructor = await tx.instructor.create({
-    data: {
-      userId: newUser.id,
-      schoolId: targetSchoolId as number,
-      bio: bio || null,
-      yearsExperience: yearsExperience ?? 0,
-      specialties: specialties || [],
-      certifications: certifications || [],
-      profileImage: profileImage || null,
-      instructorRole: instructorRole || 'INSTRUCTOR',
-      type: type || 'EMPLOYEE',
-      isActive: true
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true
-        }
-      },
-      school: {
-        select: {
-          id: true,
-          name: true,
-          location: true
-        }
+    // Determine target school
+    let targetSchoolId: number | undefined;
+    if (req.role === 'SCHOOL_ADMIN') {
+      if (!req.schoolId) {
+        res.status(404).json({ message: 'No school found for this user' });
+        return;
       }
+      targetSchoolId = req.schoolId;
+    } else if (req.role === 'ADMIN') {
+      if (!schoolId) {
+        res.status(400).json({ message: 'School ID is required' });
+        return;
+      }
+      targetSchoolId = schoolId;
     }
-  });
 
-  return { user: newUser, instructor: newInstructor };
-});
+    if (!targetSchoolId) {
+      res.status(400).json({ message: 'School ID could not be determined' });
+      return;
+    }
 
-if (sendWelcomeEmail) {
-  console.log(`Welcome email should be sent to ${userData.email}`);
-}
+    const existingUser = await prisma.user.findUnique({ where: { email: userData.email } });
+    if (existingUser) {
+      res.status(400).json({ message: 'Email already exists' });
+      return;
+    }
 
-res.status(201).json(result.instructor);
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone || null,
+          password: hashedPassword,
+          role: 'INSTRUCTOR'
+        }
+      });
+
+      const newInstructor = await tx.instructor.create({
+        data: {
+          userId: newUser.id,
+          schoolId: targetSchoolId as number,
+          bio: bio || null,
+          yearsExperience: yearsExperience ?? 0,
+          specialties: specialties || [],
+          certifications: certifications || [],
+          profileImage: profileImage || null,
+          instructorRole: instructorRole || 'INSTRUCTOR',
+          type: type || 'EMPLOYEE',
+          isActive: true
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true
+            }
+          },
+          school: {
+            select: {
+              id: true,
+              name: true,
+              location: true
+            }
+          }
+        }
+      });
+
+      return { user: newUser, instructor: newInstructor };
+    });
+
+    if (sendWelcomeEmail) {
+      console.log(`Welcome email should be sent to ${userData.email}`);
+    }
+
+    res.status(201).json(result.instructor);
   } catch (err) {
-  console.error('[POST /instructors/create-with-user] Error:', err);
-  res.status(500).json({ message: 'Internal server error' });
-}
+    console.error('[POST /instructors/create-with-user] Error:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 const updateInstructorSchema = z.object({
@@ -332,7 +331,7 @@ router.post('/', requireAuth, requireRole(['ADMIN', 'SCHOOL_ADMIN']), resolveSch
         specialties: specialties || [],
         certifications: certifications || [],
         profileImage: profileImage || null,
-        profileImage: profileImage || null,
+
         instructorRole: instructorRole || 'INSTRUCTOR',
         type: type || 'EMPLOYEE',
         isActive: true
