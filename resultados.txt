@@ -1,197 +1,104 @@
-2026-02-04T04:39:57.906353105Z [err]  2026-02-04 04:39:55.001 UTC [67014] ERROR:  column instructors.type does not exist at character 521
-2026-02-04T04:39:57.906360974Z [err]  2026-02-04 04:39:55.001 UTC [67014] STATEMENT:  SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:39:58.587183879Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
-2026-02-04T04:39:58.587189950Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
-2026-02-04T04:39:58.587194312Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
-2026-02-04T04:39:58.587198289Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
-2026-02-04T04:39:58.977666673Z [err]  2026-02-04 04:39:58.455 UTC [67014] ERROR:  column instructors.type does not exist at character 521
-2026-02-04T04:39:58.977674541Z [err]  2026-02-04 04:39:58.455 UTC [67014] STATEMENT:  SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:00.289248892Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
-2026-02-04T04:40:00.289257734Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
-2026-02-04T04:40:00.289266151Z [inf]  prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:00.289275108Z [inf]  prisma:error 
-2026-02-04T04:40:00.289284209Z [inf]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:00.289293931Z [inf]  
-2026-02-04T04:40:00.289302975Z [inf]  
-2026-02-04T04:40:00.289312467Z [inf]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:00.289322286Z [err]  PrismaClientKnownRequestError: 
-2026-02-04T04:40:00.289330500Z [err]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:00.289338922Z [err]  
-2026-02-04T04:40:00.289347350Z [err]  
-2026-02-04T04:40:00.289356183Z [err]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:02.491307918Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
-2026-02-04T04:40:02.491314238Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
-2026-02-04T04:40:02.491321291Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
-2026-02-04T04:40:02.491328898Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
-2026-02-04T04:40:02.491336106Z [err]      at async /app/dist/routes/users.js:52:22 {
-2026-02-04T04:40:02.491347688Z [err]    code: 'P2022',
-2026-02-04T04:40:02.491356607Z [err]    clientVersion: '5.22.0',
-2026-02-04T04:40:02.491364030Z [err]    meta: { modelName: 'User', column: 'instructors.type' }
-2026-02-04T04:40:02.491375286Z [err]  }
-2026-02-04T04:40:02.491388236Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
-2026-02-04T04:40:02.491399833Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
-2026-02-04T04:40:02.491407990Z [inf]  prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:04.530160187Z [inf]  prisma:error 
-2026-02-04T04:40:04.530168249Z [inf]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:04.530180965Z [inf]  
-2026-02-04T04:40:04.530493939Z [inf]  
-2026-02-04T04:40:04.530512382Z [inf]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:04.530520932Z [err]  PrismaClientKnownRequestError: 
-2026-02-04T04:40:04.530528475Z [err]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:04.530534888Z [err]  
-2026-02-04T04:40:04.530541322Z [err]  
-2026-02-04T04:40:04.530547223Z [err]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:04.530553757Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
-2026-02-04T04:40:04.530559259Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
-2026-02-04T04:40:04.530565981Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
-2026-02-04T04:40:04.530572454Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
-2026-02-04T04:40:04.530578714Z [err]      at async /app/dist/routes/users.js:52:22 {
-2026-02-04T04:40:04.530584884Z [err]    code: 'P2022',
-2026-02-04T04:40:04.530590859Z [err]    clientVersion: '5.22.0',
-2026-02-04T04:40:04.530596926Z [err]    meta: { modelName: 'User', column: 'instructors.type' }
-2026-02-04T04:40:04.530603545Z [err]  }
-2026-02-04T04:40:05.152504304Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
-2026-02-04T04:40:05.277715549Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
-2026-02-04T04:40:05.819192121Z [err]  2026-02-04 04:40:05.222 UTC [67014] ERROR:  column instructors.type does not exist at character 521
-2026-02-04T04:40:05.819205952Z [err]  2026-02-04 04:40:05.222 UTC [67014] STATEMENT:  SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:06.312770801Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
-2026-02-04T04:40:06.312777623Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
-2026-02-04T04:40:06.312785515Z [inf]  prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:06.313095977Z [inf]  prisma:error 
-2026-02-04T04:40:06.313105793Z [inf]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:06.313114035Z [inf]  
-2026-02-04T04:40:06.313122339Z [inf]  
-2026-02-04T04:40:06.313130471Z [inf]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:06.313137760Z [err]  PrismaClientKnownRequestError: 
-2026-02-04T04:40:06.313145009Z [err]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:06.313151363Z [err]  
-2026-02-04T04:40:06.313157963Z [err]  
-2026-02-04T04:40:06.313174581Z [err]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:06.315413804Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
-2026-02-04T04:40:06.336731236Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
-2026-02-04T04:40:06.912467979Z [err]  2026-02-04 04:40:06.297 UTC [67014] ERROR:  column instructors.type does not exist at character 521
-2026-02-04T04:40:06.912472329Z [err]  2026-02-04 04:40:06.297 UTC [67014] STATEMENT:  SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:06.912476709Z [err]  2026-02-04 04:40:06.401 UTC [67014] ERROR:  column classes.instructorId does not exist at character 451
-2026-02-04T04:40:06.912481159Z [err]  2026-02-04 04:40:06.401 UTC [67014] HINT:  Perhaps you meant to reference the column "classes.instructor".
-2026-02-04T04:40:06.912486135Z [err]  2026-02-04 04:40:06.401 UTC [67014] STATEMENT:  SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."instructorId", "public"."classes"."instructorStatus"::text, "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE "public"."classes"."id" IN ($1) OFFSET $2
-2026-02-04T04:40:06.912489899Z [err]  2026-02-04 04:40:06.526 UTC [67015] ERROR:  column classes.instructorId does not exist at character 451
-2026-02-04T04:40:06.917087379Z [err]  2026-02-04 04:40:06.526 UTC [67015] HINT:  Perhaps you meant to reference the column "classes.instructor".
-2026-02-04T04:40:06.917091783Z [err]  2026-02-04 04:40:06.526 UTC [67015] STATEMENT:  SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."instructorId", "public"."classes"."instructorStatus"::text, "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE "public"."classes"."id" IN ($1) OFFSET $2
-2026-02-04T04:40:07.939820050Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
-2026-02-04T04:40:07.939828658Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
-2026-02-04T04:40:07.939835611Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
-2026-02-04T04:40:07.939844395Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
-2026-02-04T04:40:07.939850532Z [err]      at async /app/dist/routes/users.js:52:22 {
-2026-02-04T04:40:07.939857394Z [err]    code: 'P2022',
-2026-02-04T04:40:07.939865163Z [err]    clientVersion: '5.22.0',
-2026-02-04T04:40:07.939872827Z [err]    meta: { modelName: 'User', column: 'instructors.type' }
-2026-02-04T04:40:07.939880150Z [err]  }
-2026-02-04T04:40:07.939887254Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
-2026-02-04T04:40:07.939893591Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
-2026-02-04T04:40:07.939900336Z [inf]  prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:09.442702146Z [inf]  prisma:error 
-2026-02-04T04:40:09.442710031Z [inf]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:09.442717466Z [inf]  
-2026-02-04T04:40:09.442723618Z [inf]  
-2026-02-04T04:40:09.442730235Z [inf]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:09.442736993Z [err]  PrismaClientKnownRequestError: 
-2026-02-04T04:40:09.442744306Z [err]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:09.442750670Z [err]  
-2026-02-04T04:40:09.442756717Z [err]  
-2026-02-04T04:40:09.442768151Z [err]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:09.442775236Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
-2026-02-04T04:40:09.442782575Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
-2026-02-04T04:40:09.442788889Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
-2026-02-04T04:40:09.442795894Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
-2026-02-04T04:40:09.442802617Z [err]      at async /app/dist/routes/users.js:52:22 {
-2026-02-04T04:40:09.442809250Z [err]    code: 'P2022',
-2026-02-04T04:40:09.442817275Z [err]    clientVersion: '5.22.0',
-2026-02-04T04:40:09.442823885Z [err]    meta: { modelName: 'User', column: 'instructors.type' }
-2026-02-04T04:40:09.442831534Z [err]  }
-2026-02-04T04:40:09.442839756Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
-2026-02-04T04:40:09.442847555Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
-2026-02-04T04:40:09.442854841Z [inf]  prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE "public"."reservations"."userId" = $1 ORDER BY "public"."reservations"."createdAt" DESC OFFSET $2
-2026-02-04T04:40:11.612450038Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."name", "public"."users"."email", "public"."users"."phone" FROM "public"."users" WHERE "public"."users"."id" IN ($1) OFFSET $2
-2026-02-04T04:40:11.612460667Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."instructorId", "public"."classes"."instructorStatus"::text, "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE "public"."classes"."id" IN ($1) OFFSET $2
-2026-02-04T04:40:11.612471477Z [inf]  prisma:error 
-2026-02-04T04:40:11.612480611Z [inf]  Invalid `prisma.reservation.findMany()` invocation:
-2026-02-04T04:40:11.612490391Z [inf]  
-2026-02-04T04:40:11.612501629Z [inf]  
-2026-02-04T04:40:11.612511552Z [inf]  The column `classes.instructorId` does not exist in the current database.
-2026-02-04T04:40:11.612522802Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
-2026-02-04T04:40:11.612531855Z [inf]  prisma:query SELECT "public"."payments"."id", "public"."payments"."reservationId", "public"."payments"."amount", "public"."payments"."status"::text, "public"."payments"."paymentMethod", "public"."payments"."transactionId", "public"."payments"."paidAt", "public"."payments"."createdAt", "public"."payments"."updatedAt", "public"."payments"."voucherImage", "public"."payments"."voucherNotes", "public"."payments"."discountCodeId", "public"."payments"."discountAmount", "public"."payments"."originalAmount" FROM "public"."payments" LEFT JOIN "public"."reservations" AS "j1" ON ("j1"."id") = ("public"."payments"."reservationId") WHERE ("j1"."userId" = $1 AND ("j1"."id" IS NOT NULL)) ORDER BY "public"."payments"."createdAt" DESC OFFSET $2
-2026-02-04T04:40:13.842049189Z [inf]  prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE "public"."reservations"."id" IN ($1,$2,$3) OFFSET $4
-2026-02-04T04:40:13.842057970Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE "public"."users"."id" IN ($1) OFFSET $2
-2026-02-04T04:40:13.842065460Z [inf]  prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."instructorId", "public"."classes"."instructorStatus"::text, "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE "public"."classes"."id" IN ($1) OFFSET $2
-2026-02-04T04:40:13.842088268Z [inf]  prisma:error 
-2026-02-04T04:40:13.842095987Z [inf]  Invalid `prisma.payment.findMany()` invocation:
-2026-02-04T04:40:13.842106731Z [inf]  
-2026-02-04T04:40:13.842115384Z [inf]  
-2026-02-04T04:40:15.112643034Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
-2026-02-04T04:40:15.129892376Z [err]  2026-02-04 04:40:15.122 UTC [67015] ERROR:  column instructors.type does not exist at character 521
-2026-02-04T04:40:15.129902449Z [err]  2026-02-04 04:40:15.122 UTC [67015] STATEMENT:  SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:15.245486450Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
-2026-02-04T04:40:15.896461198Z [inf]  The column `classes.instructorId` does not exist in the current database.
-2026-02-04T04:40:15.896470325Z [err]  PrismaClientKnownRequestError: 
-2026-02-04T04:40:15.896476198Z [err]  Invalid `prisma.payment.findMany()` invocation:
-2026-02-04T04:40:15.896484171Z [err]  
-2026-02-04T04:40:15.896490727Z [err]  
-2026-02-04T04:40:15.896498849Z [err]  The column `classes.instructorId` does not exist in the current database.
-2026-02-04T04:40:15.896505406Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
-2026-02-04T04:40:15.896511572Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
-2026-02-04T04:40:15.896517524Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
-2026-02-04T04:40:15.896523885Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
-2026-02-04T04:40:15.896530935Z [err]      at async /app/dist/routes/payments.js:248:26 {
-2026-02-04T04:40:15.896539509Z [err]    code: 'P2022',
-2026-02-04T04:40:15.896546190Z [err]    clientVersion: '5.22.0',
-2026-02-04T04:40:15.896553498Z [err]    meta: { modelName: 'Payment', column: 'classes.instructorId' }
-2026-02-04T04:40:15.896561493Z [err]  }
-2026-02-04T04:40:15.896568916Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
-2026-02-04T04:40:15.896575915Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
-2026-02-04T04:40:17.744215694Z [inf]  prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:17.744225263Z [inf]  prisma:error 
-2026-02-04T04:40:17.744241076Z [inf]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:17.744250402Z [inf]  
-2026-02-04T04:40:17.744259957Z [inf]  
-2026-02-04T04:40:17.744270200Z [inf]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:17.744690654Z [err]  PrismaClientKnownRequestError: 
-2026-02-04T04:40:17.744708886Z [err]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:17.744718161Z [err]  
-2026-02-04T04:40:17.744727574Z [err]  
-2026-02-04T04:40:17.744735755Z [err]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:17.744772946Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
-2026-02-04T04:40:17.744782308Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
-2026-02-04T04:40:17.744790566Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
-2026-02-04T04:40:17.744799114Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
-2026-02-04T04:40:17.744807386Z [err]      at async /app/dist/routes/users.js:52:22 {
-2026-02-04T04:40:17.744815699Z [err]    code: 'P2022',
-2026-02-04T04:40:19.923605022Z [err]    clientVersion: '5.22.0',
-2026-02-04T04:40:19.923611608Z [err]    meta: { modelName: 'User', column: 'instructors.type' }
-2026-02-04T04:40:19.923618003Z [err]  }
-2026-02-04T04:40:24.472057261Z [inf]  [API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
-2026-02-04T04:40:24.509232730Z [err]  [API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
-2026-02-04T04:40:25.064219747Z [err]  2026-02-04 04:40:24.477 UTC [67015] ERROR:  column instructors.type does not exist at character 521
-2026-02-04T04:40:25.064228490Z [err]  2026-02-04 04:40:24.477 UTC [67015] STATEMENT:  SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:25.969330634Z [inf]  Using JWT_SECRET: zvPwjXx4gK...
-2026-02-04T04:40:25.969340774Z [inf]  prisma:query SELECT 1
-2026-02-04T04:40:25.969356732Z [inf]  prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
-2026-02-04T04:40:25.969365599Z [inf]  prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
-2026-02-04T04:40:25.969376849Z [inf]  prisma:error 
-2026-02-04T04:40:25.969392267Z [inf]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:25.969402185Z [inf]  
-2026-02-04T04:40:25.969412311Z [inf]  
-2026-02-04T04:40:25.969426660Z [inf]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:25.969436521Z [err]  PrismaClientKnownRequestError: 
-2026-02-04T04:40:25.969447643Z [err]  Invalid `prisma.user.findUnique()` invocation:
-2026-02-04T04:40:25.969467854Z [err]  
-2026-02-04T04:40:25.969477476Z [err]  
-2026-02-04T04:40:28.991885580Z [err]  The column `instructors.type` does not exist in the current database.
-2026-02-04T04:40:28.991892745Z [err]      at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
-2026-02-04T04:40:28.991900981Z [err]      at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
-2026-02-04T04:40:28.991908767Z [err]      at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
-2026-02-04T04:40:28.991916756Z [err]      at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
-2026-02-04T04:40:28.991924089Z [err]      at async /app/dist/routes/users.js:52:22 {
-2026-02-04T04:40:28.991931595Z [err]    code: 'P2022',
-2026-02-04T04:40:28.991939968Z [err]    clientVersion: '5.22.0',
-2026-02-04T04:40:28.991948877Z [err]    meta: { modelName: 'User', column: 'instructors.type' }
-2026-02-04T04:40:28.991957895Z [err]  }
+    at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async /app/dist/routes/users.js:52:22 {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'User', column: 'instructors.type' }
+}
+Using JWT_SECRET: zvPwjXx4gK...
+Using JWT_SECRET: zvPwjXx4gK...
+Using JWT_SECRET: zvPwjXx4gK...
+prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE "public"."reservations"."userId" = $1 ORDER BY "public"."reservations"."createdAt" DESC OFFSET $2
+prisma:query SELECT "public"."users"."id", "public"."users"."name", "public"."users"."email", "public"."users"."phone" FROM "public"."users" WHERE "public"."users"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."instructorId", "public"."classes"."instructorStatus"::text, "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE "public"."classes"."id" IN ($1) OFFSET $2
+prisma:error 
+Invalid `prisma.reservation.findMany()` invocation:
+The column `classes.instructorId` does not exist in the current database.
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
+prisma:error 
+Invalid `prisma.user.findUnique()` invocation:
+The column `instructors.type` does not exist in the current database.
+PrismaClientKnownRequestError: 
+Invalid `prisma.user.findUnique()` invocation:
+The column `instructors.type` does not exist in the current database.
+    at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+    at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async /app/dist/routes/users.js:52:22 {
+  code: 'P2022',
+[API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
+2026-02-04 05:11:38.066 UTC [67088] ERROR:  column instructors.type does not exist at character 521
+2026-02-04 05:11:38.066 UTC [67088] STATEMENT:  SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
+[API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
+  clientVersion: '5.22.0',
+  meta: { modelName: 'User', column: 'instructors.type' }
+}
+prisma:query SELECT "public"."payments"."id", "public"."payments"."reservationId", "public"."payments"."amount", "public"."payments"."status"::text, "public"."payments"."paymentMethod", "public"."payments"."transactionId", "public"."payments"."paidAt", "public"."payments"."createdAt", "public"."payments"."updatedAt", "public"."payments"."voucherImage", "public"."payments"."voucherNotes", "public"."payments"."discountCodeId", "public"."payments"."discountAmount", "public"."payments"."originalAmount" FROM "public"."payments" LEFT JOIN "public"."reservations" AS "j1" ON ("j1"."id") = ("public"."payments"."reservationId") WHERE ("j1"."userId" = $1 AND ("j1"."id" IS NOT NULL)) ORDER BY "public"."payments"."createdAt" DESC OFFSET $2
+prisma:query SELECT "public"."reservations"."id", "public"."reservations"."userId", "public"."reservations"."classId", "public"."reservations"."status"::text, "public"."reservations"."specialRequest", "public"."reservations"."createdAt", "public"."reservations"."updatedAt", "public"."reservations"."participants", "public"."reservations"."date", "public"."reservations"."time" FROM "public"."reservations" WHERE "public"."reservations"."id" IN ($1,$2,$3) OFFSET $4
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE "public"."users"."id" IN ($1) OFFSET $2
+2026-02-04 05:11:40.170 UTC [67088] ERROR:  column instructors.type does not exist at character 521
+2026-02-04 05:11:40.170 UTC [67088] STATEMENT:  SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
+[API Proxy] Proxying GET /users/profile to https://surfschool-backend-production.up.railway.app/users/profile
+[API Proxy] GET /users/profile - Error 500: {"message":"Internal server error"}
+    at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+    at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async /app/dist/routes/payments.js:248:26 {
+prisma:query SELECT "public"."classes"."id", "public"."classes"."title", "public"."classes"."description", "public"."classes"."duration", "public"."classes"."defaultPrice", "public"."classes"."level"::text, "public"."classes"."schoolId", "public"."classes"."createdAt", "public"."classes"."updatedAt", "public"."classes"."deletedAt", "public"."classes"."instructor", "public"."classes"."studentDetails", "public"."classes"."images", "public"."classes"."beachId", "public"."classes"."instructorId", "public"."classes"."instructorStatus"::text, "public"."classes"."type", "public"."classes"."defaultCapacity" FROM "public"."classes" WHERE "public"."classes"."id" IN ($1) OFFSET $2
+prisma:error 
+Invalid `prisma.payment.findMany()` invocation:
+The column `classes.instructorId` does not exist in the current database.
+PrismaClientKnownRequestError: 
+Invalid `prisma.payment.findMany()` invocation:
+The column `classes.instructorId` does not exist in the current database.
+prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
+prisma:error 
+Invalid `prisma.user.findUnique()` invocation:
+The column `instructors.type` does not exist in the current database.
+  code: 'P2022',
+PrismaClientKnownRequestError: 
+  clientVersion: '5.22.0',
+  meta: { modelName: 'Payment', column: 'classes.instructorId' }
+}
+Using JWT_SECRET: zvPwjXx4gK...
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+Invalid `prisma.user.findUnique()` invocation:
+The column `instructors.type` does not exist in the current database.
+    at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+    at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async /app/dist/routes/users.js:52:22 {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'User', column: 'instructors.type' }
+}
+Using JWT_SECRET: zvPwjXx4gK...
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
+The column `instructors.type` does not exist in the current database.
+prisma:error 
+Using JWT_SECRET: zvPwjXx4gK...
+Invalid `prisma.user.findUnique()` invocation:
+PrismaClientKnownRequestError: 
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."name", "public"."users"."password", "public"."users"."role"::text, "public"."users"."age", "public"."users"."weight", "public"."users"."height", "public"."users"."canSwim", "public"."users"."injuries", "public"."users"."phone", "public"."users"."emergencyContact", "public"."users"."emergencyPhone", "public"."users"."createdAt", "public"."users"."updatedAt", "public"."users"."profilePhoto", "public"."users"."avatar" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+Invalid `prisma.user.findUnique()` invocation:
+The column `instructors.type` does not exist in the current database.
+    at $n.handleRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:7315)
+    at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+    at $n.request (/app/node_modules/@prisma/client/runtime/library.js:121:6307)
+    at async l (/app/node_modules/@prisma/client/runtime/library.js:130:9633)
+    at async /app/dist/routes/users.js:52:22 {
+  code: 'P2022',
+  clientVersion: '5.22.0',
+  meta: { modelName: 'User', column: 'instructors.type' }
+}
+prisma:error 
+prisma:query SELECT "public"."instructors"."id", "public"."instructors"."userId", "public"."instructors"."schoolId", "public"."instructors"."bio", "public"."instructors"."yearsExperience", "public"."instructors"."specialties", "public"."instructors"."certifications", "public"."instructors"."rating", "public"."instructors"."totalReviews", "public"."instructors"."profileImage", "public"."instructors"."isActive", "public"."instructors"."createdAt", "public"."instructors"."updatedAt", "public"."instructors"."instructorRole"::text, "public"."instructors"."type"::text FROM "public"."instructors" WHERE "public"."instructors"."userId" IN ($1) OFFSET $2
+Invalid `prisma.user.findUnique()` invocation:
+The column `instructors.type` does not exist in the current database.
+    at $n.handleAndLogRequestError (/app/node_modules/@prisma/client/runtime/library.js:121:6623)
+  code: 'P2022',

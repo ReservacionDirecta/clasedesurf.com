@@ -1,0 +1,398 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+  engineType    = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int            @id @default(autoincrement())
+  email            String         @unique
+  name             String
+  password         String
+  role             UserRole       @default(STUDENT)
+  age              Int?
+  weight           Float?
+  height           Float?
+  canSwim          Boolean        @default(false)
+  injuries         String?
+  phone            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  profilePhoto     String?
+  avatar           String?
+  emergencyContact String?
+  emergencyPhone   String?
+  instructor       Instructor?
+  notifications    Notification[]
+  refreshTokens    RefreshToken[]
+  reservations     Reservation[]
+  student          Student?
+
+  @@map("users")
+}
+
+model Instructor {
+  id              Int                @id @default(autoincrement())
+  userId          Int                @unique
+  schoolId        Int
+  bio             String?
+  yearsExperience Int                @default(0)
+  specialties     String[]
+  certifications  String[]
+  rating          Float              @default(0)
+  totalReviews    Int                @default(0)
+  profileImage    String?
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  instructorRole  InstructorRole     @default(INSTRUCTOR)
+  reviews         InstructorReview[]
+  school          School             @relation(fields: [schoolId], references: [id])
+  user            User               @relation(fields: [userId], references: [id])
+
+  @@map("instructors")
+}
+
+model InstructorReview {
+  id           Int        @id @default(autoincrement())
+  instructorId Int
+  studentName  String
+  rating       Int
+  comment      String?
+  createdAt    DateTime   @default(now())
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+
+  @@map("instructor_reviews")
+}
+
+model SchoolReview {
+  id          Int      @id @default(autoincrement())
+  schoolId    Int
+  studentName String
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+  school      School   @relation(fields: [schoolId], references: [id])
+
+  @@map("school_reviews")
+}
+
+model Student {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  schoolId  Int?
+  birthdate DateTime?
+  notes     String?
+  level     ClassLevel @default(BEGINNER)
+  canSwim   Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  school    School?    @relation(fields: [schoolId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
+
+  @@map("students")
+}
+
+model School {
+  id            Int            @id @default(autoincrement())
+  name          String
+  location      String
+  description   String?
+  phone         String?
+  email         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  address       String?
+  coverImage    String?
+  facebook      String?
+  instagram     String?
+  logo          String?
+  website       String?
+  whatsapp      String?
+  ownerId       Int?
+  foundedYear   Int?
+  rating        Float          @default(0)
+  totalReviews  Int            @default(0)
+  status        SchoolStatus   @default(PENDING)
+  notes         CalendarNote[]
+  classes       Class[]
+  discountCodes DiscountCode[]
+  instructors   Instructor[]
+  products      Product[]
+  reviews       SchoolReview[]
+  students      Student[]
+
+  @@map("schools")
+}
+
+model Beach {
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  location     String?
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  bestTime     String?
+  conditions   Json?
+  count        String?
+  displayOrder Int      @default(0)
+  entryTips    Json?
+  hazards      Json?
+  image        String?
+  isActive     Boolean  @default(true)
+  level        String?
+  slug         String?
+  waveType     String?
+  classes      Class[]
+
+  @@map("beaches")
+}
+
+model Class {
+  id              Int             @id @default(autoincrement())
+  title           String
+  description     String?
+  duration        Int             @default(120)
+  level           ClassLevel      @default(BEGINNER)
+  schoolId        Int
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  instructor      String?
+  images          String[]
+  beachId         Int?
+  deletedAt       DateTime?
+  type            String          @default("SURF_LESSON")
+  defaultCapacity Int             @default(8)
+  defaultPrice    Float           @default(0)
+  studentDetails  String?
+  schedules       ClassSchedule[]
+  sessions        ClassSession[]
+  beach           Beach?          @relation(fields: [beachId], references: [id])
+  school          School          @relation(fields: [schoolId], references: [id])
+  reservations    Reservation[]
+
+  @@map("classes")
+}
+
+model ClassSchedule {
+  id           Int          @id @default(autoincrement())
+  classId      Int
+  dayOfWeek    Int?
+  startTime    String
+  endTime      String?
+  isActive     Boolean      @default(true)
+  dates        Json?
+  rangeEnd     DateTime?
+  rangeStart   DateTime?
+  specificDate DateTime?
+  times        Json?
+  type         ScheduleType @default(RECURRING)
+  class        Class        @relation(fields: [classId], references: [id])
+
+  @@map("class_schedules")
+}
+
+model ClassSession {
+  id        Int      @id @default(autoincrement())
+  classId   Int
+  date      DateTime
+  time      String
+  capacity  Int
+  price     Float?
+  isClosed  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  class     Class    @relation(fields: [classId], references: [id])
+
+  @@unique([classId, date, time])
+  @@map("class_sessions")
+}
+
+model Reservation {
+  id               Int               @id @default(autoincrement())
+  userId           Int
+  classId          Int
+  status           ReservationStatus @default(PENDING)
+  specialRequest   String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  participants     Json?
+  date             DateTime?
+  time             String?
+  payment          Payment?
+  productPurchases ProductPurchase[]
+  class            Class             @relation(fields: [classId], references: [id])
+  user             User              @relation(fields: [userId], references: [id])
+
+  @@map("reservations")
+}
+
+model Payment {
+  id             Int           @id @default(autoincrement())
+  reservationId  Int           @unique
+  amount         Float
+  status         PaymentStatus @default(UNPAID)
+  paymentMethod  String?
+  transactionId  String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  voucherImage   String?
+  voucherNotes   String?
+  discountAmount Float?
+  discountCodeId Int?
+  originalAmount Float?
+  discountCode   DiscountCode? @relation(fields: [discountCodeId], references: [id])
+  reservation    Reservation   @relation(fields: [reservationId], references: [id])
+
+  @@map("payments")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String
+  userId    Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
+}
+
+model Product {
+  id          Int               @id @default(autoincrement())
+  schoolId    Int
+  name        String
+  description String?
+  price       Float
+  currency    String            @default("PEN")
+  stock       Int               @default(0)
+  image       String?
+  category    String?
+  isActive    Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  purchases   ProductPurchase[]
+  school      School            @relation(fields: [schoolId], references: [id])
+
+  @@map("products")
+}
+
+model ProductPurchase {
+  id            Int         @id @default(autoincrement())
+  reservationId Int
+  productId     Int
+  quantity      Int
+  unitPrice     Float
+  totalPrice    Float
+  createdAt     DateTime    @default(now())
+  product       Product     @relation(fields: [productId], references: [id])
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+
+  @@map("product_purchases")
+}
+
+model CalendarNote {
+  id        Int      @id @default(autoincrement())
+  schoolId  Int
+  title     String
+  content   String?
+  date      DateTime
+  time      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  school    School   @relation(fields: [schoolId], references: [id])
+
+  @@map("calendar_notes")
+}
+
+model DiscountCode {
+  id                 Int       @id @default(autoincrement())
+  code               String    @unique
+  description        String?
+  discountPercentage Float
+  validFrom          DateTime
+  validTo            DateTime
+  isActive           Boolean   @default(true)
+  maxUses            Int?
+  usedCount          Int       @default(0)
+  schoolId           Int?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  school             School?   @relation(fields: [schoolId], references: [id])
+  payments           Payment[]
+
+  @@map("discount_codes")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int
+  type      NotificationType
+  category  String
+  subject   String?
+  content   String
+  metadata  Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+enum ScheduleType {
+  RECURRING
+  SINGLE
+  DATE_RANGE
+  SPECIFIC_DATES
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+  SCHOOL_ADMIN
+  INSTRUCTOR
+}
+
+enum ClassLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  PAID
+  CANCELED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+  PENDING
+}
+
+enum InstructorRole {
+  INSTRUCTOR
+  HEAD_COACH
+}
+
+enum SchoolStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  EMAIL
+  WHATSAPP
+  SYSTEM
+}
