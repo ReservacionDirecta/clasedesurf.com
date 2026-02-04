@@ -32,19 +32,21 @@ export const updateProfileSchema = z.object({
     .max(1000, 'Injuries description must be less than 1000 characters')
     .nullable()
     .optional(),
-  phone: z.string()
-    .regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, 'Invalid phone number format')
-    .nullable()
-    .optional(),
+  phone: z.union([
+    z.string().regex(/^[\+]?[0-9\s\-\(\)]{7,20}$/, 'Invalid phone number format'),
+    z.literal('').transform(() => null),
+    z.null()
+  ]).optional(),
   profilePhoto: z.union([
     z.string().max(10000000, 'Profile photo must be less than 10MB when base64 encoded'),
     z.literal('').transform(() => null),
     z.null()
   ]).optional(),
-  avatar: z.string()
-    .max(50, 'Avatar ID must be less than 50 characters')
-    .nullable()
-    .optional()
+  avatar: z.union([
+    z.string().max(50, 'Avatar ID must be less than 50 characters'),
+    z.literal('').transform(() => null),
+    z.null()
+  ]).optional()
 });
 
 // Types derived from schemas
