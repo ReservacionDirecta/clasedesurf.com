@@ -804,9 +804,9 @@ export default function ClassesManagementPage() {
                                 <div className="flex flex-wrap gap-1 mt-1">
                                    <span className="text-xs text-gray-500 flex items-center bg-gray-100 px-1.5 py-0.5 rounded">
                                       {cls.instructor || 'Sin instructor'} 
-                                      {cls.instructorStatus === 'PENDING' && <AlertCircle className="w-3 h-3 ml-1 text-amber-500" title="Pendiente de confirmación por el instructor" />}
-                                      {cls.instructorStatus === 'CONFIRMED' && <CheckCircle className="w-3 h-3 ml-1 text-green-500" title="Instructor confirmado" />}
-                                      {cls.instructorStatus === 'REJECTED' && <XCircle className="w-3 h-3 ml-1 text-red-500" title="Instructor rechazó la clase" />}
+                                      {cls.instructorStatus === 'PENDING' && <span title="Pendiente de confirmación por el instructor"><AlertCircle className="w-3 h-3 ml-1 text-amber-500" /></span>}
+                                      {cls.instructorStatus === 'CONFIRMED' && <span title="Instructor confirmado"><CheckCircle className="w-3 h-3 ml-1 text-green-500" /></span>}
+                                      {cls.instructorStatus === 'REJECTED' && <span title="Instructor rechazó la clase"><XCircle className="w-3 h-3 ml-1 text-red-500" /></span>}
                                    </span>
                                    <span className="text-xs text-gray-500 flex items-center bg-gray-100 px-1.5 py-0.5 rounded">
                                       {cls.duration} min

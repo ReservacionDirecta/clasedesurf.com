@@ -17,6 +17,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 COPY tsconfig.json ./
+COPY prisma ./prisma 
+
 
 # Install dependencies
 RUN npm ci --no-audit --no-fund && \
