@@ -104,7 +104,6 @@ export default function SimpleInstructorForm({ onSubmit, onCancel, isLoading, in
           yearsExperience: 1,
           specialties: ['Surf para principiantes'],
           certifications: [],
-          certifications: [],
           isActive: true,
           instructorRole: formData.instructorRole,
           type: formData.type
