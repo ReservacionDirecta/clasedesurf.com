@@ -2,7 +2,7 @@ name: 🚀 Deploy to Railway
 
 on:
   push:
-    branches: [ main, production ]
+    branches: [ main, production, ultimoestado ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -136,7 +136,7 @@ jobs:
   deploy-railway:
     needs: [build-and-test, build-docker]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ultimoestado' || github.event_name == 'workflow_dispatch'
     
     environment: 
       name: ${{ github.event.inputs.environment || 'production' }}
@@ -179,7 +179,7 @@ jobs:
   migrate-database:
     needs: deploy-railway
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/ultimoestado' || github.event_name == 'workflow_dispatch'
 
     steps:
     - name: 📥 Checkout code
